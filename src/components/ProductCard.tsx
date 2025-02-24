@@ -29,7 +29,7 @@ export const ProductCard = ({ title, price, image, condition }: ProductCardProps
       </div>
       <div className="p-4">
         <h3 className="font-medium text-white mb-2 line-clamp-2">{title}</h3>
-        <p className="text-lg font-semibold text-primary">${price}</p>
+        <p className="text-lg font-semibold text-primary">₦{price}</p>
       </div>
     </div>
   );
