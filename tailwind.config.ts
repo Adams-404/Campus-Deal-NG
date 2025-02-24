@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -23,35 +22,26 @@ export default {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        background: "#0A0A0A",
+        foreground: "#FFFFFF",
         primary: {
-          DEFAULT: "#94A3B8",
-          foreground: "#F8FAFC",
+          DEFAULT: "#2563EB",
+          foreground: "#FFFFFF",
         },
         secondary: {
-          DEFAULT: "#F8FAFC",
-          foreground: "#1E293B",
+          DEFAULT: "#111111",
+          foreground: "#FFFFFF",
         },
         accent: {
-          DEFAULT: "#FCD34D",
-          foreground: "#1E293B",
+          DEFAULT: "#F59E0B",
+          foreground: "#000000",
         },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
+        success: "#22C55E",
+        warning: "#F97316",
+        danger: "#EF4444",
         card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "#111111",
+          foreground: "#FFFFFF",
         },
       },
       borderRadius: {
