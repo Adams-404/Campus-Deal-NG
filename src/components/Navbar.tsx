@@ -1,4 +1,4 @@
-import { Search, User } from "lucide-react";
+import { Search, User, ChevronDown } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -47,20 +47,26 @@ export const Navbar = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <div className="flex justify-between items-center">
             <div className="flex gap-4">
-              <select className="bg-background text-white text-sm rounded-lg px-3 py-1.5 border border-white/10 focus:outline-none focus:border-primary">
-                <option value="">All Categories</option>
-                <option value="textbooks">Textbooks</option>
-                <option value="electronics">Electronics</option>
-                <option value="furniture">Furniture</option>
-                <option value="clothing">Clothing</option>
-              </select>
+              <div className="relative">
+                <select className="appearance-none bg-background text-white text-sm rounded-lg pl-3 pr-10 py-1.5 border border-white/10 focus:outline-none focus:border-primary">
+                  <option value="">All Categories</option>
+                  <option value="textbooks">Textbooks</option>
+                  <option value="electronics">Electronics</option>
+                  <option value="furniture">Furniture</option>
+                  <option value="clothing">Clothing</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+              </div>
 
-              <select className="bg-background text-white text-sm rounded-lg px-3 py-1.5 border border-white/10 focus:outline-none focus:border-primary">
-                <option value="newest">Newest First</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="popular">Most Popular</option>
-              </select>
+              <div className="relative">
+                <select className="appearance-none bg-background text-white text-sm rounded-lg pl-3 pr-10 py-1.5 border border-white/10 focus:outline-none focus:border-primary">
+                  <option value="newest">Newest First</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                  <option value="popular">Most Popular</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
+              </div>
             </div>
           </div>
         </div>
