@@ -1,9 +1,9 @@
 
-import { Book, Desktop, Pencil, ShirtIcon } from "lucide-react";
+import { Book, Pencil, ShirtIcon } from "lucide-react";
 
 const categories = [
   { name: "Textbooks", icon: Book },
-  { name: "Electronics", icon: Desktop },
+  { name: "Electronics", icon: Book }, // Changed from Desktop to Book temporarily
   { name: "Stationery", icon: Pencil },
   { name: "Clothing", icon: ShirtIcon },
 ];
