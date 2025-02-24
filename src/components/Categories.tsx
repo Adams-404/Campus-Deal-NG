@@ -37,10 +37,10 @@ export const Categories = () => {
         <h2 className="text-2xl font-semibold">Browse Categories</h2>
         <Link 
           to="/saved" 
-          className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+          className="flex items-center gap-2 border-2 border-blue-500 hover:border-blue-600 bg-transparent hover:bg-transparent px-3 py-1.5 rounded-lg transition-colors"
         >
-          <Heart className="w-5 h-5" />
-          <span>Saved Items</span>
+          <Heart className="w-5 h-5 text-blue-500 fill-blue-500" />
+          <span className="text-white">Saved Items</span>
         </Link>
       </div>
       <div className="relative">

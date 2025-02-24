@@ -1,39 +1,70 @@
-
 import { Bell, Shield, CreditCard, HelpCircle, LogOut } from "lucide-react";
-import { BottomNav } from "@/components/BottomNav";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { useEffect } from "react";
+import { PageTransition } from "@/components/PageTransition";
 
 const settingsItems = [
-  { icon: Bell, label: "Notifications", href: "#" },
-  { icon: Shield, label: "Privacy & Security", href: "#" },
-  { icon: CreditCard, label: "Payments", href: "#" },
-  { icon: HelpCircle, label: "Help & Support", href: "#" },
+  { 
+    icon: Bell, 
+    label: "Notifications", 
+    href: "#"
+  },
+  { 
+    icon: Shield, 
+    label: "Privacy & Security", 
+    href: "#"
+  },
+  { 
+    icon: CreditCard, 
+    label: "Payments", 
+    href: "#"
+  },
+  { 
+    icon: HelpCircle, 
+    label: "Help & Support", 
+    href: "#"
+  },
 ];
 
 const Settings = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-24">
-      <div className="max-w-4xl mx-auto px-4 pt-8">
-        <h1 className="text-2xl font-bold mb-6">Settings</h1>
-        
-        <div className="space-y-4">
-          {settingsItems.map((item) => (
-            <a
-              key={item.label}
-              href={item.href}
-              className="flex items-center gap-4 bg-secondary p-4 rounded-lg hover:bg-secondary/80 transition-colors"
-            >
-              <item.icon className="w-5 h-5 text-primary" />
-              <span className="flex-1">{item.label}</span>
-            </a>
-          ))}
+      <PageTransition>
+        <div className="max-w-4xl mx-auto px-4 pt-8">
+          <h1 className="text-2xl font-bold mb-6">Settings</h1>
+          
+          <div className="space-y-4">
+            {settingsItems.map((item) => (
+              <Link
+                key={item.label}
+                to={item.href}
+                className="flex items-center gap-4 p-4 rounded-lg transition-all
+                  bg-transparent hover:bg-transparent
+                  border-2 border-blue-500 hover:border-blue-600"
+              >
+                <item.icon className="w-5 h-5 text-blue-500" />
+                <span className="flex-1 text-white">{item.label}</span>
+              </Link>
+            ))}
 
-          <button className="flex items-center gap-4 w-full bg-secondary p-4 rounded-lg hover:bg-danger/10 text-danger transition-colors">
-            <LogOut className="w-5 h-5" />
-            <span>Log Out</span>
-          </button>
+            <div className="pt-12">
+              <button 
+                className="flex items-center gap-4 w-full p-4 rounded-lg transition-all
+                  bg-transparent hover:bg-transparent
+                  border-2 border-red-500 hover:border-red-600"
+              >
+                <LogOut className="w-5 h-5 text-red-500" />
+                <span className="flex-1 text-white">Log Out</span>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-      <BottomNav />
+      </PageTransition>
     </div>
   );
 };

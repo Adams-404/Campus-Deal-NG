@@ -1,8 +1,8 @@
-
-import { Search, Bookmark } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 export const Navbar = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
@@ -31,9 +31,15 @@ export const Navbar = () => {
             </div>
           </div>
 
-          <Button variant="ghost" size="icon" className="text-gray-400">
-            <Bookmark className="h-5 w-5" />
-          </Button>
+          <Link to="/profile">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
+            >
+              <User className="h-5 w-5 text-primary" />
+            </Button>
+          </Link>
         </div>
       </div>
 
