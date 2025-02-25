@@ -1,5 +1,6 @@
-
 import { ProductCard } from "./ProductCard";
+import { ProductCardSkeleton } from "./ProductCardSkeleton";
+import { useState, useEffect } from "react";
 
 const SAMPLE_PRODUCTS = [
   {
@@ -33,13 +34,34 @@ const SAMPLE_PRODUCTS = [
 ];
 
 export const ProductGrid = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [products, setProducts] = useState(SAMPLE_PRODUCTS);
+
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="py-8">
-      <h2 className="text-2xl font-semibold text-gray-800 mb-6">Featured Listings</h2>
+      <h2 className="text-2xl font-semibold mb-6">Featured Listings</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {SAMPLE_PRODUCTS.map((product) => (
-          <ProductCard key={product.id} {...product} />
-        ))}
+        {isLoading ? (
+          <>
+            <ProductCardSkeleton />
+            <ProductCardSkeleton />
+            <ProductCardSkeleton />
+            <ProductCardSkeleton />
+          </>
+        ) : (
+          products.map((product) => (
+            <ProductCard key={product.id} {...product} />
+          ))
+        )}
       </div>
     </div>
   );
