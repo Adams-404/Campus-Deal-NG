@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -23,6 +22,9 @@ import Share from "./pages/Share";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { useEffect } from "react";
 import ViewItem from "./pages/ViewItem";
+import AuthLayout from "./components/AuthLayout";
+import SignIn from "./pages/auth/SignIn";
+import SignUp from "./pages/auth/SignUp";
 
 const queryClient = new QueryClient();
 
