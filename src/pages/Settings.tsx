@@ -113,17 +113,6 @@ export default function Settings() {
           href: "/profile",
           iconColor: "text-blue-500",
           bgColor: "bg-blue-500/10"
-        },
-        {
-          icon: LogOut,
-          label: "Sign Out",
-          iconColor: "text-red-500",
-          bgColor: "bg-red-500/10",
-          onClick: async () => {
-            await supabase.auth.signOut();
-            navigate('/');
-            toast.success('Signed out successfully');
-          }
         }
       ]
     },
@@ -319,14 +308,25 @@ export default function Settings() {
               ))}
             </div>
 
-            <div className="mt-12">
-              <Button
-                variant="ghost"
-                className="w-full p-4 flex items-center justify-center gap-2 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+            <div className="mt-24">
+              <Link
+                to="/"
+                className="bg-secondary/50 rounded-lg border border-white/10 p-4 flex items-center justify-between hover:bg-secondary/80 transition-colors group"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  await supabase.auth.signOut();
+                  navigate('/');
+                  toast.success('Signed out successfully');
+                }}
               >
-                <LogOut className="w-5 h-5" />
-                <span>Log Out</span>
-              </Button>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full bg-red-500/10">
+                    <LogOut className="w-5 h-5 text-red-500" />
+                  </div>
+                  <span className="text-red-500">Sign Out</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-red-500 transition-transform group-hover:translate-x-0.5" />
+              </Link>
             </div>
 
             <div className="mt-8 text-center">
