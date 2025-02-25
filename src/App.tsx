@@ -30,7 +30,6 @@ const queryClient = new QueryClient();
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const isHome = location.pathname === "/";
   const hideNav = ["/", "/auth", "/auth/signin", "/auth/signup"].includes(location.pathname);
   const hideBottomNav = ["/", "/auth", "/auth/signin", "/auth/signup"].includes(location.pathname);
   
@@ -43,27 +42,29 @@ const AnimatedRoutes = () => {
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       {!hideNav && <Navbar />}
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<Index />} />
-          <Route path="/home" element={<Homepage />} />
-          <Route path="/messages" element={<Messages />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/saved" element={<SavedItems />} />
-          <Route path="/help" element={<Help />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/share" element={<Share />} />
-          <Route path="/item/:id" element={<ViewItem />} />
-          <Route path="/auth" element={<AuthLayout />}>
-            <Route index element={<SignIn />} />
-            <Route path="signin" element={<SignIn />} />
-            <Route path="signup" element={<SignUp />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </AnimatePresence>
+      <main className={cn("flex-1", !hideNav && "pt-32")}>
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<Index />} />
+            <Route path="/home" element={<Homepage />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/saved" element={<SavedItems />} />
+            <Route path="/help" element={<Help />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/share" element={<Share />} />
+            <Route path="/item/:id" element={<ViewItem />} />
+            <Route path="/auth" element={<AuthLayout />}>
+              <Route index element={<SignIn />} />
+              <Route path="signin" element={<SignIn />} />
+              <Route path="signup" element={<SignUp />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AnimatePresence>
+      </main>
       {!hideBottomNav && <BottomNav />}
     </div>
   );

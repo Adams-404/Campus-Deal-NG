@@ -1,3 +1,4 @@
+
 import { Home, MessageSquare, Plus, User, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -5,7 +6,7 @@ import { SellModal } from "./SellModal";
 import { Link, useLocation } from "react-router-dom";
 
 const navItems = [
-  { icon: Home, label: "Home", href: "/" },
+  { icon: Home, label: "Home", href: "/home" }, // Changed from "/" to "/home"
   { icon: MessageSquare, label: "Messages", href: "/messages" },
   { icon: Plus, label: "Sell", href: "#" },
   { icon: User, label: "Profile", href: "/profile" },
