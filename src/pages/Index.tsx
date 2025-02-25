@@ -4,6 +4,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { useCallback } from "react";
 import { toast } from "sonner";
+import { useScrollPosition } from "@/hooks/useScrollPosition";
 
 const Index = () => {
   const handleRefresh = useCallback(async () => {
@@ -11,6 +12,9 @@ const Index = () => {
     await new Promise(resolve => setTimeout(resolve, 1500));
     toast.success("Content refreshed");
   }, []);
+
+  // Use the scroll position hook
+  useScrollPosition();
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-24">

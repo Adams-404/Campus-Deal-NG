@@ -12,7 +12,15 @@ import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import SavedItems from "./pages/SavedItems";
+import Help from "./pages/Help";
+import Privacy from "./pages/Privacy";
+import About from "./pages/About";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+import Share from "./pages/Share";
+import { NotificationProvider } from "./contexts/NotificationContext";
+import { useEffect } from "react";
+import ViewItem from "./pages/ViewItem";
 
 const queryClient = new QueryClient();
 
@@ -20,8 +28,15 @@ const AnimatedRoutes = () => {
   const location = useLocation();
   const isHome = location.pathname === "/";
   
+  useEffect(() => {
+    // Only scroll to top if not returning to homepage
+    if (location.pathname !== '/') {
+      window.scrollTo(0, 0);
+    }
+  }, [location.pathname]);
+  
   return (
-    <>
+    <div className="flex flex-col min-h-screen overflow-x-hidden">
       {isHome && <Navbar />}
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
@@ -30,26 +45,37 @@ const AnimatedRoutes = () => {
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/saved" element={<SavedItems />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/share" element={<Share />} />
+          <Route path="/item/:id" element={<ViewItem />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
       <BottomNav />
-    </>
+    </div>
   );
 };
 
 const App = () => (
-  <SettingsProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AnimatedRoutes />
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </SettingsProvider>
+  <ThemeProvider>
+    <SettingsProvider>
+      <NotificationProvider>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider>
+            <div className="relative min-h-screen overflow-x-hidden">
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AnimatedRoutes />
+              </BrowserRouter>
+            </div>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </NotificationProvider>
+    </SettingsProvider>
+  </ThemeProvider>
 );
 
 export default App;

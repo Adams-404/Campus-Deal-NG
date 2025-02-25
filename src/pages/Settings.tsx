@@ -1,6 +1,8 @@
 import { PageTransition } from "@/components/PageTransition";
 import { useSettings } from "@/contexts/SettingsContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
+import { ExpandableSection } from "@/components/ui/expandable-section";
 import { 
   ChevronRight, 
   Type, 
@@ -13,15 +15,54 @@ import {
   Shield,
   MessageSquare,
   Info,
-  LogOut
+  LogOut,
+  Monitor,
+  BellRing,
+  BellOff,
+  Mail,
+  ArrowLeft
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { toast } from "sonner";
+import { useEffect } from "react";
 
 export default function Settings() {
   const { fontSize, setFontSize } = useSettings();
-  const [isDarkMode, setIsDarkMode] = useState(true); // We'll implement theme context later
+  const { theme, setTheme } = useTheme();
+  const { isEnabled, isPushSupported, toggleNotifications } = useNotifications();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
+  const notificationTypes = [
+    {
+      icon: BellRing,
+      label: "Push Notifications",
+      description: "Get notified about new messages and updates",
+      enabled: isEnabled,
+      supported: isPushSupported,
+      onToggle: toggleNotifications
+    },
+    {
+      icon: Mail,
+      label: "Email Notifications",
+      description: "Receive email updates about your activity",
+      enabled: false,
+      supported: true,
+      onToggle: () => toast.info("Email notification settings coming soon!")
+    },
+    {
+      icon: BellOff,
+      label: "Do Not Disturb",
+      description: "Temporarily disable all notifications",
+      enabled: false,
+      supported: true,
+      onToggle: () => toast.info("Do Not Disturb settings coming soon!")
+    }
+  ];
 
   const sections = [
     {
@@ -58,20 +99,6 @@ export default function Settings() {
               </Button>
             </div>
           )
-        },
-        {
-          icon: isDarkMode ? Moon : Sun,
-          label: "Theme",
-          content: (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsDarkMode(!isDarkMode)}
-              className="h-8"
-            >
-              {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
-          )
         }
       ]
     },
@@ -84,13 +111,6 @@ export default function Settings() {
           href: "/profile",
           iconColor: "text-blue-500",
           bgColor: "bg-blue-500/10"
-        },
-        {
-          icon: Bell,
-          label: "Notifications",
-          href: "/notifications",
-          iconColor: "text-purple-500",
-          bgColor: "bg-purple-500/10"
         }
       ]
     },
@@ -137,46 +157,149 @@ export default function Settings() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/50 text-foreground pb-24">
-      <main className="max-w-2xl mx-auto px-4 sm:px-6 pt-20">
-        <PageTransition>
-          <section className="py-6">
-            <h1 className="text-2xl font-bold mb-8">Settings</h1>
+    <div className="bg-background">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10">
+        <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
+          <div className="h-16 flex items-center justify-center">
+            <h1 className="text-lg font-semibold">Settings</h1>
+          </div>
+          <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
+        </div>
+      </div>
 
+      <main className="max-w-2xl mx-auto px-4 sm:px-6">
+        <PageTransition>
+          <div className="pt-24 pb-32 space-y-8">
             <div className="space-y-8">
-              {sections.map((section) => (
+              {/* Theme Section */}
+              <div>
+                <h2 className="text-sm font-medium text-gray-400 mb-4">Preferences</h2>
+                <div className="space-y-4">
+                  <ExpandableSection
+                    icon={theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor}
+                    label="Theme"
+                    iconColor="text-purple-500"
+                    bgColor="bg-purple-500/10"
+                  >
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button
+                        variant={theme === 'light' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setTheme('light')}
+                        className="w-full"
+                      >
+                        <Sun className="w-4 h-4 mr-2" />
+                        Light
+                      </Button>
+                      <Button
+                        variant={theme === 'dark' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setTheme('dark')}
+                        className="w-full"
+                      >
+                        <Moon className="w-4 h-4 mr-2" />
+                        Dark
+                      </Button>
+                      <Button
+                        variant={theme === 'system' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setTheme('system')}
+                        className="w-full"
+                      >
+                        <Monitor className="w-4 h-4 mr-2" />
+                        System
+                      </Button>
+                    </div>
+                  </ExpandableSection>
+
+                  <ExpandableSection
+                    icon={Bell}
+                    label="Notifications"
+                    iconColor="text-pink-500"
+                    bgColor="bg-pink-500/10"
+                  >
+                    <div className="space-y-6">
+                      {notificationTypes.map((type) => (
+                        <div key={type.label} className="flex items-start gap-4 py-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <type.icon className="w-4 h-4 text-gray-400" />
+                              <span className="font-medium">{type.label}</span>
+                              {!type.supported && (
+                                <span className="text-xs text-yellow-500">(Not supported)</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-gray-400 mt-2">{type.description}</p>
+                          </div>
+                          <Button
+                            variant={type.enabled ? 'default' : 'ghost'}
+                            size="sm"
+                            onClick={type.onToggle}
+                            className="h-8"
+                            disabled={!type.supported}
+                          >
+                            {type.enabled ? 'On' : 'Off'}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </ExpandableSection>
+
+                  <ExpandableSection
+                    icon={Type}
+                    label="Font Size"
+                    iconColor="text-blue-500"
+                    bgColor="bg-blue-500/10"
+                  >
+                    <div className="flex gap-2">
+                      <Button
+                        variant={fontSize === 'small' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setFontSize('small')}
+                        className="flex-1"
+                      >
+                        Small
+                      </Button>
+                      <Button
+                        variant={fontSize === 'medium' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setFontSize('medium')}
+                        className="flex-1"
+                      >
+                        Medium
+                      </Button>
+                      <Button
+                        variant={fontSize === 'large' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setFontSize('large')}
+                        className="flex-1"
+                      >
+                        Large
+                      </Button>
+                    </div>
+                  </ExpandableSection>
+                </div>
+              </div>
+
+              {/* Other Sections */}
+              {sections.slice(1).map((section) => (
                 <div key={section.title}>
                   <h2 className="text-sm font-medium text-gray-400 mb-4">{section.title}</h2>
                   <div className="space-y-2">
                     {section.items.map((item) => (
-                      item.href ? (
-                        <Link
-                          key={item.label}
-                          to={item.href}
-                          className="bg-secondary/50 rounded-lg border border-white/10 p-4 flex items-center justify-between hover:bg-secondary/80 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={cn("p-2 rounded-full", item.bgColor)}>
-                              <item.icon className={cn("w-5 h-5", item.iconColor)} />
-                            </div>
-                            <span>{item.label}</span>
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        className="bg-secondary/50 rounded-lg border border-white/10 p-4 flex items-center justify-between hover:bg-secondary/80 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={cn("p-2 rounded-full", item.bgColor)}>
+                            <item.icon className={cn("w-5 h-5", item.iconColor)} />
                           </div>
-                          <ChevronRight className="w-5 h-5 text-gray-400" />
-                        </Link>
-                      ) : (
-                        <div
-                          key={item.label}
-                          className="bg-secondary/50 rounded-lg border border-white/10 p-4 flex items-center justify-between"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className={cn("p-2 rounded-full", item.bgColor || "bg-primary/10")}>
-                              <item.icon className={cn("w-5 h-5", item.iconColor || "text-primary")} />
-                            </div>
-                            <span>{item.label}</span>
-                          </div>
-                          {item.content}
+                          <span>{item.label}</span>
                         </div>
-                      )
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -196,7 +319,7 @@ export default function Settings() {
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-400">GSU Market v1.0.0</p>
             </div>
-          </section>
+          </div>
         </PageTransition>
       </main>
     </div>
