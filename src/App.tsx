@@ -29,9 +29,9 @@ const queryClient = new QueryClient();
 const AnimatedRoutes = () => {
   const location = useLocation();
   const isHome = location.pathname === "/";
+  const hideBottomNav = ["/", "/auth", "/auth/signin", "/auth/signup"].includes(location.pathname);
   
   useEffect(() => {
-    // Only scroll to top if not returning to homepage
     if (location.pathname !== '/') {
       window.scrollTo(0, 0);
     }
@@ -53,10 +53,15 @@ const AnimatedRoutes = () => {
           <Route path="/about" element={<About />} />
           <Route path="/share" element={<Share />} />
           <Route path="/item/:id" element={<ViewItem />} />
+          <Route path="/auth" element={<AuthLayout />}>
+            <Route index element={<SignIn />} />
+            <Route path="signin" element={<SignIn />} />
+            <Route path="signup" element={<SignUp />} />
+          </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </AnimatePresence>
-      <BottomNav />
+      {!hideBottomNav && <BottomNav />}
     </div>
   );
 };
