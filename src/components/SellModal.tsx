@@ -1,4 +1,3 @@
-
 import { X, Upload, Plus, Video } from "lucide-react";
 import { Button } from "./ui/button";
 
@@ -62,8 +61,8 @@ export const SellModal = ({ isOpen, onClose }: SellModalProps) => {
               <option value="">Select a category</option>
               <option value="textbooks">Textbooks</option>
               <option value="electronics">Electronics</option>
-              <option value="furniture">Furniture</option>
-              <option value="clothing">Clothing</option>
+              <option value="stationery">Stationery</option>
+              <option value="others">Others</option>
             </select>
           </div>
 

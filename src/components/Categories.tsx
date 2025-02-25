@@ -1,4 +1,4 @@
-import { Book, Pencil, ShirtIcon, Laptop, Heart } from "lucide-react";
+import { Book, Pencil, ShirtIcon, Laptop, Heart, MoreHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ const categories = [
   { name: "Textbooks", icon: Book, color: "text-red-500", bgColor: "bg-red-500/10", borderColor: "border-red-500/20", activeColor: "bg-red-500" },
   { name: "Electronics", icon: Laptop, color: "text-yellow-500", bgColor: "bg-yellow-500/10", borderColor: "border-yellow-500/20", activeColor: "bg-yellow-500" },
   { name: "Stationery", icon: Pencil, color: "text-orange-500", bgColor: "bg-orange-500/10", borderColor: "border-orange-500/20", activeColor: "bg-orange-500" },
-  { name: "Clothing", icon: ShirtIcon, color: "text-green-500", bgColor: "bg-green-500/10", borderColor: "border-green-500/20", activeColor: "bg-green-500" },
+  { name: "Others", icon: MoreHorizontal, color: "text-green-500", bgColor: "bg-green-500/10", borderColor: "border-green-500/20", activeColor: "bg-green-500" },
 ];
 
 export const Categories = () => {
@@ -52,14 +52,17 @@ export const Categories = () => {
                 key={category.name}
                 onClick={() => handleCategoryClick(category.name)}
                 className={cn(
-                  "h-[100px] flex flex-col items-center justify-center rounded-lg border transition-all group",
+                  "h-[100px] flex flex-col items-center justify-center rounded-lg border transition-all group hover:cursor-pointer",
                   isSelected ? [
                     category.bgColor,
                     category.borderColor,
                   ] : [
                     "bg-secondary",
                     "border-white/10",
-                    "hover:bg-secondary/80"
+                    "hover:bg-secondary/80",
+                    "hover:scale-105",
+                    "hover:shadow-lg",
+                    "hover:border-white/20"
                   ]
                 )}
               >
