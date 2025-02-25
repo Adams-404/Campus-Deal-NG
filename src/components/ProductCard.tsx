@@ -9,7 +9,8 @@ interface ProductCardProps {
   id: number;
   title: string;
   price: number;
-  image: string | string[];
+  image: string;
+  images: string[];
   condition: string;
   seller?: {
     name: string;
@@ -17,10 +18,10 @@ interface ProductCardProps {
   };
 }
 
-export const ProductCard = ({ id, title, price, image, condition, seller }: ProductCardProps) => {
+export const ProductCard = ({ id, title, price, image, images, condition, seller }: ProductCardProps) => {
   const { fontSizeClass } = useSettings();
   const navigate = useNavigate();
-  const images = Array.isArray(image) ? image : [image];
+  const allImages = images?.length > 0 ? images : [image];
 
   const handleViewItem = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -34,8 +35,11 @@ export const ProductCard = ({ id, title, price, image, condition, seller }: Prod
 
   return (
     <div className="bg-secondary rounded-lg border border-white/10 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group">
-      <div className="relative aspect-square">
-        <ImageCarousel images={images} />
+      <div className="relative aspect-[16/9]">
+        <ImageCarousel 
+          images={allImages} 
+          showZoom={true}
+        />
         <div className="absolute top-2 right-2 z-10 flex gap-2">
           <Button
             variant="ghost"
