@@ -63,27 +63,58 @@ const SignUp = () => {
 
   return (
     <div className="min-h-screen w-full flex flex-col relative bg-[#0A0A0A]">
-      {/* Back Button */}
+      {/* Back Button - Positioned at the edge */}
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="p-4"
+        className="absolute top-3 left-3"
       >
         <Button
-          variant="outline"
+          variant="ghost"
           onClick={() => navigate('/')}
-          className="group border border-blue-500/20 hover:border-blue-500/50 transition-all duration-200 text-sm"
+          className="group relative px-4 py-2 text-sm font-medium text-gray-300 transition-all duration-200 hover:text-white border border-blue-500/30 hover:border-blue-500/70"
         >
-          <ArrowLeft className="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1" />
-          Back to Home
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+          <div className="relative flex items-center">
+            <ArrowLeft className="mr-2 h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
+            <span className="relative">Back</span>
+          </div>
+          <div className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-blue-500/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
         </Button>
+      </motion.div>
+
+      {/* Trust Indicators - Moved to top */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className="w-full max-w-md mx-auto mt-16 mb-8 grid grid-cols-3 gap-6 px-4"
+      >
+        <div className="flex flex-col items-center space-y-3">
+          <div className="p-3 rounded-full bg-blue-500/10">
+            <ShieldCheck className="h-7 w-7 text-blue-500" />
+          </div>
+          <span className="text-sm font-medium text-gray-300">Secure</span>
+        </div>
+        <div className="flex flex-col items-center space-y-3">
+          <div className="p-3 rounded-full bg-green-500/10">
+            <User className="h-7 w-7 text-green-500" />
+          </div>
+          <span className="text-sm font-medium text-gray-300">Verified Users</span>
+        </div>
+        <div className="flex flex-col items-center space-y-3">
+          <div className="p-3 rounded-full bg-orange-500/10">
+            <Lock className="h-7 w-7 text-orange-500" />
+          </div>
+          <span className="text-sm font-medium text-gray-300">Encrypted</span>
+        </div>
       </motion.div>
 
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex-1 flex flex-col px-4 pt-8 pb-4"
+        className="flex-1 flex flex-col px-4"
       >
         <div className="flex justify-center mb-6">
           <div className="p-3 rounded-full bg-blue-500/10">
@@ -217,27 +248,6 @@ const SignUp = () => {
             </p>
           </div>
         </div>
-
-        {/* Trust Indicators - Moved to bottom */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="mt-auto pt-8 grid grid-cols-3 gap-2 text-center text-xs text-gray-400"
-        >
-          <div className="flex flex-col items-center space-y-2">
-            <ShieldCheck className="h-4 w-4 text-blue-500" />
-            <span>Secure</span>
-          </div>
-          <div className="flex flex-col items-center space-y-2">
-            <User className="h-4 w-4 text-green-500" />
-            <span>Verified Users</span>
-          </div>
-          <div className="flex flex-col items-center space-y-2">
-            <Lock className="h-4 w-4 text-orange-500" />
-            <span>Encrypted</span>
-          </div>
-        </motion.div>
       </motion.div>
     </div>
   );

@@ -26,6 +26,7 @@ import AuthLayout from "./components/AuthLayout";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import { cn } from "@/lib/utils";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -46,22 +47,27 @@ const AnimatedRoutes = () => {
       <main className={cn("flex-1", showNav && "pt-32")}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
+            {/* Public Routes */}
             <Route path="/" element={<Index />} />
-            <Route path="/home" element={<Homepage />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/saved" element={<SavedItems />} />
-            <Route path="/help" element={<Help />} />
-            <Route path="/privacy" element={<Privacy />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/share" element={<Share />} />
-            <Route path="/item/:id" element={<ViewItem />} />
             <Route path="/auth" element={<AuthLayout />}>
               <Route index element={<SignIn />} />
               <Route path="signin" element={<SignIn />} />
               <Route path="signup" element={<SignUp />} />
             </Route>
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/help" element={<Help />} />
+
+            {/* Protected Routes */}
+            <Route path="/home" element={<ProtectedRoute><Homepage /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/saved" element={<ProtectedRoute><SavedItems /></ProtectedRoute>} />
+            <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
+            <Route path="/item/:id" element={<ProtectedRoute><ViewItem /></ProtectedRoute>} />
+
+            {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AnimatePresence>
@@ -71,24 +77,24 @@ const AnimatedRoutes = () => {
   );
 };
 
-const App = () => (
-  <ThemeProvider>
-    <SettingsProvider>
-      <NotificationProvider>
-        <QueryClientProvider client={queryClient}>
-          <TooltipProvider>
-            <div className="relative min-h-screen overflow-x-hidden">
-              <Toaster />
-              <Sonner />
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <SettingsProvider>
+          <NotificationProvider>
+            <TooltipProvider>
               <BrowserRouter>
                 <AnimatedRoutes />
+                <Toaster />
+                <Sonner />
               </BrowserRouter>
-            </div>
-          </TooltipProvider>
-        </QueryClientProvider>
-      </NotificationProvider>
-    </SettingsProvider>
-  </ThemeProvider>
-);
+            </TooltipProvider>
+          </NotificationProvider>
+        </SettingsProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
