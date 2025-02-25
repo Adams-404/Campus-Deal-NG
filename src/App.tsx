@@ -25,12 +25,13 @@ import ViewItem from "./pages/ViewItem";
 import AuthLayout from "./components/AuthLayout";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
+import { cn } from "@/lib/utils";
 
 const queryClient = new QueryClient();
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const hideNav = ["/", "/auth", "/auth/signin", "/auth/signup"].includes(location.pathname);
+  const showNav = location.pathname === '/home';
   const hideBottomNav = ["/", "/auth", "/auth/signin", "/auth/signup"].includes(location.pathname);
   
   useEffect(() => {
@@ -41,8 +42,8 @@ const AnimatedRoutes = () => {
   
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
-      {!hideNav && <Navbar />}
-      <main className={cn("flex-1", !hideNav && "pt-32")}>
+      {showNav && <Navbar />}
+      <main className={cn("flex-1", showNav && "pt-32")}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<Index />} />

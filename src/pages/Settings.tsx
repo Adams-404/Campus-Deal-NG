@@ -27,11 +27,13 @@ import { cn } from "@/lib/utils";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { toast } from "sonner";
 import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Settings() {
   const { fontSize, setFontSize } = useSettings();
   const { theme, setTheme } = useTheme();
   const { isEnabled, isPushSupported, toggleNotifications } = useNotifications();
+  const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -111,6 +113,17 @@ export default function Settings() {
           href: "/profile",
           iconColor: "text-blue-500",
           bgColor: "bg-blue-500/10"
+        },
+        {
+          icon: LogOut,
+          label: "Sign Out",
+          iconColor: "text-red-500",
+          bgColor: "bg-red-500/10",
+          onClick: async () => {
+            await supabase.auth.signOut();
+            navigate('/');
+            toast.success('Signed out successfully');
+          }
         }
       ]
     },
