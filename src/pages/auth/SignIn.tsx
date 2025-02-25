@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Google } from "lucide-react";
+import { User } from "lucide-react";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -70,7 +70,7 @@ const SignIn = () => {
           onClick={handleGoogleSignIn}
           disabled={isGoogleLoading}
         >
-          <Google className="mr-2 h-4 w-4" />
+          <User className="mr-2 h-4 w-4" />
           {isGoogleLoading ? "Signing in..." : "Sign in with Google"}
         </Button>
         <div className="relative">
