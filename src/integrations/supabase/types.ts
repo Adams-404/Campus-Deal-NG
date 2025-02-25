@@ -9,16 +9,119 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      kyc_documents: {
+        Row: {
+          admin_notes: string | null
+          created_at: string | null
+          document_type: string
+          document_url: string
+          id: string
+          status: Database["public"]["Enums"]["kyc_status"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          created_at?: string | null
+          document_type: string
+          document_url: string
+          id?: string
+          status?: Database["public"]["Enums"]["kyc_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          created_at?: string | null
+          document_type?: string
+          document_url?: string
+          id?: string
+          status?: Database["public"]["Enums"]["kyc_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kyc_documents_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          address: string | null
+          avatar_url: string | null
+          created_at: string | null
+          first_name: string | null
+          id: string
+          kyc_status: Database["public"]["Enums"]["kyc_status"] | null
+          last_name: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          avatar_url?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id: string
+          kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          avatar_url?: string | null
+          created_at?: string | null
+          first_name?: string | null
+          id?: string
+          kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
+          last_name?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["user_role"] | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["user_role"] | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: {
+        Args: {
+          user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      kyc_status: "pending" | "verified" | "rejected"
+      user_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
