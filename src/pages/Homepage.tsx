@@ -1,4 +1,3 @@
-
 import { Categories } from "@/components/Categories";
 import { ProductGrid } from "@/components/ProductGrid";
 import { PageTransition } from "@/components/PageTransition";
@@ -21,10 +20,17 @@ const Homepage = () => {
         <PullToRefresh onRefresh={handleRefresh}>
           <PageTransition>
             {/* Categories and Products */}
-            <section className="py-12">
-              <h2 className="text-3xl font-bold mb-8">Trending Categories</h2>
-              <Categories />
-              <ProductGrid />
+            <section className="py-6 pb-32">
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-2xl font-bold mb-6">Trending Categories</h2>
+                  <Categories />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold mb-6">Featured Items</h2>
+                  <ProductGrid />
+                </div>
+              </div>
             </section>
           </PageTransition>
         </PullToRefresh>

@@ -164,28 +164,83 @@ const Profile = () => {
     <PageTransition>
       <div className="container max-w-2xl mx-auto px-4 py-8 pb-32">
         <div className="relative mb-8">
-          <div className="h-32 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-lg border border-white/10" />
+          <div className="h-32 bg-secondary/50 rounded-lg border border-blue-500/30 overflow-hidden">
+            <svg
+              className="absolute inset-0 h-full w-full opacity-60"
+              xmlns="http://www.w3.org/2000/svg"
+              width="100%"
+              height="100%"
+              viewBox="0 0 100 100"
+              preserveAspectRatio="xMidYMid slice"
+            >
+              <defs>
+                <pattern
+                  id="shapes"
+                  x="0"
+                  y="0"
+                  width="25"
+                  height="25"
+                  patternUnits="userSpaceOnUse"
+                >
+                  {/* Circles */}
+                  <circle cx="4" cy="4" r="2" fill="none" stroke="rgb(59, 130, 246)" strokeWidth="0.5" opacity="0.5" />
+                  <circle cx="20" cy="18" r="1.5" fill="none" stroke="rgb(59, 130, 246)" strokeWidth="0.5" opacity="0.5" />
+                  
+                  {/* Squares */}
+                  <rect x="15" y="2" width="4" height="4" fill="none" stroke="rgb(249, 115, 22)" strokeWidth="0.5" opacity="0.5" transform="rotate(45, 17, 4)" />
+                  <rect x="2" y="15" width="3" height="3" fill="none" stroke="rgb(249, 115, 22)" strokeWidth="0.5" opacity="0.5" transform="rotate(30, 3.5, 16.5)" />
+                  
+                  {/* Triangles */}
+                  <path d="M 20 12 L 22 15 L 18 15 Z" fill="none" stroke="rgb(239, 68, 68)" strokeWidth="0.5" opacity="0.5" />
+                  <path d="M 8 8 L 10 11 L 6 11 Z" fill="none" stroke="rgb(239, 68, 68)" strokeWidth="0.5" opacity="0.5" transform="rotate(180, 8, 9.5)" />
+                  
+                  {/* Hexagons */}
+                  <path d="M 12 20 L 14 18 L 16 20 L 14 22 Z" fill="none" stroke="rgb(34, 197, 94)" strokeWidth="0.5" opacity="0.5" />
+                  <path d="M 22 8 L 24 6 L 26 8 L 24 10 Z" fill="none" stroke="rgb(34, 197, 94)" strokeWidth="0.5" opacity="0.5" />
+                  
+                  {/* Stars */}
+                  <path d="M 6 22 L 7 20 L 8 22 L 6 21 L 8 21 Z" fill="none" stroke="rgb(168, 85, 247)" strokeWidth="0.5" opacity="0.5" />
+                  <path d="M 16 7 L 17 5 L 18 7 L 16 6 L 18 6 Z" fill="none" stroke="rgb(168, 85, 247)" strokeWidth="0.5" opacity="0.5" />
+                  
+                  {/* Plus signs */}
+                  <path d="M 12 3 L 12 5 M 11 4 L 13 4" stroke="rgb(234, 179, 8)" strokeWidth="0.5" opacity="0.5" />
+                  <path d="M 3 12 L 3 14 M 2 13 L 4 13" stroke="rgb(234, 179, 8)" strokeWidth="0.5" opacity="0.5" />
+                </pattern>
+              </defs>
+              <rect x="0" y="0" width="100%" height="100%" fill="url(#shapes)" />
+            </svg>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/20" />
+          </div>
           <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
-            <div className="relative">
-              <Avatar className="h-32 w-32 border-4 border-background ring-2 ring-blue-500/20">
+            <div className="relative group">
+              <Avatar className="h-32 w-32 border-4 border-background ring-2 ring-blue-500/20 transition-transform group-hover:scale-[1.02]">
                 <AvatarImage src={profile?.avatar_url} alt={`${profile?.first_name} ${profile?.last_name}`} />
                 <AvatarFallback className="bg-secondary">
                   {profile?.first_name?.[0]}{profile?.last_name?.[0]}
                 </AvatarFallback>
               </Avatar>
-              <Label htmlFor="avatar" className="absolute bottom-0 right-0 cursor-pointer">
-                <Input
-                  id="avatar"
-                  type="file"
-                  accept="image/*"
-                  onChange={uploadAvatar}
-                  disabled={uploading}
-                  className="hidden"
-                />
-                <Button size="icon" className="rounded-full bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/20">
+              <Input
+                id="avatar"
+                type="file"
+                accept="image/*"
+                onChange={uploadAvatar}
+                disabled={uploading}
+                className="hidden"
+              />
+              <Button 
+                onClick={() => document.getElementById('avatar')?.click()}
+                size="icon" 
+                className="absolute -bottom-2 -right-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white border-2 border-background shadow-lg transition-transform hover:scale-110"
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
                   <Camera className="h-4 w-4" />
-                </Button>
-              </Label>
+                )}
+                <span className="sr-only">Upload profile picture</span>
+              </Button>
+              <div className="absolute inset-0 rounded-full transition-colors group-hover:bg-black/10" />
             </div>
           </div>
           
@@ -210,7 +265,7 @@ const Profile = () => {
             </div>
           </div>
 
-          <Card className="border-white/10 bg-secondary/50 backdrop-blur-sm">
+          <Card className="border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center space-x-4 p-4 bg-background/50 rounded-lg border border-blue-500/20">
                 <Mail className="h-5 w-5 text-blue-500" />
