@@ -31,6 +31,7 @@ const queryClient = new QueryClient();
 const AnimatedRoutes = () => {
   const location = useLocation();
   const isHome = location.pathname === "/";
+  const hideNav = ["/", "/auth", "/auth/signin", "/auth/signup"].includes(location.pathname);
   const hideBottomNav = ["/", "/auth", "/auth/signin", "/auth/signup"].includes(location.pathname);
   
   useEffect(() => {
@@ -41,7 +42,7 @@ const AnimatedRoutes = () => {
   
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
-      {!isHome && <Navbar />}
+      {!hideNav && <Navbar />}
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<Index />} />

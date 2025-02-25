@@ -1,11 +1,43 @@
+
 import { Search, User, ChevronDown } from "lucide-react";
 import { Button } from "./ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export const Navbar = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    // Get the current user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      if (user) {
+        // Get the user's profile
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+          .then(({ data }) => {
+            setProfile(data);
+          });
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <nav className="fixed top-0 w-full bg-secondary/80 backdrop-blur-md z-50 border-b border-white/10">
@@ -37,7 +69,16 @@ export const Navbar = () => {
               size="icon" 
               className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
             >
-              <User className="h-5 w-5 text-primary" />
+              {profile?.avatar_url ? (
+                <Avatar>
+                  <AvatarImage src={profile.avatar_url} alt="Profile" />
+                  <AvatarFallback>
+                    <User className="h-5 w-5 text-primary" />
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <User className="h-5 w-5 text-primary" />
+              )}
             </Button>
           </Link>
         </div>
