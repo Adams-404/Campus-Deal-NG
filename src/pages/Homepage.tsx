@@ -1,3 +1,4 @@
+
 import { Categories } from "@/components/Categories";
 import { ProductGrid } from "@/components/ProductGrid";
 import { PageTransition } from "@/components/PageTransition";
@@ -15,6 +16,8 @@ interface Item {
   images: string[];
   seller?: {
     full_name?: string;
+    first_name?: string;
+    last_name?: string;
     avatar_url?: string;
   };
 }
@@ -27,14 +30,12 @@ const Homepage = () => {
     try {
       setLoading(true);
       
-      // First, fetch items with their images
       const { data: itemsData, error: itemsError } = await supabase
         .from('items')
         .select(`
           *,
-          item_images!left (
-            image_url,
-            is_primary
+          item_images (
+            image_url
           ),
           profiles:seller_id (
             first_name,
@@ -69,6 +70,7 @@ const Homepage = () => {
               ? `${seller.first_name} ${seller.last_name}`
               : seller.first_name || seller.last_name || 'Anonymous',
             first_name: seller.first_name || 'Anonymous',
+            last_name: seller.last_name,
             avatar_url: seller.avatar_url
           } : undefined
         };
