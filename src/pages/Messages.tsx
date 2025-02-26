@@ -25,16 +25,18 @@ interface Message {
   sender_id: string;
   created_at: string;
   image_url?: string;
-}
-
-interface Conversation {
-  id: string;
-  item: {
+  read?: boolean;
+  item_id?: string;
+  item?: {
     id: string;
     title: string;
     price: number;
     images: string[];
   };
+}
+
+interface Conversation {
+  id: string;
   other_user: {
     id: string;
     first_name?: string;
@@ -44,6 +46,42 @@ interface Conversation {
   last_message?: string;
   last_message_at?: string;
   unread_count?: number;
+  items?: {
+    id: string;
+    title: string;
+    price: number;
+    images: string[];
+  }[];
+}
+
+interface DatabaseConversation {
+  id: string;
+  last_message: string | null;
+  last_message_at: string | null;
+  buyer_id: string;
+  seller_id: string;
+  conversation_items: {
+    items: {
+      id: string;
+      title: string;
+      price: number;
+      item_images: {
+        image_url: string;
+      }[];
+    };
+  }[];
+  buyer_profile: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  };
+  seller_profile: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  };
 }
 
 export default function Messages() {
@@ -75,8 +113,9 @@ export default function Messages() {
   }, []);
 
   useEffect(() => {
-    if (conversationId) {
+    if (conversationId && currentUser?.id) {
       fetchMessages(conversationId);
+      markConversationAsRead(conversationId);
       
       // Subscribe to both conversations and messages
       const channel = supabase.channel(`room:${conversationId}`);
@@ -98,7 +137,12 @@ export default function Messages() {
           table: 'messages',
           filter: `conversation_id=eq.${conversationId}`
         }, payload => {
-          setMessages(current => [...current, payload.new as Message]);
+          const newMessage = payload.new as Message;
+          setMessages(current => [...current, newMessage]);
+          // If the new message is not from current user, mark it as unread
+          if (newMessage.sender_id !== currentUser.id) {
+            markConversationAsUnread(conversationId);
+          }
           scrollToBottom();
         })
         .subscribe();
@@ -127,12 +171,14 @@ export default function Messages() {
           last_message_at,
           buyer_id,
           seller_id,
-          items!inner (
-            id,
-            title,
-            price,
-            item_images (
-              image_url
+          conversation_items!inner (
+            items (
+              id,
+              title,
+              price,
+              item_images (
+                image_url
+              )
             )
           ),
           buyer_profile:profiles!buyer_id(
@@ -154,20 +200,48 @@ export default function Messages() {
       if (error) throw error;
 
       if (data) {
-        const formattedConversations = data.map(conv => ({
-          id: conv.id,
-          item: {
-            id: conv.items.id,
-            title: conv.items.title,
-            price: conv.items.price,
-            images: conv.items.item_images?.map((img: any) => img.image_url) || []
-          },
-          other_user: userId === conv.seller_id 
-            ? conv.buyer_profile 
-            : conv.seller_profile,
-          last_message: conv.last_message,
-          last_message_at: conv.last_message_at
-        }));
+        const conversationsByUser = (data as DatabaseConversation[]).reduce<{ [key: string]: Conversation }>((acc, conv) => {
+          const otherUser = userId === conv.seller_id ? conv.buyer_profile : conv.seller_profile;
+          const otherUserId = otherUser.id;
+
+          if (!acc[otherUserId]) {
+            acc[otherUserId] = {
+              id: conv.id,
+              other_user: {
+                id: otherUser.id,
+                first_name: otherUser.first_name ?? undefined,
+                last_name: otherUser.last_name ?? undefined,
+                avatar_url: otherUser.avatar_url ?? undefined
+              },
+              last_message: conv.last_message ?? undefined,
+              last_message_at: conv.last_message_at ?? undefined,
+              items: [],
+              unread_count: 0
+            };
+          }
+
+          // Add items from conversation_items
+          const items = conv.conversation_items?.map(ci => ({
+            id: ci.items.id,
+            title: ci.items.title,
+            price: ci.items.price,
+            images: ci.items.item_images?.map(img => img.image_url) || []
+          })) || [];
+
+          acc[otherUserId].items = [...(acc[otherUserId].items || []), ...items];
+
+          // Update last message if this conversation is more recent
+          if (!acc[otherUserId].last_message_at || 
+              new Date(conv.last_message_at ?? '') > new Date(acc[otherUserId].last_message_at)) {
+            acc[otherUserId].last_message = conv.last_message ?? undefined;
+            acc[otherUserId].last_message_at = conv.last_message_at ?? undefined;
+            acc[otherUserId].id = conv.id;
+          }
+
+          return acc;
+        }, {});
+
+        const formattedConversations = Object.values(conversationsByUser) as Conversation[];
         setConversations(formattedConversations);
 
         if (conversationId) {
@@ -187,12 +261,39 @@ export default function Messages() {
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select('*')
+        .select(`
+          id,
+          content,
+          sender_id,
+          conversation_id,
+          created_at,
+          image_url,
+          item_id,
+          items (
+            id,
+            title,
+            price,
+            item_images (
+              image_url
+            )
+          )
+        `)
         .eq('conversation_id', convId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      
+      const formattedMessages = (data || []).map(msg => ({
+        ...msg,
+        item: msg.items ? {
+          id: msg.items.id,
+          title: msg.items.title,
+          price: msg.items.price,
+          images: msg.items.item_images?.map(img => img.image_url) || []
+        } : undefined
+      }));
+      
+      setMessages(formattedMessages);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
       toast.error(error.message);
@@ -208,13 +309,24 @@ export default function Messages() {
       const messageContent = newMessage.trim();
       const timestamp = new Date().toISOString();
 
+      // Check if message starts with item tag (e.g., #itemId)
+      const itemTagMatch = messageContent.match(/^#(\w+)/);
+      const itemId = itemTagMatch?.[1];
+      const cleanMessage = itemTagMatch ? messageContent.replace(/^#\w+\s*/, '').trim() : messageContent;
+
+      if (cleanMessage.length === 0) {
+        toast.error('Please enter a message');
+        return;
+      }
+
       // Clear input and add optimistic message immediately
       setNewMessage('');
-      const optimisticMessage = {
+      const optimisticMessage: Message = {
         id: `temp-${Date.now()}`,
-        content: messageContent,
+        content: cleanMessage,
         sender_id: currentUser.id,
-        created_at: timestamp
+        created_at: timestamp,
+        item_id: itemId
       };
       setMessages(current => [...current, optimisticMessage]);
       scrollToBottom();
@@ -224,9 +336,10 @@ export default function Messages() {
         .from('messages')
         .insert({
           conversation_id: conversationId,
-          content: messageContent,
+          content: cleanMessage,
           sender_id: currentUser.id,
-          created_at: timestamp
+          created_at: timestamp,
+          item_id: itemId
         });
 
       if (messageError) throw messageError;
@@ -235,12 +348,17 @@ export default function Messages() {
       const { error: conversationError } = await supabase
         .from('conversations')
         .update({
-          last_message: messageContent,
+          last_message: cleanMessage,
           last_message_at: timestamp
         })
         .eq('id', conversationId);
 
       if (conversationError) throw conversationError;
+
+      // If this is a new item being discussed, fetch the updated messages to get item details
+      if (itemId) {
+        fetchMessages(conversationId);
+      }
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast.error(error.message);
@@ -249,10 +367,41 @@ export default function Messages() {
     }
   };
 
+  const markConversationAsRead = async (convId: string) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .update({ unread_count: 0 })
+        .eq('id', convId)
+        .eq(currentUser?.id === selectedConversation?.other_user.id ? 'seller_id' : 'buyer_id', currentUser?.id);
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error marking conversation as read:', error);
+    }
+  };
+
+  const markConversationAsUnread = async (convId: string) => {
+    try {
+      const { error } = await supabase
+        .from('conversations')
+        .update({
+          unread_count: supabase.sql`unread_count + 1`
+        })
+        .eq('id', convId)
+        .eq(currentUser?.id === selectedConversation?.other_user.id ? 'buyer_id' : 'seller_id', currentUser?.id);
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Error marking conversation as unread:', error);
+    }
+  };
+
   // Filter conversations based on search query
   const filteredConversations = conversations.filter(conv => 
     conv.other_user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    conv.items?.some(item => item.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    conv.items?.some(item => item.price.toString().includes(searchQuery.toLowerCase()))
   );
 
   if (loading) {
@@ -291,22 +440,31 @@ export default function Messages() {
                   onClick={() => navigate(`/messages/${conversation.id}`)}
                   className={`p-4 px-6 border-b border-white/10 hover:bg-white/5 cursor-pointer transition-all ${
                     conversationId === conversation.id ? 'bg-white/5' : ''
-                  }`}
+                  } ${conversation.unread_count ? 'bg-primary/5' : ''}`}
                 >
                   <div className="flex items-center gap-4">
-                    <Avatar className="h-12 w-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20">
-                      <AvatarImage src={conversation.other_user.avatar_url} />
-                      <AvatarFallback>
-                        <User className="h-5 w-5 text-primary" />
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="relative">
+                      <Avatar className="h-12 w-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20">
+                        <AvatarImage src={conversation.other_user.avatar_url} />
+                        <AvatarFallback>
+                          <User className="h-5 w-5 text-primary" />
+                        </AvatarFallback>
+                      </Avatar>
+                      {conversation.unread_count > 0 && (
+                        <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                          <span className="text-[11px] font-medium text-primary-foreground">
+                            {conversation.unread_count}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="font-medium truncate">
+                        <p className={`font-medium truncate ${conversation.unread_count ? 'text-primary' : ''}`}>
                           {conversation.other_user.first_name || 'Anonymous'}
                         </p>
                         {conversation.last_message_at && (
-                          <span className="text-xs text-muted-foreground/60">
+                          <span className={`text-xs ${conversation.unread_count ? 'text-primary' : 'text-muted-foreground/60'}`}>
                             {format(new Date(conversation.last_message_at), 'HH:mm')}
                           </span>
                         )}
@@ -314,11 +472,15 @@ export default function Messages() {
                       <div className="flex items-center gap-1.5 mt-1">
                         <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
                         <p className="text-xs text-muted-foreground/80 truncate">
-                          {conversation.item.title}
+                          {conversation.items?.map(item => item.title).join(', ')}
                         </p>
                       </div>
                       {conversation.last_message && (
-                        <p className="text-sm text-muted-foreground/60 truncate mt-1">
+                        <p className={`text-sm truncate mt-1 ${
+                          conversation.unread_count 
+                            ? 'text-primary/90 font-medium' 
+                            : 'text-muted-foreground/60'
+                        }`}>
                           {conversation.last_message}
                         </p>
                       )}
@@ -354,9 +516,6 @@ export default function Messages() {
                   <p className="text-lg font-medium">
                     {selectedConversation.other_user.first_name || 'Anonymous'}
                   </p>
-                  <p className="text-sm text-muted-foreground/80">
-                    {selectedConversation.item.title}
-                  </p>
                 </div>
               </div>
             </div>
@@ -366,41 +525,55 @@ export default function Messages() {
               <div className="p-6 space-y-6">
                 <div className="flex justify-center mb-6">
                   <div className="bg-white/5 rounded-full px-4 py-2 text-xs text-muted-foreground/60 backdrop-blur-sm">
-                    Conversation started about {selectedConversation.item.title}
+                    Conversation with {selectedConversation.other_user.first_name || 'Anonymous'}
                   </div>
                 </div>
                 <AnimatePresence initial={false}>
-                  {messages.map((message) => (
-                    <motion.div
-                      key={message.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className={`flex ${
-                        message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'
-                      }`}
-                    >
-                      <div
-                        className={`max-w-[70%] rounded-2xl p-4 shadow-lg ${
-                          message.sender_id === currentUser?.id
-                            ? 'bg-primary text-primary-foreground rounded-br-sm'
-                            : 'bg-white/5 rounded-bl-sm'
-                        }`}
-                      >
-                        {message.image_url && (
-                          <img
-                            src={message.image_url}
-                            alt="Message attachment"
-                            className="rounded-lg mb-2 max-w-full"
-                          />
+                  {messages.map((message, index) => {
+                    const showItemContext = index === 0 || 
+                      (index > 0 && messages[index - 1].item_id !== message.item_id);
+                    const isNewItemContext = message.item_id && showItemContext;
+                    
+                    return (
+                      <motion.div key={message.id}>
+                        {isNewItemContext && message.item && (
+                          <div className="flex justify-center my-4">
+                            <div className="bg-white/5 rounded-full px-4 py-2 text-xs text-muted-foreground/60 backdrop-blur-sm">
+                              {message.sender_id === currentUser?.id ? 'You' : selectedConversation.other_user.first_name} started discussing: {message.item.title}
+                            </div>
+                          </div>
                         )}
-                        <p className="break-words text-[15px]">{message.content}</p>
-                        <p className="text-xs opacity-60 text-right mt-1.5">
-                          {format(new Date(message.created_at), 'HH:mm')}
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))}
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          className={`flex ${
+                            message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'
+                          }`}
+                        >
+                          <div
+                            className={`max-w-[70%] rounded-2xl p-4 shadow-lg ${
+                              message.sender_id === currentUser?.id
+                                ? 'bg-primary text-primary-foreground rounded-br-sm'
+                                : 'bg-white/5 rounded-bl-sm'
+                            }`}
+                          >
+                            {message.image_url && (
+                              <img
+                                src={message.image_url}
+                                alt="Message attachment"
+                                className="rounded-lg mb-2 max-w-full"
+                              />
+                            )}
+                            <p className="break-words text-[15px]">{message.content}</p>
+                            <p className="text-xs opacity-60 text-right mt-1.5">
+                              {format(new Date(message.created_at), 'HH:mm')}
+                            </p>
+                          </div>
+                        </motion.div>
+                      </motion.div>
+                    );
+                  })}
                 </AnimatePresence>
                 <div ref={messagesEndRef} />
               </div>
@@ -408,6 +581,22 @@ export default function Messages() {
 
             {/* Message Input */}
             <div className="flex-shrink-0 border-t border-white/10 bg-secondary/20 backdrop-blur-sm p-6">
+              {selectedConversation.items && selectedConversation.items.length > 0 && (
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xs text-muted-foreground/60">Discussing:</span>
+                  {selectedConversation.items.map((item) => (
+                    <Button
+                      key={item.id}
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs bg-white/5 hover:bg-white/10"
+                      onClick={() => setNewMessage(prev => `#${item.id} ${prev}`)}
+                    >
+                      #{item.title}
+                    </Button>
+                  ))}
+                </div>
+              )}
               <form
                 onSubmit={handleSendMessage}
                 className="flex items-center gap-3"

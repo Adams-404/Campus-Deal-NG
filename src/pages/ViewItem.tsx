@@ -224,35 +224,108 @@ export default function ViewItem() {
         return;
       }
 
-      // Check if conversation already exists
-      const { data: existingChat } = await supabase
+      // First check if there's any existing conversation between these users
+      const { data: existingConversation } = await supabase
         .from('conversations')
-        .select('id')
-        .eq('item_id', item?.id)
+        .select(`
+          id,
+          conversation_items!inner (
+            item_id
+          )
+        `)
         .eq('buyer_id', user.id)
         .eq('seller_id', item?.seller_id)
         .single();
 
       let conversationId;
 
-      if (existingChat) {
-        conversationId = existingChat.id;
+      if (existingConversation) {
+        conversationId = existingConversation.id;
+        
+        // Check if this item is already being discussed in this conversation
+        const itemExists = existingConversation.conversation_items.some(
+          ci => ci.item_id === item?.id
+        );
+
+        if (itemExists) {
+          // Item already being discussed, just navigate to the conversation
+          navigate(`/messages/${conversationId}`);
+          return;
+        }
+
+        // Add new item to existing conversation
+        const { error: itemError } = await supabase
+          .from('conversation_items')
+          .insert({
+            conversation_id: conversationId,
+            item_id: item?.id
+          });
+
+        if (itemError) throw itemError;
+
+        // Send a message about the new item
+        const { error: messageError } = await supabase
+          .from('messages')
+          .insert({
+            conversation_id: conversationId,
+            content: `Hi, I'm also interested in ${item?.title}`,
+            sender_id: user.id,
+            created_at: new Date().toISOString(),
+            item_id: item?.id
+          });
+
+        if (messageError) throw messageError;
+
+        // Update conversation's last message
+        const { error: updateError } = await supabase
+          .from('conversations')
+          .update({
+            last_message: `Also interested in ${item?.title}`,
+            last_message_at: new Date().toISOString()
+          })
+          .eq('id', conversationId);
+
+        if (updateError) throw updateError;
+
       } else {
-        // Create new conversation
-        const { data: newChat, error: chatError } = await supabase
+        // Create new conversation if none exists
+        const { data: newConversation, error: conversationError } = await supabase
           .from('conversations')
           .insert({
-            item_id: item?.id,
             buyer_id: user.id,
             seller_id: item?.seller_id,
-            last_message: null,
+            last_message: `Interested in ${item?.title}`,
             last_message_at: new Date().toISOString()
           })
           .select('id')
           .single();
 
-        if (chatError) throw chatError;
-        conversationId = newChat.id;
+        if (conversationError) throw conversationError;
+        
+        conversationId = newConversation.id;
+
+        // Create conversation_items entry
+        const { error: itemError } = await supabase
+          .from('conversation_items')
+          .insert({
+            conversation_id: conversationId,
+            item_id: item?.id
+          });
+
+        if (itemError) throw itemError;
+
+        // Send initial message
+        const { error: messageError } = await supabase
+          .from('messages')
+          .insert({
+            conversation_id: conversationId,
+            content: `Hi, I'm interested in ${item?.title}`,
+            sender_id: user.id,
+            created_at: new Date().toISOString(),
+            item_id: item?.id
+          });
+
+        if (messageError) throw messageError;
       }
 
       // Navigate to messages with the conversation
