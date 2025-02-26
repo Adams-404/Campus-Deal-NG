@@ -1,9 +1,11 @@
+
 import { Heart, Eye, User } from "lucide-react";
 import { Button } from "./ui/button";
 import { ImageCarousel } from "./ui/image-carousel";
 import { useSettings } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 interface ProductCardProps {
   item: {
@@ -88,18 +90,15 @@ export const ProductCard = ({ item }: ProductCardProps) => {
           )}>₦{item.price}</p>
           {item.seller && (
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                {item.seller.avatar_url ? (
-                  <img 
-                    src={item.seller.avatar_url} 
-                    alt={item.seller.first_name}
-                    className="w-full h-full rounded-full object-cover"
-                  />
-                ) : (
-                  <User className="w-3 h-3 text-primary" />
-                )}
-              </div>
-              <span className="text-sm text-gray-400 truncate">{item.seller.first_name}</span>
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={item.seller.avatar_url} alt={item.seller.first_name} />
+                <AvatarFallback>
+                  <User className="h-3 w-3 text-primary" />
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-gray-400 truncate">
+                {item.seller.first_name}
+              </span>
             </div>
           )}
         </div>

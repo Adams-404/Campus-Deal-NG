@@ -9,6 +9,117 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      item_images: {
+        Row: {
+          created_at: string | null
+          id: string
+          image_url: string
+          is_primary: boolean | null
+          item_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          image_url: string
+          is_primary?: boolean | null
+          item_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          is_primary?: boolean | null
+          item_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_images_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      item_videos: {
+        Row: {
+          created_at: string | null
+          id: string
+          item_id: string | null
+          video_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          item_id?: string | null
+          video_url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          item_id?: string | null
+          video_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "item_videos_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: true
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      items: {
+        Row: {
+          category: string
+          condition: Database["public"]["Enums"]["item_condition"]
+          created_at: string | null
+          description: string | null
+          id: string
+          location: string | null
+          price: number
+          seller_id: string | null
+          status: Database["public"]["Enums"]["item_status"] | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          condition: Database["public"]["Enums"]["item_condition"]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          price: number
+          seller_id?: string | null
+          status?: Database["public"]["Enums"]["item_status"] | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          condition?: Database["public"]["Enums"]["item_condition"]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          location?: string | null
+          price?: number
+          seller_id?: string | null
+          status?: Database["public"]["Enums"]["item_status"] | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_seller_id_fkey"
+            columns: ["seller_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kyc_documents: {
         Row: {
           admin_notes: string | null
@@ -120,6 +231,8 @@ export type Database = {
       }
     }
     Enums: {
+      item_condition: "new" | "like_new" | "good" | "fair" | "poor"
+      item_status: "active" | "sold" | "deleted"
       kyc_status: "pending" | "verified" | "rejected"
       user_role: "admin" | "user"
     }

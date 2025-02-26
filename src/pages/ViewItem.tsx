@@ -17,6 +17,7 @@ import {
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface Item {
   id: string;
@@ -60,10 +62,8 @@ export default function ViewItem() {
       
       setIsLoading(true);
       try {
-        // Get current user
         const { data: { user } } = await supabase.auth.getUser();
         
-        // Fetch item with its images and seller information in a single query
         const { data: itemData, error: itemError } = await supabase
           .from('items')
           .select(`
@@ -85,10 +85,8 @@ export default function ViewItem() {
         if (itemError) throw itemError;
         if (!itemData) throw new Error('Item not found');
 
-        // Check if current user is the owner
         setIsOwner(!!user && user.id === itemData.seller_id);
 
-        // Format seller information
         const sellerData = itemData.profiles;
         
         setItem({
@@ -112,7 +110,6 @@ export default function ViewItem() {
 
     fetchItem();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (id) {
         const { data: itemData } = await supabase
@@ -136,11 +133,9 @@ export default function ViewItem() {
     if (!id) return;
 
     try {
-      // Get current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('You must be logged in to delete an item');
 
-      // Update the item status to deleted
       const { error } = await supabase
         .from('items')
         .update({ 
@@ -148,7 +143,7 @@ export default function ViewItem() {
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
-        .eq('seller_id', user.id); // This ensures RLS policy is satisfied
+        .eq('seller_id', user.id);
 
       if (error) {
         console.error('Error deleting item:', error);
@@ -172,16 +167,13 @@ export default function ViewItem() {
   };
 
   const handleItemUpdated = () => {
-    // Refetch item data
     const fetchItem = async () => {
       if (!id) return;
       
       setIsLoading(true);
       try {
-        // Get current user
         const { data: { user } } = await supabase.auth.getUser();
         
-        // Fetch item with its images and seller information in a single query
         const { data: itemData, error: itemError } = await supabase
           .from('items')
           .select(`
@@ -203,10 +195,8 @@ export default function ViewItem() {
         if (itemError) throw itemError;
         if (!itemData) throw new Error('Item not found');
 
-        // Check if current user is the owner
         setIsOwner(!!user && user.id === itemData.seller_id);
 
-        // Format seller information
         const sellerData = itemData.profiles;
         
         setItem({
@@ -252,7 +242,6 @@ export default function ViewItem() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10">
         <div className="max-w-2xl mx-auto px-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
@@ -293,7 +282,6 @@ export default function ViewItem() {
       <main className="max-w-2xl mx-auto px-4 sm:px-6">
         <PageTransition>
           <div className="pt-24 pb-32">
-            {/* Image Carousel */}
             <div className="rounded-lg overflow-hidden border border-white/10 relative h-[400px]">
               <div style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.2s' }} className="h-full">
                 <ImageCarousel 
@@ -325,12 +313,11 @@ export default function ViewItem() {
               </div>
             </div>
 
-            {/* Item Details */}
             <div className="mt-6 space-y-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold">{item.title}</h1>
-                  <p className="text-3xl font-bold text-primary mt-2">₦{item.price}</p>
+                  <h1 className="text-2xl font-bold">{item?.title}</h1>
+                  <p className="text-3xl font-bold text-primary mt-2">₦{item?.price}</p>
                 </div>
                 <Button
                   variant="ghost"
@@ -343,19 +330,16 @@ export default function ViewItem() {
 
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    {item.seller?.avatar_url ? (
-                      <img 
-                        src={item.seller.avatar_url} 
-                        alt={item.seller.full_name}
-                        className="w-full h-full rounded-full object-cover"
-                      />
-                    ) : (
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={item?.seller?.avatar_url} />
+                    <AvatarFallback>
                       <User className="w-5 h-5 text-primary" />
-                    )}
-                  </div>
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
-                    <p className="font-medium">{item.seller?.full_name || 'Anonymous'}</p>
+                    <p className="font-medium">
+                      {item?.seller?.full_name || 'Anonymous'}
+                    </p>
                     <p className="text-sm text-gray-400">Seller</p>
                   </div>
                 </div>
@@ -370,16 +354,16 @@ export default function ViewItem() {
               <div className="space-y-4">
                 <div>
                   <h2 className="text-lg font-semibold mb-2">Condition</h2>
-                  <p className="text-gray-400">{item.condition}</p>
+                  <p className="text-gray-400">{item?.condition}</p>
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold mb-2">Category</h2>
-                  <p className="text-gray-400">{item.category}</p>
+                  <p className="text-gray-400">{item?.category}</p>
                 </div>
-                {item.description && (
+                {item?.description && (
                   <div>
                     <h2 className="text-lg font-semibold mb-2">Description</h2>
-                    <p className="text-gray-400 whitespace-pre-wrap">{item.description}</p>
+                    <p className="text-gray-400 whitespace-pre-wrap">{item?.description}</p>
                   </div>
                 )}
               </div>
@@ -388,7 +372,6 @@ export default function ViewItem() {
         </PageTransition>
       </main>
 
-      {/* Edit Modal */}
       <EditItemModal 
         isOpen={showEditModal} 
         onClose={() => setShowEditModal(false)} 
@@ -396,7 +379,6 @@ export default function ViewItem() {
         itemId={item.id}
       />
 
-      {/* Delete Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -413,4 +395,4 @@ export default function ViewItem() {
       </AlertDialog>
     </div>
   );
-} 
+}
