@@ -5,6 +5,9 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
 
 interface ProductCardProps {
   item: {
@@ -25,15 +28,77 @@ interface ProductCardProps {
 export const ProductCard = ({ item }: ProductCardProps) => {
   const { fontSizeClass } = useSettings();
   const navigate = useNavigate();
+  const [isSaved, setIsSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    checkIfSaved();
+  }, [item.id]);
+
+  const checkIfSaved = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from('saved_items')
+        .select()
+        .eq('user_id', user.id)
+        .eq('item_id', item.id)
+        .single();
+
+      setIsSaved(!!data);
+    } catch (error) {
+      console.error('Error checking saved status:', error);
+    }
+  };
 
   const handleViewItem = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/item/${item.id}`);
   };
 
-  const handleLike = (e: React.MouseEvent) => {
+  const handleLike = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    // TODO: Implement like functionality
+    try {
+      setIsLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('Please sign in to save items');
+        return;
+      }
+
+      if (isSaved) {
+        // Remove from saved items
+        const { error } = await supabase
+          .from('saved_items')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('item_id', item.id);
+
+        if (error) throw error;
+        setIsSaved(false);
+        toast.success('Item removed from saved items');
+      } else {
+        // Add to saved items
+        const { error } = await supabase
+          .from('saved_items')
+          .insert({
+            user_id: user.id,
+            item_id: item.id
+          });
+
+        if (error) throw error;
+        setIsSaved(true);
+        toast.success('Item saved successfully');
+      }
+    } catch (error: any) {
+      console.error('Error saving item:', error);
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,9 +113,16 @@ export const ProductCard = ({ item }: ProductCardProps) => {
             variant="ghost"
             size="icon"
             onClick={handleLike}
-            className="bg-black/50 backdrop-blur-sm hover:bg-black/70"
+            disabled={isLoading}
+            className={cn(
+              "bg-black/50 backdrop-blur-sm hover:bg-black/70",
+              isSaved && "text-red-500"
+            )}
           >
-            <Heart className="h-5 w-5 text-white" />
+            <Heart className={cn(
+              "h-5 w-5",
+              isSaved ? "fill-current" : "text-white"
+            )} />
           </Button>
         </div>
         {item.condition && (

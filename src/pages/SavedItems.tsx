@@ -1,132 +1,235 @@
-import { Heart, Trash2, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from "@/integrations/supabase/client";
 import { PageTransition } from "@/components/PageTransition";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface SavedItem {
-  id: number;
-  title: string;
-  price: number;
-  image: string;
-  seller: string;
-  condition: string;
+  id: string;
+  item: {
+    id: string;
+    title: string;
+    price: number;
+    images: string[];
+    seller?: {
+      full_name?: string;
+      first_name?: string;
+      last_name?: string;
+      avatar_url?: string;
+    };
+  };
 }
 
-const SavedItems = () => {
+export default function SavedItems() {
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<SavedItem[]>([]);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const navigate = useNavigate();
-  
+
   useEffect(() => {
-    window.scrollTo(0, 0);
+    fetchSavedItems();
   }, []);
 
-  const savedItems: SavedItem[] = [
-    {
-      id: 1,
-      title: "Calculus Textbook 3rd Edition",
-      price: 45.99,
-      image: "/placeholder.jpg",
-      seller: "John Smith",
-      condition: "Like New",
-    },
-    {
-      id: 2,
-      title: "Scientific Calculator",
-      price: 29.99,
-      image: "/placeholder.jpg",
-      seller: "Alice Johnson",
-      condition: "Good",
-    },
-    // Add more mock items as needed
-  ];
+  const fetchSavedItems = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
 
-  const handleRemove = (id: number) => {
-    // Here you would typically remove the item from saved items in your backend
-    console.log("Removing item:", id);
+      if (!user) {
+        navigate('/auth/signin');
+        return;
+      }
+
+      const { data: savedItems, error } = await supabase
+        .from('saved_items')
+        .select(`
+          id,
+          item_id,
+          items:item_id (
+            id,
+            title,
+            price,
+            item_images (
+              image_url
+            ),
+            profiles:seller_id (
+              first_name,
+              last_name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      if (savedItems) {
+        const formattedItems = savedItems.map(item => ({
+          id: item.id,
+          item: {
+            id: item.items.id,
+            title: item.items.title,
+            price: item.items.price,
+            images: item.items.item_images?.map((img: any) => img.image_url) || [],
+            seller: item.items.profiles ? {
+              first_name: item.items.profiles.first_name,
+              last_name: item.items.profiles.last_name,
+              avatar_url: item.items.profiles.avatar_url,
+              full_name: `${item.items.profiles.first_name || ''} ${item.items.profiles.last_name || ''}`.trim()
+            } : undefined
+          }
+        }));
+        setItems(formattedItems);
+      }
+    } catch (error: any) {
+      console.error('Error fetching saved items:', error);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const handleDelete = async () => {
+    if (!selectedItemId) return;
+
+    try {
+      const { error } = await supabase
+        .from('saved_items')
+        .delete()
+        .eq('id', selectedItemId);
+
+      if (error) throw error;
+
+      setItems(items.filter(item => item.id !== selectedItemId));
+      toast.success('Item removed from saved items');
+    } catch (error: any) {
+      console.error('Error removing saved item:', error);
+      toast.error(error.message);
+    } finally {
+      setShowDeleteDialog(false);
+      setSelectedItemId(null);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
       <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10">
-        <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => navigate(-1)}
-              className="h-9 w-9 rounded-full bg-blue-500/10 text-blue-500 hover:bg-blue-500/20"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="flex items-center gap-2">
-              <Heart className="w-5 h-5 text-blue-500 fill-blue-500" />
-              <h1 className="text-lg font-semibold">Saved Items</h1>
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                className="h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h1 className="text-xl font-semibold">Saved Items</h1>
             </div>
-            <div className="w-9" /> {/* Spacer for centering */}
           </div>
-          <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
         </div>
       </div>
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6">
         <PageTransition>
           <div className="pt-24 pb-32">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {savedItems.map((item) => (
-                <div key={item.id} className="bg-secondary/50 rounded-lg overflow-hidden border border-white/10">
-                  <div className="aspect-video bg-primary/10 relative">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-medium text-lg mb-2">{item.title}</h3>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-2xl font-bold text-primary">
-                        ${item.price.toFixed(2)}
-                      </span>
-                      <span className="text-sm text-muted-foreground">{item.condition}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-4">Seller: {item.seller}</p>
-                    <div className="flex items-center justify-between">
-                      <Button 
-                        variant="ghost"
-                        className="border-2 border-green-500 hover:border-green-600 bg-transparent hover:bg-green-500/10 text-green-500 hover:text-green-400"
-                      >
-                        View Details
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemove(item.id)}
-                        className="border-2 border-red-500 hover:border-red-600 bg-transparent hover:bg-red-500/10"
-                      >
-                        <Trash2 className="w-4 h-4 text-red-500 hover:text-red-400" />
-                      </Button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {items.map((savedItem) => (
+                <div 
+                  key={savedItem.id}
+                  className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-primary/20 transition-colors"
+                >
+                  <div 
+                    onClick={() => navigate(`/item/${savedItem.item.id}`)}
+                    className="absolute inset-0 z-10"
+                  />
+                  <img 
+                    src={savedItem.item.images[0]} 
+                    alt={savedItem.item.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 flex flex-col justify-end">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-medium text-white line-clamp-2">{savedItem.item.title}</p>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedItemId(savedItem.id);
+                            setShowDeleteDialog(true);
+                          }}
+                          className="h-8 w-8 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20 relative z-20"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <p className="text-sm text-primary">₦{savedItem.item.price}</p>
+                      {savedItem.item.seller && (
+                        <p className="text-xs text-gray-400">
+                          By {savedItem.item.seller.first_name || 'Anonymous'}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            {savedItems.length === 0 && (
+            {items.length === 0 && (
               <div className="text-center py-12">
-                <Heart className="w-12 h-12 text-blue-500 fill-blue-500 mx-auto mb-4" />
-                <h2 className="text-xl font-medium text-muted-foreground mb-2">
-                  No saved items yet
-                </h2>
-                <p className="text-muted-foreground">
-                  Items you save will appear here
-                </p>
+                <p className="text-gray-400 mb-4">You haven't saved any items yet</p>
+                <Button onClick={() => navigate('/home')} className="bg-primary/10 text-primary hover:bg-primary/20">
+                  Browse Items
+                </Button>
               </div>
             )}
           </div>
         </PageTransition>
       </main>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Saved Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this item from your saved items?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
-};
-
-export default SavedItems; 
+} 

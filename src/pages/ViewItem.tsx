@@ -210,6 +210,59 @@ export default function ViewItem() {
     setZoom(prev => Math.max(prev - 0.25, 1));
   };
 
+  const handleMessageSeller = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('Please sign in to message the seller');
+        return;
+      }
+
+      if (user.id === item?.seller_id) {
+        toast.error("You can't message yourself");
+        return;
+      }
+
+      // Check if conversation already exists
+      const { data: existingChat } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('item_id', item?.id)
+        .eq('buyer_id', user.id)
+        .eq('seller_id', item?.seller_id)
+        .single();
+
+      let conversationId;
+
+      if (existingChat) {
+        conversationId = existingChat.id;
+      } else {
+        // Create new conversation
+        const { data: newChat, error: chatError } = await supabase
+          .from('conversations')
+          .insert({
+            item_id: item?.id,
+            buyer_id: user.id,
+            seller_id: item?.seller_id,
+            last_message: null,
+            last_message_at: new Date().toISOString()
+          })
+          .select('id')
+          .single();
+
+        if (chatError) throw chatError;
+        conversationId = newChat.id;
+      }
+
+      // Navigate to messages with the conversation
+      navigate(`/messages/${conversationId}`);
+    } catch (error: any) {
+      console.error('Error starting conversation:', error);
+      toast.error(error.message);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -335,7 +388,10 @@ export default function ViewItem() {
                   </div>
                 </div>
                 {!isOwner && (
-                  <Button className="ml-auto">
+                  <Button 
+                    onClick={handleMessageSeller}
+                    className="ml-auto"
+                  >
                     <MessageCircle className="w-4 h-4 mr-2" />
                     Message Seller
                   </Button>

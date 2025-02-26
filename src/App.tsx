@@ -34,7 +34,7 @@ const queryClient = new QueryClient();
 const AnimatedRoutes = () => {
   const location = useLocation();
   const showNav = location.pathname === '/home';
-  const hideBottomNav = ["/", "/auth", "/auth/signin", "/auth/signup"].includes(location.pathname);
+  const hideBottomNav = ["/", "/auth", "/auth/signin", "/auth/signup"].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
   
   useEffect(() => {
     if (location.pathname !== '/') {
@@ -45,7 +45,7 @@ const AnimatedRoutes = () => {
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       {showNav && <Navbar />}
-      <main className={cn("flex-1", showNav && "pt-32")}>
+      <main className={cn("flex-1 pb-24", showNav && "pt-32")}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             {/* Public Routes */}
@@ -62,6 +62,7 @@ const AnimatedRoutes = () => {
             {/* Protected Routes */}
             <Route path="/home" element={<ProtectedRoute><Homepage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/messages/:conversationId" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/saved" element={<ProtectedRoute><SavedItems /></ProtectedRoute>} />
@@ -74,7 +75,7 @@ const AnimatedRoutes = () => {
           </Routes>
         </AnimatePresence>
       </main>
-      {!hideBottomNav && <BottomNav />}
+      {!hideBottomNav && <div className="fixed bottom-0 left-0 right-0 z-50"><BottomNav /></div>}
     </div>
   );
 };
