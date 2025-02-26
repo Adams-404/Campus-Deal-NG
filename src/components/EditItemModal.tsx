@@ -18,7 +18,7 @@ interface FormData {
   title: string;
   price: string;
   category: string;
-  condition: string;
+  condition: "new" | "like_new" | "good" | "fair" | "poor";
   description: string;
 }
 
@@ -27,7 +27,7 @@ interface Item {
   title: string;
   price: number;
   category: string;
-  condition: string;
+  condition: "new" | "like_new" | "good" | "fair" | "poor";
   description: string;
   item_images?: { image_url: string }[];
   item_videos?: { video_url: string }[];
@@ -85,7 +85,7 @@ export const EditItemModal = ({ isOpen, onClose, onItemUpdated, itemId }: EditIt
           setExistingImageUrls(item.item_images.map((img: any) => img.image_url));
         }
 
-        if (item.item_videos) {
+        if (item.item_videos && Array.isArray(item.item_videos)) {
           setExistingVideoUrls(item.item_videos.map((vid: any) => vid.video_url));
         }
 
@@ -513,4 +513,4 @@ export const EditItemModal = ({ isOpen, onClose, onItemUpdated, itemId }: EditIt
       </form>
     </div>
   );
-}; 
+};

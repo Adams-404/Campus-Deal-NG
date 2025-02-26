@@ -17,7 +17,7 @@ interface FormData {
   title: string;
   price: string;
   category: string;
-  condition: string;
+  condition: "new" | "like_new" | "good" | "fair" | "poor";
   description: string;
 }
 
@@ -115,18 +115,18 @@ export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => 
       const { data: item, error: itemError } = await supabase
         .from('items')
         .insert({
-          seller_id: user.id,
           title: formData.title,
           description: formData.description,
           price: parseFloat(formData.price),
           condition: formData.condition,
           category: formData.category,
+          seller_id: user.id,
           status: 'active'
         })
         .select()
         .single();
 
-      if (itemError || !item) throw itemError || new Error("Failed to create item");
+      if (itemError) throw itemError;
 
       // Upload images
       const imagePromises = images.map(async (image, index) => {
@@ -158,7 +158,8 @@ export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => 
       onClose();
 
     } catch (error: any) {
-      toast.error(error.message || "Failed to list item");
+      console.error('Error creating item:', error);
+      toast.error(error.message);
     } finally {
       setIsSubmitting(false);
     }
@@ -233,7 +234,7 @@ export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => 
                 >
                   <ImagePlus className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
                   <span className="text-xs sm:text-sm text-gray-400">Add Photos</span>
-                  <span className="text-[10px] sm:text-xs text-gray-500">or drag and drop</span>
+                  <span className="text-[10px] sm:text-xs text-gray-400">or drag and drop</span>
                 </button>
                 <button
                   type="button"
@@ -242,7 +243,7 @@ export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => 
                 >
                   <Video className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
                   <span className="text-xs sm:text-sm text-gray-400">Add Video</span>
-                  <span className="text-[10px] sm:text-xs text-gray-500">up to 30 seconds</span>
+                  <span className="text-[10px] sm:text-xs text-gray-400">up to 30 seconds</span>
                 </button>
               </div>
               <input
