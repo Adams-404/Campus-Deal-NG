@@ -59,6 +59,48 @@ export default function ViewItem() {
   const [zoom, setZoom] = useState(1);
   const [showEditModal, setShowEditModal] = useState(false);
 
+  const handleItemUpdated = async () => {
+    if (!id) return;
+    try {
+      const { data: itemData, error: itemError } = await supabase
+        .from('items')
+        .select(`
+          *,
+          item_images (
+            image_url
+          ),
+          profiles:seller_id (
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (itemError) throw itemError;
+      if (!itemData) throw new Error('Item not found');
+
+      const sellerData = itemData.profiles;
+      
+      setItem({
+        ...itemData,
+        images: itemData.item_images?.map((img: any) => img.image_url) || [],
+        seller: sellerData ? {
+          full_name: sellerData.first_name && sellerData.last_name 
+            ? `${sellerData.first_name} ${sellerData.last_name}`
+            : sellerData.first_name || sellerData.last_name || 'Anonymous',
+          first_name: sellerData.first_name,
+          last_name: sellerData.last_name,
+          avatar_url: sellerData.avatar_url
+        } : undefined
+      });
+    } catch (error: any) {
+      console.error('Error refreshing item:', error);
+      toast.error(error.message);
+    }
+  };
+
   useEffect(() => {
     const fetchItem = async () => {
       if (!id) return;
