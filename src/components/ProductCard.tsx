@@ -17,6 +17,7 @@ interface ProductCardProps {
     seller?: {
       full_name?: string;
       first_name?: string;
+      last_name?: string;
       avatar_url?: string;
     };
   };
@@ -88,19 +89,17 @@ export const ProductCard = ({ item }: ProductCardProps) => {
               'text-base': fontSizeClass === 'small',
             }
           )}>₦{item.price}</p>
-          {item.seller && (
-            <div className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={item.seller.avatar_url} alt={item.seller.first_name} />
-                <AvatarFallback>
-                  <User className="h-3 w-3 text-primary" />
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-gray-400 truncate">
-                {item.seller.first_name}
-              </span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            <Avatar className="h-6 w-6">
+              <AvatarImage src={item.seller?.avatar_url} />
+              <AvatarFallback>
+                <User className="h-3 w-3 text-primary" />
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm text-gray-400 truncate">
+              {item.seller?.first_name || 'Anonymous'}
+            </span>
+          </div>
         </div>
       </div>
     </div>
