@@ -22,17 +22,6 @@ interface FormData {
   description: string;
 }
 
-interface Item {
-  id: string;
-  title: string;
-  price: number;
-  category: string;
-  condition: "new" | "like_new" | "good" | "fair" | "poor";
-  description: string;
-  item_images?: { image_url: string }[];
-  item_videos?: { video_url: string }[];
-}
-
 export const EditItemModal = ({ isOpen, onClose, onItemUpdated, itemId }: EditItemModalProps) => {
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -48,7 +37,7 @@ export const EditItemModal = ({ isOpen, onClose, onItemUpdated, itemId }: EditIt
     title: '',
     price: '',
     category: '',
-    condition: '',
+    condition: 'good',
     description: ''
   });
 

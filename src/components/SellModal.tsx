@@ -1,3 +1,4 @@
+
 import { X, Upload, Video, ImagePlus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useRef, FormEvent } from "react";
@@ -33,7 +34,7 @@ export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => 
     title: '',
     price: '',
     category: '',
-    condition: '',
+    condition: 'good', // Set a default value that matches the allowed types
     description: ''
   });
 
