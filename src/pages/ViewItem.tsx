@@ -45,6 +45,7 @@ interface Item {
     first_name?: string;
     last_name?: string;
     avatar_url?: string;
+    phone?: string;
   };
   images: string[];
 }
@@ -72,7 +73,8 @@ export default function ViewItem() {
           profiles:seller_id (
             first_name,
             last_name,
-            avatar_url
+            avatar_url,
+            phone
           )
         `)
         .eq('id', id)
@@ -90,10 +92,17 @@ export default function ViewItem() {
           full_name: sellerData.first_name && sellerData.last_name 
             ? `${sellerData.first_name} ${sellerData.last_name}`
             : sellerData.first_name || sellerData.last_name || 'Anonymous',
-          first_name: sellerData.first_name,
-          last_name: sellerData.last_name,
-          avatar_url: sellerData.avatar_url
-        } : undefined
+          first_name: sellerData.first_name || '',
+          last_name: sellerData.last_name || '',
+          avatar_url: sellerData.avatar_url || '',
+          phone: sellerData.phone || ''
+        } : {
+          full_name: 'Anonymous',
+          first_name: '',
+          last_name: '',
+          avatar_url: '',
+          phone: ''
+        }
       });
     } catch (error: any) {
       console.error('Error refreshing item:', error);
@@ -119,7 +128,8 @@ export default function ViewItem() {
             profiles:seller_id (
               first_name,
               last_name,
-              avatar_url
+              avatar_url,
+              phone
             )
           `)
           .eq('id', id)
@@ -139,10 +149,17 @@ export default function ViewItem() {
             full_name: sellerData.first_name && sellerData.last_name 
               ? `${sellerData.first_name} ${sellerData.last_name}`
               : sellerData.first_name || sellerData.last_name || 'Anonymous',
-            first_name: sellerData.first_name,
-            last_name: sellerData.last_name,
-            avatar_url: sellerData.avatar_url
-          } : undefined
+            first_name: sellerData.first_name || '',
+            last_name: sellerData.last_name || '',
+            avatar_url: sellerData.avatar_url || '',
+            phone: sellerData.phone || ''
+          } : {
+            full_name: 'Anonymous',
+            first_name: '',
+            last_name: '',
+            avatar_url: '',
+            phone: ''
+          }
         });
       } catch (error: any) {
         console.error('Error fetching item:', error);
@@ -312,7 +329,9 @@ export default function ViewItem() {
                     <p className="font-medium">
                       {item.seller?.full_name || 'Anonymous'}
                     </p>
-                    <p className="text-sm text-gray-400">Seller</p>
+                    <p className="text-sm text-gray-400">
+                      {item.seller?.phone || 'No phone number provided'}
+                    </p>
                   </div>
                 </div>
                 {!isOwner && (

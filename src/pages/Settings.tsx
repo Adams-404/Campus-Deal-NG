@@ -26,14 +26,25 @@ import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function Settings() {
   const { fontSize, setFontSize } = useSettings();
   const { theme, setTheme } = useTheme();
   const { isEnabled, isPushSupported, toggleNotifications } = useNotifications();
   const navigate = useNavigate();
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -157,6 +168,16 @@ export default function Settings() {
       ]
     }
   ];
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate('/');
+      toast.success('Signed out successfully');
+    } catch (error: any) {
+      toast.error('Failed to sign out');
+    }
+  };
 
   return (
     <div className="bg-background">
@@ -309,15 +330,10 @@ export default function Settings() {
             </div>
 
             <div className="mt-24">
-              <Link
-                to="/"
-                className="bg-secondary/50 rounded-lg border border-white/10 p-4 flex items-center justify-between hover:bg-secondary/80 transition-colors group"
-                onClick={async (e) => {
-                  e.preventDefault();
-                  await supabase.auth.signOut();
-                  navigate('/');
-                  toast.success('Signed out successfully');
-                }}
+              <Button
+                variant="ghost"
+                className="w-full h-[60px] bg-secondary/50 rounded-lg border border-white/10 flex items-center justify-between hover:bg-secondary/80 transition-colors group"
+                onClick={() => setShowSignOutDialog(true)}
               >
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-full bg-red-500/10">
@@ -326,7 +342,7 @@ export default function Settings() {
                   <span className="text-red-500">Sign Out</span>
                 </div>
                 <ChevronRight className="w-5 h-5 text-red-500 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+              </Button>
             </div>
 
             <div className="mt-8 text-center">
@@ -335,6 +351,26 @@ export default function Settings() {
           </div>
         </PageTransition>
       </main>
+
+      <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign Out</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out? You will need to sign in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleSignOut}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

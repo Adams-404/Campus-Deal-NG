@@ -12,6 +12,14 @@ import { PageTransition } from "@/components/PageTransition";
 import EditProfileModal from "@/components/EditProfileModal";
 import { Badge } from "@/components/ui/badge";
 
+interface UserItem {
+  id: string;
+  title: string;
+  price: number;
+  images: string[];
+  status: string;
+}
+
 const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -19,6 +27,7 @@ const Profile = () => {
   const [kycDocument, setKycDocument] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [userItems, setUserItems] = useState<UserItem[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -57,6 +66,35 @@ const Profile = () => {
 
       if (!kycError) {
         setKycDocument(kycData);
+      }
+
+      // Get user's items
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('items')
+        .select(`
+          id,
+          title,
+          price,
+          status,
+          item_images (
+            image_url
+          )
+        `)
+        .eq('seller_id', user.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (itemsError) throw itemsError;
+
+      if (itemsData) {
+        const formattedItems = itemsData.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          status: item.status,
+          images: item.item_images?.map((img: any) => img.image_url) || []
+        }));
+        setUserItems(formattedItems);
       }
     } catch (error: any) {
       toast.error(error.message);
@@ -314,6 +352,46 @@ const Profile = () => {
                   Complete Verification
                 </Button>
               )}
+            </CardContent>
+          </Card>
+
+          <Card className="border-green-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(34,197,94,0.1)]">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold">My Listings</h3>
+                  <Badge variant="secondary" className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
+                    {userItems?.length || 0} items
+                  </Badge>
+                </div>
+                <Button 
+                  variant="ghost"
+                  onClick={() => navigate('/my-listings')}
+                  className="text-green-500 hover:text-green-400 hover:bg-green-500/10"
+                >
+                  View All
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                {userItems?.slice(0, 4).map((item) => (
+                  <div 
+                    key={item.id}
+                    className="group relative aspect-[4/3] rounded-lg overflow-hidden border border-white/10 cursor-pointer"
+                    onClick={() => navigate(`/item/${item.id}`)}
+                  >
+                    <img 
+                      src={item.images[0]} 
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-3 flex flex-col justify-end">
+                      <p className="text-sm font-medium text-white line-clamp-2">{item.title}</p>
+                      <p className="text-sm text-green-300">₦{item.price}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>

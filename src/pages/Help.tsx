@@ -63,22 +63,24 @@ export default function Help() {
               <Button
                 variant="outline"
                 className="h-auto p-4 flex items-center gap-3 border-green-500/20 hover:bg-green-500/10"
+                onClick={() => window.location.href = 'mailto:muhammadadamualiyu33@gmail.com'}
               >
                 <Mail className="w-5 h-5 text-green-500" />
                 <div className="text-left">
                   <div className="font-medium">Email Support</div>
-                  <div className="text-sm text-muted-foreground">support@gsumarket.com</div>
+                  <div className="text-sm text-muted-foreground">muhammadadamualiyu33@gmail.com</div>
                 </div>
               </Button>
 
               <Button
                 variant="outline"
                 className="h-auto p-4 flex items-center gap-3 border-green-500/20 hover:bg-green-500/10"
+                onClick={() => window.location.href = 'https://wa.me/09067063781'}
               >
                 <MessageSquare className="w-5 h-5 text-green-500" />
                 <div className="text-left">
-                  <div className="font-medium">Live Chat</div>
-                  <div className="text-sm text-muted-foreground">Available 9 AM - 5 PM</div>
+                  <div className="font-medium">WhatsApp</div>
+                  <div className="text-sm text-muted-foreground">+234 906 706 3781</div>
                 </div>
               </Button>
             </div>

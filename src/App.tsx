@@ -27,6 +27,7 @@ import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import { cn } from "@/lib/utils";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MyListings from "./pages/MyListings";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const AnimatedRoutes = () => {
             <Route path="/saved" element={<ProtectedRoute><SavedItems /></ProtectedRoute>} />
             <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
             <Route path="/item/:id" element={<ProtectedRoute><ViewItem /></ProtectedRoute>} />
+            <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
 
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />

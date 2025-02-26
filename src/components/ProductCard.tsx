@@ -1,4 +1,3 @@
-
 import { Heart, Eye, User } from "lucide-react";
 import { Button } from "./ui/button";
 import { ImageCarousel } from "./ui/image-carousel";
