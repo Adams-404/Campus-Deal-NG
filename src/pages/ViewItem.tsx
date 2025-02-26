@@ -39,8 +39,11 @@ interface Item {
   category: string;
   created_at: string;
   seller_id: string;
+  status: string;
   seller?: {
-    full_name: string;
+    full_name?: string;
+    first_name?: string;
+    last_name?: string;
     avatar_url?: string;
   };
   images: string[];
@@ -74,12 +77,10 @@ export default function ViewItem() {
             profiles:seller_id (
               first_name,
               last_name,
-              avatar_url,
-              created_at
+              avatar_url
             )
           `)
           .eq('id', id)
-          .eq('status', 'active')
           .single();
 
         if (itemError) throw itemError;
@@ -91,11 +92,13 @@ export default function ViewItem() {
         
         setItem({
           ...itemData,
-          images: itemData.item_images.map((img: any) => img.image_url),
+          images: itemData.item_images?.map((img: any) => img.image_url) || [],
           seller: sellerData ? {
             full_name: sellerData.first_name && sellerData.last_name 
               ? `${sellerData.first_name} ${sellerData.last_name}`
               : sellerData.first_name || sellerData.last_name || 'Anonymous',
+            first_name: sellerData.first_name,
+            last_name: sellerData.last_name,
             avatar_url: sellerData.avatar_url
           } : undefined
         });
@@ -109,24 +112,6 @@ export default function ViewItem() {
     };
 
     fetchItem();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (id) {
-        const { data: itemData } = await supabase
-          .from('items')
-          .select('seller_id')
-          .eq('id', id)
-          .single();
-        
-        if (itemData) {
-          setIsOwner(!!session?.user && session.user.id === itemData.seller_id);
-        }
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
   }, [id, navigate]);
 
   const handleDelete = async () => {
@@ -147,14 +132,14 @@ export default function ViewItem() {
 
       if (error) {
         console.error('Error deleting item:', error);
-        throw new Error(error.message || 'Failed to delete item. Please try again.');
+        throw error;
       }
 
       toast.success('Item deleted successfully');
       navigate('/home');
     } catch (error: any) {
       console.error('Error deleting item:', error);
-      toast.error(error.message);
+      toast.error(error.message || 'Failed to delete item');
     }
   };
 
@@ -164,61 +149,6 @@ export default function ViewItem() {
 
   const handleZoomOut = () => {
     setZoom(prev => Math.max(prev - 0.25, 1));
-  };
-
-  const handleItemUpdated = () => {
-    const fetchItem = async () => {
-      if (!id) return;
-      
-      setIsLoading(true);
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        const { data: itemData, error: itemError } = await supabase
-          .from('items')
-          .select(`
-            *,
-            item_images (
-              image_url
-            ),
-            profiles:seller_id (
-              first_name,
-              last_name,
-              avatar_url,
-              created_at
-            )
-          `)
-          .eq('id', id)
-          .eq('status', 'active')
-          .single();
-
-        if (itemError) throw itemError;
-        if (!itemData) throw new Error('Item not found');
-
-        setIsOwner(!!user && user.id === itemData.seller_id);
-
-        const sellerData = itemData.profiles;
-        
-        setItem({
-          ...itemData,
-          images: itemData.item_images.map((img: any) => img.image_url),
-          seller: sellerData ? {
-            full_name: sellerData.first_name && sellerData.last_name 
-              ? `${sellerData.first_name} ${sellerData.last_name}`
-              : sellerData.first_name || sellerData.last_name || 'Anonymous',
-            avatar_url: sellerData.avatar_url
-          } : undefined
-        });
-      } catch (error: any) {
-        console.error('Error fetching item:', error);
-        toast.error(error.message);
-        navigate('/home');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchItem();
   };
 
   if (isLoading) {
@@ -285,7 +215,7 @@ export default function ViewItem() {
             <div className="rounded-lg overflow-hidden border border-white/10 relative h-[400px]">
               <div style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.2s' }} className="h-full">
                 <ImageCarousel 
-                  images={item.images || []} 
+                  images={item.images} 
                   showZoom={true}
                   aspectRatio="full"
                   className="h-full"
@@ -295,7 +225,7 @@ export default function ViewItem() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={handleZoomOut}
+                  onClick={() => setZoom(prev => Math.max(prev - 0.25, 1))}
                   disabled={zoom <= 1}
                   className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70"
                 >
@@ -304,7 +234,7 @@ export default function ViewItem() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={handleZoomIn}
+                  onClick={() => setZoom(prev => Math.min(prev + 0.25, 3))}
                   disabled={zoom >= 3}
                   className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70"
                 >
@@ -316,8 +246,8 @@ export default function ViewItem() {
             <div className="mt-6 space-y-6">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold">{item?.title}</h1>
-                  <p className="text-3xl font-bold text-primary mt-2">₦{item?.price}</p>
+                  <h1 className="text-2xl font-bold">{item.title}</h1>
+                  <p className="text-3xl font-bold text-primary mt-2">₦{item.price}</p>
                 </div>
                 <Button
                   variant="ghost"
@@ -331,14 +261,14 @@ export default function ViewItem() {
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <Avatar className="w-10 h-10">
-                    <AvatarImage src={item?.seller?.avatar_url} />
+                    <AvatarImage src={item.seller?.avatar_url} />
                     <AvatarFallback>
                       <User className="w-5 h-5 text-primary" />
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-medium">
-                      {item?.seller?.full_name || 'Anonymous'}
+                      {item.seller?.full_name || 'Anonymous'}
                     </p>
                     <p className="text-sm text-gray-400">Seller</p>
                   </div>
@@ -354,16 +284,16 @@ export default function ViewItem() {
               <div className="space-y-4">
                 <div>
                   <h2 className="text-lg font-semibold mb-2">Condition</h2>
-                  <p className="text-gray-400">{item?.condition}</p>
+                  <p className="text-gray-400">{item.condition}</p>
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold mb-2">Category</h2>
-                  <p className="text-gray-400">{item?.category}</p>
+                  <p className="text-gray-400">{item.category}</p>
                 </div>
-                {item?.description && (
+                {item.description && (
                   <div>
                     <h2 className="text-lg font-semibold mb-2">Description</h2>
-                    <p className="text-gray-400 whitespace-pre-wrap">{item?.description}</p>
+                    <p className="text-gray-400 whitespace-pre-wrap">{item.description}</p>
                   </div>
                 )}
               </div>
