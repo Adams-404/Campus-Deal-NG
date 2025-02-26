@@ -2,6 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { ImageCarousel } from "@/components/ui/image-carousel";
+import { EditItemModal } from "@/components/EditItemModal";
 import { 
   ArrowLeft, 
   Heart, 
@@ -51,6 +52,7 @@ export default function ViewItem() {
   const [isOwner, setIsOwner] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [zoom, setZoom] = useState(1);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -61,13 +63,19 @@ export default function ViewItem() {
         // Get current user
         const { data: { user } } = await supabase.auth.getUser();
         
-        // Fetch item with its images
+        // Fetch item with its images and seller information in a single query
         const { data: itemData, error: itemError } = await supabase
           .from('items')
           .select(`
             *,
             item_images (
               image_url
+            ),
+            profiles:seller_id (
+              first_name,
+              last_name,
+              avatar_url,
+              created_at
             )
           `)
           .eq('id', id)
@@ -80,15 +88,9 @@ export default function ViewItem() {
         // Check if current user is the owner
         setIsOwner(!!user && user.id === itemData.seller_id);
 
-        // Fetch seller information
-        const { data: sellerData, error: sellerError } = await supabase
-          .from('profiles')
-          .select('first_name, last_name, avatar_url, created_at')
-          .eq('id', itemData.seller_id)
-          .single();
-
-        if (sellerError) throw sellerError;
-
+        // Format seller information
+        const sellerData = itemData.profiles;
+        
         setItem({
           ...itemData,
           images: itemData.item_images.map((img: any) => img.image_url),
@@ -169,6 +171,66 @@ export default function ViewItem() {
     setZoom(prev => Math.max(prev - 0.25, 1));
   };
 
+  const handleItemUpdated = () => {
+    // Refetch item data
+    const fetchItem = async () => {
+      if (!id) return;
+      
+      setIsLoading(true);
+      try {
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        // Fetch item with its images and seller information in a single query
+        const { data: itemData, error: itemError } = await supabase
+          .from('items')
+          .select(`
+            *,
+            item_images (
+              image_url
+            ),
+            profiles:seller_id (
+              first_name,
+              last_name,
+              avatar_url,
+              created_at
+            )
+          `)
+          .eq('id', id)
+          .eq('status', 'active')
+          .single();
+
+        if (itemError) throw itemError;
+        if (!itemData) throw new Error('Item not found');
+
+        // Check if current user is the owner
+        setIsOwner(!!user && user.id === itemData.seller_id);
+
+        // Format seller information
+        const sellerData = itemData.profiles;
+        
+        setItem({
+          ...itemData,
+          images: itemData.item_images.map((img: any) => img.image_url),
+          seller: sellerData ? {
+            full_name: sellerData.first_name && sellerData.last_name 
+              ? `${sellerData.first_name} ${sellerData.last_name}`
+              : sellerData.first_name || sellerData.last_name || 'Anonymous',
+            avatar_url: sellerData.avatar_url
+          } : undefined
+        });
+      } catch (error: any) {
+        console.error('Error fetching item:', error);
+        toast.error(error.message);
+        navigate('/home');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchItem();
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -203,12 +265,12 @@ export default function ViewItem() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex items-center gap-2">
-              {isOwner ? (
+              {isOwner && (
                 <>
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => navigate(`/edit-item/${id}`)}
+                    onClick={() => setShowEditModal(true)}
                     className="h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
                   >
                     <Pencil className="h-5 w-5" />
@@ -222,24 +284,6 @@ export default function ViewItem() {
                     <Trash2 className="h-5 w-5" />
                   </Button>
                 </>
-              ) : (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70"
-                  >
-                    <Heart className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigate("/share")}
-                    className="h-9 w-9 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70"
-                  >
-                    <Share2 className="h-5 w-5" />
-                  </Button>
-                </>
               )}
             </div>
           </div>
@@ -250,12 +294,13 @@ export default function ViewItem() {
         <PageTransition>
           <div className="pt-24 pb-32">
             {/* Image Carousel */}
-            <div className="rounded-lg overflow-hidden border border-white/10 relative">
-              <div style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.2s' }}>
+            <div className="rounded-lg overflow-hidden border border-white/10 relative h-[400px]">
+              <div style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.2s' }} className="h-full">
                 <ImageCarousel 
-                  images={item.images} 
-                  className="aspect-[4/3] sm:aspect-[16/9]"
+                  images={item.images || []} 
                   showZoom={true}
+                  aspectRatio="full"
+                  className="h-full"
                 />
               </div>
               <div className="absolute bottom-4 right-4 flex gap-2">
@@ -281,84 +326,77 @@ export default function ViewItem() {
             </div>
 
             {/* Item Details */}
-            <div className="mt-8 space-y-6">
-              <div>
-                <h1 className="text-2xl font-semibold mb-2">{item.title}</h1>
-                <p className="text-3xl font-bold text-primary">₦{item.price}</p>
+            <div className="mt-6 space-y-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold">{item.title}</h1>
+                  <p className="text-3xl font-bold text-primary mt-2">₦{item.price}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+                >
+                  <Heart className="h-5 w-5" />
+                </Button>
               </div>
 
-              <div className="flex items-center justify-between py-4 border-y border-white/10">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center overflow-hidden">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     {item.seller?.avatar_url ? (
                       <img 
                         src={item.seller.avatar_url} 
                         alt={item.seller.full_name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full rounded-full object-cover"
                       />
                     ) : (
-                      <User className="w-6 h-6 text-primary" />
+                      <User className="w-5 h-5 text-primary" />
                     )}
                   </div>
                   <div>
-                    <h3 className="font-medium">{item.seller?.full_name}</h3>
-                    <p className="text-sm text-gray-400">
-                      Listed {new Date(item.created_at).toLocaleDateString()}
-                    </p>
+                    <p className="font-medium">{item.seller?.full_name || 'Anonymous'}</p>
+                    <p className="text-sm text-gray-400">Seller</p>
                   </div>
                 </div>
                 {!isOwner && (
-                  <Button className="gap-2">
-                    <MessageCircle className="w-4 h-4" />
-                    Message
+                  <Button className="ml-auto">
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Message Seller
                   </Button>
                 )}
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <h2 className="text-lg font-semibold mb-2">Details</h2>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-400">Condition</p>
-                      <p className="capitalize">{item.condition.replace('_', ' ')}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-400">Category</p>
-                      <p className="capitalize">{item.category}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-gray-400">Listed</p>
-                      <p>{new Date(item.created_at).toLocaleDateString()}</p>
-                    </div>
-                  </div>
+                  <h2 className="text-lg font-semibold mb-2">Condition</h2>
+                  <p className="text-gray-400">{item.condition}</p>
                 </div>
-
                 <div>
-                  <h2 className="text-lg font-semibold mb-2">Description</h2>
-                  <p className="text-gray-300 whitespace-pre-line">{item.description}</p>
+                  <h2 className="text-lg font-semibold mb-2">Category</h2>
+                  <p className="text-gray-400">{item.category}</p>
                 </div>
+                {item.description && (
+                  <div>
+                    <h2 className="text-lg font-semibold mb-2">Description</h2>
+                    <p className="text-gray-400 whitespace-pre-wrap">{item.description}</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </PageTransition>
       </main>
 
-      {/* Fixed Bottom Action */}
-      {!isOwner && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-t border-white/10 p-4">
-          <div className="max-w-2xl mx-auto flex gap-4">
-            <Button variant="outline" className="flex-1">
-              Make Offer
-            </Button>
-            <Button className="flex-1">
-              Buy Now
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Edit Modal */}
+      <EditItemModal 
+        isOpen={showEditModal} 
+        onClose={() => setShowEditModal(false)} 
+        onItemUpdated={handleItemUpdated}
+        itemId={item.id}
+      />
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -369,9 +407,7 @@ export default function ViewItem() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

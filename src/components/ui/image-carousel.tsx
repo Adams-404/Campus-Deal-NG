@@ -7,33 +7,31 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface ImageCarouselProps {
   images: string[];
   className?: string;
+  aspectRatio?: "square" | "video" | "product" | "full";
+  showControls?: boolean;
   showZoom?: boolean;
   disableScroll?: boolean;
 }
 
-export const ImageCarousel = ({ 
+export function ImageCarousel({ 
   images, 
   className, 
+  aspectRatio = "video",
+  showControls = true,
   showZoom = false,
   disableScroll = false 
-}: ImageCarouselProps) => {
+}: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [zooms, setZooms] = useState<number[]>(new Array(images.length).fill(1));
 
   const currentZoom = zooms[currentIndex];
 
-  const goToNext = () => {
-    if (currentZoom > 1) return;
-    if (currentIndex < images.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
+  const next = () => {
+    setCurrentIndex((prev) => (prev + 1) % images.length);
   };
 
-  const goToPrevious = () => {
-    if (currentZoom > 1) return;
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
+  const previous = () => {
+    setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
   const handleZoomIn = () => {
@@ -52,6 +50,25 @@ export const ImageCarousel = ({
     });
   };
 
+  const aspectRatioClass = {
+    square: "aspect-square",
+    video: "aspect-video",
+    product: "aspect-[4/3]",
+    full: "h-full"
+  }[aspectRatio];
+
+  if (!images.length) {
+    return (
+      <div className={cn(
+        "relative bg-secondary flex items-center justify-center",
+        aspectRatioClass,
+        className
+      )}>
+        <span className="text-sm text-gray-400">No images</span>
+      </div>
+    );
+  }
+
   return (
     <div className={cn("relative group", className)}>
       {/* Image Counter - At top */}
@@ -61,54 +78,71 @@ export const ImageCarousel = ({
         </div>
       )}
 
-      <div className="relative overflow-hidden">
-        <motion.div
-          className="flex transition-transform"
-          animate={{
-            x: `${-currentIndex * 100}%`,
-          }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        >
-          {images.map((image, index) => (
-            <motion.div
-              key={index}
-              className="w-full flex-shrink-0"
-              animate={{
-                scale: zooms[index]
-              }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            >
-              <img 
-                src={image} 
-                alt={`Image ${index + 1}`} 
+      <div className={cn(
+        "relative overflow-hidden rounded-lg",
+        aspectRatioClass
+      )}>
+        {images.map((src, index) => (
+          <div
+            key={src}
+            className={cn(
+              "absolute inset-0 transition-opacity duration-300",
+              index === currentIndex ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}
+          >
+            {src.includes('video') ? (
+              <video
+                src={src}
                 className="w-full h-full object-cover"
-                style={{ transformOrigin: 'center' }}
-                draggable={false}
+                controls={false}
+                muted
+                loop
+                autoPlay
+                playsInline
               />
-            </motion.div>
-          ))}
-        </motion.div>
+            ) : (
+              <img
+                src={src}
+                alt={`Image ${index + 1}`}
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+        ))}
       </div>
 
-      {/* Navigation Buttons */}
-      {!disableScroll && currentZoom <= 1 && (
+      {showControls && images.length > 1 && (
         <>
-          {currentIndex > 0 && (
-            <button
-              onClick={goToPrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-          )}
-          {currentIndex < images.length - 1 && (
-            <button
-              onClick={goToNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 backdrop-blur-sm text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={previous}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={next}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {images.map((_, index) => (
+              <button
+                key={index}
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full transition-all",
+                  index === currentIndex
+                    ? "bg-white scale-125"
+                    : "bg-white/50 hover:bg-white/75"
+                )}
+                onClick={() => setCurrentIndex(index)}
+              />
+            ))}
+          </div>
         </>
       )}
 
@@ -137,4 +171,4 @@ export const ImageCarousel = ({
       )}
     </div>
   );
-}; 
+} 

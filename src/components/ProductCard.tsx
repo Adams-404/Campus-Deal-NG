@@ -6,26 +6,27 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 
 interface ProductCardProps {
-  id: number;
-  title: string;
-  price: number;
-  image: string;
-  images: string[];
-  condition: string;
-  seller?: {
-    name: string;
-    avatar?: string;
+  item: {
+    id: string;
+    title: string;
+    price: number;
+    images: string[];
+    condition?: string;
+    seller?: {
+      full_name?: string;
+      first_name?: string;
+      avatar_url?: string;
+    };
   };
 }
 
-export const ProductCard = ({ id, title, price, image, images, condition, seller }: ProductCardProps) => {
+export const ProductCard = ({ item }: ProductCardProps) => {
   const { fontSizeClass } = useSettings();
   const navigate = useNavigate();
-  const allImages = images?.length > 0 ? images : [image];
 
   const handleViewItem = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/item/${id}`);
+    navigate(`/item/${item.id}`);
   };
 
   const handleLike = (e: React.MouseEvent) => {
@@ -37,7 +38,7 @@ export const ProductCard = ({ id, title, price, image, images, condition, seller
     <div className="bg-secondary rounded-lg border border-white/10 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group">
       <div className="relative aspect-[16/9]">
         <ImageCarousel 
-          images={allImages} 
+          images={item.images} 
           showZoom={true}
         />
         <div className="absolute top-2 right-2 z-10 flex gap-2">
@@ -50,21 +51,23 @@ export const ProductCard = ({ id, title, price, image, images, condition, seller
             <Heart className="h-5 w-5 text-white" />
           </Button>
         </div>
-        <div className="absolute bottom-2 left-2 z-10">
-          <span className={cn(
-            "px-2 py-1 bg-black/50 backdrop-blur-sm rounded-full font-medium text-white",
-            fontSizeClass === 'large' ? 'text-base' : 'text-sm'
-          )}>
-            {condition}
-          </span>
-        </div>
+        {item.condition && (
+          <div className="absolute bottom-2 left-2 z-10">
+            <span className={cn(
+              "px-2 py-1 bg-black/50 backdrop-blur-sm rounded-full font-medium text-white",
+              fontSizeClass === 'large' ? 'text-base' : 'text-sm'
+            )}>
+              {item.condition}
+            </span>
+          </div>
+        )}
       </div>
       <div className="p-4">
         <div className="flex justify-between items-start gap-4 mb-3">
           <h3 className={cn(
             "font-medium text-white line-clamp-2 flex-1",
             fontSizeClass
-          )}>{title}</h3>
+          )}>{item.title}</h3>
           <Button
             variant="ghost"
             size="icon"
@@ -82,21 +85,21 @@ export const ProductCard = ({ id, title, price, image, images, condition, seller
               'text-lg': fontSizeClass === 'medium',
               'text-base': fontSizeClass === 'small',
             }
-          )}>₦{price}</p>
-          {seller && (
+          )}>₦{item.price}</p>
+          {item.seller && (
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                {seller.avatar ? (
+                {item.seller.avatar_url ? (
                   <img 
-                    src={seller.avatar} 
-                    alt={seller.name}
+                    src={item.seller.avatar_url} 
+                    alt={item.seller.first_name}
                     className="w-full h-full rounded-full object-cover"
                   />
                 ) : (
                   <User className="w-3 h-3 text-primary" />
                 )}
               </div>
-              <span className="text-sm text-gray-400 truncate">{seller.name}</span>
+              <span className="text-sm text-gray-400 truncate">{item.seller.first_name}</span>
             </div>
           )}
         </div>
