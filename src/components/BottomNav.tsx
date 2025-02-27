@@ -21,18 +21,16 @@ export const BottomNav = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: roles, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id)
-        .eq('role', 'admin');
+      // Use the is_admin RPC function instead of directly querying user_roles
+      const { data, error } = await supabase
+        .rpc('is_admin', { user_id: user.id });
 
       if (error) {
         console.error('Error checking admin status:', error);
         return;
       }
 
-      setIsAdmin(roles && roles.length > 0);
+      setIsAdmin(!!data);
     } catch (error) {
       console.error('Error checking admin status:', error);
     }

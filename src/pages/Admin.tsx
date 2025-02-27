@@ -61,27 +61,39 @@ export default function Admin() {
 
   useEffect(() => {
     checkAdminAccess();
-    fetchData();
   }, []);
 
   const checkAdminAccess = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      navigate('/auth/signin');
-      return;
-    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        navigate('/auth/signin');
+        return;
+      }
 
-    // First get user roles
-    const { data: roles, error } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', user.id)
-      .eq('role', 'admin');
+      // Check if user is admin using the is_admin function
+      const { data, error } = await supabase
+        .rpc('is_admin', { user_id: user.id });
 
-    if (error || !roles?.length) {
+      if (error || !data) {
+        console.error('Error checking admin status:', error);
+        navigate('/');
+        toast.error("Access denied. Admin privileges required.");
+        return;
+      }
+
+      if (!data) {
+        navigate('/');
+        toast.error("Access denied. Admin privileges required.");
+        return;
+      }
+
+      fetchData();
+    } catch (error: any) {
+      console.error('Error in checkAdminAccess:', error);
       navigate('/');
-      toast.error("Access denied. Admin privileges required.");
-      return;
+      toast.error("An error occurred while checking admin access");
     }
   };
 
