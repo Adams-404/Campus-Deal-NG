@@ -754,14 +754,14 @@ export default function Messages() {
                       exit={{ opacity: 0, y: -20 }}
                       className={`flex ${
                         message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'
-                      }`}
+                      } mb-2 last:mb-0`}
                     >
                       <div
                         className={cn(
-                          "max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-4 shadow-lg",
+                          "max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-4 shadow-sm transition-colors duration-200",
                           message.sender_id === currentUser?.id
-                            ? "bg-primary text-primary-foreground rounded-br-sm"
-                            : "bg-white/5 rounded-bl-sm"
+                            ? "border-2 border-primary/60 hover:border-primary/80 bg-primary/5 text-foreground rounded-br-sm"
+                            : "border-2 border-green-500/60 hover:border-green-500/80 bg-green-500/5 text-foreground rounded-bl-sm"
                         )}
                       >
                         {message.image_url && (
@@ -772,7 +772,7 @@ export default function Messages() {
                           />
                         )}
                         <p className="break-words text-[13px] sm:text-[15px] leading-relaxed">{message.content}</p>
-                        <p className="text-[10px] sm:text-xs opacity-60 text-right mt-1">
+                        <p className="text-[10px] sm:text-xs text-muted-foreground text-right mt-1.5">
                           {format(new Date(message.created_at), 'HH:mm')}
                         </p>
                       </div>
