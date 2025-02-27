@@ -93,6 +93,22 @@ interface DatabaseMessage {
   image_url?: string;
 }
 
+interface GroupedConversation {
+  other_user: {
+    id: string;
+    first_name?: string;
+    last_name?: string;
+    avatar_url?: string;
+  };
+  items: {
+    id: string;
+    conversation_id: string;
+    last_message?: string;
+    last_message_at?: string;
+    unread_count: number;
+  }[];
+}
+
 export default function Messages() {
   const { conversationId } = useParams();
   const navigate = useNavigate();
@@ -109,6 +125,7 @@ export default function Messages() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messageContainerRef = useRef<HTMLDivElement>(null);
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const setup = async () => {
@@ -406,6 +423,44 @@ export default function Messages() {
     conv.item?.price.toString().includes(searchQuery.toLowerCase())
   );
 
+  const groupConversationsByUser = (conversations: Conversation[]): GroupedConversation[] => {
+    const groupedMap = conversations.reduce((acc, conv) => {
+      const userId = conv.other_user.id;
+      if (!acc.has(userId)) {
+        acc.set(userId, {
+          other_user: conv.other_user,
+          items: []
+        });
+      }
+      acc.get(userId)!.items.push({
+        id: conv.id,
+        conversation_id: conv.id,
+        last_message: conv.last_message,
+        last_message_at: conv.last_message_at,
+        unread_count: conv.unread_count || 0
+      });
+      return acc;
+    }, new Map<string, GroupedConversation>());
+
+    return Array.from(groupedMap.values()).sort((a, b) => {
+      const aLatest = Math.max(...a.items.map(i => i.last_message_at ? new Date(i.last_message_at).getTime() : 0));
+      const bLatest = Math.max(...b.items.map(i => i.last_message_at ? new Date(i.last_message_at).getTime() : 0));
+      return bLatest - aLatest;
+    });
+  };
+
+  const toggleUserExpanded = (userId: string) => {
+    setExpandedUsers(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -433,76 +488,96 @@ export default function Messages() {
           </div>
           <div className="flex-1 overflow-y-auto">
             <AnimatePresence>
-              {filteredConversations.map((conversation) => (
+              {groupConversationsByUser(filteredConversations).map((group) => (
                 <motion.div
-                  key={conversation.id}
+                  key={group.other_user.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  onClick={() => navigate(`/messages/${conversation.id}`)}
-                  className={`p-4 px-6 border-b border-white/10 hover:bg-white/5 cursor-pointer transition-all ${
-                    conversationId === conversation.id ? 'bg-white/5' : ''
-                  } ${conversation.unread_count ? 'bg-primary/5' : ''}`}
+                  className="border-b border-white/10"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <Avatar className="h-12 w-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20">
-                        <AvatarImage src={conversation.other_user.avatar_url} />
-                        <AvatarFallback>
-                          <User className="h-5 w-5 text-primary" />
-                        </AvatarFallback>
-                      </Avatar>
-                      {conversation.unread_count > 0 && (
-                        <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                          <span className="text-[11px] font-medium text-primary-foreground">
-                            {conversation.unread_count}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <p className={`font-medium truncate ${conversation.unread_count ? 'text-primary' : ''}`}>
-                          {conversation.other_user.first_name || 'Anonymous'}
-                        </p>
-                        {conversation.last_message_at && (
-                          <span className={`text-xs ${conversation.unread_count ? 'text-primary' : 'text-muted-foreground/60'}`}>
-                            {format(new Date(conversation.last_message_at), 'HH:mm')}
-                          </span>
+                  <div 
+                    className="p-4 px-6 hover:bg-white/5 cursor-pointer transition-all"
+                    onClick={() => toggleUserExpanded(group.other_user.id)}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <Avatar className="h-12 w-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20">
+                          <AvatarImage src={group.other_user.avatar_url} />
+                          <AvatarFallback>
+                            <User className="h-5 w-5 text-primary" />
+                          </AvatarFallback>
+                        </Avatar>
+                        {group.items.some(item => item.unread_count > 0) && (
+                          <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                            <span className="text-[11px] font-medium text-primary-foreground">
+                              {group.items.reduce((sum, item) => sum + (item.unread_count || 0), 0)}
+                            </span>
+                          </div>
                         )}
                       </div>
-                      {conversation.item && (
-                        <div className="flex items-center gap-2 mt-2">
-                          {conversation.item.images?.[0] && (
-                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/5">
-                              <img 
-                                src={conversation.item.images[0]} 
-                                alt={conversation.item.title}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate text-primary">
-                              {conversation.item.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground/60">
-                              ₦{conversation.item.price}
-                            </p>
-                          </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="font-medium text-lg">
+                            {group.other_user.first_name || 'Anonymous'}
+                          </p>
+                          <p className="text-sm text-muted-foreground/60">
+                            {group.items.length} items
+                          </p>
                         </div>
-                      )}
-                      {conversation.last_message && (
-                        <p className={`text-sm truncate mt-2 ${
-                          conversation.unread_count 
-                            ? 'text-primary/90 font-medium' 
-                            : 'text-muted-foreground/60'
-                        }`}>
-                          {conversation.last_message}
+                        <p className="text-sm text-muted-foreground/60 mt-1">
+                          Click to {expandedUsers.has(group.other_user.id) ? 'collapse' : 'expand'} conversations
                         </p>
-                      )}
+                      </div>
                     </div>
                   </div>
+                  
+                  <AnimatePresence>
+                    {expandedUsers.has(group.other_user.id) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="overflow-hidden"
+                      >
+                        {group.items.map((item) => (
+                          <div
+                            key={item.id}
+                            onClick={() => navigate(`/messages/${item.conversation_id}`)}
+                            className={`p-4 pl-16 border-t border-white/10 hover:bg-white/5 cursor-pointer transition-all ${
+                              conversationId === item.conversation_id ? 'bg-white/5' : ''
+                            } ${item.unread_count ? 'bg-primary/5' : ''}`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex-1 min-w-0">
+                                {item.last_message && (
+                                  <p className={`text-sm truncate ${
+                                    item.unread_count 
+                                      ? 'text-primary/90 font-medium' 
+                                      : 'text-muted-foreground/60'
+                                  }`}>
+                                    {item.last_message}
+                                  </p>
+                                )}
+                                {item.last_message_at && (
+                                  <p className="text-xs text-muted-foreground/60 mt-1">
+                                    {format(new Date(item.last_message_at), 'MMM d, HH:mm')}
+                                  </p>
+                                )}
+                              </div>
+                              {item.unread_count > 0 && (
+                                <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center ml-2">
+                                  <span className="text-[11px] font-medium text-primary-foreground">
+                                    {item.unread_count}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               ))}
             </AnimatePresence>
