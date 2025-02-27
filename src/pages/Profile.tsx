@@ -25,6 +25,7 @@ import { PageTransition } from "@/components/PageTransition";
 import EditProfileModal from "@/components/EditProfileModal";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import ImageCropModal from "@/components/ImageCropModal";
 
 interface UserItem {
   id: string;
@@ -44,6 +45,8 @@ const Profile = () => {
   const [userItems, setUserItems] = useState<UserItem[]>([]);
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const navigate = useNavigate();
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const forceRefreshRole = async () => {
     try {
@@ -218,16 +221,21 @@ const Profile = () => {
     }
   }
 
-  async function uploadAvatar(event: React.ChangeEvent<HTMLInputElement>) {
+  async function handleImageSelect(event: React.ChangeEvent<HTMLInputElement>) {
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
+    }
+
+    setSelectedImage(event.target.files[0]);
+    setShowCropModal(true);
+  }
+
+  async function handleCroppedImage(croppedBlob: Blob) {
     try {
       setUploading(true);
 
-      if (!event.target.files || event.target.files.length === 0) {
-        throw new Error('You must select an image to upload.');
-      }
-
-      const file = event.target.files[0];
-      const fileExt = file.name.split('.').pop();
+      const file = new File([croppedBlob], 'profile.jpg', { type: 'image/jpeg' });
+      const fileExt = 'jpg';
       const fileName = `${user.id}/${Math.random()}.${fileExt}`;
 
       let { error: uploadError } = await supabase.storage
@@ -346,7 +354,7 @@ const Profile = () => {
                 id="avatar"
                 type="file"
                 accept="image/*"
-                onChange={uploadAvatar}
+                onChange={handleImageSelect}
                 disabled={uploading}
                 className="hidden"
               />
@@ -549,6 +557,13 @@ const Profile = () => {
               toast.error(error.message);
             }
           }}
+        />
+
+        <ImageCropModal
+          open={showCropModal}
+          onClose={() => setShowCropModal(false)}
+          imageFile={selectedImage}
+          onCropComplete={handleCroppedImage}
         />
       </div>
     </PageTransition>
