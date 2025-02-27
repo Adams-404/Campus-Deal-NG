@@ -15,7 +15,9 @@ import {
   Paperclip,
   MessageSquare,
   Phone,
-  MessageCircle
+  MessageCircle,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from 'date-fns';
@@ -104,6 +106,7 @@ interface GroupedConversation {
     first_name?: string;
     last_name?: string;
     avatar_url?: string;
+    phone?: string;
   };
   items: {
     id: string;
@@ -510,7 +513,9 @@ export default function Messages() {
     <PageTransition>
       <div className="min-h-screen bg-background flex">
         {/* Conversations Sidebar */}
-        <div className={`w-full sm:w-[380px] border-r border-white/10 flex flex-col ${conversationId ? 'hidden sm:flex' : 'flex'}`}>
+        <div className={`w-full sm:w-[380px] border-r border-white/10 flex flex-col ${
+          conversationId ? 'hidden sm:flex' : 'flex'
+        }`}>
           <div className="h-24 border-b border-white/10 flex flex-col justify-center px-6 gap-3 bg-secondary/20 backdrop-blur-sm">
             <h1 className="text-xl font-semibold tracking-tight">Messages</h1>
             <div className="relative">
@@ -585,7 +590,9 @@ export default function Messages() {
                                   className="h-8 w-8 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20"
                                   title="WhatsApp"
                                 >
-                                  <MessageCircle className="h-4 w-4" />
+                                  <svg viewBox="0 0 24 24" className="h-4 w-4 fill-current">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                                  </svg>
                                 </Button>
                               </>
                             )}
@@ -658,69 +665,71 @@ export default function Messages() {
 
         {/* Chat Area */}
         {conversationId && selectedConversation ? (
-          <div className="flex-1 flex flex-col h-[100dvh] fixed inset-0 bg-background sm:relative sm:flex">
+          <div className="flex-1 flex flex-col h-[100dvh] fixed inset-0 bg-background sm:relative sm:h-auto">
             {/* Chat Header */}
-            <div className="h-24 border-b border-white/10 flex items-center px-6 flex-shrink-0 backdrop-blur-sm bg-secondary/20">
-              <div className="flex items-center gap-4 flex-1">
+            <div className="h-16 sm:h-20 border-b border-white/10 flex items-center px-3 sm:px-6 flex-shrink-0 backdrop-blur-sm bg-secondary/20">
+              <div className="flex items-center gap-2 sm:gap-4 flex-1">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => navigate('/messages')}
-                  className="h-10 w-10 rounded-xl sm:hidden hover:bg-white/10"
+                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl sm:hidden hover:bg-white/10"
                 >
-                  <ArrowLeft className="h-5 w-5" />
+                  <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
-                <Avatar className="h-12 w-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20">
+                <Avatar className="h-9 w-9 sm:h-12 sm:w-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20">
                   <AvatarImage src={selectedConversation.other_user.avatar_url} />
                   <AvatarFallback>
-                    <User className="h-5 w-5 text-primary" />
+                    <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-lg font-medium">
+                      <p className="text-sm sm:text-lg font-medium truncate">
                         {selectedConversation.other_user.first_name && selectedConversation.other_user.last_name 
                           ? `${selectedConversation.other_user.first_name} ${selectedConversation.other_user.last_name}`
                           : selectedConversation.other_user.first_name || 'Anonymous'}
                       </p>
                       {selectedConversation.item && (
-                        <p className="text-sm text-primary truncate">
+                        <p className="text-xs sm:text-sm text-primary truncate">
                           Discussing: {selectedConversation.item.title}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => window.open(`tel:${selectedConversation.other_user.phone}`)}
-                        className="h-9 w-9 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20"
-                        title="Call"
-                      >
-                        <Phone className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => window.open(`https://wa.me/${selectedConversation.other_user.phone?.replace(/\+/g, '')}`)}
-                        className="h-9 w-9 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20"
-                        title="WhatsApp"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </div>
+                </div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => window.open(`tel:${selectedConversation.other_user.phone}`)}
+                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20"
+                    title="Call"
+                  >
+                    <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => window.open(`https://wa.me/${selectedConversation.other_user.phone?.replace(/\+/g, '')}`)}
+                    className="h-8 w-8 sm:h-9 sm:w-9 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20"
+                    title="WhatsApp"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 sm:h-4 sm:w-4 fill-current">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                    </svg>
+                  </Button>
                 </div>
               </div>
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto" ref={messageContainerRef}>
-              <div className="p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto pb-safe" ref={messageContainerRef}>
+              <div className="p-3 sm:p-6 space-y-3 sm:space-y-6">
                 {selectedConversation.item && (
-                  <div className="flex flex-col items-center gap-3 mb-8">
-                    <div className="relative w-32 h-32 rounded-lg overflow-hidden ring-2 ring-primary/20">
+                  <div className="flex flex-col items-center gap-2 sm:gap-3 mb-4 sm:mb-8">
+                    <div className="relative w-24 sm:w-32 h-24 sm:h-32 rounded-lg overflow-hidden ring-2 ring-primary/20">
                       <img 
                         src={selectedConversation.item.images[0]} 
                         alt={selectedConversation.item.title}
@@ -731,8 +740,8 @@ export default function Messages() {
                       </div>
                     </div>
                     <div className="text-center">
-                      <p className="font-medium text-sm">{selectedConversation.item.title}</p>
-                      <p className="text-xs text-muted-foreground/60 mt-1">Started conversation about this item</p>
+                      <p className="font-medium text-xs sm:text-sm">{selectedConversation.item.title}</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground/60 mt-0.5 sm:mt-1">Started conversation about this item</p>
                     </div>
                   </div>
                 )}
@@ -749,7 +758,7 @@ export default function Messages() {
                     >
                       <div
                         className={cn(
-                          "max-w-[70%] rounded-2xl p-4 shadow-lg",
+                          "max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-4 shadow-lg",
                           message.sender_id === currentUser?.id
                             ? "bg-primary text-primary-foreground rounded-br-sm"
                             : "bg-white/5 rounded-bl-sm"
@@ -762,8 +771,8 @@ export default function Messages() {
                             className="rounded-lg mb-2 max-w-full"
                           />
                         )}
-                        <p className="break-words text-[15px]">{message.content}</p>
-                        <p className="text-xs opacity-60 text-right mt-1.5">
+                        <p className="break-words text-[13px] sm:text-[15px] leading-relaxed">{message.content}</p>
+                        <p className="text-[10px] sm:text-xs opacity-60 text-right mt-1">
                           {format(new Date(message.created_at), 'HH:mm')}
                         </p>
                       </div>
@@ -775,41 +784,41 @@ export default function Messages() {
             </div>
 
             {/* Message Input */}
-            <div className="flex-shrink-0 border-t border-white/10 bg-secondary/20 backdrop-blur-sm p-6">
+            <div className="flex-shrink-0 border-t border-white/10 bg-secondary/20 backdrop-blur-sm p-3 sm:p-6">
               <form
                 onSubmit={handleSendMessage}
-                className="flex items-center gap-3"
+                className="flex items-center gap-2 sm:gap-3"
               >
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-xl hover:bg-white/10"
+                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl hover:bg-white/10"
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 >
-                  <Smile className="h-5 w-5" />
+                  <Smile className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-xl hover:bg-white/10"
+                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl hover:bg-white/10"
                 >
-                  <Paperclip className="h-5 w-5" />
+                  <Paperclip className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
                 <Input
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   placeholder="Type a message..."
-                  className="flex-1 bg-white/5 border-white/10 focus:border-primary/50 transition-colors rounded-xl"
+                  className="flex-1 bg-white/5 border-white/10 focus:border-primary/50 transition-colors rounded-xl text-sm sm:text-base h-8 sm:h-10 min-h-[32px] sm:min-h-[40px]"
                 />
                 <Button
                   type="submit"
                   size="icon"
-                  className="h-10 w-10 rounded-xl bg-primary hover:bg-primary/90"
+                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-primary hover:bg-primary/90"
                   disabled={!newMessage.trim() || sending}
                 >
-                  <Send className="h-5 w-5" />
+                  <Send className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </form>
             </div>
