@@ -71,13 +71,14 @@ export default function Admin() {
       return;
     }
 
-    const { data: roles } = await supabase
+    // First get user roles
+    const { data: roles, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'admin');
 
-    if (!roles?.length) {
+    if (error || !roles?.length) {
       navigate('/');
       toast.error("Access denied. Admin privileges required.");
       return;
@@ -109,8 +110,8 @@ export default function Admin() {
 
       if (kycError) throw kycError;
 
-      // Fetch users with their roles
-      const { data: userData, error: userError } = await supabase
+      // First fetch profiles
+      const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select(`
           id,
@@ -121,14 +122,25 @@ export default function Admin() {
           phone,
           kyc_status,
           created_at,
-          updated_at,
-          roles:user_roles (
-            role
-          )
+          updated_at
         `)
         .order('created_at', { ascending: false });
 
-      if (userError) throw userError;
+      if (profileError) throw profileError;
+
+      // Then fetch roles for each profile
+      const usersWithRoles = await Promise.all((profiles || []).map(async (profile) => {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', profile.id);
+        
+        return {
+          ...profile,
+          email: '', // Add empty email since we don't fetch it
+          roles: roleData || null
+        };
+      }));
 
       const processedKycData = (kycData || []).map(doc => ({
         ...doc,
@@ -138,19 +150,13 @@ export default function Admin() {
         }
       }));
 
-      const processedUserData = (userData || []).map(user => ({
-        ...user,
-        roles: user.roles as Array<{ role: UserRole }> | null,
-        email: '', // Add empty email since we don't fetch it
-      }));
-
       setKycDocuments(processedKycData);
-      setUsers(processedUserData);
+      setUsers(usersWithRoles);
 
       setStats({
-        totalUsers: processedUserData.length,
+        totalUsers: usersWithRoles.length,
         pendingKYC: processedKycData.filter(doc => doc.status === 'pending').length,
-        verifiedUsers: processedUserData.filter(user => user.kyc_status === 'verified').length,
+        verifiedUsers: usersWithRoles.filter(user => user.kyc_status === 'verified').length,
       });
 
     } catch (error: any) {
