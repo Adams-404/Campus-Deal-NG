@@ -257,7 +257,7 @@ const Index = () => {
             >
               <Link to="/auth">
                 <Button className="bg-blue-500 hover:bg-blue-600 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
-                  Start Trading <ArrowRight className="ml-2" />
+                  Get Started <ArrowRight className="ml-2" />
                 </Button>
               </Link>
             </motion.div>
