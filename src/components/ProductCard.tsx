@@ -17,6 +17,7 @@ interface ProductCardProps {
     images: string[];
     condition?: string;
     seller?: {
+      id?: string;
       full_name?: string;
       first_name?: string;
       last_name?: string;
@@ -56,6 +57,13 @@ export const ProductCard = ({ item }: ProductCardProps) => {
   const handleViewItem = (e: React.MouseEvent) => {
     e.stopPropagation();
     navigate(`/item/${item.id}`);
+  };
+
+  const handleViewProfile = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (item.seller?.id) {
+      navigate(`/user/${item.seller.id}`);
+    }
   };
 
   const handleLike = async (e: React.MouseEvent) => {
@@ -160,14 +168,17 @@ export const ProductCard = ({ item }: ProductCardProps) => {
               'text-base': fontSizeClass === 'small',
             }
           )}>₦{item.price}</p>
-          <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
+          <div 
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity group/profile"
+            onClick={handleViewProfile}
+          >
+            <Avatar className="h-6 w-6 ring-2 ring-offset-2 ring-offset-background ring-primary/20 group-hover/profile:ring-primary/40 transition-all">
               <AvatarImage src={item.seller?.avatar_url} />
               <AvatarFallback>
                 <User className="h-3 w-3 text-primary" />
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm text-gray-400 truncate">
+            <span className="text-sm text-gray-400 truncate group-hover/profile:text-primary transition-colors">
               {item.seller?.first_name || 'Anonymous'}
             </span>
           </div>

@@ -9,6 +9,17 @@ import { Badge } from "@/components/ui/badge";
 import { User, Mail, Calendar, Shield, AlertCircle, Phone, MapPin, MessageCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
+interface ProfileData {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  address: string | null;
+  created_at: string;
+  kyc_status: string | null;
+}
+
 interface UserItem {
   id: string;
   title: string;
@@ -22,7 +33,7 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<Record<string, any> | null>(null);
   const [userItems, setUserItems] = useState<UserItem[]>([]);
 
   useEffect(() => {
@@ -45,7 +56,7 @@ export default function UserProfile() {
         return;
       }
 
-      // Get profile data
+      // Get profile data and user role
       let { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -53,7 +64,22 @@ export default function UserProfile() {
         .single();
 
       if (profileError) throw profileError;
-      setProfile(profileData);
+
+      // Get user role
+      const { data: roleData, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+
+      if (roleError && roleError.code !== 'PGRST116') {
+        throw roleError;
+      }
+
+      setProfile({
+        ...profileData,
+        role: roleData?.role || 'user'
+      });
 
       // Get user's items
       const { data: itemsData, error: itemsError } = await supabase
@@ -238,6 +264,28 @@ export default function UserProfile() {
               <p className="text-muted-foreground">Member since {new Date(profile?.created_at).toLocaleDateString()}</p>
               <div className="flex items-center justify-center gap-2">
                 {getKycStatusBadge()}
+                {profile?.role === 'admin' && (
+                  <Badge 
+                    variant="outline" 
+                    className="bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="w-3 h-3 mr-1"
+                    >
+                      <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7-7H4a2 2 0 0 0-2 2v4" />
+                      <path d="M14 2v6h6" />
+                      <path d="M8.5 12.5 5 16l3.5 3.5" />
+                      <path d="M15.5 12.5 19 16l-3.5 3.5" />
+                    </svg>
+                    Admin
+                  </Badge>
+                )}
               </div>
             </div>
 

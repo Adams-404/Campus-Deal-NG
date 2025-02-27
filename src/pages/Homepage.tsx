@@ -17,6 +17,7 @@ interface Item {
   images: string[];
   created_at: string;
   seller?: {
+    id: string;
     full_name?: string;
     first_name?: string;
     last_name?: string;
@@ -41,6 +42,7 @@ const Homepage = () => {
             image_url
           ),
           profiles:seller_id (
+            id,
             first_name,
             last_name,
             avatar_url
@@ -71,6 +73,7 @@ const Homepage = () => {
           created_at: item.created_at,
           images: allImages,
           seller: seller ? {
+            id: seller.id,
             full_name: seller.first_name && seller.last_name 
               ? `${seller.first_name} ${seller.last_name}`
               : seller.first_name || seller.last_name || 'Anonymous',
