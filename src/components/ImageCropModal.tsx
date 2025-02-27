@@ -3,7 +3,7 @@ import ReactCrop, { type Crop, centerCrop, makeAspectCrop, PixelCrop } from 'rea
 import 'react-image-crop/dist/ReactCrop.css';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2, Camera } from "lucide-react";
+import { Loader2, Camera, Image as ImageIcon } from "lucide-react";
 
 interface ImageCropModalProps {
   open: boolean;
@@ -37,28 +37,64 @@ export default function ImageCropModal({ open, onClose, imageFile, onCropComplet
   const [imageSrc, setImageSrc] = useState<string>('');
   const [imageRef, setImageRef] = useState<HTMLImageElement | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isImageLoading, setIsImageLoading] = useState(true);
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
 
   useEffect(() => {
     if (!imageFile) return;
 
+    setIsImageLoading(true);
     const reader = new FileReader();
+    
     reader.addEventListener('load', () => {
-      setImageSrc(reader.result?.toString() || '');
+      // Create a new image to pre-load
+      const img = new Image();
+      img.src = reader.result?.toString() || '';
+      
+      img.onload = () => {
+        setImageSrc(img.src);
+        setIsImageLoading(false);
+      };
+
+      img.onerror = () => {
+        console.error('Error loading image');
+        setIsImageLoading(false);
+      };
     });
+
+    reader.addEventListener('error', () => {
+      console.error('Error reading file');
+      setIsImageLoading(false);
+    });
+
     reader.readAsDataURL(imageFile);
 
-    // Reset crop when image changes
+    // Reset states
     setCrop(undefined);
     setCompletedCrop(undefined);
+    
+    return () => {
+      // Cleanup
+      setImageSrc('');
+      setIsImageLoading(true);
+    };
   }, [imageFile]);
 
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { width, height } = e.currentTarget;
     setImageRef(e.currentTarget);
-    const initialCrop = centerAspectCrop(width, height, 1);
-    setCrop(initialCrop);
-    setCompletedCrop(initialCrop);
+    
+    // Convert the percentage crop to pixel values
+    const pixelCrop = {
+      unit: 'px',
+      x: 0,
+      y: 0,
+      width: width * 0.9,
+      height: height * 0.9
+    } as PixelCrop;
+
+    setCrop(centerAspectCrop(width, height, 1));
+    setCompletedCrop(pixelCrop);
   }
 
   const getCroppedImg = async () => {
@@ -85,6 +121,10 @@ export default function ImageCropModal({ open, onClose, imageFile, onCropComplet
 
       // Clear the canvas
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Enable image smoothing
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
 
       // Draw the cropped image
       ctx.save();
@@ -139,24 +179,35 @@ export default function ImageCropModal({ open, onClose, imageFile, onCropComplet
         </DialogHeader>
         <div className="space-y-6">
           <div className="relative rounded-lg overflow-hidden border border-blue-500/20 bg-secondary/50">
-            {imageSrc ? (
-              <ReactCrop
-                crop={crop}
-                onChange={(_, percentCrop) => setCrop(percentCrop)}
-                onComplete={(c) => setCompletedCrop(c)}
-                circularCrop
-                aspect={1}
-              >
-                <img
-                  src={imageSrc}
-                  alt="Crop preview"
-                  onLoad={onImageLoad}
-                  className="max-h-[500px] w-full object-contain"
-                />
-              </ReactCrop>
+            {isImageLoading ? (
+              <div className="aspect-square flex flex-col items-center justify-center bg-secondary gap-3">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                <p className="text-sm text-muted-foreground animate-pulse">
+                  Loading image...
+                </p>
+              </div>
+            ) : imageSrc ? (
+              <div className="relative">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(_, percentCrop) => setCrop(percentCrop)}
+                  onComplete={(c) => setCompletedCrop(c)}
+                  circularCrop
+                  aspect={1}
+                >
+                  <img
+                    src={imageSrc}
+                    alt="Crop preview"
+                    onLoad={onImageLoad}
+                    className="max-h-[500px] w-full object-contain"
+                  />
+                </ReactCrop>
+                <div className="absolute inset-0 pointer-events-none border-2 border-blue-500/20 rounded-lg" />
+              </div>
             ) : (
-              <div className="aspect-square flex items-center justify-center bg-secondary">
-                <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+              <div className="aspect-square flex flex-col items-center justify-center bg-secondary gap-2">
+                <ImageIcon className="w-8 h-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">No image selected</p>
               </div>
             )}
           </div>
@@ -170,7 +221,7 @@ export default function ImageCropModal({ open, onClose, imageFile, onCropComplet
             </Button>
             <Button
               onClick={getCroppedImg}
-              disabled={isLoading || !completedCrop}
+              disabled={isLoading || !completedCrop || isImageLoading}
               className="bg-blue-500 hover:bg-blue-600 text-white"
             >
               {isLoading ? (

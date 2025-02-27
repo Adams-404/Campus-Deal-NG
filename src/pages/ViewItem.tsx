@@ -135,8 +135,18 @@ export default function ViewItem() {
           .eq('id', id)
           .single();
 
-        if (itemError) throw itemError;
-        if (!itemData) throw new Error('Item not found');
+        if (itemError) {
+          console.error('Error fetching item:', itemError);
+          toast.error('Item not found or error fetching item.');
+          navigate('/home');
+          return;
+        }
+
+        if (!itemData) {
+          toast.error('Item not found.');
+          navigate('/home');
+          return;
+        }
 
         setIsOwner(!!user && user.id === itemData.seller_id);
 
@@ -178,27 +188,54 @@ export default function ViewItem() {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('You must be logged in to delete an item');
+      if (!user) {
+        toast.error('You must be logged in to delete an item');
+        return;
+      }
 
-      const { error } = await supabase
+      // First, delete all images from storage
+      const { data: images } = await supabase
+        .from('item_images')
+        .select('image_url')
+        .eq('item_id', id);
+
+      if (images?.length) {
+        // Delete image files from storage
+        for (const image of images) {
+          const path = image.image_url.split('/').slice(-2).join('/');
+          await supabase.storage
+            .from('item_images')
+            .remove([path]);
+        }
+
+        // Delete image records
+        await supabase
+          .from('item_images')
+          .delete()
+          .eq('item_id', id);
+      }
+
+      // Delete the item
+      const { error: deleteError } = await supabase
         .from('items')
-        .update({ 
-          status: 'deleted',
-          updated_at: new Date().toISOString()
-        })
+        .delete()
         .eq('id', id)
         .eq('seller_id', user.id);
 
-      if (error) {
-        console.error('Error deleting item:', error);
-        throw error;
+      if (deleteError) {
+        console.error('Error deleting item:', deleteError);
+        console.error('Error details:', deleteError.message);
+        throw new Error('Failed to delete item. Please try again.');
       }
 
       toast.success('Item deleted successfully');
-      navigate('/home');
+      navigate('/my-listings');
     } catch (error: any) {
       console.error('Error deleting item:', error);
+      console.error('Error details:', error.message);
       toast.error(error.message || 'Failed to delete item');
+    } finally {
+      setShowDeleteDialog(false);
     }
   };
 
