@@ -28,38 +28,43 @@ interface Message {
   id: string;
   content: string;
   sender_id: string;
+  conversation_id: string;
   created_at: string;
-  image_url?: string;
-  read?: boolean;
-  item_id?: string;
-  item?: {
+  image_url: string | null;
+  item_id: string | null;
+  items?: {
     id: string;
     title: string;
     price: number;
-    images: string[];
+    item_images: { image_url: string }[];
   };
+}
+
+interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
 }
 
 interface Conversation {
   id: string;
-  other_user: {
-    id: string;
-    first_name?: string;
-    last_name?: string;
-    avatar_url?: string;
-    phone?: string;
-  };
-  last_message?: string;
-  last_message_at?: string;
-  unread_count?: number;
-  item_title?: string;
-  messages?: Message[];
+  buyer_id: string;
+  seller_id: string;
+  last_message: string;
+  last_message_at: string;
+  buyer_profile: Profile;
+  seller_profile: Profile;
+  messages: Message[];
+  other_user: Profile;
   item?: {
     id: string;
     title: string;
     price: number;
     images: string[];
   };
+  item_title?: string;
 }
 
 interface DatabaseConversation {
@@ -113,7 +118,6 @@ interface GroupedConversation {
     conversation_id: string;
     last_message?: string;
     last_message_at?: string;
-    unread_count: number;
     item_title?: string;
   }[];
 }
@@ -162,7 +166,6 @@ export default function Messages() {
   useEffect(() => {
     if (conversationId && currentUser?.id) {
       fetchMessages(conversationId);
-      markConversationAsRead(conversationId);
       
       // Subscribe to both conversations and messages
       const channel = supabase.channel(`room:${conversationId}`);
@@ -192,10 +195,6 @@ export default function Messages() {
             setSelectedItemId(newMessage.item_id);
           }
           
-          // If the new message is not from current user, mark it as unread
-          if (newMessage.sender_id !== currentUser.id) {
-            markConversationAsUnread(conversationId);
-          }
           scrollToBottom();
         })
         .subscribe();
@@ -272,7 +271,7 @@ export default function Messages() {
             avatar_url,
             phone
           ),
-          messages!inner (
+          messages (
             id,
             content,
             created_at,
@@ -294,25 +293,41 @@ export default function Messages() {
       if (conversationsError) throw conversationsError;
 
       // Transform the data into the expected format
-      const formattedConversations = conversationsData?.map(conv => {
+      const formattedConversations = (conversationsData || []).map(conv => {
         const otherUser = userId === conv.seller_id ? conv.buyer_profile : conv.seller_profile;
         
         // Get the first message that has an item (which should be the initial message)
         const messageWithItem = conv.messages?.find(msg => msg.items);
         const item = messageWithItem?.items;
 
+        // Add conversation_id to each message and ensure all fields are properly typed
+        const formattedMessages = (conv.messages || []).map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          sender_id: msg.sender_id,
+          conversation_id: conv.id,
+          created_at: msg.created_at,
+          image_url: msg.image_url || null,
+          item_id: msg.item_id || null,
+          items: msg.items
+        }));
+
         return {
           id: conv.id,
-          other_user: {
-            id: otherUser.id,
-            first_name: otherUser.first_name ?? undefined,
-            last_name: otherUser.last_name ?? undefined,
-            avatar_url: otherUser.avatar_url ?? undefined,
-            phone: otherUser.phone ?? undefined
-          },
+          buyer_id: conv.buyer_id,
+          seller_id: conv.seller_id,
           last_message: conv.last_message,
           last_message_at: conv.last_message_at,
-          messages: conv.messages || [],
+          buyer_profile: conv.buyer_profile,
+          seller_profile: conv.seller_profile,
+          messages: formattedMessages,
+          other_user: {
+            id: otherUser.id,
+            first_name: otherUser.first_name ?? null,
+            last_name: otherUser.last_name ?? null,
+            avatar_url: otherUser.avatar_url ?? null,
+            phone: otherUser.phone ?? null
+          },
           item: item ? {
             id: item.id,
             title: item.title,
@@ -321,7 +336,7 @@ export default function Messages() {
           } : undefined,
           item_title: item?.title || 'Unknown Item'
         };
-      }) || [];
+      });
 
       console.log('Formatted conversations:', formattedConversations);
       setConversations(formattedConversations);
@@ -347,16 +362,36 @@ export default function Messages() {
           id,
           content,
           sender_id,
-          conversation_id,
           created_at,
-          image_url
+          image_url,
+          item_id,
+          items (
+            id,
+            title,
+            price,
+            item_images (
+              image_url
+            )
+          )
         `)
         .eq('conversation_id', convId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
       
-      setMessages(data || []);
+      // Add conversation_id to each message and ensure all fields are properly typed
+      const formattedMessages = (data || []).map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        sender_id: msg.sender_id,
+        conversation_id: convId,
+        created_at: msg.created_at,
+        image_url: msg.image_url || null,
+        item_id: msg.item_id || null,
+        items: msg.items
+      }));
+      
+      setMessages(formattedMessages);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
       toast.error(error.message);
@@ -388,8 +423,10 @@ export default function Messages() {
         id: `temp-${Date.now()}`,
         content: cleanMessage,
         sender_id: currentUser.id,
+        conversation_id: conversationId,
         created_at: timestamp,
-        item_id: itemId
+        item_id: itemId || null,
+        image_url: null
       };
       setMessages(current => [...current, optimisticMessage]);
       scrollToBottom();
@@ -402,7 +439,7 @@ export default function Messages() {
           content: cleanMessage,
           sender_id: currentUser.id,
           created_at: timestamp,
-          item_id: itemId
+          item_id: itemId || null
         });
 
       if (messageError) throw messageError;
@@ -431,33 +468,11 @@ export default function Messages() {
   };
 
   const markConversationAsRead = async (convId: string) => {
-    try {
-      const { error } = await supabase
-        .from('conversations')
-        .update({ unread_count: 0 })
-        .eq('id', convId)
-        .eq(currentUser?.id === selectedConversation?.other_user.id ? 'seller_id' : 'buyer_id', currentUser?.id);
-
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Error marking conversation as read:', error);
-    }
+    // Remove this function since we're removing unread functionality
   };
 
   const markConversationAsUnread = async (convId: string) => {
-    try {
-      const { error } = await supabase
-        .from('conversations')
-        .update({
-          unread_count: supabase.sql`unread_count + 1`
-        })
-        .eq('id', convId)
-        .eq(currentUser?.id === selectedConversation?.other_user.id ? 'buyer_id' : 'seller_id', currentUser?.id);
-
-      if (error) throw error;
-    } catch (error: any) {
-      console.error('Error marking conversation as unread:', error);
-    }
+    // Remove this function since we're removing unread functionality
   };
 
   // Filter conversations based on search query
@@ -484,7 +499,6 @@ export default function Messages() {
           conversation_id: conv.id,
           last_message: conv.last_message,
           last_message_at: conv.last_message_at,
-          unread_count: conv.unread_count || 0,
           item_title: conv.item_title
         });
       }
@@ -554,23 +568,28 @@ export default function Messages() {
                   >
                     <div className="flex items-center gap-4">
                       <div className="relative">
-                        <Avatar className="h-12 w-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20">
+                        <Avatar 
+                          className="h-12 w-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20 cursor-pointer"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/user/${group.other_user.id}`);
+                          }}
+                        >
                           <AvatarImage src={group.other_user.avatar_url} />
                           <AvatarFallback>
                             <User className="h-5 w-5 text-primary" />
                           </AvatarFallback>
                         </Avatar>
-                        {group.items.some(item => item.unread_count > 0) && (
-                          <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
-                            <span className="text-[11px] font-medium text-primary-foreground">
-                              {group.items.reduce((sum, item) => sum + (item.unread_count || 0), 0)}
-                            </span>
-                          </div>
-                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="font-medium text-lg">
+                          <p 
+                            className="font-medium text-lg cursor-pointer hover:text-primary transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/user/${group.other_user.id}`);
+                            }}
+                          >
                             {group.other_user.first_name && group.other_user.last_name 
                               ? `${group.other_user.first_name} ${group.other_user.last_name}`
                               : group.other_user.first_name || 'Anonymous'}
@@ -632,7 +651,7 @@ export default function Messages() {
                             onClick={() => navigate(`/messages/${item.conversation_id}`)}
                             className={`p-4 pl-16 border-t border-white/10 hover:bg-white/5 cursor-pointer transition-all ${
                               conversationId === item.conversation_id ? 'bg-white/5' : ''
-                            } ${item.unread_count ? 'bg-primary/5' : ''}`}
+                            }`}
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
@@ -640,11 +659,7 @@ export default function Messages() {
                                   {item.item_title || 'Unknown Item'}
                                 </p>
                                 {item.last_message && (
-                                  <p className={`text-sm truncate mt-1 ${
-                                    item.unread_count 
-                                      ? 'text-primary/90 font-medium' 
-                                      : 'text-muted-foreground/60'
-                                  }`}>
+                                  <p className="text-sm truncate mt-1 text-muted-foreground/60">
                                     {item.last_message}
                                   </p>
                                 )}
@@ -654,13 +669,6 @@ export default function Messages() {
                                   </p>
                                 )}
                               </div>
-                              {item.unread_count > 0 && (
-                                <div className="h-5 w-5 rounded-full bg-primary flex items-center justify-center ml-2">
-                                  <span className="text-[11px] font-medium text-primary-foreground">
-                                    {item.unread_count}
-                                  </span>
-                                </div>
-                              )}
                             </div>
                           </div>
                         ))}
@@ -687,7 +695,10 @@ export default function Messages() {
                 >
                   <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
-                <Avatar className="h-9 w-9 sm:h-12 sm:w-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20">
+                <Avatar 
+                  className="h-9 w-9 sm:h-12 sm:w-12 ring-2 ring-offset-2 ring-offset-background ring-primary/20 cursor-pointer"
+                  onClick={() => navigate(`/user/${selectedConversation.other_user.id}`)}
+                >
                   <AvatarImage src={selectedConversation.other_user.avatar_url} />
                   <AvatarFallback>
                     <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
@@ -696,7 +707,10 @@ export default function Messages() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm sm:text-lg font-medium truncate">
+                      <p 
+                        className="text-sm sm:text-lg font-medium truncate cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => navigate(`/user/${selectedConversation.other_user.id}`)}
+                      >
                         {selectedConversation.other_user.first_name && selectedConversation.other_user.last_name 
                           ? `${selectedConversation.other_user.first_name} ${selectedConversation.other_user.last_name}`
                           : selectedConversation.other_user.first_name || 'Anonymous'}

@@ -28,6 +28,7 @@ import SignUp from "./pages/auth/SignUp";
 import { cn } from "@/lib/utils";
 import ProtectedRoute from "./components/ProtectedRoute";
 import MyListings from "./pages/MyListings";
+import UserProfile from "./pages/UserProfile";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ const AnimatedRoutes = () => {
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/messages/:conversationId" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/user/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/saved" element={<ProtectedRoute><SavedItems /></ProtectedRoute>} />
             <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
