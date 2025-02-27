@@ -50,7 +50,7 @@ interface UserProfile {
   phone: string;
 }
 
-const Admin = () => {
+export default function Admin() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
@@ -89,7 +89,6 @@ const Admin = () => {
     try {
       setLoading(true);
 
-      // Fetch KYC documents with user profiles
       const { data: kycData, error: kycError } = await supabase
         .from('kyc_documents')
         .select(`
@@ -105,7 +104,6 @@ const Admin = () => {
       if (kycError) throw kycError;
       setKycDocuments(kycData as KYCDocument[] || []);
 
-      // Fetch users with their roles
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select(`
@@ -117,7 +115,6 @@ const Admin = () => {
       if (userError) throw userError;
       setUsers(userData as UserProfile[] || []);
 
-      // Calculate stats
       setStats({
         totalUsers: userData?.length || 0,
         pendingKYC: kycData?.filter(doc => doc.status === 'pending').length || 0,
@@ -135,7 +132,6 @@ const Admin = () => {
     try {
       const status = action === 'verify' ? 'verified' : 'rejected';
 
-      // Update KYC document status
       const { error: docError } = await supabase
         .from('kyc_documents')
         .update({ 
@@ -147,7 +143,6 @@ const Admin = () => {
 
       if (docError) throw docError;
 
-      // Update profile KYC status
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
@@ -167,20 +162,36 @@ const Admin = () => {
 
   const handleMakeAdmin = async (userId: string) => {
     try {
-      const { error } = await supabase
+      const { data: existingRole, error: checkError } = await supabase
+        .from('user_roles')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('role', 'admin')
+        .single();
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        throw checkError;
+      }
+
+      if (existingRole) {
+        toast.info("User is already an admin");
+        return;
+      }
+
+      const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
           user_id: userId,
-          role: 'admin',
-          created_at: new Date().toISOString()
+          role: 'admin'
         });
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       toast.success("User promoted to admin successfully");
       fetchData();
     } catch (error: any) {
-      toast.error(error.message);
+      console.error('Error making user admin:', error);
+      toast.error(error.message || "Failed to make user admin");
     }
   };
 
@@ -202,7 +213,6 @@ const Admin = () => {
           </Button>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -343,6 +353,4 @@ const Admin = () => {
       </div>
     </PageTransition>
   );
-};
-
-export default Admin; 
+}

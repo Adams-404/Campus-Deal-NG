@@ -1,9 +1,11 @@
+
 import { Home, MessageSquare, Plus, User, Settings, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { SellModal } from "./SellModal";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const BottomNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
@@ -12,16 +14,27 @@ export const BottomNav = () => {
 
   useEffect(() => {
     checkAdminStatus();
-  }, [location.pathname]);
+  }, []);
 
   const checkAdminStatus = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: roles } = await supabase
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: roles, error } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id);
-      setIsAdmin(roles?.some(r => r.role === 'admin') ?? false);
+        .eq('user_id', user.id)
+        .eq('role', 'admin');
+
+      if (error) {
+        console.error('Error checking admin status:', error);
+        return;
+      }
+
+      setIsAdmin(roles && roles.length > 0);
+    } catch (error) {
+      console.error('Error checking admin status:', error);
     }
   };
 

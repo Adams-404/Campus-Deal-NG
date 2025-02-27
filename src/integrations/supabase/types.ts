@@ -9,33 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      conversations: {
+      conversation_items: {
         Row: {
+          conversation_id: string
+          created_at: string
           id: string
-          buyer_id: string
-          seller_id: string
           item_id: string
-          last_message: string | null
-          last_message_at: string | null
-          created_at: string | null
         }
         Insert: {
+          conversation_id: string
+          created_at?: string
           id?: string
-          buyer_id: string
-          seller_id: string
           item_id: string
-          last_message?: string | null
-          last_message_at?: string | null
-          created_at?: string | null
         }
         Update: {
+          conversation_id?: string
+          created_at?: string
           id?: string
-          buyer_id?: string
-          seller_id?: string
           item_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_items_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversations: {
+        Row: {
+          buyer_id: string
+          created_at: string
+          id: string
+          last_message: string | null
+          last_message_at: string
+          seller_id: string
+        }
+        Insert: {
+          buyer_id: string
+          created_at?: string
+          id?: string
           last_message?: string | null
-          last_message_at?: string | null
-          created_at?: string | null
+          last_message_at?: string
+          seller_id: string
+        }
+        Update: {
+          buyer_id?: string
+          created_at?: string
+          id?: string
+          last_message?: string | null
+          last_message_at?: string
+          seller_id?: string
         }
         Relationships: [
           {
@@ -52,65 +85,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "conversations_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
-      messages: {
-        Row: {
-          id: string
-          conversation_id: string
-          sender_id: string
-          content: string
-          created_at: string
-          image_url: string | null
-          item_id: string | null
-        }
-        Insert: {
-          id?: string
-          conversation_id: string
-          sender_id: string
-          content: string
-          created_at?: string
-          image_url?: string | null
-          item_id?: string | null
-        }
-        Update: {
-          id?: string
-          conversation_id?: string
-          sender_id?: string
-          content?: string
-          created_at?: string
-          image_url?: string | null
-          item_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "conversations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_sender_id_fkey"
-            columns: ["sender_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "messages_item_id_fkey"
-            columns: ["item_id"]
-            isOneToOne: false
-            referencedRelation: "items"
-            referencedColumns: ["id"]
-          }
         ]
       }
       item_images: {
@@ -142,7 +116,7 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "items"
             referencedColumns: ["id"]
-          }
+          },
         ]
       }
       item_videos: {
@@ -265,6 +239,51 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          image_url: string | null
+          item_id: string | null
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          item_id?: string | null
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          item_id?: string | null
+          sender_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           address: string | null
@@ -300,6 +319,35 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      saved_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_items_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
