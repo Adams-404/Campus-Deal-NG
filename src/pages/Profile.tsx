@@ -415,11 +415,26 @@ const Profile = () => {
               )}
               {profile?.kyc_status !== 'verified' && (
                 <Button 
-                  className="bg-gradient-to-r from-yellow-500/20 via-orange-500/20 to-red-500/20 hover:from-yellow-500/30 hover:via-orange-500/30 hover:to-red-500/30 text-orange-500 border-orange-500/20 transition-all duration-300 shadow-lg shadow-orange-500/5"
-                  onClick={() => setShowEditProfile(true)}
+                  className={cn(
+                    "transition-all duration-300 shadow-lg",
+                    profile?.kyc_status === 'pending'
+                      ? "bg-orange-500/10 hover:bg-orange-500/10 text-orange-500 border border-orange-500/20 shadow-orange-500/5 cursor-not-allowed"
+                      : "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 shadow-yellow-500/5"
+                  )}
+                  onClick={() => profile?.kyc_status !== 'pending' && setShowEditProfile(true)}
+                  disabled={profile?.kyc_status === 'pending'}
                 >
-                  <Shield className="w-4 h-4 mr-2" />
-                  Complete Verification
+                  {profile?.kyc_status === 'pending' ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Verification Pending
+                    </>
+                  ) : (
+                    <>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Complete Verification
+                    </>
+                  )}
                 </Button>
               )}
             </div>

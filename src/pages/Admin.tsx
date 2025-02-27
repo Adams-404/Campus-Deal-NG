@@ -18,7 +18,11 @@ import {
   BarChart,
   TrendingUp,
   Clock,
-  Crown
+  Crown,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar
 } from "lucide-react";
 import {
   AreaChart,
@@ -33,6 +37,7 @@ import {
   Cell
 } from 'recharts';
 import type { Database } from '@/integrations/supabase/types';
+import { AdminActionModal } from "@/components/AdminActionModal";
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type KYCStatus = Database['public']['Enums']['kyc_status'];
@@ -74,6 +79,9 @@ export default function Admin() {
     userGrowthData: [] as { date: string; users: number }[],
     kycStatusData: [] as { name: string; value: number }[]
   });
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [adminAction, setAdminAction] = useState<'add' | 'remove'>('add');
+  const [showAdminModal, setShowAdminModal] = useState(false);
 
   useEffect(() => {
     checkAdminAccess();
@@ -251,17 +259,26 @@ export default function Admin() {
     }
   };
 
-  const handleMakeAdmin = async (userId: string) => {
+  const handleMakeAdmin = async (email: string) => {
     try {
-      // Check if user is already admin
-      const { data: existingRole, error: checkError } = await supabase
-        .from('user_roles')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .maybeSingle();
+      // First get the user by email from auth.users
+      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
+      
+      if (usersError) throw usersError;
+      
+      const user = users.find(u => u.email === email);
+      if (!user) {
+        toast.error("User not found with this email");
+        return;
+      }
 
-      if (checkError) throw checkError;
+      // Check if already admin
+      const { data: existingRole } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .single();
 
       if (existingRole) {
         toast.info("User is already an admin");
@@ -272,17 +289,58 @@ export default function Admin() {
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
-          user_id: userId,
+          user_id: user.id,
           role: 'admin'
         });
 
       if (insertError) throw insertError;
 
       toast.success("User promoted to admin successfully");
-      fetchData();
+      await fetchData();
     } catch (error: any) {
       console.error('Error making user admin:', error);
       toast.error(error.message || "Failed to make user admin");
+      throw error; // Re-throw to be caught by the modal
+    }
+  };
+
+  const handleRemoveAdmin = async (userId: string) => {
+    try {
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', userId)
+        .eq('role', 'admin');
+
+      if (deleteError) throw deleteError;
+
+      toast.success("Admin privileges removed successfully");
+      await fetchData();
+    } catch (error: any) {
+      console.error('Error removing admin:', error);
+      toast.error(error.message || "Failed to remove admin privileges");
+      throw error; // Re-throw to be caught by the modal
+    }
+  };
+
+  const handleAdminAction = (user: UserProfile | null, action: 'add' | 'remove') => {
+    setSelectedUser(user);
+    setAdminAction(action);
+    setShowAdminModal(true);
+  };
+
+  const handleAdminConfirm = async (email: string) => {
+    try {
+      if (adminAction === 'add') {
+        await handleMakeAdmin(email);
+      } else if (selectedUser) {
+        await handleRemoveAdmin(selectedUser.id);
+      }
+      setShowAdminModal(false);
+      setSelectedUser(null);
+    } catch (error) {
+      // Error is already handled in the individual functions
+      console.error('Error in handleAdminConfirm:', error);
     }
   };
 
@@ -438,15 +496,135 @@ export default function Admin() {
           </Card>
         </div>
 
-        <Tabs defaultValue="kyc" className="space-y-4">
+        <Tabs defaultValue="admins" className="space-y-4">
           <TabsList className="bg-secondary/50 border border-blue-500/20">
+            <TabsTrigger value="admins" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
+              Admins
+            </TabsTrigger>
+            <TabsTrigger value="users" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
+              Users
+            </TabsTrigger>
             <TabsTrigger value="kyc" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
               KYC Verification
             </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
-              User Management
-            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="admins" className="space-y-4">
+            <div className="flex justify-end">
+              <Button
+                onClick={() => {
+                  setSelectedUser(null);
+                  setAdminAction('add');
+                  setShowAdminModal(true);
+                }}
+                className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+              >
+                <Crown className="w-4 h-4" />
+                Add New Admin
+              </Button>
+            </div>
+
+            {users
+              .filter(user => user.roles?.some(r => r.role === 'admin'))
+              .map((admin) => (
+                <Card key={admin.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                  <CardContent className="p-6">
+                    <div className="grid gap-6">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
+                          <Crown className="h-6 w-6 text-blue-500" />
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            {admin.first_name} {admin.last_name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">Administrator</p>
+                        </div>
+                      </div>
+
+                      <div className="grid gap-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4 text-blue-500" />
+                          <span>{admin.email}</span>
+                        </div>
+                        {admin.phone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4 text-blue-500" />
+                            <span>{admin.phone}</span>
+                          </div>
+                        )}
+                        {admin.address && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <MapPin className="h-4 w-4 text-blue-500" />
+                            <span>{admin.address}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-blue-500" />
+                          <span>Joined {new Date(admin.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Admin
+                        </Badge>
+                        <Badge variant={
+                          admin.kyc_status === 'verified'
+                            ? 'outline'
+                            : admin.kyc_status === 'rejected'
+                            ? 'destructive'
+                            : 'secondary'
+                        }
+                        className={
+                          admin.kyc_status === 'verified'
+                            ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
+                            : admin.kyc_status === 'rejected'
+                            ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
+                            : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
+                        }>
+                          {admin.kyc_status?.charAt(0).toUpperCase() + admin.kyc_status?.slice(1)}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+          </TabsContent>
+
+          <TabsContent value="users" className="space-y-4">
+            {users.map((user) => (
+              <Card key={user.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold">
+                        {user.first_name} {user.last_name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">{user.email}</p>
+                    </div>
+                    <Badge variant={
+                      user.kyc_status === 'verified'
+                        ? 'outline'
+                        : user.kyc_status === 'rejected'
+                        ? 'destructive'
+                        : 'secondary'
+                    }
+                    className={
+                      user.kyc_status === 'verified'
+                        ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
+                        : user.kyc_status === 'rejected'
+                        ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
+                        : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
+                    }>
+                      {user.kyc_status?.charAt(0).toUpperCase() + user.kyc_status?.slice(1)}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
 
           <TabsContent value="kyc" className="space-y-4">
             {kycDocuments.map((doc) => (
@@ -516,60 +694,17 @@ export default function Admin() {
               </Card>
             ))}
           </TabsContent>
-
-          <TabsContent value="users" className="space-y-4">
-            {users.map((user) => (
-              <Card key={user.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold">
-                        {user.first_name} {user.last_name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {user.roles?.some(r => r.role === 'admin') ? (
-                        <Badge 
-                          variant="outline" 
-                          className="bg-blue-500/10 text-blue-500 border-blue-500/20"
-                        >
-                          <Crown className="w-3 h-3 mr-1" />
-                          Admin
-                        </Badge>
-                      ) : (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleMakeAdmin(user.id)}
-                          className="border-blue-500/20 hover:bg-blue-500/10 text-blue-500"
-                        >
-                          Make Admin
-                        </Button>
-                      )}
-                      <Badge variant={
-                        user.kyc_status === 'verified'
-                          ? 'outline'
-                          : user.kyc_status === 'rejected'
-                          ? 'destructive'
-                          : 'secondary'
-                      }
-                      className={
-                        user.kyc_status === 'verified'
-                          ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
-                          : user.kyc_status === 'rejected'
-                          ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
-                          : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
-                      }>
-                        {user.kyc_status?.charAt(0).toUpperCase() + user.kyc_status?.slice(1)}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </TabsContent>
         </Tabs>
+
+        <AdminActionModal
+          open={showAdminModal}
+          onClose={() => {
+            setShowAdminModal(false);
+            setSelectedUser(null);
+          }}
+          onConfirm={handleAdminConfirm}
+          action={adminAction}
+        />
       </div>
     </PageTransition>
   );

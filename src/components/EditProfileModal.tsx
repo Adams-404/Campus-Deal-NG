@@ -1,4 +1,4 @@
-import { X, Upload, Shield, User2, Mail, Phone, MapPin, BadgeCheck } from "lucide-react";
+import { X, Upload, Shield, User2, Mail, Phone, MapPin, BadgeCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -83,9 +83,9 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end justify-center animate-in fade-in duration-300">
-      <div className="bg-background w-full rounded-t-2xl overflow-hidden animate-in slide-in-from-bottom duration-500">
-        <form onSubmit={handleSubmit}>
-          <div className="flex justify-between items-center p-4 border-b border-border">
+      <div className="bg-background w-full rounded-t-2xl overflow-hidden animate-in slide-in-from-bottom duration-500 flex flex-col max-h-[80vh] mb-24 sm:mb-0 sm:max-h-[90vh]">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          <div className="flex justify-between items-center p-4 border-b border-border flex-shrink-0">
             <div className="flex items-center gap-2">
               <h2 className="text-xl font-semibold">Edit Profile</h2>
               {profile?.kyc_status && (
@@ -113,111 +113,124 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
               <X className="h-5 w-5" />
             </Button>
           </div>
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="space-y-6 pb-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="first_name" className="flex items-center gap-2">
+                      <User2 className="w-4 h-4 text-blue-500" />
+                      First Name
+                    </Label>
+                    <Input
+                      id="first_name"
+                      value={formData.first_name}
+                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                      placeholder="John"
+                      className="bg-secondary border-border"
+                    />
+                  </div>
 
-          <div className="p-4 space-y-6 max-h-[80vh] overflow-y-auto">
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="last_name" className="flex items-center gap-2">
+                      <User2 className="w-4 h-4 text-blue-500" />
+                      Last Name
+                    </Label>
+                    <Input
+                      id="last_name"
+                      value={formData.last_name}
+                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                      placeholder="Doe"
+                      className="bg-secondary border-border"
+                    />
+                  </div>
+                </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="first_name" className="flex items-center gap-2">
-                    <User2 className="w-4 h-4 text-blue-500" />
-                    First Name
+                  <Label htmlFor="phone" className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-green-500" />
+                    Phone Number
                   </Label>
                   <Input
-                    id="first_name"
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    placeholder="John"
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+1 (234) 567-8900"
                     className="bg-secondary border-border"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="last_name" className="flex items-center gap-2">
-                    <User2 className="w-4 h-4 text-blue-500" />
-                    Last Name
+                  <Label htmlFor="address" className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-red-500" />
+                    Address
                   </Label>
                   <Input
-                    id="last_name"
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                    placeholder="Doe"
+                    id="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Your address"
                     className="bg-secondary border-border"
                   />
                 </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-green-500" />
-                  Phone Number
-                </Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  placeholder="+1 (234) 567-8900"
-                  className="bg-secondary border-border"
-                />
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="address" className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-red-500" />
-                  Address
-                </Label>
-                <Input
-                  id="address"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  placeholder="Your address"
-                  className="bg-secondary border-border"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="verification" className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-yellow-500" />
-                  <span>Student ID Verification</span>
-                  {kycDocument && (
-                    <Badge variant={
-                      kycDocument.status === 'verified' 
-                        ? 'outline'
-                        : kycDocument.status === 'rejected'
-                        ? 'destructive'
-                        : 'secondary'
-                    } className={
-                      kycDocument.status === 'verified' 
-                        ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                        : kycDocument.status === 'rejected'
-                        ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                        : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
-                    }>
-                      {kycDocument.status.charAt(0).toUpperCase() + kycDocument.status.slice(1)}
-                    </Badge>
+                <div className="space-y-2">
+                  <Label htmlFor="verification" className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-yellow-500" />
+                    <span>Student ID Verification</span>
+                    {(kycDocument || profile?.kyc_status) && (
+                      <Badge variant={
+                        profile?.kyc_status === 'verified' 
+                          ? 'outline'
+                          : profile?.kyc_status === 'rejected'
+                          ? 'destructive'
+                          : 'secondary'
+                      } className={
+                        profile?.kyc_status === 'verified' 
+                          ? 'bg-green-500/10 text-green-500 border-green-500/20'
+                          : profile?.kyc_status === 'rejected'
+                          ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                          : 'bg-orange-500/10 text-orange-500 border-orange-500/20'
+                      }>
+                        {profile?.kyc_status === 'verified' && <BadgeCheck className="w-3 h-3 mr-1" />}
+                        {profile?.kyc_status === 'rejected' && <X className="w-3 h-3 mr-1" />}
+                        {profile?.kyc_status === 'pending' && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+                        {profile?.kyc_status?.charAt(0).toUpperCase() + profile?.kyc_status?.slice(1) || 'Not Verified'}
+                      </Badge>
+                    )}
+                  </Label>
+                  {profile?.kyc_status === 'pending' ? (
+                    <div className="bg-orange-500/5 text-orange-500 p-4 rounded-lg border border-orange-500/20 flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <p className="text-sm">Your verification is being processed. We'll notify you once it's complete.</p>
+                    </div>
+                  ) : (
+                    <>
+                      <Input 
+                        id="verification" 
+                        type="file" 
+                        accept="image/*,.pdf"
+                        onChange={async (e) => {
+                          if (!e.target.files?.[0]) return;
+                          await uploadKycDocument(e.target.files[0]);
+                        }}
+                        className="bg-secondary border-border file:bg-secondary file:text-foreground file:border file:border-border file:rounded-md hover:file:bg-secondary/80" 
+                        disabled={profile?.kyc_status === 'pending'}
+                      />
+                      <p className="text-sm text-muted-foreground">
+                        Upload your student ID for verification. Supported formats: Images, PDF
+                      </p>
+                    </>
                   )}
-                </Label>
-                <Input 
-                  id="verification" 
-                  type="file" 
-                  accept="image/*,.pdf"
-                  onChange={async (e) => {
-                    if (!e.target.files?.[0]) return;
-                    await uploadKycDocument(e.target.files[0]);
-                  }}
-                  className="bg-secondary border-border file:bg-secondary file:text-foreground file:border file:border-border file:rounded-md hover:file:bg-secondary/80" 
-                />
-                <p className="text-sm text-muted-foreground">
-                  Upload your student ID for verification. Supported formats: Images, PDF
-                </p>
+                </div>
               </div>
             </div>
           </div>
-
-          <div className="p-4 border-t border-border bg-secondary/50">
+          <div className="p-4 border-t border-border bg-secondary/50 flex-shrink-0">
             <Button 
               type="submit"
-              className="w-full bg-secondary hover:bg-secondary/80"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white transition-colors"
               disabled={uploading}
             >
               {uploading ? 'Uploading...' : 'Save Changes'}
