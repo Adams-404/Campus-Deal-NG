@@ -128,6 +128,7 @@ export default function Messages() {
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -144,6 +145,15 @@ export default function Messages() {
         return;
       }
       setCurrentUser(user);
+
+      // Get the user's profile
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      setCurrentUserProfile(profileData);
       fetchConversations(user.id);
     };
     setup();
@@ -746,35 +756,68 @@ export default function Messages() {
                   </div>
                 )}
                 <AnimatePresence initial={false}>
-                  {messages.map((message, index) => (
-                    <motion.div
-                      key={message.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      className={`flex ${
-                        message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'
-                      } mb-2 last:mb-0`}
-                    >
-                      <div
-                        className={cn(
-                          "max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-4 shadow-sm transition-colors duration-200",
-                          message.sender_id === currentUser?.id
-                            ? "border-2 border-primary/60 hover:border-primary/80 bg-primary/5 text-foreground rounded-br-sm"
-                            : "border-2 border-green-500/60 hover:border-green-500/80 bg-green-500/5 text-foreground rounded-bl-sm"
-                        )}
-                      >
-                        {message.image_url && (
-                          <img
-                            src={message.image_url}
-                            alt="Message attachment"
-                            className="rounded-lg mb-2 max-w-full"
-                          />
-                        )}
-                        <p className="break-words text-[13px] sm:text-[15px] leading-relaxed">{message.content}</p>
-                        <p className="text-[10px] sm:text-xs text-muted-foreground text-right mt-1.5">
-                          {format(new Date(message.created_at), 'HH:mm')}
-                        </p>
+                  {Object.entries(
+                    messages.reduce((groups, message) => {
+                      const date = format(new Date(message.created_at), 'yyyy-MM-dd');
+                      if (!groups[date]) {
+                        groups[date] = [];
+                      }
+                      groups[date].push(message);
+                      return groups;
+                    }, {} as Record<string, Message[]>)
+                  ).map(([date, dateMessages]) => (
+                    <motion.div key={date}>
+                      <div className="flex items-center justify-center my-4">
+                        <div className="px-3 py-1.5 rounded-full bg-secondary/30 backdrop-blur-sm">
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(date), "EEEE, MMMM d")}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        {dateMessages.map((message) => (
+                          <motion.div
+                            key={message.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className={`flex items-end gap-2 ${
+                              message.sender_id === currentUser?.id ? 'flex-row-reverse' : 'flex-row'
+                            } mb-2 last:mb-0`}
+                          >
+                            <Avatar className="h-6 w-6 sm:h-8 sm:w-8 ring-2 ring-offset-2 ring-offset-background ring-primary/20 flex-shrink-0">
+                              <AvatarImage 
+                                src={message.sender_id === currentUser?.id 
+                                  ? currentUserProfile?.avatar_url
+                                  : selectedConversation.other_user.avatar_url
+                                } 
+                              />
+                              <AvatarFallback>
+                                <User className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div
+                              className={cn(
+                                "max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-4 shadow-sm transition-colors duration-200",
+                                message.sender_id === currentUser?.id
+                                  ? "border-2 border-primary/60 hover:border-primary/80 bg-primary/5 text-foreground rounded-br-sm"
+                                  : "border-2 border-green-500/60 hover:border-green-500/80 bg-green-500/5 text-foreground rounded-bl-sm"
+                              )}
+                            >
+                              {message.image_url && (
+                                <img
+                                  src={message.image_url}
+                                  alt="Message attachment"
+                                  className="rounded-lg mb-2 max-w-full"
+                                />
+                              )}
+                              <p className="break-words text-[13px] sm:text-[15px] leading-relaxed">{message.content}</p>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground text-right mt-1.5">
+                                {format(new Date(message.created_at), 'HH:mm')}
+                              </p>
+                            </div>
+                          </motion.div>
+                        ))}
                       </div>
                     </motion.div>
                   ))}
