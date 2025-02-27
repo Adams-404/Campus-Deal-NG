@@ -45,10 +45,24 @@ export default function Settings() {
   const { isEnabled, isPushSupported, toggleNotifications } = useNotifications();
   const navigate = useNavigate();
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(isEnabled);
 
   useEffect(() => {
+    checkAdminStatus();
     window.scrollTo(0, 0);
   }, []);
+
+  const checkAdminStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      setIsAdmin(roles?.some(r => r.role === 'admin') ?? false);
+    }
+  };
 
   const notificationTypes = [
     {
@@ -120,10 +134,39 @@ export default function Settings() {
       items: [
         {
           icon: User,
-          label: "Profile Settings",
+          label: "Profile",
           href: "/profile",
           iconColor: "text-blue-500",
           bgColor: "bg-blue-500/10"
+        },
+        ...(isAdmin ? [{
+          icon: Shield,
+          label: "Admin Dashboard",
+          href: "/admin",
+          iconColor: "text-purple-500",
+          bgColor: "bg-purple-500/10"
+        }] : []),
+        {
+          icon: Bell,
+          label: "Notifications",
+          onClick: () => setNotificationsEnabled(!notificationsEnabled),
+          iconColor: "text-pink-500",
+          bgColor: "bg-pink-500/10",
+          rightElement: (
+            <div className="flex items-center gap-2">
+              {notificationsEnabled ? (
+                <>
+                  <BellRing className="w-4 h-4 text-green-500" />
+                  <span className="text-sm text-muted-foreground">On</span>
+                </>
+              ) : (
+                <>
+                  <BellOff className="w-4 h-4 text-red-500" />
+                  <span className="text-sm text-muted-foreground">Off</span>
+                </>
+              )}
+            </div>
+          )
         }
       ]
     },

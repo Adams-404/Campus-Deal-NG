@@ -28,6 +28,8 @@ import AuthLayout from "./components/AuthLayout";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import ProtectedRoute from "./components/ProtectedRoute";
+import AdminRoute from "./components/AdminRoute";
+import Admin from "./pages/Admin";
 import MyListings from "./pages/MyListings";
 import UserProfile from "./pages/UserProfile";
 import { SearchProvider } from "./contexts/SearchContext";
@@ -72,7 +74,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 const AnimatedRoutes = () => {
   const location = useLocation();
   const showNav = location.pathname === '/home';
-  const hideBottomNav = ["/", "/auth", "/auth/signin", "/auth/signup"].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
+  const hideBottomNav = ["/", "/auth", "/auth/signin", "/auth/signup", "/admin"].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
   
   useEffect(() => {
     if (location.pathname !== '/') {
@@ -110,6 +112,9 @@ const AnimatedRoutes = () => {
             <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
             <Route path="/item/:id" element={<ProtectedRoute><ViewItem /></ProtectedRoute>} />
             <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
+
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />

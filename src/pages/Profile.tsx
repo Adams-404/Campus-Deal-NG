@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { PageTransition } from "@/components/PageTransition";
 import EditProfileModal from "@/components/EditProfileModal";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface UserItem {
   id: string;
@@ -28,6 +29,7 @@ const Profile = () => {
   const [uploading, setUploading] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [userItems, setUserItems] = useState<UserItem[]>([]);
+  const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,15 +47,25 @@ const Profile = () => {
 
       setUser(user);
 
-      // Get profile data
-      let { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+      // Get profile data and check role
+      const [profileResult, rolesResult] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single(),
+        supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+      ]);
 
-      if (profileError) throw profileError;
-      setProfile(profileData);
+      if (profileResult.error) throw profileResult.error;
+      setProfile(profileResult.data);
+
+      // Set user role
+      const isAdmin = rolesResult.data?.some(r => r.role === 'admin') ?? false;
+      setUserRole(isAdmin ? 'admin' : 'user');
 
       // Get latest KYC document
       let { data: kycData, error: kycError } = await supabase
@@ -300,6 +312,28 @@ const Profile = () => {
             <p className="text-muted-foreground">Member since {new Date(user?.created_at).toLocaleDateString()}</p>
             <div className="flex items-center justify-center gap-2">
               {getKycStatusBadge()}
+              <Badge 
+                variant="outline" 
+                className={cn(
+                  "capitalize",
+                  userRole === 'admin' 
+                    ? "bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 border-purple-500/20"
+                    : "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20"
+                )}
+              >
+                <Shield className="w-3 h-3 mr-1" />
+                {userRole}
+              </Badge>
+              {userRole === 'admin' && (
+                <Button
+                  variant="outline"
+                  className="mt-2 bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 border-purple-500/20"
+                  onClick={() => navigate('/admin')}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Go to Admin Dashboard
+                </Button>
+              )}
             </div>
           </div>
 
