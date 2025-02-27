@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -45,9 +46,9 @@ interface UserProfile {
     role: 'admin' | 'user';
   }>;
   updated_at: string;
-  address: string;
-  avatar_url: string;
-  phone: string;
+  address: string | null;
+  avatar_url: string | null;
+  phone: string | null;
 }
 
 export default function Admin() {
@@ -76,9 +77,10 @@ export default function Admin() {
     const { data: roles } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .eq('role', 'admin');
 
-    if (!roles?.some(r => r.role === 'admin')) {
+    if (!roles?.length) {
       navigate('/');
       toast.error("Access denied. Admin privileges required.");
       return;
@@ -89,11 +91,12 @@ export default function Admin() {
     try {
       setLoading(true);
 
+      // Fetch KYC documents with profiles
       const { data: kycData, error: kycError } = await supabase
         .from('kyc_documents')
         .select(`
           *,
-          profile:profiles(
+          profile:profiles!kyc_documents_user_id_fkey (
             first_name,
             last_name,
             email
@@ -102,8 +105,8 @@ export default function Admin() {
         .order('created_at', { ascending: false });
 
       if (kycError) throw kycError;
-      setKycDocuments(kycData as KYCDocument[] || []);
 
+      // Fetch users with their roles
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select(`
@@ -113,12 +116,21 @@ export default function Admin() {
         .order('created_at', { ascending: false });
 
       if (userError) throw userError;
-      setUsers(userData as UserProfile[] || []);
+
+      // Safely type cast the data
+      const typedKycData = (kycData || []) as KYCDocument[];
+      const typedUserData = (userData || []).map(user => ({
+        ...user,
+        email: '', // Add missing required field
+      })) as UserProfile[];
+
+      setKycDocuments(typedKycData);
+      setUsers(typedUserData);
 
       setStats({
-        totalUsers: userData?.length || 0,
-        pendingKYC: kycData?.filter(doc => doc.status === 'pending').length || 0,
-        verifiedUsers: userData?.filter(user => user.kyc_status === 'verified').length || 0,
+        totalUsers: typedUserData.length,
+        pendingKYC: typedKycData.filter(doc => doc.status === 'pending').length,
+        verifiedUsers: typedUserData.filter(user => user.kyc_status === 'verified').length,
       });
 
     } catch (error: any) {
@@ -162,22 +174,22 @@ export default function Admin() {
 
   const handleMakeAdmin = async (userId: string) => {
     try {
+      // Check if user is already admin
       const { data: existingRole, error: checkError } = await supabase
         .from('user_roles')
         .select('*')
         .eq('user_id', userId)
         .eq('role', 'admin')
-        .single();
+        .maybeSingle();
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
+      if (checkError) throw checkError;
 
       if (existingRole) {
         toast.info("User is already an admin");
         return;
       }
 
+      // Add admin role
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
