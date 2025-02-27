@@ -224,59 +224,35 @@ export default function ViewItem() {
         return;
       }
 
-      // Check if there's already a conversation between these users
-      const { data: existingConversation } = await supabase
+      // Create a new conversation
+      const { data: newConversation, error: conversationError } = await supabase
         .from('conversations')
-        .select('id')
-        .or(`and(buyer_id.eq.${user.id},seller_id.eq.${item?.seller_id}),and(buyer_id.eq.${item?.seller_id},seller_id.eq.${user.id})`)
+        .insert({
+          buyer_id: user.id,
+          seller_id: item?.seller_id,
+          last_message: `Interested in ${item?.title}`,
+          last_message_at: new Date().toISOString()
+        })
+        .select()
         .single();
 
-      let conversationId;
-
-      if (existingConversation) {
-        conversationId = existingConversation.id;
-        
-        // Update the existing conversation
-        const { error: updateError } = await supabase
-          .from('conversations')
-          .update({
-            last_message: `Interested in ${item?.title}`,
-            last_message_at: new Date().toISOString()
-          })
-          .eq('id', conversationId);
-
-        if (updateError) throw updateError;
-      } else {
-        // Create new conversation
-        const { data: newConversation, error: conversationError } = await supabase
-          .from('conversations')
-          .insert({
-            buyer_id: user.id,
-            seller_id: item?.seller_id,
-            last_message: `Interested in ${item?.title}`,
-            last_message_at: new Date().toISOString()
-          })
-          .select()
-          .single();
-
-        if (conversationError) throw conversationError;
-        conversationId = newConversation.id;
-      }
+      if (conversationError) throw conversationError;
 
       // Send initial message
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
-          conversation_id: conversationId,
+          conversation_id: newConversation.id,
           content: `Hi, I'm interested in ${item?.title}`,
           sender_id: user.id,
-          created_at: new Date().toISOString()
+          created_at: new Date().toISOString(),
+          item_id: item?.id
         });
 
       if (messageError) throw messageError;
 
       // Navigate to the conversation
-      navigate(`/messages/${conversationId}`);
+      navigate(`/messages/${newConversation.id}`);
     } catch (error: any) {
       console.error('Error starting conversation:', error);
       toast.error(error.message);

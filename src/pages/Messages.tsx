@@ -13,7 +13,9 @@ import {
   Search,
   Smile,
   Paperclip,
-  MessageSquare
+  MessageSquare,
+  Phone,
+  MessageCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from 'date-fns';
@@ -43,10 +45,13 @@ interface Conversation {
     first_name?: string;
     last_name?: string;
     avatar_url?: string;
+    phone?: string;
   };
   last_message?: string;
   last_message_at?: string;
   unread_count?: number;
+  item_title?: string;
+  messages?: Message[];
   item?: {
     id: string;
     title: string;
@@ -106,6 +111,7 @@ interface GroupedConversation {
     last_message?: string;
     last_message_at?: string;
     unread_count: number;
+    item_title?: string;
   }[];
 }
 
@@ -230,61 +236,86 @@ export default function Messages() {
     try {
       console.log('Fetching conversations for user:', userId);
       
-      const { data, error } = await supabase
+      // Get conversations where the user is either buyer or seller
+      const { data: conversationsData, error: conversationsError } = await supabase
         .from('conversations')
         .select(`
           id,
-          last_message,
-          last_message_at,
           buyer_id,
           seller_id,
+          last_message,
+          last_message_at,
           buyer_profile:profiles!buyer_id (
             id,
             first_name,
             last_name,
-            avatar_url
+            avatar_url,
+            phone
           ),
           seller_profile:profiles!seller_id (
             id,
             first_name,
             last_name,
-            avatar_url
+            avatar_url,
+            phone
+          ),
+          messages!inner (
+            id,
+            content,
+            created_at,
+            sender_id,
+            item_id,
+            items (
+              id,
+              title,
+              price,
+              item_images (
+                image_url
+              )
+            )
           )
         `)
         .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
         .order('last_message_at', { ascending: false });
 
-      console.log('Conversations data:', data);
-      console.log('Conversations error:', error);
+      if (conversationsError) throw conversationsError;
 
-      if (error) throw error;
+      // Transform the data into the expected format
+      const formattedConversations = conversationsData?.map(conv => {
+        const otherUser = userId === conv.seller_id ? conv.buyer_profile : conv.seller_profile;
+        
+        // Get the first message that has an item (which should be the initial message)
+        const messageWithItem = conv.messages?.find(msg => msg.items);
+        const item = messageWithItem?.items;
 
-      if (data) {
-        const formattedConversations = (data as DatabaseConversation[]).map(conv => {
-          const otherUser = userId === conv.seller_id ? conv.buyer_profile : conv.seller_profile;
-          console.log('Formatting conversation:', conv.id);
-          
-          return {
-            id: conv.id,
-            other_user: {
-              id: otherUser.id,
-              first_name: otherUser.first_name ?? undefined,
-              last_name: otherUser.last_name ?? undefined,
-              avatar_url: otherUser.avatar_url ?? undefined
-            },
-            last_message: conv.last_message ?? undefined,
-            last_message_at: conv.last_message_at ?? undefined,
-            unread_count: 0
-          };
-        });
+        return {
+          id: conv.id,
+          other_user: {
+            id: otherUser.id,
+            first_name: otherUser.first_name ?? undefined,
+            last_name: otherUser.last_name ?? undefined,
+            avatar_url: otherUser.avatar_url ?? undefined,
+            phone: otherUser.phone ?? undefined
+          },
+          last_message: conv.last_message,
+          last_message_at: conv.last_message_at,
+          messages: conv.messages || [],
+          item: item ? {
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            images: item.item_images?.map(img => img.image_url) || []
+          } : undefined,
+          item_title: item?.title || 'Unknown Item'
+        };
+      }) || [];
 
-        console.log('Formatted conversations:', formattedConversations);
-        setConversations(formattedConversations);
+      console.log('Formatted conversations:', formattedConversations);
+      setConversations(formattedConversations);
 
-        if (conversationId) {
-          const selected = formattedConversations.find(c => c.id === conversationId);
-          setSelectedConversation(selected || null);
-        }
+      if (conversationId) {
+        const selected = formattedConversations.find(c => c.id === conversationId);
+        setSelectedConversation(selected || null);
       }
     } catch (error: any) {
       console.error('Error fetching conversations:', error);
@@ -419,8 +450,7 @@ export default function Messages() {
   // Filter conversations based on search query
   const filteredConversations = conversations.filter(conv => 
     conv.other_user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.item?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.item?.price.toString().includes(searchQuery.toLowerCase())
+    conv.item_title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const groupConversationsByUser = (conversations: Conversation[]): GroupedConversation[] => {
@@ -432,13 +462,20 @@ export default function Messages() {
           items: []
         });
       }
-      acc.get(userId)!.items.push({
-        id: conv.id,
-        conversation_id: conv.id,
-        last_message: conv.last_message,
-        last_message_at: conv.last_message_at,
-        unread_count: conv.unread_count || 0
-      });
+      
+      // Only add unique items
+      const existingItem = acc.get(userId)!.items.find(item => item.id === conv.id);
+      if (!existingItem) {
+        acc.get(userId)!.items.push({
+          id: conv.id,
+          conversation_id: conv.id,
+          last_message: conv.last_message,
+          last_message_at: conv.last_message_at,
+          unread_count: conv.unread_count || 0,
+          item_title: conv.item_title
+        });
+      }
+      
       return acc;
     }, new Map<string, GroupedConversation>());
 
@@ -519,11 +556,43 @@ export default function Messages() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p className="font-medium text-lg">
-                            {group.other_user.first_name || 'Anonymous'}
+                            {group.other_user.first_name && group.other_user.last_name 
+                              ? `${group.other_user.first_name} ${group.other_user.last_name}`
+                              : group.other_user.first_name || 'Anonymous'}
                           </p>
-                          <p className="text-sm text-muted-foreground/60">
-                            {group.items.length} items
-                          </p>
+                          <div className="flex items-center gap-2">
+                            {group.other_user.phone && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(`tel:${group.other_user.phone}`);
+                                  }}
+                                  className="h-8 w-8 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20"
+                                  title="Call"
+                                >
+                                  <Phone className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    window.open(`https://wa.me/${group.other_user.phone?.replace(/\+/g, '')}`);
+                                  }}
+                                  className="h-8 w-8 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20"
+                                  title="WhatsApp"
+                                >
+                                  <MessageCircle className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                            <p className="text-sm text-muted-foreground/60">
+                              {group.items.length} items
+                            </p>
+                          </div>
                         </div>
                         <p className="text-sm text-muted-foreground/60 mt-1">
                           Click to {expandedUsers.has(group.other_user.id) ? 'collapse' : 'expand'} conversations
@@ -550,8 +619,11 @@ export default function Messages() {
                           >
                             <div className="flex items-center justify-between">
                               <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-primary truncate">
+                                  {item.item_title || 'Unknown Item'}
+                                </p>
                                 {item.last_message && (
-                                  <p className={`text-sm truncate ${
+                                  <p className={`text-sm truncate mt-1 ${
                                     item.unread_count 
                                       ? 'text-primary/90 font-medium' 
                                       : 'text-muted-foreground/60'
@@ -605,14 +677,40 @@ export default function Messages() {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="text-lg font-medium">
-                    {selectedConversation.other_user.first_name || 'Anonymous'}
-                  </p>
-                  {selectedConversation.item && (
-                    <p className="text-sm text-primary truncate">
-                      Discussing: {selectedConversation.item.title}
-                    </p>
-                  )}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-lg font-medium">
+                        {selectedConversation.other_user.first_name && selectedConversation.other_user.last_name 
+                          ? `${selectedConversation.other_user.first_name} ${selectedConversation.other_user.last_name}`
+                          : selectedConversation.other_user.first_name || 'Anonymous'}
+                      </p>
+                      {selectedConversation.item && (
+                        <p className="text-sm text-primary truncate">
+                          Discussing: {selectedConversation.item.title}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => window.open(`tel:${selectedConversation.other_user.phone}`)}
+                        className="h-9 w-9 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20"
+                        title="Call"
+                      >
+                        <Phone className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => window.open(`https://wa.me/${selectedConversation.other_user.phone?.replace(/\+/g, '')}`)}
+                        className="h-9 w-9 rounded-full bg-green-500/10 text-green-500 hover:bg-green-500/20"
+                        title="WhatsApp"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
