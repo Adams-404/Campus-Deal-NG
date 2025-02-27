@@ -18,37 +18,34 @@ import {
   ChevronRight,
   BarChart
 } from "lucide-react";
+import type { Database } from '@/integrations/supabase/types';
+
+type Profile = Database['public']['Tables']['profiles']['Row'];
+type KYCStatus = Database['public']['Enums']['kyc_status'];
+type UserRole = Database['public']['Enums']['user_role'];
 
 interface KYCDocument {
   id: string;
   user_id: string;
   document_type: string;
   document_url: string;
-  status: 'pending' | 'verified' | 'rejected';
+  status: KYCStatus;
   created_at: string;
   admin_notes: string | null;
+  updated_at: string;
   profile: {
     first_name: string | null;
     last_name: string | null;
-    email: string;
+    email?: string;
   };
-  updated_at: string;
 }
 
-interface UserProfile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  email: string;
-  kyc_status: 'pending' | 'verified' | 'rejected';
-  created_at: string;
+interface UserProfile extends Omit<Profile, 'kyc_status'> {
+  kyc_status: KYCStatus;
+  email?: string;
   roles: Array<{
-    role: 'admin' | 'user';
-  }>;
-  updated_at: string;
-  address: string | null;
-  avatar_url: string | null;
-  phone: string | null;
+    role: UserRole;
+  }> | null;
 }
 
 export default function Admin() {
@@ -95,11 +92,17 @@ export default function Admin() {
       const { data: kycData, error: kycError } = await supabase
         .from('kyc_documents')
         .select(`
-          *,
-          profile:profiles!kyc_documents_user_id_fkey (
+          id,
+          user_id,
+          document_type,
+          document_url,
+          status,
+          created_at,
+          admin_notes,
+          updated_at,
+          profile:profiles (
             first_name,
-            last_name,
-            email
+            last_name
           )
         `)
         .order('created_at', { ascending: false });
@@ -110,27 +113,44 @@ export default function Admin() {
       const { data: userData, error: userError } = await supabase
         .from('profiles')
         .select(`
-          *,
-          roles:user_roles(role)
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          address,
+          phone,
+          kyc_status,
+          created_at,
+          updated_at,
+          roles:user_roles (
+            role
+          )
         `)
         .order('created_at', { ascending: false });
 
       if (userError) throw userError;
 
-      // Safely type cast the data
-      const typedKycData = (kycData || []) as KYCDocument[];
-      const typedUserData = (userData || []).map(user => ({
-        ...user,
-        email: '', // Add missing required field
-      })) as UserProfile[];
+      const processedKycData = (kycData || []).map(doc => ({
+        ...doc,
+        profile: {
+          ...doc.profile,
+          email: '', // Add empty email since we don't fetch it
+        }
+      }));
 
-      setKycDocuments(typedKycData);
-      setUsers(typedUserData);
+      const processedUserData = (userData || []).map(user => ({
+        ...user,
+        roles: user.roles as Array<{ role: UserRole }> | null,
+        email: '', // Add empty email since we don't fetch it
+      }));
+
+      setKycDocuments(processedKycData);
+      setUsers(processedUserData);
 
       setStats({
-        totalUsers: typedUserData.length,
-        pendingKYC: typedKycData.filter(doc => doc.status === 'pending').length,
-        verifiedUsers: typedUserData.filter(user => user.kyc_status === 'verified').length,
+        totalUsers: processedUserData.length,
+        pendingKYC: processedKycData.filter(doc => doc.status === 'pending').length,
+        verifiedUsers: processedUserData.filter(user => user.kyc_status === 'verified').length,
       });
 
     } catch (error: any) {
