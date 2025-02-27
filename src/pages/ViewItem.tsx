@@ -224,50 +224,59 @@ export default function ViewItem() {
         return;
       }
 
-      // Check if there's already a conversation about this specific item
+      // Check if there's already a conversation between these users
       const { data: existingConversation } = await supabase
         .from('conversations')
         .select('id')
-        .eq('item_id', item?.id)
         .or(`and(buyer_id.eq.${user.id},seller_id.eq.${item?.seller_id}),and(buyer_id.eq.${item?.seller_id},seller_id.eq.${user.id})`)
         .single();
 
+      let conversationId;
+
       if (existingConversation) {
-        // If conversation about this item exists, navigate to it
-        navigate(`/messages/${existingConversation.id}`);
-        return;
+        conversationId = existingConversation.id;
+        
+        // Update the existing conversation
+        const { error: updateError } = await supabase
+          .from('conversations')
+          .update({
+            last_message: `Interested in ${item?.title}`,
+            last_message_at: new Date().toISOString()
+          })
+          .eq('id', conversationId);
+
+        if (updateError) throw updateError;
+      } else {
+        // Create new conversation
+        const { data: newConversation, error: conversationError } = await supabase
+          .from('conversations')
+          .insert({
+            buyer_id: user.id,
+            seller_id: item?.seller_id,
+            last_message: `Interested in ${item?.title}`,
+            last_message_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (conversationError) throw conversationError;
+        conversationId = newConversation.id;
       }
-
-      // Create new conversation for this item
-      const { data: newConversation, error: conversationError } = await supabase
-        .from('conversations')
-        .insert({
-          buyer_id: user.id,
-          seller_id: item?.seller_id,
-          item_id: item?.id,
-          last_message: `Interested in ${item?.title}`,
-          last_message_at: new Date().toISOString()
-        })
-        .select('id')
-        .single();
-
-      if (conversationError) throw conversationError;
 
       // Send initial message
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
-          conversation_id: newConversation.id,
+          conversation_id: conversationId,
           content: `Hi, I'm interested in ${item?.title}`,
           sender_id: user.id,
-          created_at: new Date().toISOString(),
-          item_id: item?.id
+          created_at: new Date().toISOString()
         });
 
       if (messageError) throw messageError;
 
-      // Navigate to the new conversation
-      navigate(`/messages/${newConversation.id}`);
+      // Navigate to the conversation
+      navigate(`/messages/${conversationId}`);
     } catch (error: any) {
       console.error('Error starting conversation:', error);
       toast.error(error.message);
