@@ -172,17 +172,17 @@ const stats = [
 const testimonials = [
   {
     quote: "GSU Market has made buying and selling textbooks so much easier! The verification process makes me feel safe.",
-    author: "Sarah J.",
+    author: "Aisha M.",
     role: "Computer Science Student"
   },
   {
     quote: "I love how easy it is to find what I need. The direct messaging feature is super convenient!",
-    author: "Michael T.",
+    author: "Fatima B.",
     role: "Business Major"
   },
   {
     quote: "Best platform for campus trading! The community is great and prices are reasonable.",
-    author: "Emily R.",
+    author: "Mohammed S.",
     role: "Graduate Student"
   }
 ];
@@ -375,7 +375,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-blue-950/30">
+      <footer className="py-12 bg-blue-950/30 mb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
@@ -383,7 +383,7 @@ const Index = () => {
                 GSU Market
               </h3>
               <p className="text-sm text-white/80">
-                Your trusted platform for campus trading at Georgia State University.
+                Your trusted platform for campus trading at Gombe State University.
               </p>
             </div>
             <div>
