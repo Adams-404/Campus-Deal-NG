@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface Message {
   id: string;
@@ -46,12 +47,12 @@ interface Conversation {
   last_message?: string;
   last_message_at?: string;
   unread_count?: number;
-  items?: {
+  item?: {
     id: string;
     title: string;
     price: number;
     images: string[];
-  }[];
+  };
 }
 
 interface DatabaseConversation {
@@ -60,16 +61,15 @@ interface DatabaseConversation {
   last_message_at: string | null;
   buyer_id: string;
   seller_id: string;
-  conversation_items: {
-    items: {
-      id: string;
-      title: string;
-      price: number;
-      item_images: {
-        image_url: string;
-      }[];
-    };
-  }[];
+  item_id: string;
+  item: {
+    id: string;
+    title: string;
+    price: number;
+    item_images: Array<{
+      image_url: string;
+    }>;
+  } | null;
   buyer_profile: {
     id: string;
     first_name: string | null;
@@ -84,6 +84,15 @@ interface DatabaseConversation {
   };
 }
 
+interface DatabaseMessage {
+  id: string;
+  content: string;
+  sender_id: string;
+  conversation_id: string;
+  created_at: string;
+  image_url?: string;
+}
+
 export default function Messages() {
   const { conversationId } = useParams();
   const navigate = useNavigate();
@@ -91,9 +100,11 @@ export default function Messages() {
   const [sending, setSending] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -139,6 +150,12 @@ export default function Messages() {
         }, payload => {
           const newMessage = payload.new as Message;
           setMessages(current => [...current, newMessage]);
+          
+          // Automatically switch to the item being discussed
+          if (newMessage.item_id && (!selectedItemId || selectedItemId !== newMessage.item_id)) {
+            setSelectedItemId(newMessage.item_id);
+          }
+          
           // If the new message is not from current user, mark it as unread
           if (newMessage.sender_id !== currentUser.id) {
             markConversationAsUnread(conversationId);
@@ -154,6 +171,37 @@ export default function Messages() {
   }, [conversationId, currentUser?.id]);
 
   useEffect(() => {
+    if (messages.length > 0) {
+      let messagesToShow = messages;
+      
+      if (selectedItemId) {
+        messagesToShow = messages.filter(msg => msg.item_id === selectedItemId);
+      } else {
+        // Show most recent item's messages by default if no item selected
+        const mostRecentMessage = messages
+          .slice()
+          .reverse()
+          .find(msg => msg.item_id);
+        
+        if (mostRecentMessage?.item_id && !selectedItemId) {
+          setSelectedItemId(mostRecentMessage.item_id);
+          messagesToShow = messages.filter(msg => msg.item_id === mostRecentMessage.item_id);
+        }
+      }
+
+      // Sort messages by date for the selected item
+      const sortedMessages = messagesToShow.sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      
+      setFilteredMessages(sortedMessages);
+      
+      // Scroll to bottom after a short delay to ensure content is rendered
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [messages, selectedItemId]);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
@@ -163,6 +211,8 @@ export default function Messages() {
 
   const fetchConversations = async (userId: string) => {
     try {
+      console.log('Fetching conversations for user:', userId);
+      
       const { data, error } = await supabase
         .from('conversations')
         .select(`
@@ -171,23 +221,13 @@ export default function Messages() {
           last_message_at,
           buyer_id,
           seller_id,
-          conversation_items!inner (
-            items (
-              id,
-              title,
-              price,
-              item_images (
-                image_url
-              )
-            )
-          ),
-          buyer_profile:profiles!buyer_id(
+          buyer_profile:profiles!buyer_id (
             id,
             first_name,
             last_name,
             avatar_url
           ),
-          seller_profile:profiles!seller_id(
+          seller_profile:profiles!seller_id (
             id,
             first_name,
             last_name,
@@ -197,51 +237,31 @@ export default function Messages() {
         .or(`buyer_id.eq.${userId},seller_id.eq.${userId}`)
         .order('last_message_at', { ascending: false });
 
+      console.log('Conversations data:', data);
+      console.log('Conversations error:', error);
+
       if (error) throw error;
 
       if (data) {
-        const conversationsByUser = (data as DatabaseConversation[]).reduce<{ [key: string]: Conversation }>((acc, conv) => {
+        const formattedConversations = (data as DatabaseConversation[]).map(conv => {
           const otherUser = userId === conv.seller_id ? conv.buyer_profile : conv.seller_profile;
-          const otherUserId = otherUser.id;
+          console.log('Formatting conversation:', conv.id);
+          
+          return {
+            id: conv.id,
+            other_user: {
+              id: otherUser.id,
+              first_name: otherUser.first_name ?? undefined,
+              last_name: otherUser.last_name ?? undefined,
+              avatar_url: otherUser.avatar_url ?? undefined
+            },
+            last_message: conv.last_message ?? undefined,
+            last_message_at: conv.last_message_at ?? undefined,
+            unread_count: 0
+          };
+        });
 
-          if (!acc[otherUserId]) {
-            acc[otherUserId] = {
-              id: conv.id,
-              other_user: {
-                id: otherUser.id,
-                first_name: otherUser.first_name ?? undefined,
-                last_name: otherUser.last_name ?? undefined,
-                avatar_url: otherUser.avatar_url ?? undefined
-              },
-              last_message: conv.last_message ?? undefined,
-              last_message_at: conv.last_message_at ?? undefined,
-              items: [],
-              unread_count: 0
-            };
-          }
-
-          // Add items from conversation_items
-          const items = conv.conversation_items?.map(ci => ({
-            id: ci.items.id,
-            title: ci.items.title,
-            price: ci.items.price,
-            images: ci.items.item_images?.map(img => img.image_url) || []
-          })) || [];
-
-          acc[otherUserId].items = [...(acc[otherUserId].items || []), ...items];
-
-          // Update last message if this conversation is more recent
-          if (!acc[otherUserId].last_message_at || 
-              new Date(conv.last_message_at ?? '') > new Date(acc[otherUserId].last_message_at)) {
-            acc[otherUserId].last_message = conv.last_message ?? undefined;
-            acc[otherUserId].last_message_at = conv.last_message_at ?? undefined;
-            acc[otherUserId].id = conv.id;
-          }
-
-          return acc;
-        }, {});
-
-        const formattedConversations = Object.values(conversationsByUser) as Conversation[];
+        console.log('Formatted conversations:', formattedConversations);
         setConversations(formattedConversations);
 
         if (conversationId) {
@@ -252,6 +272,7 @@ export default function Messages() {
     } catch (error: any) {
       console.error('Error fetching conversations:', error);
       toast.error(error.message);
+      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -267,33 +288,14 @@ export default function Messages() {
           sender_id,
           conversation_id,
           created_at,
-          image_url,
-          item_id,
-          items (
-            id,
-            title,
-            price,
-            item_images (
-              image_url
-            )
-          )
+          image_url
         `)
         .eq('conversation_id', convId)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
       
-      const formattedMessages = (data || []).map(msg => ({
-        ...msg,
-        item: msg.items ? {
-          id: msg.items.id,
-          title: msg.items.title,
-          price: msg.items.price,
-          images: msg.items.item_images?.map(img => img.image_url) || []
-        } : undefined
-      }));
-      
-      setMessages(formattedMessages);
+      setMessages(data || []);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
       toast.error(error.message);
@@ -400,8 +402,8 @@ export default function Messages() {
   // Filter conversations based on search query
   const filteredConversations = conversations.filter(conv => 
     conv.other_user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.items?.some(item => item.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    conv.items?.some(item => item.price.toString().includes(searchQuery.toLowerCase()))
+    conv.item?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.item?.price.toString().includes(searchQuery.toLowerCase())
   );
 
   if (loading) {
@@ -469,14 +471,29 @@ export default function Messages() {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
-                        <p className="text-xs text-muted-foreground/80 truncate">
-                          {conversation.items?.map(item => item.title).join(', ')}
-                        </p>
-                      </div>
+                      {conversation.item && (
+                        <div className="flex items-center gap-2 mt-2">
+                          {conversation.item.images?.[0] && (
+                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-white/5">
+                              <img 
+                                src={conversation.item.images[0]} 
+                                alt={conversation.item.title}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate text-primary">
+                              {conversation.item.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground/60">
+                              ₦{conversation.item.price}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                       {conversation.last_message && (
-                        <p className={`text-sm truncate mt-1 ${
+                        <p className={`text-sm truncate mt-2 ${
                           conversation.unread_count 
                             ? 'text-primary/90 font-medium' 
                             : 'text-muted-foreground/60'
@@ -512,10 +529,15 @@ export default function Messages() {
                     <User className="h-5 w-5 text-primary" />
                   </AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1 min-w-0">
                   <p className="text-lg font-medium">
                     {selectedConversation.other_user.first_name || 'Anonymous'}
                   </p>
+                  {selectedConversation.item && (
+                    <p className="text-sm text-primary truncate">
+                      Discussing: {selectedConversation.item.title}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
@@ -523,57 +545,57 @@ export default function Messages() {
             {/* Messages */}
             <div className="flex-1 overflow-y-auto" ref={messageContainerRef}>
               <div className="p-6 space-y-6">
-                <div className="flex justify-center mb-6">
-                  <div className="bg-white/5 rounded-full px-4 py-2 text-xs text-muted-foreground/60 backdrop-blur-sm">
-                    Conversation with {selectedConversation.other_user.first_name || 'Anonymous'}
+                {selectedConversation.item && (
+                  <div className="flex flex-col items-center gap-3 mb-8">
+                    <div className="relative w-32 h-32 rounded-lg overflow-hidden ring-2 ring-primary/20">
+                      <img 
+                        src={selectedConversation.item.images[0]} 
+                        alt={selectedConversation.item.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end justify-center p-2">
+                        <span className="text-xs font-medium text-white">₦{selectedConversation.item.price}</span>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="font-medium text-sm">{selectedConversation.item.title}</p>
+                      <p className="text-xs text-muted-foreground/60 mt-1">Started conversation about this item</p>
+                    </div>
                   </div>
-                </div>
+                )}
                 <AnimatePresence initial={false}>
-                  {messages.map((message, index) => {
-                    const showItemContext = index === 0 || 
-                      (index > 0 && messages[index - 1].item_id !== message.item_id);
-                    const isNewItemContext = message.item_id && showItemContext;
-                    
-                    return (
-                      <motion.div key={message.id}>
-                        {isNewItemContext && message.item && (
-                          <div className="flex justify-center my-4">
-                            <div className="bg-white/5 rounded-full px-4 py-2 text-xs text-muted-foreground/60 backdrop-blur-sm">
-                              {message.sender_id === currentUser?.id ? 'You' : selectedConversation.other_user.first_name} started discussing: {message.item.title}
-                            </div>
-                          </div>
+                  {messages.map((message, index) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      className={`flex ${
+                        message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'
+                      }`}
+                    >
+                      <div
+                        className={cn(
+                          "max-w-[70%] rounded-2xl p-4 shadow-lg",
+                          message.sender_id === currentUser?.id
+                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            : "bg-white/5 rounded-bl-sm"
                         )}
-                        <motion.div
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                          className={`flex ${
-                            message.sender_id === currentUser?.id ? 'justify-end' : 'justify-start'
-                          }`}
-                        >
-                          <div
-                            className={`max-w-[70%] rounded-2xl p-4 shadow-lg ${
-                              message.sender_id === currentUser?.id
-                                ? 'bg-primary text-primary-foreground rounded-br-sm'
-                                : 'bg-white/5 rounded-bl-sm'
-                            }`}
-                          >
-                            {message.image_url && (
-                              <img
-                                src={message.image_url}
-                                alt="Message attachment"
-                                className="rounded-lg mb-2 max-w-full"
-                              />
-                            )}
-                            <p className="break-words text-[15px]">{message.content}</p>
-                            <p className="text-xs opacity-60 text-right mt-1.5">
-                              {format(new Date(message.created_at), 'HH:mm')}
-                            </p>
-                          </div>
-                        </motion.div>
-                      </motion.div>
-                    );
-                  })}
+                      >
+                        {message.image_url && (
+                          <img
+                            src={message.image_url}
+                            alt="Message attachment"
+                            className="rounded-lg mb-2 max-w-full"
+                          />
+                        )}
+                        <p className="break-words text-[15px]">{message.content}</p>
+                        <p className="text-xs opacity-60 text-right mt-1.5">
+                          {format(new Date(message.created_at), 'HH:mm')}
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
                 </AnimatePresence>
                 <div ref={messagesEndRef} />
               </div>
@@ -581,22 +603,6 @@ export default function Messages() {
 
             {/* Message Input */}
             <div className="flex-shrink-0 border-t border-white/10 bg-secondary/20 backdrop-blur-sm p-6">
-              {selectedConversation.items && selectedConversation.items.length > 0 && (
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-xs text-muted-foreground/60">Discussing:</span>
-                  {selectedConversation.items.map((item) => (
-                    <Button
-                      key={item.id}
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs bg-white/5 hover:bg-white/10"
-                      onClick={() => setNewMessage(prev => `#${item.id} ${prev}`)}
-                    >
-                      #{item.title}
-                    </Button>
-                  ))}
-                </div>
-              )}
               <form
                 onSubmit={handleSendMessage}
                 className="flex items-center gap-3"
