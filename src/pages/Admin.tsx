@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -16,8 +15,23 @@ import {
   CheckCircle2,
   XCircle,
   ChevronRight,
-  BarChart
+  BarChart,
+  TrendingUp,
+  Clock,
+  Crown
 } from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
 import type { Database } from '@/integrations/supabase/types';
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
@@ -57,6 +71,8 @@ export default function Admin() {
     totalUsers: 0,
     pendingKYC: 0,
     verifiedUsers: 0,
+    userGrowthData: [] as { date: string; users: number }[],
+    kycStatusData: [] as { name: string; value: number }[]
   });
 
   useEffect(() => {
@@ -66,34 +82,37 @@ export default function Admin() {
   const checkAdminAccess = async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
       if (!user) {
-        navigate('/auth/signin');
+        navigate('/sign-in');
         return;
       }
 
-      // Check if user is admin using the is_admin function
-      const { data, error } = await supabase
-        .rpc('is_admin', { user_id: user.id });
+      // Check user_roles table directly
+      const { data: roles, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
 
-      if (error || !data) {
+      if (error) {
         console.error('Error checking admin status:', error);
+        toast.error('Error checking admin status');
         navigate('/');
-        toast.error("Access denied. Admin privileges required.");
         return;
       }
 
-      if (!data) {
+      const isAdmin = roles?.some(r => r.role === 'admin') ?? false;
+      if (!isAdmin) {
+        toast.error('Access denied, admin privileges required');
         navigate('/');
-        toast.error("Access denied. Admin privileges required.");
         return;
       }
 
+      // Only fetch data if user is admin
       fetchData();
-    } catch (error: any) {
-      console.error('Error in checkAdminAccess:', error);
+    } catch (error) {
+      console.error('Error in admin check:', error);
+      toast.error('An error occurred while checking admin access');
       navigate('/');
-      toast.error("An error occurred while checking admin access");
     }
   };
 
@@ -162,13 +181,35 @@ export default function Admin() {
         }
       }));
 
+      // Calculate user growth data (last 7 days)
+      const userGrowthData = Array.from({ length: 7 }, (_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (6 - i));
+        const usersOnDate = usersWithRoles.filter(user => {
+          const userDate = new Date(user.created_at);
+          return userDate.toDateString() === date.toDateString();
+        }).length;
+        return {
+          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+          users: usersOnDate
+        };
+      });
+
+      // Calculate KYC status distribution
+      const kycStatusData = [
+        { name: 'Verified', value: usersWithRoles.filter(user => user.kyc_status === 'verified').length },
+        { name: 'Pending', value: usersWithRoles.filter(user => user.kyc_status === 'pending').length },
+        { name: 'Rejected', value: usersWithRoles.filter(user => user.kyc_status === 'rejected').length }
+      ];
+
       setKycDocuments(processedKycData);
       setUsers(usersWithRoles);
-
       setStats({
         totalUsers: usersWithRoles.length,
         pendingKYC: processedKycData.filter(doc => doc.status === 'pending').length,
         verifiedUsers: usersWithRoles.filter(user => user.kyc_status === 'verified').length,
+        userGrowthData,
+        kycStatusData
       });
 
     } catch (error: any) {
@@ -253,55 +294,163 @@ export default function Admin() {
     );
   }
 
+  const COLORS = ['#3B82F6', '#F59E0B', '#EF4444'];
+
   return (
     <PageTransition>
       <div className="container py-8 space-y-8">
         <div className="flex items-center justify-between">
-          <h1 className="text-4xl font-bold">Admin Dashboard</h1>
-          <Button variant="outline" onClick={() => navigate(-1)}>
+          <div className="space-y-1">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-green-500 bg-clip-text text-transparent">
+              Admin Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Manage users and monitor platform activity
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => navigate(-1)}
+            className="border-blue-500/20 hover:bg-blue-500/10"
+          >
             Back
           </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card className="border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <Users className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers}</div>
+              <div className="text-2xl font-bold text-blue-500">{stats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground">Platform members</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-yellow-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(245,158,11,0.1)]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending KYC</CardTitle>
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
+              <Clock className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.pendingKYC}</div>
+              <div className="text-2xl font-bold text-yellow-500">{stats.pendingKYC}</div>
+              <p className="text-xs text-muted-foreground">Awaiting verification</p>
             </CardContent>
           </Card>
-          <Card>
+          <Card className="border-green-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(34,197,94,0.1)]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Verified Users</CardTitle>
               <Shield className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.verifiedUsers}</div>
+              <div className="text-2xl font-bold text-green-500">{stats.verifiedUsers}</div>
+              <p className="text-xs text-muted-foreground">Verified members</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-blue-500" />
+                User Growth
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[200px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={stats.userGrowthData}>
+                    <defs>
+                      <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.1}/>
+                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" className="text-xs" />
+                    <YAxis className="text-xs" />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                        borderRadius: '8px'
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="users"
+                      stroke="#3B82F6"
+                      fillOpacity={1}
+                      fill="url(#colorUsers)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+            <CardHeader>
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <BarChart className="h-4 w-4 text-blue-500" />
+                KYC Status Distribution
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[200px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={stats.kycStatusData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {stats.kycStatusData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                        borderRadius: '8px'
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="flex justify-center gap-4 mt-4">
+                {stats.kycStatusData.map((entry, index) => (
+                  <div key={entry.name} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index] }} />
+                    <span className="text-sm">{entry.name}</span>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="kyc" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="kyc">KYC Verification</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsList className="bg-secondary/50 border border-blue-500/20">
+            <TabsTrigger value="kyc" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
+              KYC Verification
+            </TabsTrigger>
+            <TabsTrigger value="users" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
+              User Management
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="kyc" className="space-y-4">
             {kycDocuments.map((doc) => (
-              <Card key={doc.id} className="overflow-hidden">
+              <Card key={doc.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
@@ -318,6 +467,13 @@ export default function Admin() {
                         : doc.status === 'rejected'
                         ? 'destructive'
                         : 'secondary'
+                    }
+                    className={
+                      doc.status === 'verified'
+                        ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
+                        : doc.status === 'rejected'
+                        ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
+                        : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
                     }>
                       {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
                     </Badge>
@@ -328,9 +484,10 @@ export default function Admin() {
                       href={doc.document_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-sm text-blue-500 hover:underline"
+                      className="text-sm text-blue-500 hover:underline flex items-center gap-1"
                     >
                       View Document
+                      <ChevronRight className="h-4 w-4" />
                     </a>
                   </div>
 
@@ -339,7 +496,7 @@ export default function Admin() {
                       <Button
                         size="sm"
                         onClick={() => handleKYCAction(doc.id, doc.user_id, 'verify')}
-                        className="bg-green-500 hover:bg-green-600"
+                        className="bg-green-500 hover:bg-green-600 text-white"
                       >
                         <CheckCircle2 className="w-4 h-4 mr-2" />
                         Verify
@@ -348,6 +505,7 @@ export default function Admin() {
                         size="sm"
                         variant="destructive"
                         onClick={() => handleKYCAction(doc.id, doc.user_id, 'reject')}
+                        className="bg-red-500 hover:bg-red-600"
                       >
                         <XCircle className="w-4 h-4 mr-2" />
                         Reject
@@ -361,7 +519,7 @@ export default function Admin() {
 
           <TabsContent value="users" className="space-y-4">
             {users.map((user) => (
-              <Card key={user.id} className="overflow-hidden">
+              <Card key={user.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div className="space-y-1">
@@ -372,7 +530,11 @@ export default function Admin() {
                     </div>
                     <div className="flex items-center gap-2">
                       {user.roles?.some(r => r.role === 'admin') ? (
-                        <Badge variant="outline" className="bg-purple-500/10 text-purple-500 border-purple-500/20">
+                        <Badge 
+                          variant="outline" 
+                          className="bg-blue-500/10 text-blue-500 border-blue-500/20"
+                        >
+                          <Crown className="w-3 h-3 mr-1" />
                           Admin
                         </Badge>
                       ) : (
@@ -380,6 +542,7 @@ export default function Admin() {
                           size="sm"
                           variant="outline"
                           onClick={() => handleMakeAdmin(user.id)}
+                          className="border-blue-500/20 hover:bg-blue-500/10 text-blue-500"
                         >
                           Make Admin
                         </Button>
@@ -390,6 +553,13 @@ export default function Admin() {
                           : user.kyc_status === 'rejected'
                           ? 'destructive'
                           : 'secondary'
+                      }
+                      className={
+                        user.kyc_status === 'verified'
+                          ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
+                          : user.kyc_status === 'rejected'
+                          ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
+                          : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
                       }>
                         {user.kyc_status?.charAt(0).toUpperCase() + user.kyc_status?.slice(1)}
                       </Badge>

@@ -6,7 +6,20 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Loader2, Camera, Mail, Calendar, Shield, Edit2, AlertCircle, Phone, MapPin } from "lucide-react";
+import { 
+  User, 
+  Loader2, 
+  Camera, 
+  Mail, 
+  Calendar, 
+  Shield, 
+  Edit2, 
+  AlertCircle, 
+  Phone, 
+  MapPin,
+  BadgeCheck,
+  Crown
+} from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { PageTransition } from "@/components/PageTransition";
 import EditProfileModal from "@/components/EditProfileModal";
@@ -32,43 +45,95 @@ const Profile = () => {
   const [userRole, setUserRole] = useState<'admin' | 'user'>('user');
   const navigate = useNavigate();
 
+  const forceRefreshRole = async () => {
+    try {
+      // Force refresh the session
+      const { data: { session }, error: sessionError } = await supabase.auth.refreshSession();
+      if (sessionError) throw sessionError;
+
+      if (!session?.user) {
+        navigate('/sign-in');
+        return;
+      }
+
+      // Re-fetch roles after session refresh
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', session.user.id);
+
+      console.log('Refreshed roles:', roles); // Debug log
+
+      if (roleError) {
+        console.error('Error checking role:', roleError);
+        setUserRole('user');
+      } else {
+        const isAdmin = roles?.some(r => r.role === 'admin') ?? false;
+        console.log('Is admin after refresh?', isAdmin); // Debug log
+        setUserRole(isAdmin ? 'admin' : 'user');
+      }
+    } catch (error) {
+      console.error('Error refreshing role:', error);
+      toast.error('Error refreshing role status');
+    }
+  };
+
   useEffect(() => {
     getProfile();
   }, []);
 
-  async function getProfile() {
+  const getProfile = async () => {
     try {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('Profile - Current user:', user); // Debug log
 
       if (!user) {
-        navigate('/auth/signin');
+        navigate('/sign-in');
         return;
       }
 
       setUser(user);
 
-      // Get profile data and check role
-      const [profileResult, rolesResult] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single(),
-        supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', user.id)
-      ]);
+      // Get user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
 
-      if (profileResult.error) throw profileResult.error;
-      setProfile(profileResult.data);
+      console.log('Profile data:', profileData); // Debug log
+      console.log('Profile error:', profileError); // Debug log
 
-      // Set user role
-      const isAdmin = rolesResult.data?.some(r => r.role === 'admin') ?? false;
-      setUserRole(isAdmin ? 'admin' : 'user');
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        toast.error('Error fetching profile');
+        return;
+      }
+
+      // Check user role
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      console.log('User roles:', roles); // Debug log
+      console.log('Role error:', roleError); // Debug log
+
+      if (roleError) {
+        console.error('Error checking role:', roleError);
+        // Don't show error toast here, just set default role
+        setUserRole('user');
+      } else {
+        const isAdmin = roles?.some(r => r.role === 'admin') ?? false;
+        console.log('Is admin?', isAdmin); // Debug log
+        setUserRole(isAdmin ? 'admin' : 'user');
+      }
+
+      setProfile(profileData);
 
       // Get latest KYC document
-      let { data: kycData, error: kycError } = await supabase
+      const { data: kycData, error: kycError } = await supabase
         .from('kyc_documents')
         .select('*')
         .eq('user_id', user.id)
@@ -76,7 +141,7 @@ const Profile = () => {
         .limit(1)
         .single();
 
-      if (!kycError) {
+      if (!kycError && kycData) {
         setKycDocument(kycData);
       }
 
@@ -96,9 +161,7 @@ const Profile = () => {
         .eq('status', 'active')
         .order('created_at', { ascending: false });
 
-      if (itemsError) throw itemsError;
-
-      if (itemsData) {
+      if (!itemsError && itemsData) {
         const formattedItems = itemsData.map(item => ({
           id: item.id,
           title: item.title,
@@ -108,12 +171,22 @@ const Profile = () => {
         }));
         setUserItems(formattedItems);
       }
-    } catch (error: any) {
-      toast.error(error.message);
+    } catch (error) {
+      console.error('Error in getProfile:', error);
+      toast.error('An error occurred while fetching profile');
     } finally {
       setLoading(false);
     }
-  }
+  };
+
+  const formatDate = (dateString: string | undefined) => {
+    if (!dateString) return 'N/A';
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (error) {
+      return 'N/A';
+    }
+  };
 
   async function updateProfile(avatarUrl: string | null = null) {
     try {
@@ -181,7 +254,7 @@ const Profile = () => {
       case 'verified':
         return (
           <Badge variant="outline" className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
-            <Shield className="w-3 h-3 mr-1" />
+            <BadgeCheck className="w-3 h-3 mr-1" />
             Verified
           </Badge>
         );
@@ -309,29 +382,44 @@ const Profile = () => {
             <h2 className="text-2xl font-bold">
               {profile?.first_name} {profile?.last_name}
             </h2>
-            <p className="text-muted-foreground">Member since {new Date(user?.created_at).toLocaleDateString()}</p>
-            <div className="flex items-center justify-center gap-2">
-              {getKycStatusBadge()}
-              <Badge 
-                variant="outline" 
-                className={cn(
-                  "capitalize",
-                  userRole === 'admin' 
-                    ? "bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 border-purple-500/20"
-                    : "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20"
-                )}
-              >
-                <Shield className="w-3 h-3 mr-1" />
-                {userRole}
-              </Badge>
+            <p className="text-muted-foreground">
+              Member since {formatDate(user?.created_at)}
+            </p>
+            <div className="flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2">
+                {getKycStatusBadge()}
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    "capitalize transition-all duration-200",
+                    userRole === 'admin' 
+                      ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20"
+                      : "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20"
+                  )}
+                  onClick={forceRefreshRole}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Crown className="w-3 h-3 mr-1" />
+                  {userRole}
+                </Badge>
+              </div>
               {userRole === 'admin' && (
                 <Button
                   variant="outline"
-                  className="mt-2 bg-purple-500/10 text-purple-500 hover:bg-purple-500/20 border-purple-500/20"
+                  className="bg-gradient-to-r from-blue-500/20 via-green-500/20 to-blue-500/20 hover:from-blue-500/30 hover:via-green-500/30 hover:to-blue-500/30 text-blue-500 border-blue-500/20 transition-all duration-300 shadow-lg shadow-blue-500/5"
                   onClick={() => navigate('/admin')}
                 >
-                  <Shield className="w-4 h-4 mr-2" />
+                  <Crown className="w-4 h-4 mr-2" />
                   Go to Admin Dashboard
+                </Button>
+              )}
+              {profile?.kyc_status !== 'verified' && (
+                <Button 
+                  className="bg-gradient-to-r from-yellow-500/20 via-orange-500/20 to-red-500/20 hover:from-yellow-500/30 hover:via-orange-500/30 hover:to-red-500/30 text-orange-500 border-orange-500/20 transition-all duration-300 shadow-lg shadow-orange-500/5"
+                  onClick={() => setShowEditProfile(true)}
+                >
+                  <Shield className="w-4 h-4 mr-2" />
+                  Complete Verification
                 </Button>
               )}
             </div>
@@ -372,20 +460,10 @@ const Profile = () => {
                 <div>
                   <p className="text-sm font-medium">Joined</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date(profile?.created_at).toLocaleDateString()}
+                    {formatDate(profile?.created_at)}
                   </p>
                 </div>
               </div>
-
-              {profile?.kyc_status !== 'verified' && (
-                <Button 
-                  className="w-full bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 hover:from-blue-500/30 hover:via-purple-500/30 hover:to-pink-500/30 text-foreground border border-white/10 backdrop-blur-sm"
-                  onClick={() => setShowEditProfile(true)}
-                >
-                  <Shield className="w-4 h-4 mr-2 text-yellow-500" />
-                  Complete Verification
-                </Button>
-              )}
             </CardContent>
           </Card>
 

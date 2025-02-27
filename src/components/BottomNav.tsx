@@ -1,46 +1,18 @@
-
-import { Home, MessageSquare, Plus, User, Settings, Shield } from "lucide-react";
+import { Home, MessageSquare, Plus, User, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { SellModal } from "./SellModal";
 import { Link, useLocation } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 export const BottomNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    checkAdminStatus();
-  }, []);
-
-  const checkAdminStatus = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Use the is_admin RPC function instead of directly querying user_roles
-      const { data, error } = await supabase
-        .rpc('is_admin', { user_id: user.id });
-
-      if (error) {
-        console.error('Error checking admin status:', error);
-        return;
-      }
-
-      setIsAdmin(!!data);
-    } catch (error) {
-      console.error('Error checking admin status:', error);
-    }
-  };
 
   const navItems = [
     { icon: Home, label: "Home", href: "/home" },
     { icon: MessageSquare, label: "Messages", href: "/messages" },
     { icon: Plus, label: "Sell", href: "#" },
-    { icon: isAdmin ? Shield : User, label: isAdmin ? "Admin" : "Profile", href: isAdmin ? "/admin" : "/profile" },
+    { icon: User, label: "Profile", href: "/profile" },
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
 
