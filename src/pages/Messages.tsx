@@ -199,6 +199,9 @@ export default function Messages() {
         })
         .subscribe();
 
+      // Scroll to bottom when entering chat
+      setTimeout(scrollToBottom, 300);
+
       return () => {
         channel.unsubscribe();
       };
@@ -241,7 +244,12 @@ export default function Messages() {
   }, [messages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: "smooth",
+        block: "end"
+      });
+    }
   };
 
   const fetchConversations = async (userId: string) => {
@@ -583,13 +591,7 @@ export default function Messages() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p 
-                            className="font-medium text-lg cursor-pointer hover:text-primary transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/user/${group.other_user.id}`);
-                            }}
-                          >
+                          <p className="font-medium text-lg">
                             {group.other_user.first_name && group.other_user.last_name 
                               ? `${group.other_user.first_name} ${group.other_user.last_name}`
                               : group.other_user.first_name || 'Anonymous'}
@@ -799,7 +801,10 @@ export default function Messages() {
                               message.sender_id === currentUser?.id ? 'flex-row-reverse' : 'flex-row'
                             } mb-2 last:mb-0`}
                           >
-                            <Avatar className="h-6 w-6 sm:h-8 sm:w-8 ring-2 ring-offset-2 ring-offset-background ring-primary/20 flex-shrink-0">
+                            <Avatar 
+                              className="h-6 w-6 sm:h-8 sm:w-8 ring-2 ring-offset-2 ring-offset-background ring-primary/20 flex-shrink-0 cursor-pointer"
+                              onClick={() => navigate(`/user/${message.sender_id}`)}
+                            >
                               <AvatarImage 
                                 src={message.sender_id === currentUser?.id 
                                   ? currentUserProfile?.avatar_url

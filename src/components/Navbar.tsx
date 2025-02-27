@@ -1,4 +1,3 @@
-
 import { Search, User, ChevronDown } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useEffect } from "react";
@@ -6,11 +5,13 @@ import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useSearch } from "@/contexts/SearchContext";
 
 export const Navbar = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
+  const { searchQuery, setSearchQuery, selectedCategories, setSelectedCategories, sortBy, setSortBy } = useSearch();
 
   useEffect(() => {
     // Get the current user
@@ -39,13 +40,30 @@ export const Navbar = () => {
     };
   }, []);
 
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const category = e.target.value;
+    if (category === '') {
+      setSelectedCategories([]);
+    } else {
+      setSelectedCategories([category]);
+    }
+  };
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSortBy(e.target.value);
+  };
+
   return (
     <nav className="fixed top-0 w-full bg-secondary/80 backdrop-blur-md z-50 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <a href="/" className="text-xl font-semibold text-white">
+          <Link to="/home" className="text-xl font-semibold text-white">
             GSU Market
-          </a>
+          </Link>
 
           <div className={cn(
             "transition-all duration-300 ease-in-out",
@@ -56,6 +74,8 @@ export const Navbar = () => {
                 type="text"
                 placeholder="Search for anything..."
                 className="w-full py-2 pl-10 pr-4 text-white bg-background rounded-full border border-white/10 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-gray-500"
+                value={searchQuery}
+                onChange={handleSearch}
                 onFocus={() => setIsSearchFocused(true)}
                 onBlur={() => setIsSearchFocused(false)}
               />
@@ -89,7 +109,11 @@ export const Navbar = () => {
           <div className="flex justify-between items-center">
             <div className="flex gap-4">
               <div className="relative">
-                <select className="appearance-none bg-background text-white text-sm rounded-lg pl-3 pr-10 py-1.5 border border-white/10 focus:outline-none focus:border-primary">
+                <select 
+                  className="appearance-none bg-background text-white text-sm rounded-lg pl-3 pr-10 py-1.5 border border-white/10 focus:outline-none focus:border-primary"
+                  value={selectedCategories[0] || ''}
+                  onChange={handleCategoryChange}
+                >
                   <option value="">All Categories</option>
                   <option value="textbooks">Textbooks</option>
                   <option value="electronics">Electronics</option>
@@ -100,7 +124,11 @@ export const Navbar = () => {
               </div>
 
               <div className="relative">
-                <select className="appearance-none bg-background text-white text-sm rounded-lg pl-3 pr-10 py-1.5 border border-white/10 focus:outline-none focus:border-primary">
+                <select 
+                  className="appearance-none bg-background text-white text-sm rounded-lg pl-3 pr-10 py-1.5 border border-white/10 focus:outline-none focus:border-primary"
+                  value={sortBy}
+                  onChange={handleSortChange}
+                >
                   <option value="newest">Newest First</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>

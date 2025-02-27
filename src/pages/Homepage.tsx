@@ -1,19 +1,21 @@
-
 import { Categories } from "@/components/Categories";
 import { ProductGrid } from "@/components/ProductGrid";
 import { PageTransition } from "@/components/PageTransition";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { toast } from "sonner";
 import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/ProductCard";
+import { useSearch } from "@/contexts/SearchContext";
 
 interface Item {
   id: string;
   title: string;
   price: number;
+  category: string;
   images: string[];
+  created_at: string;
   seller?: {
     full_name?: string;
     first_name?: string;
@@ -25,6 +27,7 @@ interface Item {
 const Homepage = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
+  const { searchQuery, selectedCategories, sortBy } = useSearch();
 
   const fetchItems = async () => {
     try {
@@ -63,7 +66,9 @@ const Homepage = () => {
           id: item.id,
           title: item.title,
           price: item.price,
+          category: item.category,
           condition: item.condition,
+          created_at: item.created_at,
           images: allImages,
           seller: seller ? {
             full_name: seller.first_name && seller.last_name 
@@ -114,6 +119,42 @@ const Homepage = () => {
     toast.success("Content refreshed");
   }, []);
 
+  // Filter and sort items based on search context
+  const filteredItems = useMemo(() => {
+    let result = [...items];
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(item => 
+        item.title.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter by categories
+    if (selectedCategories.length > 0) {
+      result = result.filter(item =>
+        selectedCategories.includes(item.category)
+      );
+    }
+
+    // Sort items
+    switch (sortBy) {
+      case 'price-low':
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case 'price-high':
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case 'newest':
+        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+      // Add more sorting options as needed
+    }
+
+    return result;
+  }, [items, searchQuery, selectedCategories, sortBy]);
+
   useScrollPosition();
 
   return (
@@ -128,20 +169,22 @@ const Homepage = () => {
                   <Categories />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold mb-6">Featured Items</h2>
+                  <h2 className="text-2xl font-bold mb-6">
+                    {searchQuery ? 'Search Results' : 'Featured Items'}
+                  </h2>
                   {loading ? (
                     <div className="space-y-4">
                       {[...Array(3)].map((_, i) => (
                         <div key={i} className="w-full aspect-[16/9] animate-pulse bg-white/5 rounded-lg" />
                       ))}
                     </div>
-                  ) : items.length === 0 ? (
+                  ) : filteredItems.length === 0 ? (
                     <div className="text-center py-12 text-gray-400">
-                      No items listed yet
+                      {searchQuery ? 'No items found matching your search' : 'No items listed yet'}
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {items.map((item) => (
+                      {filteredItems.map((item) => (
                         <ProductCard
                           key={item.id}
                           item={item}
