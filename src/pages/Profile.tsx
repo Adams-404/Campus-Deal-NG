@@ -425,14 +425,20 @@ const Profile = () => {
                 <Button 
                   className={cn(
                     "transition-all duration-300 shadow-lg",
-                    profile?.kyc_status === 'pending'
-                      ? "bg-orange-500/10 hover:bg-orange-500/10 text-orange-500 border border-orange-500/20 shadow-orange-500/5 cursor-not-allowed"
-                      : "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 shadow-yellow-500/5"
+                    !kycDocument
+                      ? "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 shadow-yellow-500/5"
+                      : profile?.kyc_status === 'pending' && kycDocument
+                        ? "bg-orange-500/10 hover:bg-orange-500/10 text-orange-500 border border-orange-500/20 shadow-orange-500/5"
+                        : "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 shadow-yellow-500/5"
                   )}
-                  onClick={() => profile?.kyc_status !== 'pending' && setShowEditProfile(true)}
-                  disabled={profile?.kyc_status === 'pending'}
+                  onClick={() => setShowEditProfile(true)}
                 >
-                  {profile?.kyc_status === 'pending' ? (
+                  {!kycDocument ? (
+                    <>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Complete Verification
+                    </>
+                  ) : profile?.kyc_status === 'pending' && kycDocument ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Verification Pending

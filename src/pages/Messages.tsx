@@ -9,14 +9,14 @@ import {
   Send, 
   User, 
   ArrowLeft, 
-  Image as ImageIcon,
-  Search,
-  Smile,
-  Paperclip,
-  MessageSquare,
-  Phone,
-  MessageCircle,
-  ChevronDown,
+  Image as ImageIcon, 
+  Search, 
+  Smile, 
+  Paperclip, 
+  MessageSquare, 
+  Phone, 
+  MessageCircle, 
+  ChevronDown, 
   ChevronUp
 } from "lucide-react";
 import { toast } from "sonner";
@@ -548,6 +548,16 @@ export default function Messages() {
       }
       return next;
     });
+  };
+
+  const handleProfileClick = async (profileId: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const currentUserId = user?.id;
+    if (profileId === currentUserId) {
+      navigate('/profile');
+    } else {
+      navigate(`/user-profile/${profileId}`);
+    }
   };
 
   if (loading) {

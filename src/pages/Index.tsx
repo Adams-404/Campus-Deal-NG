@@ -189,7 +189,7 @@ const testimonials = [
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-black text-foreground">
       {/* Hero Section */}
       <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-black via-blue-950/80 to-blue-950/30" />
@@ -375,7 +375,7 @@ const Index = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-blue-950/30 mb-0">
+      <footer className="py-12 bg-black mb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>

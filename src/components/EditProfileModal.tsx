@@ -175,55 +175,27 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="verification" className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-yellow-500" />
-                    <span>Student ID Verification</span>
-                    {(kycDocument || profile?.kyc_status) && (
-                      <Badge variant={
-                        profile?.kyc_status === 'verified' 
-                          ? 'outline'
-                          : profile?.kyc_status === 'rejected'
-                          ? 'destructive'
-                          : 'secondary'
-                      } className={
-                        profile?.kyc_status === 'verified' 
-                          ? 'bg-green-500/10 text-green-500 border-green-500/20'
-                          : profile?.kyc_status === 'rejected'
-                          ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                          : 'bg-orange-500/10 text-orange-500 border-orange-500/20'
-                      }>
-                        {profile?.kyc_status === 'verified' && <BadgeCheck className="w-3 h-3 mr-1" />}
-                        {profile?.kyc_status === 'rejected' && <X className="w-3 h-3 mr-1" />}
-                        {profile?.kyc_status === 'pending' && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
-                        {profile?.kyc_status?.charAt(0).toUpperCase() + profile?.kyc_status?.slice(1) || 'Not Verified'}
-                      </Badge>
-                    )}
-                  </Label>
-                  {profile?.kyc_status === 'pending' ? (
-                    <div className="bg-orange-500/5 text-orange-500 p-4 rounded-lg border border-orange-500/20 flex items-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <p className="text-sm">Your verification is being processed. We'll notify you once it's complete.</p>
-                    </div>
-                  ) : (
-                    <>
-                      <Input 
-                        id="verification" 
-                        type="file" 
-                        accept="image/*,.pdf"
-                        onChange={async (e) => {
-                          if (!e.target.files?.[0]) return;
-                          await uploadKycDocument(e.target.files[0]);
-                        }}
-                        className="bg-secondary border-border file:bg-secondary file:text-foreground file:border file:border-border file:rounded-md hover:file:bg-secondary/80" 
-                        disabled={profile?.kyc_status === 'pending'}
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Upload your student ID for verification. Supported formats: Images, PDF
-                      </p>
-                    </>
-                  )}
-                </div>
+                {profile?.kyc_status !== 'verified' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="verification" className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-yellow-500" />
+                      <span>Student ID Verification</span>
+                    </Label>
+                    <Input 
+                      id="verification" 
+                      type="file" 
+                      accept="image/*,.pdf"
+                      onChange={async (e) => {
+                        if (!e.target.files?.[0]) return;
+                        await uploadKycDocument(e.target.files[0]);
+                      }}
+                      className="bg-secondary border-border file:bg-secondary file:text-foreground file:border file:border-border file:rounded-md hover:file:bg-secondary/80" 
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Upload your student ID for verification. Supported formats: Images, PDF
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
