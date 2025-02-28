@@ -47,6 +47,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const forceRefreshRole = async () => {
     try {
@@ -146,6 +147,7 @@ const Profile = () => {
 
       if (!kycError && kycData) {
         setKycDocument(kycData);
+        setHasSubmitted(kycData.status !== 'rejected');
       }
 
       // Get user's items

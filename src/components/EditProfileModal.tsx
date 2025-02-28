@@ -25,6 +25,7 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
     address: profile?.address || '',
   });
   const [uploading, setUploading] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(kycDocument !== null);
 
   if (!open) return null;
 
@@ -59,27 +60,30 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
           user_id: profile.id,
           document_type: 'student_id',
           document_url: publicUrl,
-          status: 'pending'
+          status: 'processing'
         });
 
       if (kycError) throw kycError;
 
-      // Update profile KYC status
+      // Update profile KYC status to processing
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ kyc_status: 'pending' })
+        .update({ kyc_status: 'processing' })
         .eq('id', profile.id);
 
       if (profileError) throw profileError;
 
       toast.success('Document uploaded successfully! Verification in progress.');
       onClose();
+      setHasSubmitted(true);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
       setUploading(false);
     }
   };
+
+  if (hasSubmitted || profile?.kyc_status === 'verified') return null;
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end justify-center animate-in fade-in duration-300">
@@ -175,7 +179,7 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
                   />
                 </div>
 
-                {profile?.kyc_status !== 'verified' && (
+                {(profile?.kyc_status === 'processing' || profile?.kyc_status === 'verified') ? null : (
                   <div className="space-y-2">
                     <Label htmlFor="verification" className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-yellow-500" />
