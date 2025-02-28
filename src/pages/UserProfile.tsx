@@ -31,6 +31,7 @@ interface SimpleItem {
   title: string
   price: number
   images: string[]
+  description: string
 }
 
 export default function UserProfile() {
@@ -73,7 +74,8 @@ export default function UserProfile() {
           price,
           item_images (
             image_url
-          )
+          ),
+          description
         `)
         .eq("seller_id", userId)
         .eq("status", "active")
@@ -90,6 +92,7 @@ export default function UserProfile() {
         title: item.title,
         price: item.price,
         images: item.item_images?.map((img: any) => img.image_url) || [],
+        description: item.description || ""
       }))
 
       setItems(processedItems)
@@ -293,12 +296,11 @@ export default function UserProfile() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 {items.map((item) => (
                   <Card
                     key={item.id}
                     className="group overflow-hidden border border-green-500/50 hover:border-green-500/50 transition-all duration-200 hover:shadow-md"
-                    onClick={() => navigate(`/item/${item.id}`)}
                   >
                     <CardContent className="p-4">
                       <div className="aspect-square overflow-hidden rounded-lg">
@@ -308,8 +310,13 @@ export default function UserProfile() {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="text-sm font-medium leading-none mt-2">{item.title}</h3>
-                      <p className="text-sm text-muted-foreground">{item.price.toLocaleString()} ₹</p>
+                      <div className="flex justify-between items-center mt-2">
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-6 w-1/4" />
+                      </div>
+                      <div className="mt-2 flex gap-2">
+                        <Button onClick={() => navigate(`/item/${item.id}`)} className="border border-blue-500 text-blue-500 bg-transparent hover:bg-blue-500/10 flex-1">View Details</Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
