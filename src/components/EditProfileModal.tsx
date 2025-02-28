@@ -71,14 +71,14 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
 
       console.log("Document URL:", publicUrl);
 
-      // Create KYC document record
+      // Create KYC document record - using 'pending' status which is valid in the enum
       const { error: kycError } = await supabase
         .from('kyc_documents')
         .insert({
           user_id: profile.id,
           document_type: 'student_id',
           document_url: publicUrl,
-          status: 'processing'
+          status: 'pending' // Using 'pending' instead of 'processing'
         });
 
       if (kycError) {
@@ -86,10 +86,10 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
         throw kycError;
       }
 
-      // Update profile KYC status to processing
+      // Update profile KYC status to pending
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ kyc_status: 'processing' })
+        .update({ kyc_status: 'pending' }) // Using 'pending' instead of 'processing'
         .eq('id', profile.id);
 
       if (profileError) {
@@ -204,7 +204,7 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
                   />
                 </div>
 
-                {(profile?.kyc_status === 'processing' || profile?.kyc_status === 'verified') ? null : (
+                {(profile?.kyc_status === 'pending' || profile?.kyc_status === 'verified') ? null : (
                   <div className="space-y-2">
                     <Label htmlFor="verification" className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-yellow-500" />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -52,48 +53,87 @@ export default function SavedItems() {
         return;
       }
 
+      // First get saved items
       const { data: savedItems, error } = await supabase
         .from('saved_items')
         .select(`
           id,
-          item_id,
-          items:item_id (
-            id,
-            title,
-            price,
-            item_images (
-              image_url
-            ),
-            profiles:seller_id (
-              first_name,
-              last_name,
-              avatar_url
-            )
-          )
+          item_id
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      if (savedItems) {
-        const formattedItems = savedItems.map(item => ({
-          id: item.id,
-          item: {
-            id: item.items.id,
-            title: item.items.title,
-            price: item.items.price,
-            images: item.items.item_images?.map((img: any) => img.image_url) || [],
-            seller: item.items.profiles ? {
-              first_name: item.items.profiles.first_name,
-              last_name: item.items.profiles.last_name,
-              avatar_url: item.items.profiles.avatar_url,
-              full_name: `${item.items.profiles.first_name || ''} ${item.items.profiles.last_name || ''}`.trim()
-            } : undefined
-          }
-        }));
-        setItems(formattedItems);
+      if (!savedItems || savedItems.length === 0) {
+        setItems([]);
+        setLoading(false);
+        return;
       }
+
+      // Then get item details for each saved item
+      const formattedItems = await Promise.all(savedItems.map(async (savedItem) => {
+        // Get item details
+        const { data: item, error: itemError } = await supabase
+          .from('items')
+          .select(`
+            id,
+            title,
+            price,
+            seller_id
+          `)
+          .eq('id', savedItem.item_id)
+          .single();
+
+        if (itemError) {
+          console.error('Error fetching item details:', itemError);
+          return null;
+        }
+
+        // Get item images
+        const { data: images, error: imagesError } = await supabase
+          .from('item_images')
+          .select('image_url')
+          .eq('item_id', item.id);
+
+        if (imagesError) {
+          console.error('Error fetching item images:', imagesError);
+          return null;
+        }
+
+        // Get seller details if seller_id exists
+        let seller = undefined;
+        if (item.seller_id) {
+          const { data: sellerData, error: sellerError } = await supabase
+            .from('profiles')
+            .select('first_name, last_name, avatar_url')
+            .eq('id', item.seller_id)
+            .single();
+
+          if (!sellerError && sellerData) {
+            seller = {
+              first_name: sellerData.first_name,
+              last_name: sellerData.last_name,
+              avatar_url: sellerData.avatar_url,
+              full_name: `${sellerData.first_name || ''} ${sellerData.last_name || ''}`.trim()
+            };
+          }
+        }
+
+        return {
+          id: savedItem.id,
+          item: {
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            images: images ? images.map((img: any) => img.image_url) : [],
+            seller
+          }
+        };
+      }));
+
+      // Filter out null items (errors)
+      setItems(formattedItems.filter(Boolean) as SavedItem[]);
     } catch (error: any) {
       console.error('Error fetching saved items:', error);
       toast.error(error.message);
@@ -165,11 +205,17 @@ export default function SavedItems() {
                     onClick={() => navigate(`/item/${savedItem.item.id}`)}
                     className="absolute inset-0 z-10"
                   />
-                  <img 
-                    src={savedItem.item.images[0]} 
-                    alt={savedItem.item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
+                  {savedItem.item.images.length > 0 ? (
+                    <img 
+                      src={savedItem.item.images[0]} 
+                      alt={savedItem.item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                      <span className="text-gray-400">No image</span>
+                    </div>
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 flex flex-col justify-end">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
@@ -232,4 +278,4 @@ export default function SavedItems() {
       </AlertDialog>
     </div>
   );
-} 
+}

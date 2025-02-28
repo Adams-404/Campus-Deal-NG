@@ -38,35 +38,43 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import type { Database } from '@/integrations/supabase/types';
 import { AdminActionModal } from "@/components/AdminActionModal";
 
-type Profile = Database['public']['Tables']['profiles']['Row'];
-type KYCStatus = Database['public']['Enums']['kyc_status'];
-type UserRole = Database['public']['Enums']['user_role'];
+// Define simpler types to avoid recursion issues
+interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+  address: string | null;
+  phone: string | null;
+  kyc_status: 'pending' | 'verified' | 'rejected';
+  created_at: string;
+  updated_at: string | null;
+}
+
+interface UserRole {
+  role: 'admin' | 'user';
+}
 
 interface KYCDocument {
   id: string;
   user_id: string;
   document_type: string;
   document_url: string;
-  status: KYCStatus;
+  status: 'pending' | 'verified' | 'rejected';
   created_at: string;
   admin_notes: string | null;
   updated_at: string;
   profile: {
     first_name: string | null;
     last_name: string | null;
-    email?: string;
   };
 }
 
-interface UserProfile extends Omit<Profile, 'kyc_status'> {
-  kyc_status: KYCStatus;
+interface UserProfile extends Profile {
   email?: string;
-  roles: Array<{
-    role: UserRole;
-  }> | null;
+  roles: UserRole[] | null;
 }
 
 export default function Admin() {
@@ -97,28 +105,32 @@ export default function Admin() {
       
       for (const doc of kycDocuments) {
         // Extract the file path from the document_url
-        // Format is usually: https://xxx.supabase.co/storage/v1/object/public/kyc_documents/USER_ID/RANDOM.ext
-        const urlParts = doc.document_url.split('/');
-        const bucketIndex = urlParts.findIndex(part => part === 'kyc_documents');
-        
-        if (bucketIndex !== -1 && bucketIndex + 2 < urlParts.length) {
-          const userId = urlParts[bucketIndex + 1];
-          const fileName = urlParts[bucketIndex + 2];
-          const filePath = `${userId}/${fileName}`;
+        try {
+          const url = new URL(doc.document_url);
+          const pathParts = url.pathname.split('/');
+          const bucketIndex = pathParts.findIndex(part => part === 'kyc_documents');
           
-          try {
-            const { data, error } = await supabase.storage
-              .from('kyc_documents')
-              .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
+          if (bucketIndex !== -1 && bucketIndex + 2 < pathParts.length) {
+            const userId = pathParts[bucketIndex + 1];
+            const fileName = pathParts[bucketIndex + 2];
+            const filePath = `${userId}/${fileName}`;
             
-            if (data && !error) {
-              urls[doc.id] = data.signedUrl;
-            } else {
-              console.error("Error getting signed URL:", error);
+            try {
+              const { data, error } = await supabase.storage
+                .from('kyc_documents')
+                .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
+              
+              if (data && !error) {
+                urls[doc.id] = data.signedUrl;
+              } else {
+                console.error("Error getting signed URL:", error);
+              }
+            } catch (error) {
+              console.error("Error in createSignedUrl:", error);
             }
-          } catch (error) {
-            console.error("Error in createSignedUrl:", error);
           }
+        } catch (error) {
+          console.error("Invalid URL format:", doc.document_url, error);
         }
       }
       
@@ -135,7 +147,7 @@ export default function Admin() {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate('/sign-in');
+        navigate('/auth/signin');
         return;
       }
 
@@ -214,24 +226,25 @@ export default function Admin() {
       if (profileError) throw profileError;
 
       // Then fetch roles for each profile
-      const usersWithRoles = await Promise.all((profiles || []).map(async (profile) => {
+      const usersWithRoles: UserProfile[] = [];
+      
+      for (const profile of profiles || []) {
         const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')
           .eq('user_id', profile.id);
         
-        return {
+        usersWithRoles.push({
           ...profile,
           email: '', // Add empty email since we don't fetch it
           roles: roleData || null
-        };
-      }));
+        });
+      }
 
       const processedKycData = (kycData || []).map(doc => ({
         ...doc,
         profile: {
           ...doc.profile,
-          email: '', // Add empty email since we don't fetch it
         }
       }));
 
@@ -307,12 +320,15 @@ export default function Admin() {
 
   const handleMakeAdmin = async (email: string) => {
     try {
-      // First get the user by email from auth.users
-      const { data: { users }, error: usersError } = await supabase.auth.admin.listUsers();
+      // Get user by email from auth
+      const { data: { users: authUsers }, error: usersError } = await supabase.auth.admin.listUsers();
       
-      if (usersError) throw usersError;
+      if (usersError) {
+        console.error('Admin API error:', usersError);
+        throw new Error('Failed to fetch users. Make sure you have admin privileges.');
+      }
       
-      const user = users.find(u => u.email === email);
+      const user = authUsers?.find(u => u.email === email);
       if (!user) {
         toast.error("User not found with this email");
         return;
@@ -589,10 +605,6 @@ export default function Admin() {
                       </div>
 
                       <div className="grid gap-2">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="h-4 w-4 text-blue-500" />
-                          <span>{admin.email}</span>
-                        </div>
                         {admin.phone && (
                           <div className="flex items-center gap-2 text-sm">
                             <Phone className="h-4 w-4 text-blue-500" />
@@ -648,7 +660,6 @@ export default function Admin() {
                       <h3 className="font-semibold">
                         {user.first_name} {user.last_name}
                       </h3>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
                     </div>
                     <Badge variant={
                       user.kyc_status === 'verified'
