@@ -10,12 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
+// Define the KYC status type to match the database enum
+type KycStatus = 'pending' | 'processing' | 'verified' | 'rejected';
+
 interface SimpleUserProfile {
   id: string;
   first_name: string | null;
   last_name: string | null;
   avatar_url: string | null;
-  kyc_status: 'pending' | 'processing' | 'verified' | 'rejected';
+  kyc_status: KycStatus;
 }
 
 interface SimpleItem {

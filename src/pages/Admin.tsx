@@ -40,6 +40,9 @@ import {
 } from 'recharts';
 import { AdminActionModal } from "@/components/AdminActionModal";
 
+// Define the KYC status type to match the database enum
+type KycStatus = 'pending' | 'processing' | 'verified' | 'rejected';
+
 // Define simpler types to avoid recursion issues
 interface Profile {
   id: string;
@@ -48,7 +51,7 @@ interface Profile {
   avatar_url: string | null;
   address: string | null;
   phone: string | null;
-  kyc_status: 'pending' | 'processing' | 'verified' | 'rejected';
+  kyc_status: KycStatus;
   created_at: string;
   updated_at: string | null;
 }
@@ -62,7 +65,7 @@ interface KYCDocument {
   user_id: string;
   document_type: string;
   document_url: string;
-  status: 'pending' | 'processing' | 'verified' | 'rejected';
+  status: KycStatus;
   created_at: string;
   admin_notes: string | null;
   updated_at: string;
@@ -74,6 +77,12 @@ interface KYCDocument {
 
 interface UserProfile extends Profile {
   roles: UserRole[] | null;
+}
+
+// Interface for Auth users from admin.listUsers()
+interface AuthUser {
+  id: string;
+  email?: string;
 }
 
 export default function Admin() {
@@ -294,7 +303,7 @@ export default function Admin() {
       const { error: docError } = await supabase
         .from('kyc_documents')
         .update({ 
-          status,
+          status: status as KycStatus,
           admin_notes: notes,
           updated_at: new Date().toISOString()
         })
@@ -305,7 +314,7 @@ export default function Admin() {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({ 
-          kyc_status: status,
+          kyc_status: status as KycStatus,
           updated_at: new Date().toISOString()
         })
         .eq('id', userId);
@@ -321,16 +330,20 @@ export default function Admin() {
 
   const handleMakeAdmin = async (email: string) => {
     try {
-      // We'll need to query Supabase Auth to get the user by email
+      // Get user by email from auth
       const { data, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) {
         throw new Error('Failed to get users list. Make sure you have admin privileges.');
       }
       
-      const user = data?.users?.find(u => u.email === email);
+      if (!data || !data.users) {
+        throw new Error('No users found');
+      }
       
-      if (!user) {
+      const matchingUser = data.users.find(u => u.email === email);
+      
+      if (!matchingUser) {
         toast.error("User not found with this email");
         return;
       }
@@ -339,7 +352,7 @@ export default function Admin() {
       const { data: existingRole } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', user.id)
+        .eq('user_id', matchingUser.id)
         .eq('role', 'admin')
         .single();
 
@@ -352,7 +365,7 @@ export default function Admin() {
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert({
-          user_id: user.id,
+          user_id: matchingUser.id,
           role: 'admin'
         });
 

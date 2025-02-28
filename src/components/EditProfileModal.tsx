@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
+// Define the KYC status type to match the database enum
+type KycStatus = 'pending' | 'processing' | 'verified' | 'rejected';
+
 interface EditProfileModalProps {
   open: boolean;
   onClose: () => void;
@@ -70,14 +73,15 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
 
       console.log("Document URL:", publicUrl);
 
-      // Create KYC document record with the correct enum value 'processing'
+      // Create KYC document record with the status value 'processing'
+      // Use the type assertion to tell TypeScript this is a valid value
       const { error: kycError } = await supabase
         .from('kyc_documents')
         .insert({
           user_id: profile.id,
           document_type: 'student_id',
           document_url: publicUrl,
-          status: 'processing' // Using the new enum value
+          status: 'processing' as KycStatus // Using type assertion
         });
 
       if (kycError) {
@@ -88,7 +92,10 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
       // Update profile KYC status to processing
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ kyc_status: 'processing' }) // Using the correct enum value
+        .update({ 
+          kyc_status: 'processing' as KycStatus,  // Using type assertion
+          updated_at: new Date().toISOString()
+        })
         .eq('id', profile.id);
 
       if (profileError) {

@@ -393,7 +393,7 @@ export type Database = {
     Enums: {
       item_condition: "new" | "like_new" | "good" | "fair" | "poor"
       item_status: "active" | "sold" | "deleted"
-      kyc_status: "pending" | "verified" | "rejected"
+      kyc_status: "pending" | "verified" | "rejected" | "processing"
       user_role: "admin" | "user"
     }
     CompositeTypes: {
