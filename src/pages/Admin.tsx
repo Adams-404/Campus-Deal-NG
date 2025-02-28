@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -22,7 +23,8 @@ import {
   Mail,
   Phone,
   MapPin,
-  Calendar
+  Calendar,
+  ExternalLink
 } from "lucide-react";
 import {
   AreaChart,
@@ -82,20 +84,62 @@ export default function Admin() {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [adminAction, setAdminAction] = useState<'add' | 'remove'>('add');
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [documentUrls, setDocumentUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     checkAdminAccess();
   }, []);
 
+  useEffect(() => {
+    // Generate signed URLs for documents when kycDocuments change
+    const generateSignedUrls = async () => {
+      const urls: Record<string, string> = {};
+      
+      for (const doc of kycDocuments) {
+        // Extract the file path from the document_url
+        // Format is usually: https://xxx.supabase.co/storage/v1/object/public/kyc_documents/USER_ID/RANDOM.ext
+        const urlParts = doc.document_url.split('/');
+        const bucketIndex = urlParts.findIndex(part => part === 'kyc_documents');
+        
+        if (bucketIndex !== -1 && bucketIndex + 2 < urlParts.length) {
+          const userId = urlParts[bucketIndex + 1];
+          const fileName = urlParts[bucketIndex + 2];
+          const filePath = `${userId}/${fileName}`;
+          
+          try {
+            const { data, error } = await supabase.storage
+              .from('kyc_documents')
+              .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
+            
+            if (data && !error) {
+              urls[doc.id] = data.signedUrl;
+            } else {
+              console.error("Error getting signed URL:", error);
+            }
+          } catch (error) {
+            console.error("Error in createSignedUrl:", error);
+          }
+        }
+      }
+      
+      setDocumentUrls(urls);
+    };
+    
+    if (kycDocuments.length > 0) {
+      generateSignedUrls();
+    }
+  }, [kycDocuments]);
+
   const checkAdminAccess = async () => {
     try {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         navigate('/sign-in');
         return;
       }
 
-      // Check user_roles table directly
+      // Check if user is admin using direct query to user_roles
       const { data: roles, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -121,6 +165,8 @@ export default function Admin() {
       console.error('Error in admin check:', error);
       toast.error('An error occurred while checking admin access');
       navigate('/');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -496,7 +542,7 @@ export default function Admin() {
           </Card>
         </div>
 
-        <Tabs defaultValue="admins" className="space-y-4">
+        <Tabs defaultValue="kyc" className="space-y-4">
           <TabsList className="bg-secondary/50 border border-blue-500/20">
             <TabsTrigger value="admins" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
               Admins
@@ -658,15 +704,21 @@ export default function Admin() {
                   </div>
 
                   <div className="mt-4">
-                    <a 
-                      href={doc.document_url} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-500 hover:underline flex items-center gap-1"
-                    >
-                      View Document
-                      <ChevronRight className="h-4 w-4" />
-                    </a>
+                    {documentUrls[doc.id] ? (
+                      <a 
+                        href={documentUrls[doc.id]} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-500 hover:underline flex items-center gap-1"
+                      >
+                        View Document
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <p className="text-sm text-yellow-500">
+                        Generating document link...
+                      </p>
+                    )}
                   </div>
 
                   {doc.status === 'pending' && (

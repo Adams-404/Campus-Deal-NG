@@ -1,3 +1,4 @@
+
 import { X, Upload, Shield, User2, Mail, Phone, MapPin, BadgeCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -39,19 +40,36 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
       setUploading(true);
       
       const fileExt = file.name.split('.').pop();
+      // Store files in user-specific folders
       const filePath = `${profile.id}/${Math.random()}.${fileExt}`;
+
+      console.log("Uploading to:", filePath);
 
       // Upload to kyc_documents bucket
       let { error: uploadError } = await supabase.storage
         .from('kyc_documents')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
 
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get the public URL - use the correct method with download parameter set to false
+      const { data } = await supabase.storage
         .from('kyc_documents')
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year expiry
+
+      const publicUrl = data?.signedUrl;
+      
+      if (!publicUrl) {
+        throw new Error('Failed to get public URL for the uploaded document');
+      }
+
+      console.log("Document URL:", publicUrl);
 
       // Create KYC document record
       const { error: kycError } = await supabase
@@ -63,7 +81,10 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
           status: 'processing'
         });
 
-      if (kycError) throw kycError;
+      if (kycError) {
+        console.error("KYC record error:", kycError);
+        throw kycError;
+      }
 
       // Update profile KYC status to processing
       const { error: profileError } = await supabase
@@ -71,13 +92,17 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
         .update({ kyc_status: 'processing' })
         .eq('id', profile.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Profile update error:", profileError);
+        throw profileError;
+      }
 
       toast.success('Document uploaded successfully! Verification in progress.');
       onClose();
       setHasSubmitted(true);
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Full upload error:", error);
+      toast.error(error.message || 'Error uploading document');
     } finally {
       setUploading(false);
     }
@@ -209,7 +234,12 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
               className="w-full bg-blue-500 hover:bg-blue-600 text-white transition-colors"
               disabled={uploading}
             >
-              {uploading ? 'Uploading...' : 'Save Changes'}
+              {uploading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Uploading...
+                </>
+              ) : 'Save Changes'}
             </Button>
           </div>
         </form>
@@ -218,4 +248,4 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
   );
 };
 
-export default EditProfileModal; 
+export default EditProfileModal;
