@@ -62,12 +62,14 @@ export const ProductCard = ({ item }: ProductCardProps) => {
   const handleViewProfile = async (e: React.MouseEvent) => {
     e.stopPropagation();
     const { id } = item.seller;
+    
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id;
+
     if (id === currentUserId) {
         navigate('/profile');
     } else {
-        navigate(`/user-profile/${id}`);
+        navigate(`/user/${id}`);
     }
   };
 

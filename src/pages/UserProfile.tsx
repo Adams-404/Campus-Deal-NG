@@ -1,4 +1,3 @@
-
 // A simplified version to fix the build error
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -29,30 +28,34 @@ interface SimpleItem {
 }
 
 export default function UserProfile() {
-  const { id } = useParams<{ id: string }>();
+  const { userId } = useParams<{ userId: string }>();
+  console.log('User ID from URL:', userId); // Log the user ID
   const navigate = useNavigate();
   const [profile, setProfile] = useState<SimpleUserProfile | null>(null);
   const [items, setItems] = useState<SimpleItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
+    if (userId) {
       fetchUserProfile();
     }
-  }, [id]);
+  }, [userId]);
 
   const fetchUserProfile = async () => {
     try {
       setLoading(true);
+      console.log('Fetching user profile for ID:', userId); // Debug log
       
       // Get user profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, avatar_url, kyc_status')
-        .eq('id', id)
+        .eq('id', userId)
         .single();
       
+      console.log('Profile data:', profileData); // Debug log
       if (profileError) {
+        console.error('Profile fetch error:', profileError); // Log detailed error
         throw profileError;
       }
       
@@ -69,11 +72,13 @@ export default function UserProfile() {
             image_url
           )
         `)
-        .eq('seller_id', id)
+        .eq('seller_id', userId)
         .eq('status', 'active')
         .order('created_at', { ascending: false });
       
+      console.log('Items data:', itemsData); // Debug log
       if (itemsError) {
+        console.error('Items fetch error:', itemsError); // Log detailed error
         throw itemsError;
       }
       
@@ -89,7 +94,7 @@ export default function UserProfile() {
       
     } catch (error: any) {
       console.error('Error fetching user profile:', error);
-      toast.error('Failed to load user profile');
+      toast.error('Failed to load user profile.');
       navigate('/home');
     } finally {
       setLoading(false);
@@ -173,7 +178,7 @@ export default function UserProfile() {
                 <Button 
                   onClick={() => {
                     // Start a conversation
-                    navigate(`/messages?seller=${id}`);
+                    navigate(`/messages?seller=${userId}`);
                   }}
                   className="bg-primary hover:bg-primary/90"
                 >
