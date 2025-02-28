@@ -72,20 +72,20 @@ export default function UserProfile() {
       setLoading(true)
 
       // Get user profile
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profileData, error: profileError } = (await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single() as { data: SimpleUserProfile | null; error: any; }
+        .single()) as { data: SimpleUserProfile | null; error: any }
 
-      if (profileError || !profileData || typeof profileData !== 'object') {
+      if (profileError || !profileData || typeof profileData !== "object") {
         console.error("Profile fetch error:", profileError)
-        toast.error(`Failed to load user profile: ${profileError.message}`);
+        toast.error(`Failed to load user profile: ${profileError.message}`)
         throw new Error("Profile data is not available.")
       }
 
       // Type assertion to SimpleUserProfile
-      const typedProfileData = profileData as SimpleUserProfile;
+      const typedProfileData = profileData as SimpleUserProfile
 
       if (typedProfileData) {
         setProfile({
@@ -150,7 +150,7 @@ export default function UserProfile() {
       currency: "NGN",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(price);
+    }).format(price)
   }
 
   // Render verification badge based on KYC status
@@ -274,20 +274,20 @@ export default function UserProfile() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background pb-32">
-        {/* Header with gradient background */}
-        <header className="fixed top-0 z-50 backdrop-blur-md bg-background/70 border-b border-border/20 w-full">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 flex justify-between items-center py-4">
+      <div className="min-h-screen bg-black pb-32">
+        {/* Header with dark background */}
+        <header className="fixed top-0 z-50 bg-black backdrop-blur-md opacity-80 border-b border-gray-800 w-full">
+          <div className="max-w-4xl mx-auto px-4 flex justify-between items-center py-3">
             <Button
               onClick={() => navigate("/")}
-              variant="outline"
+              variant="ghost"
               size="sm"
-              className="border-green-500/50 text-green-500 hover:bg-green-500/10 hover:text-green-500"
+              className="text-green-500 hover:bg-gray-800"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <h2 className="font-medium text-center">User Profile</h2>
+            <h2 className="font-medium text-white">User Profile</h2>
             <div className="w-16"></div> {/* Spacer for centering */}
           </div>
         </header>
@@ -296,93 +296,200 @@ export default function UserProfile() {
         <div className="pt-20 pb-6">
           <div className="max-w-4xl mx-auto px-4 sm:px-6">
             <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
-              <Card className="border border-green-500/30 shadow-lg bg-white dark:bg-gray-900 rounded-xl overflow-hidden">
-                <div className="h-32 bg-gradient-to-r from-green-400 to-emerald-500 relative">
-                  {profile.kyc_status === "verified" && (
-                    <div className="absolute top-4 right-4">{renderVerificationBadge(profile.kyc_status)}</div>
-                  )}
+              <Card className="border border-green-500 shadow-lg bg-black rounded-xl overflow-hidden">
+                <div className="relative">
+                  {/* Pattern background */}
+                  <div className="h-32 bg-black relative rounded-t-xl shadow-lg overflow-hidden">
+                    <svg
+                      className="absolute inset-0 h-full w-full opacity-60"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="100%"
+                      height="100%"
+                      viewBox="0 0 100 100"
+                      preserveAspectRatio="xMidYMid slice"
+                    >
+                      <defs>
+                        <pattern id="shapes" x="0" y="0" width="25" height="25" patternUnits="userSpaceOnUse">
+                          {/* Circles */}
+                          <circle
+                            cx="4"
+                            cy="4"
+                            r="2"
+                            fill="none"
+                            stroke="rgb(59, 130, 246)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                          />
+                          <circle
+                            cx="20"
+                            cy="18"
+                            r="1.5"
+                            fill="none"
+                            stroke="rgb(59, 130, 246)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                          />
+                          {/* Squares */}
+                          <rect
+                            x="15"
+                            y="2"
+                            width="4"
+                            height="4"
+                            fill="none"
+                            stroke="rgb(249, 115, 22)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                            transform="rotate(45, 17, 4)"
+                          />
+                          <rect
+                            x="2"
+                            y="15"
+                            width="3"
+                            height="3"
+                            fill="none"
+                            stroke="rgb(249, 115, 22)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                            transform="rotate(30, 3.5, 16.5)"
+                          />
+                          {/* Triangles */}
+                          <path
+                            d="M 20 12 L 22 15 L 18 15 Z"
+                            fill="none"
+                            stroke="rgb(239, 68, 68)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                          />
+                          <path
+                            d="M 8 8 L 10 11 L 6 11 Z"
+                            fill="none"
+                            stroke="rgb(239, 68, 68)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                            transform="rotate(180, 8, 9.5)"
+                          />
+                          {/* Hexagons */}
+                          <path
+                            d="M 12 20 L 14 18 L 16 20 L 14 22 Z"
+                            fill="none"
+                            stroke="rgb(34, 197, 94)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                          />
+                          <path
+                            d="M 22 8 L 24 6 L 26 8 L 24 10 Z"
+                            fill="none"
+                            stroke="rgb(34, 197, 94)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                          />
+                          {/* Stars */}
+                          <path
+                            d="M 6 22 L 7 20 L 8 22 L 6 21 L 8 21 Z"
+                            fill="none"
+                            stroke="rgb(168, 85, 247)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                          />
+                          <path
+                            d="M 16 7 L 17 5 L 18 7 L 16 6 L 18 6 Z"
+                            fill="none"
+                            stroke="rgb(168, 85, 247)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                          />
+                          {/* Plus signs */}
+                          <path
+                            d="M 12 3 L 12 5 M 11 4 L 13 4"
+                            stroke="rgb(234, 179, 8)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                          />
+                          <path
+                            d="M 3 12 L 3 14 M 2 13 L 4 13"
+                            stroke="rgb(234, 179, 8)"
+                            strokeWidth="0.5"
+                            opacity="0.5"
+                          />
+                        </pattern>
+                      </defs>
+                      <rect x="0" y="0" width="100%" height="100%" fill="url(#shapes)" />
+                    </svg>
+                  </div>
+
+                  {/* Centered Avatar */}
+                  <div
+                    className="absolute left-1/2 transform -translate-x-1/2"
+                    style={{ top: "100%", transform: "translate(-50%, -50%)" }}
+                  >
+                    <Avatar className="h-32 w-32 border-4 border-green-800 ring-1 ring-green-500/20">
+                      <AvatarImage src={profile?.avatar_url} alt={`${profile?.first_name} ${profile?.last_name}`} />
+                      <AvatarFallback className="bg-secondary">
+                        {profile?.first_name?.[0]}
+                        {profile?.last_name?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                  </div>
                 </div>
-                <CardContent className="p-6 sm:p-8 relative">
-                  <Avatar className="h-24 w-24 sm:h-32 sm:w-32 border-4 border-white dark:border-gray-900 shadow-xl absolute -top-16 left-6">
-                    <AvatarImage src={profile.avatar_url || undefined} alt={profile.first_name || "User"} />
-                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                      {profile.first_name?.[0] || "?"}
-                      {profile.last_name?.[0] || ""}
-                    </AvatarFallback>
-                  </Avatar>
 
-                  <div className="ml-0 sm:ml-40 mt-12 sm:mt-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div>
-                        <h1 className="text-2xl sm:text-3xl font-bold">
-                          {profile.first_name} {profile.last_name}
-                        </h1>
+                <CardContent className="pt-16 pb-6 px-6 flex flex-col items-center">
+                  <h1 className="text-2xl font-bold text-white">
+                    {profile.first_name} {profile.last_name}
+                  </h1>
 
-                        <div className="flex flex-wrap items-center gap-3 mt-2">
-                          {profile.kyc_status !== "verified" && renderVerificationBadge(profile.kyc_status)}
-
-                          {profile.location && (
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <MapPin className="w-3.5 h-3.5 mr-1" />
-                              {profile.location}
-                            </div>
-                          )}
-
-                          {profile.joined_date && (
-                            <div className="flex items-center text-sm text-muted-foreground">
-                              <Calendar className="w-3.5 h-3.5 mr-1" />
-                              Joined {profile.joined_date}
-                            </div>
-                          )}
-
-                          {profile.rating && (
-                            <div className="flex items-center text-sm text-amber-500">
-                              <Star className="w-3.5 h-3.5 mr-1 fill-amber-500" />
-                              {profile.rating} rating
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {profile.phone && (
-                        <a
-                          href={`https://wa.me/${profile.phone}`}
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500 text-white hover:bg-green-600 transition-colors"
-                        >
-                          <FontAwesomeIcon icon={faWhatsapp} className="w-5 h-5" />
-                          <span>WhatsApp</span>
-                        </a>
-                      )}
+                  <div className="mt-2 flex flex-col items-center gap-1">
+                    <div className="flex items-center text-sm text-muted-foreground">
+                      <Calendar className="w-3.5 h-3.5 mr-1" />
+                      Joined {profile.joined_date}
                     </div>
 
-                    <div className="mt-6 flex gap-3 w-full">
-                      <Button
-                        onClick={() => navigate("/")}
-                        variant="outline"
-                        className="border-green-500/50 bg-green-500/10 hover:bg-green-500/20 text-green-500 flex-1"
+                    <div className="flex items-center text-yellow-400">
+                      <Star className="w-4 h-4 mr-1 fill-yellow-400" />
+                      <span>{profile.rating} rating</span>
+                    </div>
+
+                    {profile.kyc_status !== "verified" && (
+                      <div className="mt-1">{renderVerificationBadge(profile.kyc_status)}</div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 w-full space-y-3">
+                    {profile.phone && (
+                      <a
+                        href={`https://wa.me/${profile.phone}`}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
                       >
-                        <ShoppingBag className="w-4 h-4 mr-2" />
-                        Browse Items
-                      </Button>
-                    </div>
+                        <FontAwesomeIcon icon={faWhatsapp} className="w-5 h-5" />
+                        <span>WhatsApp</span>
+                      </a>
+                    )}
+
+                    <Button
+                      onClick={() => navigate("/")}
+                      variant="outline"
+                      className="w-full border-green-500/50 bg-transparent hover:bg-green-500/10 text-green-500 rounded-md py-3"
+                    >
+                      <ShoppingBag className="w-4 h-4 mr-2" />
+                      Browse Items
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             </motion.div>
 
             {/* Tabs */}
-            <div className="mt-8 border-b border-border">
+            <div className="mt-8">
               <div className="flex space-x-8">
                 <button
                   onClick={() => setActiveTab("listings")}
                   className={`pb-2 px-1 font-medium text-sm transition-colors relative ${
-                    activeTab === "listings" ? "text-green-500" : "text-muted-foreground hover:text-foreground"
+                    activeTab === "listings" ? "text-green-500" : "text-gray-400 hover:text-gray-300"
                   }`}
                 >
                   <div className="flex items-center gap-2">
                     <ShoppingBag className="w-4 h-4" />
                     Listings
-                    <Badge variant="secondary" className="ml-1">
+                    <Badge variant="secondary" className="ml-1 bg-gray-800 text-gray-300">
                       {items.length}
                     </Badge>
                   </div>
@@ -393,7 +500,7 @@ export default function UserProfile() {
                 <button
                   onClick={() => setActiveTab("about")}
                   className={`pb-2 px-1 font-medium text-sm transition-colors relative ${
-                    activeTab === "about" ? "text-green-500" : "text-muted-foreground hover:text-foreground"
+                    activeTab === "about" ? "text-green-500" : "text-gray-400 hover:text-gray-300"
                   }`}
                 >
                   <div className="flex items-center gap-2">
@@ -412,13 +519,13 @@ export default function UserProfile() {
               {activeTab === "listings" && (
                 <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
                   {items.length === 0 ? (
-                    <Card className="border border-border bg-card/50">
+                    <Card className="border border-gray-800 bg-gray-900">
                       <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="bg-primary/10 rounded-full p-4 mb-4">
-                          <ShoppingBag className="w-8 h-8 text-primary/70" />
+                        <div className="bg-green-500/10 rounded-full p-4 mb-4">
+                          <ShoppingBag className="w-8 h-8 text-green-500/70" />
                         </div>
-                        <p className="text-lg font-medium mb-1">No active listings</p>
-                        <p className="text-muted-foreground max-w-md">
+                        <p className="text-lg font-medium mb-1 text-white">No active listings</p>
+                        <p className="text-gray-400 max-w-md">
                           This seller doesn't have any active items for sale at the moment.
                         </p>
                       </CardContent>
@@ -433,7 +540,7 @@ export default function UserProfile() {
                           transition={{ delay: index * 0.05, duration: 0.3 }}
                         >
                           <Card
-                            className="group overflow-hidden border hover:border-green-500/50 transition-all duration-200 hover:shadow-md h-full flex flex-col"
+                            className="group overflow-hidden border border-green-500 hover:border-green-500/50 transition-all duration-200 hover:shadow-md h-full flex flex-col bg-black"
                             onClick={() => navigate(`/item/${item.id}`)}
                           >
                             <div className="aspect-[4/3] overflow-hidden relative">
@@ -480,7 +587,7 @@ export default function UserProfile() {
                   transition={{ duration: 0.3 }}
                   className="space-y-6"
                 >
-                  <Card>
+                  <Card className="border border-green-500 shadow-lg bg-black rounded-xl overflow-hidden">
                     <CardContent className="p-6">
                       <h3 className="text-lg font-medium mb-4">About the Seller</h3>
                       <div className="space-y-4">
@@ -549,7 +656,7 @@ export default function UserProfile() {
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card className="border border-green-500 shadow-lg bg-black rounded-xl overflow-hidden">
                     <CardContent className="p-6">
                       <h3 className="text-lg font-medium mb-4">Contact Information</h3>
                       {profile.phone ? (
