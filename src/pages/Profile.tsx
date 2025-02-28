@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -47,7 +48,6 @@ const Profile = () => {
   const navigate = useNavigate();
   const [showCropModal, setShowCropModal] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const forceRefreshRole = async () => {
     try {
@@ -147,7 +147,6 @@ const Profile = () => {
 
       if (!kycError && kycData) {
         setKycDocument(kycData);
-        setHasSubmitted(kycData.status !== 'rejected');
       }
 
       // Get user's items
@@ -268,6 +267,13 @@ const Profile = () => {
             Verified
           </Badge>
         );
+      case 'processing':
+        return (
+          <Badge variant="secondary" className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20">
+            <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+            Processing
+          </Badge>
+        );
       case 'rejected':
         return (
           <Badge variant="destructive" className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20">
@@ -278,10 +284,53 @@ const Profile = () => {
       default:
         return (
           <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20">
-            <AlertCircle className="w-3 h-3 mr-1" />
+            <Shield className="w-3 h-3 mr-1" />
             Pending Verification
           </Badge>
         );
+    }
+  };
+
+  const getVerificationButtonText = () => {
+    switch (profile?.kyc_status) {
+      case 'verified':
+        return null; // No button for verified users
+      case 'processing':
+        return (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Verification Processing
+          </>
+        );
+      case 'rejected':
+        return (
+          <>
+            <Shield className="w-4 h-4 mr-2" />
+            Resubmit Verification
+          </>
+        );
+      default:
+        return (
+          <>
+            <Shield className="w-4 h-4 mr-2" />
+            Complete Verification
+          </>
+        );
+    }
+  };
+
+  const shouldShowVerificationButton = () => {
+    return profile?.kyc_status !== 'verified';
+  };
+
+  const getVerificationButtonClasses = () => {
+    switch (profile?.kyc_status) {
+      case 'processing':
+        return "bg-orange-500/10 hover:bg-orange-500/10 text-orange-500 border border-orange-500/20 shadow-orange-500/5";
+      case 'rejected':
+        return "bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 shadow-red-500/5";
+      default:
+        return "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 shadow-yellow-500/5";
     }
   };
 
@@ -423,34 +472,16 @@ const Profile = () => {
                   Go to Admin Dashboard
                 </Button>
               )}
-              {profile?.kyc_status !== 'verified' && (
+              {shouldShowVerificationButton() && (
                 <Button 
                   className={cn(
                     "transition-all duration-300 shadow-lg",
-                    !kycDocument
-                      ? "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 shadow-yellow-500/5"
-                      : profile?.kyc_status === 'pending' && kycDocument
-                        ? "bg-orange-500/10 hover:bg-orange-500/10 text-orange-500 border border-orange-500/20 shadow-orange-500/5"
-                        : "bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 border border-yellow-500/20 shadow-yellow-500/5"
+                    getVerificationButtonClasses()
                   )}
                   onClick={() => setShowEditProfile(true)}
+                  disabled={profile?.kyc_status === 'processing'}
                 >
-                  {!kycDocument ? (
-                    <>
-                      <Shield className="w-4 h-4 mr-2" />
-                      Complete Verification
-                    </>
-                  ) : profile?.kyc_status === 'pending' && kycDocument ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Verification Pending
-                    </>
-                  ) : (
-                    <>
-                      <Shield className="w-4 h-4 mr-2" />
-                      Complete Verification
-                    </>
-                  )}
+                  {getVerificationButtonText()}
                 </Button>
               )}
             </div>

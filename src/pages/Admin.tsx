@@ -48,7 +48,7 @@ interface Profile {
   avatar_url: string | null;
   address: string | null;
   phone: string | null;
-  kyc_status: 'pending' | 'verified' | 'rejected';
+  kyc_status: 'pending' | 'processing' | 'verified' | 'rejected';
   created_at: string;
   updated_at: string | null;
 }
@@ -62,7 +62,7 @@ interface KYCDocument {
   user_id: string;
   document_type: string;
   document_url: string;
-  status: 'pending' | 'verified' | 'rejected';
+  status: 'pending' | 'processing' | 'verified' | 'rejected';
   created_at: string;
   admin_notes: string | null;
   updated_at: string;
@@ -84,6 +84,7 @@ export default function Admin() {
   const [stats, setStats] = useState({
     totalUsers: 0,
     pendingKYC: 0,
+    processingKYC: 0,
     verifiedUsers: 0,
     userGrowthData: [] as { date: string; users: number }[],
     kycStatusData: [] as { name: string; value: number }[]
@@ -263,6 +264,7 @@ export default function Admin() {
       // Calculate KYC status distribution
       const kycStatusData = [
         { name: 'Verified', value: usersWithRoles.filter(user => user.kyc_status === 'verified').length },
+        { name: 'Processing', value: usersWithRoles.filter(user => user.kyc_status === 'processing').length },
         { name: 'Pending', value: usersWithRoles.filter(user => user.kyc_status === 'pending').length },
         { name: 'Rejected', value: usersWithRoles.filter(user => user.kyc_status === 'rejected').length }
       ];
@@ -272,6 +274,7 @@ export default function Admin() {
       setStats({
         totalUsers: usersWithRoles.length,
         pendingKYC: processedKycData.filter(doc => doc.status === 'pending').length,
+        processingKYC: processedKycData.filter(doc => doc.status === 'processing').length,
         verifiedUsers: usersWithRoles.filter(user => user.kyc_status === 'verified').length,
         userGrowthData,
         kycStatusData
@@ -319,13 +322,13 @@ export default function Admin() {
   const handleMakeAdmin = async (email: string) => {
     try {
       // We'll need to query Supabase Auth to get the user by email
-      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+      const { data, error: authError } = await supabase.auth.admin.listUsers();
       
       if (authError) {
         throw new Error('Failed to get users list. Make sure you have admin privileges.');
       }
       
-      const user = authData?.users?.find(u => u.email === email);
+      const user = data?.users?.find(u => u.email === email);
       
       if (!user) {
         toast.error("User not found with this email");
@@ -412,7 +415,7 @@ export default function Admin() {
     );
   }
 
-  const COLORS = ['#3B82F6', '#F59E0B', '#EF4444'];
+  const COLORS = ['#22c55e', '#f97316', '#eab308', '#ef4444']; // Green, Orange, Yellow, Red
 
   return (
     <PageTransition>
@@ -446,14 +449,14 @@ export default function Admin() {
               <p className="text-xs text-muted-foreground">Platform members</p>
             </CardContent>
           </Card>
-          <Card className="border-yellow-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+          <Card className="border-orange-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(245,158,11,0.1)]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending KYC</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-500" />
+              <CardTitle className="text-sm font-medium">Processing Verifications</CardTitle>
+              <Clock className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-500">{stats.pendingKYC}</div>
-              <p className="text-xs text-muted-foreground">Awaiting verification</p>
+              <div className="text-2xl font-bold text-orange-500">{stats.processingKYC}</div>
+              <p className="text-xs text-muted-foreground">Awaiting review</p>
             </CardContent>
           </Card>
           <Card className="border-green-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(34,197,94,0.1)]">
@@ -544,7 +547,7 @@ export default function Admin() {
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-              <div className="flex justify-center gap-4 mt-4">
+              <div className="flex flex-wrap justify-center gap-4 mt-4">
                 {stats.kycStatusData.map((entry, index) => (
                   <div key={entry.name} className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index] }} />
@@ -631,6 +634,8 @@ export default function Admin() {
                             ? 'outline'
                             : admin.kyc_status === 'rejected'
                             ? 'destructive'
+                            : admin.kyc_status === 'processing'
+                            ? 'secondary'
                             : 'secondary'
                         }
                         className={
@@ -638,6 +643,8 @@ export default function Admin() {
                             ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
                             : admin.kyc_status === 'rejected'
                             ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
+                            : admin.kyc_status === 'processing'
+                            ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20'
                             : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
                         }>
                           {admin.kyc_status?.charAt(0).toUpperCase() + admin.kyc_status?.slice(1)}
@@ -664,6 +671,8 @@ export default function Admin() {
                         ? 'outline'
                         : user.kyc_status === 'rejected'
                         ? 'destructive'
+                        : user.kyc_status === 'processing'
+                        ? 'secondary'
                         : 'secondary'
                     }
                     className={
@@ -671,6 +680,8 @@ export default function Admin() {
                         ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
                         : user.kyc_status === 'rejected'
                         ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
+                        : user.kyc_status === 'processing'
+                        ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20'
                         : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
                     }>
                       {user.kyc_status?.charAt(0).toUpperCase() + user.kyc_status?.slice(1)}
@@ -682,55 +693,45 @@ export default function Admin() {
           </TabsContent>
 
           <TabsContent value="kyc" className="space-y-4">
-            {kycDocuments.map((doc) => (
-              <Card key={doc.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold">
-                        {doc.profile.first_name} {doc.profile.last_name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Submitted on {new Date(doc.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Badge variant={
-                      doc.status === 'verified' 
-                        ? 'outline' 
-                        : doc.status === 'rejected'
-                        ? 'destructive'
-                        : 'secondary'
-                    }
-                    className={
-                      doc.status === 'verified'
-                        ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
-                        : doc.status === 'rejected'
-                        ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
-                        : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
-                    }>
-                      {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                    </Badge>
-                  </div>
-
-                  <div className="mt-4">
-                    {documentUrls[doc.id] ? (
-                      <a 
-                        href={documentUrls[doc.id]} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-500 hover:underline flex items-center gap-1"
+            {kycDocuments
+              .filter(doc => doc.status === 'processing') // First show all documents in 'processing' status
+              .map((doc) => (
+                <Card key={doc.id} className="overflow-hidden border-orange-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(249,115,22,0.1)]">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <h3 className="font-semibold">
+                          {doc.profile.first_name} {doc.profile.last_name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Submitted on {new Date(doc.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Badge 
+                        className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20"
                       >
-                        View Document
-                        <ExternalLink className="h-4 w-4" />
-                      </a>
-                    ) : (
-                      <p className="text-sm text-yellow-500">
-                        Generating document link...
-                      </p>
-                    )}
-                  </div>
+                        Processing
+                      </Badge>
+                    </div>
 
-                  {doc.status === 'pending' && (
+                    <div className="mt-4">
+                      {documentUrls[doc.id] ? (
+                        <a 
+                          href={documentUrls[doc.id]} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-500 hover:underline flex items-center gap-1"
+                        >
+                          View Document
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      ) : (
+                        <p className="text-sm text-yellow-500">
+                          Generating document link...
+                        </p>
+                      )}
+                    </div>
+
                     <div className="mt-4 flex gap-2">
                       <Button
                         size="sm"
@@ -750,10 +751,92 @@ export default function Admin() {
                         Reject
                       </Button>
                     </div>
-                  )}
+                  </CardContent>
+                </Card>
+              ))}
+
+            {kycDocuments
+              .filter(doc => doc.status !== 'processing') // Then show all other documents
+              .map((doc) => (
+                <Card key={doc.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <h3 className="font-semibold">
+                          {doc.profile.first_name} {doc.profile.last_name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Submitted on {new Date(doc.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Badge variant={
+                        doc.status === 'verified' 
+                          ? 'outline' 
+                          : doc.status === 'rejected'
+                          ? 'destructive'
+                          : 'secondary'
+                      }
+                      className={
+                        doc.status === 'verified'
+                          ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
+                          : doc.status === 'rejected'
+                          ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
+                          : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
+                      }>
+                        {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-4">
+                      {documentUrls[doc.id] ? (
+                        <a 
+                          href={documentUrls[doc.id]} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-sm text-blue-500 hover:underline flex items-center gap-1"
+                        >
+                          View Document
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      ) : (
+                        <p className="text-sm text-yellow-500">
+                          Generating document link...
+                        </p>
+                      )}
+                    </div>
+
+                    {doc.status === 'pending' && (
+                      <div className="mt-4 flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => handleKYCAction(doc.id, doc.user_id, 'verify')}
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          Verify
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleKYCAction(doc.id, doc.user_id, 'reject')}
+                          className="bg-red-500 hover:bg-red-600"
+                        >
+                          <XCircle className="w-4 h-4 mr-2" />
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            
+            {kycDocuments.length === 0 && (
+              <Card className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm">
+                <CardContent className="p-6 text-center">
+                  <p className="text-muted-foreground">No KYC verification documents submitted yet</p>
                 </CardContent>
               </Card>
-            ))}
+            )}
           </TabsContent>
         </Tabs>
 

@@ -8,13 +8,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 interface SimpleUserProfile {
   id: string;
   first_name: string | null;
   last_name: string | null;
   avatar_url: string | null;
-  kyc_status: 'pending' | 'verified' | 'rejected';
+  kyc_status: 'pending' | 'processing' | 'verified' | 'rejected';
 }
 
 interface SimpleItem {
@@ -128,17 +129,33 @@ export default function UserProfile() {
               
               <div className="flex items-center gap-2 mt-2">
                 <Badge 
-                  variant={profile.kyc_status === 'verified' ? 'outline' : profile.kyc_status === 'rejected' ? 'destructive' : 'secondary'}
+                  variant={
+                    profile.kyc_status === 'verified' 
+                      ? 'outline' 
+                      : profile.kyc_status === 'rejected' 
+                      ? 'destructive' 
+                      : profile.kyc_status === 'processing'
+                      ? 'secondary'
+                      : 'secondary'
+                  }
                   className={
                     profile.kyc_status === 'verified' 
                       ? 'bg-green-500/10 text-green-500 border-green-500/20'
                       : profile.kyc_status === 'rejected'
                       ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                      : profile.kyc_status === 'processing'
+                      ? 'bg-orange-500/10 text-orange-500 border-orange-500/20'
                       : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
                   }
                 >
                   {profile.kyc_status === 'verified' ? 'Verified Seller' : 
-                   profile.kyc_status === 'rejected' ? 'Unverified' : 'Verification Pending'}
+                   profile.kyc_status === 'rejected' ? 'Unverified' : 
+                   profile.kyc_status === 'processing' ? (
+                     <span className="flex items-center">
+                       <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                       Verification in Progress
+                     </span>
+                   ) : 'Verification Pending'}
                 </Badge>
               </div>
               

@@ -26,7 +26,6 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
     address: profile?.address || '',
   });
   const [uploading, setUploading] = useState(false);
-  const [hasSubmitted, setHasSubmitted] = useState(kycDocument !== null);
 
   if (!open) return null;
 
@@ -71,14 +70,14 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
 
       console.log("Document URL:", publicUrl);
 
-      // Create KYC document record with the correct enum value 'pending'
+      // Create KYC document record with the correct enum value 'processing'
       const { error: kycError } = await supabase
         .from('kyc_documents')
         .insert({
           user_id: profile.id,
           document_type: 'student_id',
           document_url: publicUrl,
-          status: 'pending' // Using the correct enum value
+          status: 'processing' // Using the new enum value
         });
 
       if (kycError) {
@@ -86,10 +85,10 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
         throw kycError;
       }
 
-      // Update profile KYC status to pending
+      // Update profile KYC status to processing
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ kyc_status: 'pending' }) // Using the correct enum value
+        .update({ kyc_status: 'processing' }) // Using the correct enum value
         .eq('id', profile.id);
 
       if (profileError) {
@@ -99,7 +98,6 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
 
       toast.success('Document uploaded successfully! Verification in progress.');
       onClose();
-      setHasSubmitted(true);
     } catch (error: any) {
       console.error("Full upload error:", error);
       toast.error(error.message || 'Error uploading document');
@@ -108,7 +106,10 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
     }
   };
 
-  if (hasSubmitted || profile?.kyc_status === 'verified') return null;
+  // Helper function to determine if user can upload documents
+  const canUploadDocument = () => {
+    return profile?.kyc_status === 'pending' || profile?.kyc_status === 'rejected';
+  };
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end justify-center animate-in fade-in duration-300">
@@ -123,16 +124,21 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
                     ? 'outline'
                     : profile.kyc_status === 'rejected'
                     ? 'destructive'
+                    : profile.kyc_status === 'processing'
+                    ? 'secondary'
                     : 'secondary'
                 } className={
                   profile.kyc_status === 'verified' 
                     ? 'bg-green-500/10 text-green-500 border-green-500/20'
                     : profile.kyc_status === 'rejected'
                     ? 'bg-red-500/10 text-red-500 border-red-500/20'
+                    : profile.kyc_status === 'processing'
+                    ? 'bg-orange-500/10 text-orange-500 border-orange-500/20'
                     : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
                 }>
                   {profile.kyc_status === 'verified' && <BadgeCheck className="w-3 h-3 mr-1" />}
                   {profile.kyc_status === 'rejected' && <X className="w-3 h-3 mr-1" />}
+                  {profile.kyc_status === 'processing' && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
                   {profile.kyc_status === 'pending' && <Shield className="w-3 h-3 mr-1" />}
                   {profile.kyc_status.charAt(0).toUpperCase() + profile.kyc_status.slice(1)}
                 </Badge>
@@ -204,7 +210,8 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
                   />
                 </div>
 
-                {(profile?.kyc_status === 'pending' || profile?.kyc_status === 'verified') ? null : (
+                {/* Only show verification upload for pending or rejected statuses */}
+                {canUploadDocument() && (
                   <div className="space-y-2">
                     <Label htmlFor="verification" className="flex items-center gap-2">
                       <Shield className="w-4 h-4 text-yellow-500" />
@@ -223,6 +230,40 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
                     <p className="text-sm text-muted-foreground">
                       Upload your student ID for verification. Supported formats: Images, PDF
                     </p>
+                  </div>
+                )}
+
+                {/* Display verification status message */}
+                {profile?.kyc_status === 'processing' && (
+                  <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 text-orange-500 animate-spin" />
+                      <p className="text-sm text-orange-500 font-medium">
+                        Your verification is in progress. We'll notify you once it's reviewed.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {profile?.kyc_status === 'verified' && (
+                  <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <BadgeCheck className="w-4 h-4 text-green-500" />
+                      <p className="text-sm text-green-500 font-medium">
+                        Your account is verified. You now have full access to all features.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {profile?.kyc_status === 'rejected' && (
+                  <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-md">
+                    <div className="flex items-center gap-2">
+                      <X className="w-4 h-4 text-red-500" />
+                      <p className="text-sm text-red-500 font-medium">
+                        Your verification was rejected. Please submit a clearer image of your student ID.
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>
