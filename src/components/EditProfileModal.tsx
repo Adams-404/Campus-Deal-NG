@@ -58,12 +58,12 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
         throw uploadError;
       }
 
-      // Get the public URL - use the correct method with download parameter set to false
-      const { data } = await supabase.storage
+      // Get the public URL
+      const { data: urlData } = supabase.storage
         .from('kyc_documents')
-        .createSignedUrl(filePath, 60 * 60 * 24 * 365); // 1 year expiry
+        .getPublicUrl(filePath);
 
-      const publicUrl = data?.signedUrl;
+      const publicUrl = urlData?.publicUrl;
       
       if (!publicUrl) {
         throw new Error('Failed to get public URL for the uploaded document');
@@ -71,14 +71,14 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
 
       console.log("Document URL:", publicUrl);
 
-      // Create KYC document record - using 'pending' status which is valid in the enum
+      // Create KYC document record with the correct enum value 'pending'
       const { error: kycError } = await supabase
         .from('kyc_documents')
         .insert({
           user_id: profile.id,
           document_type: 'student_id',
           document_url: publicUrl,
-          status: 'pending' // Using 'pending' instead of 'processing'
+          status: 'pending' // Using the correct enum value
         });
 
       if (kycError) {
@@ -89,7 +89,7 @@ const EditProfileModal = ({ open, onClose, profile, kycDocument, onSave }: EditP
       // Update profile KYC status to pending
       const { error: profileError } = await supabase
         .from('profiles')
-        .update({ kyc_status: 'pending' }) // Using 'pending' instead of 'processing'
+        .update({ kyc_status: 'pending' }) // Using the correct enum value
         .eq('id', profile.id);
 
       if (profileError) {

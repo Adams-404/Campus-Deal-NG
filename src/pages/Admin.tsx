@@ -73,7 +73,6 @@ interface KYCDocument {
 }
 
 interface UserProfile extends Profile {
-  email?: string;
   roles: UserRole[] | null;
 }
 
@@ -236,7 +235,6 @@ export default function Admin() {
         
         usersWithRoles.push({
           ...profile,
-          email: '', // Add empty email since we don't fetch it
           roles: roleData || null
         });
       }
@@ -320,15 +318,15 @@ export default function Admin() {
 
   const handleMakeAdmin = async (email: string) => {
     try {
-      // Get user by email from auth
-      const { data: { users: authUsers }, error: usersError } = await supabase.auth.admin.listUsers();
+      // We'll need to query Supabase Auth to get the user by email
+      const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
       
-      if (usersError) {
-        console.error('Admin API error:', usersError);
-        throw new Error('Failed to fetch users. Make sure you have admin privileges.');
+      if (authError) {
+        throw new Error('Failed to get users list. Make sure you have admin privileges.');
       }
       
-      const user = authUsers?.find(u => u.email === email);
+      const user = authData?.users?.find(u => u.email === email);
+      
       if (!user) {
         toast.error("User not found with this email");
         return;
