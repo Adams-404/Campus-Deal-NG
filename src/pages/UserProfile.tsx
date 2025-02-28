@@ -20,6 +20,7 @@ import {
   Star,
   MapPin,
   Calendar,
+  Check,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
@@ -162,8 +163,7 @@ export default function UserProfile() {
             variant="outline"
             className="bg-green-500/10 text-green-500 border-green-500/20 flex items-center gap-1 px-3 py-1"
           >
-            <Shield className="w-3.5 h-3.5" />
-            Verified Seller
+            <Check className="w-3.5 h-3.5" />
           </Badge>
         )
       case "rejected":
@@ -173,7 +173,6 @@ export default function UserProfile() {
             className="bg-red-500/10 text-red-500 border-red-500/20 flex items-center gap-1 px-3 py-1"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
-            Unverified
           </Badge>
         )
       case "processing":
@@ -183,7 +182,6 @@ export default function UserProfile() {
             className="bg-orange-500/10 text-orange-500 border-orange-500/20 flex items-center gap-1 px-3 py-1"
           >
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            Verification in Progress
           </Badge>
         )
       default:
@@ -193,7 +191,6 @@ export default function UserProfile() {
             className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 flex items-center gap-1 px-3 py-1"
           >
             <User className="w-3.5 h-3.5" />
-            Verification Pending
           </Badge>
         )
     }
@@ -417,18 +414,26 @@ export default function UserProfile() {
                     </svg>
                   </div>
 
-                  {/* Centered Avatar */}
+                  {/* Centered Avatar with verification badge */}
                   <div
                     className="absolute left-1/2 transform -translate-x-1/2"
                     style={{ top: "100%", transform: "translate(-50%, -50%)" }}
                   >
-                    <Avatar className="h-32 w-32 border-4 border-green-800 ring-1 ring-green-500/20">
+                    <Avatar className="h-32 w-32 border-2 border-green-800 ring-1 ring-green-500/20">
                       <AvatarImage src={profile?.avatar_url} alt={`${profile?.first_name} ${profile?.last_name}`} />
                       <AvatarFallback className="bg-secondary">
                         {profile?.first_name?.[0]}
                         {profile?.last_name?.[0]}
                       </AvatarFallback>
                     </Avatar>
+                    {profile.kyc_status === "verified" && (
+                      <Badge
+                        variant="outline"
+                        className="absolute top-0 right-0 bg-green-500 text-white border border-green-500 px-2 py-1 rounded-full shadow-lg"
+                      >
+                        <Check className="w-5 h-5" />
+                      </Badge>
+                    )}
                   </div>
                 </div>
 
@@ -449,7 +454,7 @@ export default function UserProfile() {
                     </div>
 
                     {profile.kyc_status !== "verified" && (
-                      <div className="mt-1">{renderVerificationBadge(profile.kyc_status)}</div>
+                      <div className="mt-1 text-red-500">KYC Status: Not Verified</div>
                     )}
                   </div>
 
@@ -457,7 +462,7 @@ export default function UserProfile() {
                     {profile.phone && (
                       <a
                         href={`https://wa.me/${profile.phone}`}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors w-full"
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors w-full h-12"
                       >
                         <FontAwesomeIcon icon={faWhatsapp} className="w-5 h-5" />
                         <span>WhatsApp</span>
@@ -467,7 +472,7 @@ export default function UserProfile() {
                     <Button
                       onClick={() => navigate("/")}
                       variant="outline"
-                      className="w-full border-green-500/50 bg-transparent hover:bg-green-500/10 text-green-500 rounded-md py-3"
+                      className="w-full border-green-500/50 bg-transparent hover:bg-green-500/10 text-green-500 rounded-md py-3 h-12"
                     >
                       <ShoppingBag className="w-4 h-4 mr-2" />
                       Browse Items
