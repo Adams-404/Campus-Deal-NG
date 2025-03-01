@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -107,7 +106,6 @@ const Admin = () => {
 
       setUser(user);
 
-      // Get user profile
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -120,7 +118,6 @@ const Admin = () => {
         return;
       }
 
-      // Fetch roles for the current user
       const { data: roles, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -132,7 +129,6 @@ const Admin = () => {
 
       setProfile({ ...profileData, roles: roles || [] });
 
-      // Get all users
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
         .select('*');
@@ -143,7 +139,6 @@ const Admin = () => {
         return;
       }
 
-      // Fetch roles for each user
       const usersWithRoles = await Promise.all(
         usersData.map(async (userData) => {
           const { data: userRoles, error: roleError } = await supabase
@@ -153,7 +148,7 @@ const Admin = () => {
 
           if (roleError) {
             console.error('Error fetching role:', roleError);
-            return { ...userData, roles: [] }; // Return user without roles in case of error
+            return { ...userData, roles: [] };
           }
 
           return { ...userData, roles: userRoles || [] };
@@ -162,7 +157,6 @@ const Admin = () => {
 
       setUsers(usersWithRoles);
 
-      // Get all items
       const { data: itemsData, error: itemsError } = await supabase
         .from('items')
         .select(`
@@ -190,20 +184,21 @@ const Admin = () => {
         return;
       }
 
-      const formattedItems = itemsData.map(item => ({
-        id: item.id,
-        title: item.title,
-        price: item.price,
-        status: item.status,
-        created_at: item.created_at,
-        description: item.description,
-        seller: item.seller,
-        images: item.item_images?.map((img: any) => img.image_url) || []
-      }));
+      const formattedItems = itemsData.map(item => {
+        return {
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          status: item.status,
+          created_at: item.created_at,
+          description: item.description,
+          seller: item.seller,
+          images: (item.item_images || []).map((img: any) => img.image_url)
+        };
+      });
 
       setItems(formattedItems);
 
-      // Get all KYC documents
       const { data: kycData, error: kycError } = await supabase
         .from('kyc_documents')
         .select(`
@@ -224,7 +219,6 @@ const Admin = () => {
 
       setKycDocuments(kycData);
 
-      // Calculate dashboard stats
       setDashboardStats({
         totalUsers: usersData.length,
         totalItems: formattedItems.length,
@@ -243,7 +237,6 @@ const Admin = () => {
     const selected = users.find(user => user.id === userId);
     setSelectedUser(selected || null);
 
-    // Fetch user's items
     if (selected) {
       const { data: itemsData, error: itemsError } = await supabase
         .from('items')
@@ -272,16 +265,18 @@ const Admin = () => {
         toast.error('Error fetching user items');
         setUserItems([]);
       } else {
-        const formattedItems = itemsData.map(item => ({
-          id: item.id,
-          title: item.title,
-          price: item.price,
-          status: item.status,
-          created_at: item.created_at,
-          description: item.description,
-          seller: item.seller,
-          images: item.item_images?.map((img: any) => img.image_url) || []
-        }));
+        const formattedItems = itemsData.map(item => {
+          return {
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            status: item.status,
+            created_at: item.created_at,
+            description: item.description,
+            seller: item.seller,
+            images: (item.item_images || []).map((img: any) => img.image_url)
+          };
+        });
         setUserItems(formattedItems);
       }
     }
@@ -312,7 +307,7 @@ const Admin = () => {
         toast.error('Failed to update KYC status');
       } else {
         toast.success('KYC status updated successfully!');
-        getProfile(); // Refresh data
+        getProfile();
       }
     } catch (error) {
       console.error('Error updating KYC status:', error);
@@ -335,7 +330,6 @@ const Admin = () => {
   const handleMakeAdmin = async (userEmail: string) => {
     setIsAddingAdmin(true);
     try {
-      // 1. Find the user by email
       const { data: usersData, error: usersError } = await supabase
         .from('profiles')
         .select('*')
@@ -349,7 +343,6 @@ const Admin = () => {
 
       const targetUser = usersData[0];
 
-      // 2. Check if the user is already an admin
       const { data: roles, error: roleError } = await supabase
         .from('user_roles')
         .select('role')
@@ -367,7 +360,6 @@ const Admin = () => {
         return;
       }
 
-      // 3. Add the 'admin' role to the user_roles table
       const { error: insertError } = await supabase
         .from('user_roles')
         .insert([{ user_id: targetUser.id, role: 'admin' }]);
@@ -379,7 +371,7 @@ const Admin = () => {
       }
 
       toast.success('Admin role added successfully!');
-      getProfile(); // Refresh data
+      getProfile();
     } catch (error) {
       console.error('Error in handleMakeAdmin:', error);
       toast.error('An unexpected error occurred');
@@ -394,7 +386,6 @@ const Admin = () => {
     if (!selectedUser) return;
 
     try {
-      // 1. Remove the 'admin' role from the user_roles table
       const { error: deleteError } = await supabase
         .from('user_roles')
         .delete()
@@ -408,7 +399,7 @@ const Admin = () => {
       }
 
       toast.success('Admin role removed successfully!');
-      getProfile(); // Refresh data
+      getProfile();
     } catch (error) {
       console.error('Error in handleRemoveAdmin:', error);
       toast.error('An unexpected error occurred');
@@ -427,12 +418,10 @@ const Admin = () => {
     if (!itemToDelete) return;
 
     try {
-      // Optimistically update the UI
       setItems(prevItems => prevItems.filter(item => item.id !== itemToDelete.id));
       setItemToDelete(null);
       setShowDeleteConfirmation(false);
 
-      // Delete the item from the database
       const { error } = await supabase
         .from('items')
         .delete()
@@ -441,7 +430,6 @@ const Admin = () => {
       if (error) {
         console.error('Error deleting item:', error);
         toast.error('Failed to delete item');
-        // Revert the UI update if the deletion fails
         getProfile();
       } else {
         toast.success('Item deleted successfully!');
@@ -449,7 +437,6 @@ const Admin = () => {
     } catch (error) {
       console.error('Error in confirmDeleteItem:', error);
       toast.error('An unexpected error occurred');
-      // Revert the UI update if an error occurs
       getProfile();
     }
   };
@@ -694,7 +681,6 @@ const Admin = () => {
           userItems={userItems}
         />
 
-        {/* KYC Details Modal */}
         <Dialog open={showKYCDetailsModal} onOpenChange={setShowKYCDetailsModal}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -758,7 +744,6 @@ const Admin = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Add Admin Modal */}
         <Dialog open={showAddAdminModal} onOpenChange={setShowAddAdminModal}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -799,7 +784,6 @@ const Admin = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Delete Confirmation Modal */}
         <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>

@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DashboardStats, ChartData, TimeSeriesData, ItemType, KYCDocument } from "./types";
 import { BarChart, Bar, PieChart, Pie, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { Badge } from "@/components/ui/badge";
-import { users as UsersIcon, image as ImageIcon, shieldCheck as ShieldCheckIcon, userCheck as UserCheckIcon, trendingUp as TrendingUpIcon } from "lucide-react";
+import { Users, Image, ShieldCheck, UserCheck, TrendingUp } from "lucide-react";
 
 interface DashboardOverviewProps {
   stats: DashboardStats;
@@ -38,7 +38,7 @@ export const DashboardOverview = ({ stats, recentItems, kycDocuments }: Dashboar
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="bg-blue-500/10 border-blue-500/30">
           <CardContent className="p-4 flex flex-col items-center justify-center">
-            <UsersIcon className="h-8 w-8 text-blue-500 mb-2" />
+            <Users className="h-8 w-8 text-blue-500 mb-2" />
             <p className="text-2xl font-bold text-blue-500">{stats.totalUsers}</p>
             <p className="text-xs text-muted-foreground">Total Users</p>
           </CardContent>
@@ -46,7 +46,7 @@ export const DashboardOverview = ({ stats, recentItems, kycDocuments }: Dashboar
 
         <Card className="bg-green-500/10 border-green-500/30">
           <CardContent className="p-4 flex flex-col items-center justify-center">
-            <ImageIcon className="h-8 w-8 text-green-500 mb-2" />
+            <Image className="h-8 w-8 text-green-500 mb-2" />
             <p className="text-2xl font-bold text-green-500">{stats.totalItems}</p>
             <p className="text-xs text-muted-foreground">Total Items</p>
           </CardContent>
@@ -54,7 +54,7 @@ export const DashboardOverview = ({ stats, recentItems, kycDocuments }: Dashboar
 
         <Card className="bg-orange-500/10 border-orange-500/30">
           <CardContent className="p-4 flex flex-col items-center justify-center">
-            <ShieldCheckIcon className="h-8 w-8 text-orange-500 mb-2" />
+            <ShieldCheck className="h-8 w-8 text-orange-500 mb-2" />
             <p className="text-2xl font-bold text-orange-500">{stats.pendingKyc}</p>
             <p className="text-xs text-muted-foreground">Pending KYC</p>
           </CardContent>
@@ -62,7 +62,7 @@ export const DashboardOverview = ({ stats, recentItems, kycDocuments }: Dashboar
 
         <Card className="bg-purple-500/10 border-purple-500/30">
           <CardContent className="p-4 flex flex-col items-center justify-center">
-            <UserCheckIcon className="h-8 w-8 text-purple-500 mb-2" />
+            <UserCheck className="h-8 w-8 text-purple-500 mb-2" />
             <p className="text-2xl font-bold text-purple-500">{stats.activeSellers}</p>
             <p className="text-xs text-muted-foreground">Active Sellers</p>
           </CardContent>
@@ -126,7 +126,7 @@ export const DashboardOverview = ({ stats, recentItems, kycDocuments }: Dashboar
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <TrendingUpIcon className="h-4 w-4" />
+            <TrendingUp className="h-4 w-4" />
             Recent Activities
           </CardTitle>
         </CardHeader>
@@ -139,7 +139,7 @@ export const DashboardOverview = ({ stats, recentItems, kycDocuments }: Dashboar
                     <img src={item.images[0]} alt={item.title} className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full bg-secondary flex items-center justify-center">
-                      <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                      <Image className="h-5 w-5 text-muted-foreground" />
                     </div>
                   )}
                 </div>
