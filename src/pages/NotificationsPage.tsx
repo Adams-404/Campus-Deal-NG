@@ -179,27 +179,27 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 mt-20">
-      <div className="flex items-center mb-6">
+    <div className="max-w-4xl mx-auto px-4 py-8 mt-20 sm:px-2">
+      <div className="flex flex-col sm:flex-row items-center mb-6">
         <Link to="/home" className="mr-4">
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <ChevronLeft className="h-5 w-5" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-white">Notifications</h1>
+        <h1 className="text-2xl font-bold text-white sm:text-xl">Notifications</h1>
       </div>
 
       <div className="bg-secondary/30 rounded-lg border border-white/10 overflow-hidden">
-        <div className="p-4 border-b border-white/10 flex justify-between items-center">
+        <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row justify-between items-center">
           <Tabs defaultValue="all" className="w-full" onValueChange={setActiveTab}>
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-center">
               <TabsList className="bg-background/50">
                 <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="unread">Unread</TabsTrigger>
                 <TabsTrigger value="read">Read</TabsTrigger>
               </TabsList>
 
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 mt-2 sm:mt-0">
                 <Button
                   variant="outline"
                   size="sm"
