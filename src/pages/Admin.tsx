@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,8 @@ import { useNavigate } from 'react-router-dom';
 import { PageTransition } from "@/components/PageTransition";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DataTable } from "@/components/ui/data-table"
-import { ColumnDef } from "@tanstack/react-table"
+import { DataTable } from "@/components/ui/data-table";
+import { ColumnDef } from "@tanstack/react-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,8 +40,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+} from "@/components/ui/dropdown-menu";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AdminGuide } from "@/components/admin/AdminGuide";
 import { UsersTab } from "@/components/admin/UsersTab";
 import { AdminsTab } from "@/components/admin/AdminsTab";
@@ -52,15 +53,16 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
+  DialogFooter
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Profile, UserProfile, KYCDocument, ItemType } from "@/components/admin/types";
+import { Profile, UserProfile, KYCDocument, ItemType, KycStatus } from "@/components/admin/types";
 
 const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [items, setItems] = useState<ItemType[]>([]);
   const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
@@ -108,7 +110,17 @@ const Admin = () => {
         return;
       }
 
-      setProfile(profileData);
+      // Fetch roles for the current user
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+
+      if (roleError) {
+        console.error('Error fetching role:', roleError);
+      }
+
+      setProfile({ ...profileData, roles: roles || [] });
 
       // Get all users
       const { data: usersData, error: usersError } = await supabase
@@ -264,7 +276,7 @@ const Admin = () => {
     setShowKYCDetailsModal(true);
   };
 
-  const handleKYCStatusUpdate = async (documentId: string, newStatus: string) => {
+  const handleKYCStatusUpdate = async (documentId: string, newStatus: KycStatus) => {
     setIsUpdatingKYC(true);
     try {
       const { error } = await supabase
@@ -636,7 +648,6 @@ const Admin = () => {
               <div className="space-y-4 py-4">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-12 w-12">
-                    <AvatarImage src={selectedKYCDocument.profile?.avatar_url || ''} />
                     <AvatarFallback>
                       {selectedKYCDocument.profile?.first_name?.[0]}{selectedKYCDocument.profile?.last_name?.[0]}
                     </AvatarFallback>
