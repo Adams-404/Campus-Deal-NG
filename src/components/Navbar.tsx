@@ -169,17 +169,19 @@ export const Navbar = () => {
               </div>
 
               <div className="relative" ref={notificationRef}>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20 relative"
-                  onClick={toggleNotification}
-                >
-                  <Bell className="h-5 w-5 text-primary" />
-                  {notifications.some((n) => !n.read) && (
-                    <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 rounded-full"></span>
-                  )}
-                </Button>
+                <Link to="/notifications">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20 relative"
+                    onClick={toggleNotification}
+                  >
+                    <Bell className="h-5 w-5 text-primary" />
+                    {notifications.some((n) => !n.read) && (
+                      <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 rounded-full"></span>
+                    )}
+                  </Button>
+                </Link>
 
                 {isNotificationOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-background rounded-lg shadow-lg border border-white/10 overflow-hidden z-50">

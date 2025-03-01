@@ -33,6 +33,7 @@ import Admin from "./pages/Admin";
 import MyListings from "./pages/MyListings";
 import UserProfile from "./pages/UserProfile";
 import { SearchProvider } from "./contexts/SearchContext";
+import NotificationsPage from "./pages/NotificationsPage";
 
 const queryClient = new QueryClient();
 
@@ -112,6 +113,7 @@ const AnimatedRoutes = () => {
             <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
             <Route path="/item/:id" element={<ProtectedRoute><ViewItem /></ProtectedRoute>} />
             <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
+            <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
