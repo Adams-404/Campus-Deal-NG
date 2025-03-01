@@ -11,7 +11,7 @@ export interface Profile {
   kyc_status: KycStatus;
   created_at: string;
   updated_at: string | null;
-  email?: string; // Added email field
+  email?: string;
 }
 
 export interface UserRole {
@@ -30,7 +30,7 @@ export interface KYCDocument {
   profile: {
     first_name: string | null;
     last_name: string | null;
-    avatar_url?: string | null; // Added avatar_url field
+    avatar_url?: string | null;
   };
 }
 
