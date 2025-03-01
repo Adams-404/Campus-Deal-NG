@@ -1,110 +1,191 @@
-
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from "@/integrations/supabase/client";
-import { PageTransition } from "@/components/PageTransition";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  User as UserIcon,
+  Mail,
+  Calendar,
+  Shield,
+  Edit2,
+  AlertCircle,
+  Phone,
+  MapPin,
+  BadgeCheck,
+  Crown,
+  Image,
+  Eye,
+  Trash2,
+  Loader2,
+  CheckCircle,
+  AlertTriangle,
+  ExternalLink,
+} from "lucide-react";
+import { useNavigate } from 'react-router-dom';
+import { PageTransition } from "@/components/PageTransition";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AdminActionModal } from "@/components/AdminActionModal";
-
-// Import admin components
-import { AdminStats } from "@/components/admin/AdminDashboard";
-import { AdminCharts } from "@/components/admin/AdminDashboard";
-import { PostsTab } from "@/components/admin/PostsTab";
-import { AdminsTab } from "@/components/admin/AdminsTab";
+import { DataTable } from "@/components/ui/data-table"
+import { ColumnDef } from "@tanstack/react-table"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { AdminGuide } from "@/components/admin/AdminGuide";
 import { UsersTab } from "@/components/admin/UsersTab";
-import { KYCTab } from "@/components/admin/KYCTab";
+import { AdminsTab } from "@/components/admin/AdminsTab";
 import { UserDetailsModal } from "@/components/admin/UserDetailsModal";
+import { KYCDocumentsTab } from "@/components/admin/KYCDocumentsTab";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils";
+import { Profile, UserProfile, KYCDocument, ItemType } from "@/components/admin/types";
 
-// Import types
-import { 
-  KYCDocument, 
-  UserProfile, 
-  ItemType 
-} from "@/components/admin/types";
-
-export default function Admin() {
-  const navigate = useNavigate();
+const Admin = () => {
   const [loading, setLoading] = useState(true);
-  const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [items, setItems] = useState<ItemType[]>([]);
-  const [stats, setStats] = useState({
-    totalUsers: 0,
-    pendingKYC: 0,
-    processingKYC: 0,
-    verifiedUsers: 0,
-    userGrowthData: [] as { date: string; users: number }[],
-    kycStatusData: [] as { name: string; value: number }[]
-  });
+  const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [adminAction, setAdminAction] = useState<'add' | 'remove'>('add');
-  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [selectedKYCDocument, setSelectedKYCDocument] = useState<KYCDocument | null>(null);
   const [showUserDetailsModal, setShowUserDetailsModal] = useState(false);
-  const [viewingUser, setViewingUser] = useState<UserProfile | null>(null);
+  const [showKYCDetailsModal, setShowKYCDetailsModal] = useState(false);
   const [userItems, setUserItems] = useState<ItemType[]>([]);
+  const [isAddingAdmin, setIsAddingAdmin] = useState(false);
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<ItemType | null>(null);
+  const [activeTab, setActiveTab] = useState<'users' | 'admins' | 'kyc' | 'posts'>('users');
+  const [adminNotes, setAdminNotes] = useState('');
+  const [isUpdatingKYC, setIsUpdatingKYC] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    checkAdminAccess();
+    getProfile();
   }, []);
 
-  const checkAdminAccess = async () => {
+  const getProfile = async () => {
     try {
       setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
+
       if (!user) {
-        navigate('/auth/signin');
+        navigate('/sign-in');
         return;
       }
 
-      // Check if user is admin using direct query to user_roles
-      const { data: roles, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
+      setUser(user);
 
-      if (error) {
-        console.error('Error checking admin status:', error);
-        toast.error('Error checking admin status');
-        navigate('/');
+      // Get user profile
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        toast.error('Error fetching profile');
         return;
       }
 
-      const isAdmin = roles?.some(r => r.role === 'admin') ?? false;
-      if (!isAdmin) {
-        toast.error('Access denied, admin privileges required');
-        navigate('/');
+      setProfile(profileData);
+
+      // Get all users
+      const { data: usersData, error: usersError } = await supabase
+        .from('profiles')
+        .select('*');
+
+      if (usersError) {
+        console.error('Error fetching users:', usersError);
+        toast.error('Error fetching users');
         return;
       }
 
-      // Only fetch data if user is admin
-      fetchData();
-    } catch (error) {
-      console.error('Error in admin check:', error);
-      toast.error('An error occurred while checking admin access');
-      navigate('/');
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Fetch roles for each user
+      const usersWithRoles = await Promise.all(
+        usersData.map(async (userData) => {
+          const { data: roles, error: roleError } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', userData.id);
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
+          if (roleError) {
+            console.error('Error fetching role:', roleError);
+            return { ...userData, roles: [] }; // Return user without roles in case of error
+          }
 
-      // Fetch KYC documents with profiles
+          return { ...userData, roles: roles || [] };
+        })
+      );
+
+      setUsers(usersWithRoles);
+
+      // Get all items
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('items')
+        .select(`
+          id,
+          title,
+          price,
+          status,
+          created_at,
+          description,
+          seller:profiles (
+            id,
+            first_name,
+            last_name,
+            avatar_url
+          ),
+          item_images (
+            image_url
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (itemsError) {
+        console.error('Error fetching items:', itemsError);
+        toast.error('Error fetching items');
+        return;
+      }
+
+      const formattedItems = itemsData.map(item => ({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        status: item.status,
+        created_at: item.created_at,
+        description: item.description,
+        seller: item.seller,
+        images: item.item_images?.map((img: any) => img.image_url) || []
+      }));
+
+      setItems(formattedItems);
+
+      // Get all KYC documents
       const { data: kycData, error: kycError } = await supabase
         .from('kyc_documents')
         .select(`
-          id,
-          user_id,
-          document_type,
-          document_url,
-          status,
-          created_at,
-          admin_notes,
-          updated_at,
+          *,
           profile:profiles (
             first_name,
             last_name
@@ -112,233 +193,27 @@ export default function Admin() {
         `)
         .order('created_at', { ascending: false });
 
-      if (kycError) throw kycError;
-
-      // First fetch profiles
-      const { data: profiles, error: profileError } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          first_name,
-          last_name,
-          avatar_url,
-          address,
-          phone,
-          kyc_status,
-          created_at,
-          updated_at
-        `)
-        .order('created_at', { ascending: false });
-
-      if (profileError) throw profileError;
-
-      // Fetch all items
-      const { data: itemsData, error: itemsError } = await supabase
-        .from('items')
-        .select(`
-          id,
-          title,
-          price,
-          status,
-          created_at,
-          description,
-          seller_id,
-          item_images (
-            image_url
-          ),
-          profiles:seller_id (
-            id,
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
-        .order('created_at', { ascending: false });
-        
-      if (itemsError) throw itemsError;
-
-      // Format items data
-      const formattedItems = (itemsData || []).map(item => ({
-        id: item.id,
-        title: item.title,
-        price: item.price,
-        status: item.status,
-        created_at: item.created_at,
-        description: item.description,
-        seller: {
-          id: item.profiles?.id || '',
-          first_name: item.profiles?.first_name || '',
-          last_name: item.profiles?.last_name || '',
-          avatar_url: item.profiles?.avatar_url || ''
-        },
-        images: item.item_images?.map((img: any) => img.image_url) || []
-      }));
-
-      // Then fetch roles for each profile
-      const usersWithRoles: UserProfile[] = [];
-      
-      for (const profile of profiles || []) {
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', profile.id);
-        
-        usersWithRoles.push({
-          ...profile,
-          roles: roleData || null
-        });
+      if (kycError) {
+        console.error('Error fetching KYC documents:', kycError);
+        toast.error('Error fetching KYC documents');
+        return;
       }
 
-      const processedKycData = (kycData || []).map(doc => ({
-        ...doc,
-        profile: {
-          ...doc.profile,
-        }
-      }));
-
-      // Calculate user growth data (last 7 days)
-      const userGrowthData = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date();
-        date.setDate(date.getDate() - (6 - i));
-        const usersOnDate = usersWithRoles.filter(user => {
-          const userDate = new Date(user.created_at);
-          return userDate.toDateString() === date.toDateString();
-        }).length;
-        return {
-          date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-          users: usersOnDate
-        };
-      });
-
-      // Calculate KYC status distribution
-      const kycStatusData = [
-        { name: 'Verified', value: usersWithRoles.filter(user => user.kyc_status === 'verified').length },
-        { name: 'Processing', value: usersWithRoles.filter(user => user.kyc_status === 'processing').length },
-        { name: 'Pending', value: usersWithRoles.filter(user => user.kyc_status === 'pending').length },
-        { name: 'Rejected', value: usersWithRoles.filter(user => user.kyc_status === 'rejected').length }
-      ];
-
-      setKycDocuments(processedKycData);
-      setUsers(usersWithRoles);
-      setItems(formattedItems);
-      setStats({
-        totalUsers: usersWithRoles.length,
-        pendingKYC: processedKycData.filter(doc => doc.status === 'pending').length,
-        processingKYC: processedKycData.filter(doc => doc.status === 'processing').length,
-        verifiedUsers: usersWithRoles.filter(user => user.kyc_status === 'verified').length,
-        userGrowthData,
-        kycStatusData
-      });
-
-    } catch (error: any) {
-      toast.error(error.message);
+      setKycDocuments(kycData);
+    } catch (error) {
+      console.error('Error in getProfile:', error);
+      toast.error('An error occurred while fetching data');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMakeAdmin = async (userEmail: string) => {
-    try {
-      // Get user by email from auth
-      const { data, error: authError } = await supabase.auth.admin.listUsers();
-      
-      if (authError) {
-        throw new Error('Failed to get users list. Make sure you have admin privileges.');
-      }
-      
-      if (!data || !data.users) {
-        throw new Error('No users found');
-      }
-      
-      const matchingUser = data.users.find(u => u.email === userEmail);
-      
-      if (!matchingUser) {
-        toast.error("User not found with this email");
-        return;
-      }
-
-      // Check if already admin
-      const { data: existingRole } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', matchingUser.id)
-        .eq('role', 'admin')
-        .single();
-
-      if (existingRole) {
-        toast.info("User is already an admin");
-        return;
-      }
-
-      // Add admin role
-      const { error: insertError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: matchingUser.id,
-          role: 'admin'
-        });
-
-      if (insertError) throw insertError;
-
-      toast.success("User promoted to admin successfully");
-      await fetchData();
-    } catch (error: any) {
-      console.error('Error making user admin:', error);
-      toast.error(error.message || "Failed to make user admin");
-      throw error; // Re-throw to be caught by the modal
-    }
-  };
-
-  const handleRemoveAdmin = async (userId: string) => {
-    try {
-      const { error: deleteError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', userId)
-        .eq('role', 'admin');
-
-      if (deleteError) throw deleteError;
-
-      toast.success("Admin privileges removed successfully");
-      await fetchData();
-    } catch (error: any) {
-      console.error('Error removing admin:', error);
-      toast.error(error.message || "Failed to remove admin privileges");
-      throw error; // Re-throw to be caught by the modal
-    }
-  };
-
-  const handleAdminAction = (user: UserProfile | null, action: 'add' | 'remove') => {
-    setSelectedUser(user);
-    setAdminAction(action);
-    setShowAdminModal(true);
-  };
-
-  const handleAdminConfirm = async (email: string) => {
-    try {
-      if (adminAction === 'add') {
-        await handleMakeAdmin(email);
-      } else if (selectedUser) {
-        await handleRemoveAdmin(selectedUser.id);
-      }
-      setShowAdminModal(false);
-      setSelectedUser(null);
-    } catch (error) {
-      // Error is already handled in the individual functions
-      console.error('Error in handleAdminConfirm:', error);
-    }
-  };
-
   const handleViewUserProfile = async (userId: string) => {
-    try {
-      // Find user in existing users array
-      const user = users.find(u => u.id === userId);
-      if (!user) {
-        toast.error("User not found");
-        return;
-      }
-      
-      // Fetch user's items
+    const selected = users.find(user => user.id === userId);
+    setSelectedUser(selected || null);
+
+    // Fetch user's items
+    if (selected) {
       const { data: itemsData, error: itemsError } = await supabase
         .from('items')
         .select(`
@@ -348,40 +223,276 @@ export default function Admin() {
           status,
           created_at,
           description,
+          seller:profiles (
+            id,
+            first_name,
+            last_name,
+            avatar_url
+          ),
           item_images (
             image_url
           )
         `)
         .eq('seller_id', userId)
         .order('created_at', { ascending: false });
-        
-      if (itemsError) throw itemsError;
 
-      // Format items data
-      const formattedItems = (itemsData || []).map(item => ({
-        id: item.id,
-        title: item.title,
-        price: item.price,
-        status: item.status,
-        created_at: item.created_at,
-        description: item.description,
-        seller: {
-          id: userId,
-          first_name: user.first_name || '',
-          last_name: user.last_name || '',
-          avatar_url: user.avatar_url || ''
-        },
-        images: item.item_images?.map((img: any) => img.image_url) || []
-      }));
+      if (itemsError) {
+        console.error('Error fetching user items:', itemsError);
+        toast.error('Error fetching user items');
+        setUserItems([]);
+      } else {
+        const formattedItems = itemsData.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          status: item.status,
+          created_at: item.created_at,
+          description: item.description,
+          seller: item.seller,
+          images: item.item_images?.map((img: any) => img.image_url) || []
+        }));
+        setUserItems(formattedItems);
+      }
+    }
 
-      setViewingUser(user);
-      setUserItems(formattedItems);
-      setShowUserDetailsModal(true);
-    } catch (error: any) {
-      console.error('Error fetching user details:', error);
-      toast.error(error.message || 'Failed to fetch user details');
+    setShowUserDetailsModal(true);
+  };
+
+  const handleViewKYCDocument = (document: KYCDocument) => {
+    setSelectedKYCDocument(document);
+    setAdminNotes(document.admin_notes || '');
+    setShowKYCDetailsModal(true);
+  };
+
+  const handleKYCStatusUpdate = async (documentId: string, newStatus: string) => {
+    setIsUpdatingKYC(true);
+    try {
+      const { error } = await supabase
+        .from('kyc_documents')
+        .update({ status: newStatus, admin_notes: adminNotes, updated_at: new Date().toISOString() })
+        .eq('id', documentId);
+
+      if (error) {
+        console.error('Error updating KYC status:', error);
+        toast.error('Failed to update KYC status');
+      } else {
+        toast.success('KYC status updated successfully!');
+        getProfile(); // Refresh data
+      }
+    } catch (error) {
+      console.error('Error updating KYC status:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsUpdatingKYC(false);
+      setShowKYCDetailsModal(false);
     }
   };
+
+  const handleAdminAction = (user: UserProfile | null, action: 'add' | 'remove') => {
+    if (action === 'add') {
+      setShowAddAdminModal(true);
+    } else if (action === 'remove' && user) {
+      setSelectedUser(user);
+      setShowDeleteConfirmation(true);
+    }
+  };
+
+  const handleMakeAdmin = async (userEmail: string) => {
+    setIsAddingAdmin(true);
+    try {
+      // 1. Find the user by email
+      const { data: usersData, error: usersError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('email', userEmail);
+
+      if (usersError || !usersData || usersData.length === 0) {
+        console.error('Error finding user:', usersError);
+        toast.error('User not found with that email');
+        return;
+      }
+
+      const targetUser = usersData[0];
+
+      // 2. Check if the user is already an admin
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', targetUser.id);
+
+      if (roleError) {
+        console.error('Error checking role:', roleError);
+        toast.error('Error checking user role');
+        return;
+      }
+
+      const isAdmin = roles?.some(r => r.role === 'admin') ?? false;
+      if (isAdmin) {
+        toast.error('User is already an admin');
+        return;
+      }
+
+      // 3. Add the 'admin' role to the user_roles table
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .insert([{ user_id: targetUser.id, role: 'admin' }]);
+
+      if (insertError) {
+        console.error('Error adding admin role:', insertError);
+        toast.error('Failed to add admin role');
+        return;
+      }
+
+      toast.success('Admin role added successfully!');
+      getProfile(); // Refresh data
+    } catch (error) {
+      console.error('Error in handleMakeAdmin:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsAddingAdmin(false);
+      setShowAddAdminModal(false);
+    }
+  };
+
+  const handleRemoveAdmin = async () => {
+    setIsAddingAdmin(true);
+    if (!selectedUser) return;
+
+    try {
+      // 1. Remove the 'admin' role from the user_roles table
+      const { error: deleteError } = await supabase
+        .from('user_roles')
+        .delete()
+        .eq('user_id', selectedUser.id)
+        .eq('role', 'admin');
+
+      if (deleteError) {
+        console.error('Error removing admin role:', deleteError);
+        toast.error('Failed to remove admin role');
+        return;
+      }
+
+      toast.success('Admin role removed successfully!');
+      getProfile(); // Refresh data
+    } catch (error) {
+      console.error('Error in handleRemoveAdmin:', error);
+      toast.error('An unexpected error occurred');
+    } finally {
+      setIsAddingAdmin(false);
+      setShowDeleteConfirmation(false);
+    }
+  };
+
+  const handleDeleteItem = async (item: ItemType) => {
+    setItemToDelete(item);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+
+    try {
+      // Optimistically update the UI
+      setItems(prevItems => prevItems.filter(item => item.id !== itemToDelete.id));
+      setItemToDelete(null);
+      setShowDeleteConfirmation(false);
+
+      // Delete the item from the database
+      const { error } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', itemToDelete.id);
+
+      if (error) {
+        console.error('Error deleting item:', error);
+        toast.error('Failed to delete item');
+        // Revert the UI update if the deletion fails
+        getProfile();
+      } else {
+        toast.success('Item deleted successfully!');
+      }
+    } catch (error) {
+      console.error('Error in confirmDeleteItem:', error);
+      toast.error('An unexpected error occurred');
+      // Revert the UI update if an error occurs
+      getProfile();
+    }
+  };
+
+  const columns: ColumnDef<ItemType>[] = [
+    {
+      accessorKey: 'title',
+      header: 'Title',
+    },
+    {
+      accessorKey: 'price',
+      header: 'Price',
+      cell: ({ row }) => `₦${row.getValue("price")}`,
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ row }) => (
+        <Badge
+          variant="outline"
+          className={cn(
+            row.getValue("status") === 'active'
+              ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
+              : row.getValue("status") === 'deleted'
+                ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
+                : 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20 border-gray-500/20'
+          )}
+        >
+          {row.getValue("status")}
+        </Badge>
+      ),
+    },
+    {
+      accessorKey: 'seller',
+      header: 'Seller',
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Avatar className="h-6 w-6">
+            <AvatarImage src={row.original.seller?.avatar_url || ''} />
+            <AvatarFallback>
+              <UserIcon className="h-3 w-3" />
+            </AvatarFallback>
+          </Avatar>
+          <span>{row.original.seller?.first_name} {row.original.seller?.last_name}</span>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'created_at',
+      header: 'Created At',
+      cell: ({ row }) => new Date(row.getValue("created_at")).toLocaleDateString(),
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="h-8 w-8 p-0">
+              <span className="sr-only">Open menu</span>
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => navigate(`/item/${row.original.id}`)}>
+              <Eye className="h-4 w-4 mr-2" />
+              View Item
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => handleDeleteItem(row.original)}>
+              <Trash2 className="h-4 w-4 mr-2 text-red-500" />
+              Delete Item
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
+    },
+  ];
 
   if (loading) {
     return (
@@ -391,106 +502,262 @@ export default function Admin() {
     );
   }
 
+  if (profile?.roles?.every(r => r.role !== 'admin')) {
+    return (
+      <PageTransition>
+        <div className="container max-w-2xl mx-auto px-4 py-8">
+          <Alert variant="destructive">
+            <AlertTitle>Unauthorized</AlertTitle>
+            <AlertDescription>
+              You do not have permission to access this page.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </PageTransition>
+    );
+  }
+
   return (
     <PageTransition>
-      <div className="container py-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-500 to-green-500 bg-clip-text text-transparent">
-              Admin Dashboard
-            </h1>
-            <p className="text-muted-foreground">
-              Manage users and monitor platform activity
-            </p>
+      <div className="container max-w-7xl mx-auto px-4 py-8 pb-32">
+        <div className="mb-8 flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <div className="flex items-center gap-4">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={profile?.avatar_url} />
+              <AvatarFallback>
+                {profile?.first_name?.[0]}{profile?.last_name?.[0]}
+              </AvatarFallback>
+            </Avatar>
+            <span>{profile?.first_name} {profile?.last_name}</span>
           </div>
-          <Button 
-            variant="outline" 
-            onClick={() => navigate(-1)}
-            className="border-blue-500/20 hover:bg-blue-500/10"
-          >
-            Back
-          </Button>
         </div>
 
-        {/* Dashboard Stats */}
-        <AdminStats 
-          totalUsers={stats.totalUsers}
-          pendingKYC={stats.pendingKYC}
-          processingKYC={stats.processingKYC}
-          verifiedUsers={stats.verifiedUsers}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-1">
+            <Card className="border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+              <CardContent className="p-4">
+                <div className="space-y-2">
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start",
+                      activeTab === 'users' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
+                    )}
+                    onClick={() => setActiveTab('users')}
+                  >
+                    <UserIcon className="w-4 h-4 mr-2" />
+                    Users
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start",
+                      activeTab === 'admins' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
+                    )}
+                    onClick={() => setActiveTab('admins')}
+                  >
+                    <Crown className="w-4 h-4 mr-2" />
+                    Admins
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start",
+                      activeTab === 'kyc' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
+                    )}
+                    onClick={() => setActiveTab('kyc')}
+                  >
+                    <Shield className="w-4 h-4 mr-2" />
+                    KYC Documents
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start",
+                      activeTab === 'posts' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
+                    )}
+                    onClick={() => setActiveTab('posts')}
+                  >
+                    <Image className="w-4 h-4 mr-2" />
+                    Posts
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            <AdminGuide />
+          </div>
 
-        {/* Dashboard Charts */}
-        <AdminCharts 
-          userGrowthData={stats.userGrowthData}
-          kycStatusData={stats.kycStatusData}
-        />
-
-        <Tabs defaultValue="posts" className="space-y-4">
-          <TabsList className="bg-secondary/50 border border-blue-500/20">
-            <TabsTrigger value="posts" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
-              Posts
-            </TabsTrigger>
-            <TabsTrigger value="admins" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
-              Admins
-            </TabsTrigger>
-            <TabsTrigger value="users" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
-              Users
-            </TabsTrigger>
-            <TabsTrigger value="kyc" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
-              KYC Verification
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="posts" className="space-y-4">
-            <PostsTab 
-              items={items} 
-              onRefresh={fetchData}
-              onViewUserProfile={handleViewUserProfile}
-            />
-          </TabsContent>
-
-          <TabsContent value="admins" className="space-y-4">
-            <AdminsTab 
-              users={users}
-              onViewUserProfile={handleViewUserProfile}
-              onAdminAction={handleAdminAction}
-            />
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-4">
-            <UsersTab 
-              users={users}
-              onViewUserProfile={handleViewUserProfile}
-            />
-          </TabsContent>
-
-          <TabsContent value="kyc" className="space-y-4">
-            <KYCTab 
-              kycDocuments={kycDocuments}
-              onRefresh={fetchData}
-            />
-          </TabsContent>
-        </Tabs>
-
-        {/* Modals */}
-        <AdminActionModal
-          open={showAdminModal}
-          onClose={() => {
-            setShowAdminModal(false);
-            setSelectedUser(null);
-          }}
-          onConfirm={handleAdminConfirm}
-          action={adminAction}
-        />
+          <div className="md:col-span-3">
+            {activeTab === 'users' && (
+              <UsersTab users={users} onViewUserProfile={handleViewUserProfile} />
+            )}
+            {activeTab === 'admins' && (
+              <AdminsTab
+                users={users}
+                onViewUserProfile={handleViewUserProfile}
+                onAdminAction={handleAdminAction}
+              />
+            )}
+            {activeTab === 'kyc' && (
+              <KYCDocumentsTab
+                kycDocuments={kycDocuments}
+                onViewKYCDocument={handleViewKYCDocument}
+              />
+            )}
+            {activeTab === 'posts' && (
+              <Card className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                <CardContent className="p-6">
+                  <h2 className="text-2xl font-semibold mb-4">All Posts</h2>
+                  <DataTable columns={columns} data={items} />
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </div>
 
         <UserDetailsModal
           open={showUserDetailsModal}
           onOpenChange={setShowUserDetailsModal}
-          user={viewingUser}
+          user={selectedUser}
           userItems={userItems}
         />
+
+        {/* KYC Details Modal */}
+        <Dialog open={showKYCDetailsModal} onOpenChange={setShowKYCDetailsModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>KYC Document Details</DialogTitle>
+              <DialogDescription>
+                Review and update the status of the KYC document.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedKYCDocument && (
+              <div className="space-y-4 py-4">
+                <div className="flex items-center gap-4">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={selectedKYCDocument.profile?.avatar_url || ''} />
+                    <AvatarFallback>
+                      {selectedKYCDocument.profile?.first_name?.[0]}{selectedKYCDocument.profile?.last_name?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="text-lg font-semibold">{selectedKYCDocument.profile?.first_name} {selectedKYCDocument.profile?.last_name}</h3>
+                    <p className="text-sm text-muted-foreground">User ID: {selectedKYCDocument.user_id}</p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Document Type</p>
+                  <p className="text-sm text-muted-foreground">{selectedKYCDocument.document_type}</p>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Document URL</p>
+                  <a href={selectedKYCDocument.document_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline flex items-center gap-1">
+                    View Document
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm font-medium">Admin Notes</p>
+                  <Textarea
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    placeholder="Add notes about the document"
+                    className="resize-none"
+                  />
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowKYCDetailsModal(false)} disabled={isUpdatingKYC}>
+                Cancel
+              </Button>
+              <Button onClick={() => handleKYCStatusUpdate(selectedKYCDocument!.id, 'rejected')} variant="destructive" disabled={isUpdatingKYC}>
+                Reject
+              </Button>
+              <Button onClick={() => handleKYCStatusUpdate(selectedKYCDocument!.id, 'verified')} disabled={isUpdatingKYC}>
+                {isUpdatingKYC ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating
+                  </>
+                ) : 'Verify'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Add Admin Modal */}
+        <Dialog open={showAddAdminModal} onOpenChange={setShowAddAdminModal}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Add New Admin</DialogTitle>
+              <DialogDescription>
+                Enter the email address of the user you want to make an admin.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="email" className="text-right">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  value={newAdminEmail}
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                  className="col-span-3"
+                  type="email"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddAdminModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => handleMakeAdmin(newAdminEmail)} disabled={isAddingAdmin}>
+                {isAddingAdmin ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  'Make Admin'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Modal */}
+        <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirmation</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to {selectedUser ? 'remove admin privileges from' : 'delete'} this {selectedUser ? 'user' : 'item'}?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowDeleteConfirmation(false)}>
+                Cancel
+              </Button>
+              <Button variant="destructive" onClick={selectedUser ? handleRemoveAdmin : confirmDeleteItem} disabled={isAddingAdmin}>
+                {isAddingAdmin ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  'Confirm'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </PageTransition>
   );
-}
+};
+
+export default Admin;
