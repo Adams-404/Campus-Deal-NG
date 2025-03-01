@@ -27,6 +27,8 @@ import {
   ExternalLink,
   LayoutDashboard,
   Menu,
+  HelpCircle,
+  X,
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { PageTransition } from "@/components/PageTransition";
@@ -60,6 +62,16 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { Profile, UserProfile, KYCDocument, ItemType, KycStatus, DashboardStats } from "@/components/admin/types";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const Admin = () => {
   const [loading, setLoading] = useState(true);
@@ -82,6 +94,7 @@ const Admin = () => {
   const [adminNotes, setAdminNotes] = useState('');
   const [isUpdatingKYC, setIsUpdatingKYC] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showGuideSheet, setShowGuideSheet] = useState(false);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalItems: 0,
@@ -193,7 +206,7 @@ const Admin = () => {
           created_at: item.created_at,
           description: item.description,
           seller: item.seller,
-          images: (item.item_images || []).map((img: any) => img.image_url)
+          images: item.item_images ? item.item_images.map((img: any) => img.image_url) : []
         };
       });
 
@@ -265,18 +278,18 @@ const Admin = () => {
         toast.error('Error fetching user items');
         setUserItems([]);
       } else {
-        const formattedItems = itemsData.map(item => {
-          return {
-            id: item.id,
-            title: item.title,
-            price: item.price,
-            status: item.status,
-            created_at: item.created_at,
-            description: item.description,
-            seller: item.seller,
-            images: (item.item_images || []).map((img: any) => img.image_url)
-          };
-        });
+        // Fix for deep type instantiation error
+        const formattedItems = itemsData.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          status: item.status,
+          created_at: item.created_at,
+          description: item.description,
+          seller: item.seller,
+          images: item.item_images ? item.item_images.map((img: any) => img.image_url) : []
+        }));
+        
         setUserItems(formattedItems);
       }
     }
@@ -552,9 +565,51 @@ const Admin = () => {
               </AvatarFallback>
             </Avatar>
             <span className="hidden md:inline">{profile?.first_name} {profile?.last_name}</span>
+            
+            {/* Mobile menu button with Sheet for AdminGuide */}
+            <Sheet open={showGuideSheet} onOpenChange={setShowGuideSheet}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative md:hidden">
+                  <HelpCircle className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[90vw] sm:w-[385px] overflow-y-auto">
+                <SheetHeader className="mb-4">
+                  <SheetTitle>Admin Guide</SheetTitle>
+                  <SheetDescription>
+                    Learn how to use the admin dashboard effectively
+                  </SheetDescription>
+                </SheetHeader>
+                <AdminGuide />
+                <SheetFooter className="mt-4">
+                  <SheetClose asChild>
+                    <Button variant="outline" className="w-full">Close</Button>
+                  </SheetClose>
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
+            
             <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <Menu className="h-5 w-5" />
             </Button>
+            
+            {/* Add help button for desktop */}
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="hidden md:flex">
+                  <HelpCircle className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="overflow-y-auto">
+                <SheetHeader className="mb-4">
+                  <SheetTitle>Admin Guide</SheetTitle>
+                  <SheetDescription>
+                    Learn how to use the admin dashboard effectively
+                  </SheetDescription>
+                </SheetHeader>
+                <AdminGuide />
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
 
