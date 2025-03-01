@@ -27,7 +27,8 @@ import {
   ExternalLink,
   Image,
   Trash2,
-  Eye
+  Eye,
+  UserIcon
 } from "lucide-react";
 import {
   AreaChart,
@@ -403,7 +404,7 @@ export default function Admin() {
     }
   };
 
-  const handleMakeAdmin = async (email: string) => {
+  const handleMakeAdmin = async (userEmail: string) => {
     try {
       // Get user by email from auth
       const { data, error: authError } = await supabase.auth.admin.listUsers();
@@ -416,7 +417,7 @@ export default function Admin() {
         throw new Error('No users found');
       }
       
-      const matchingUser = data.users.find(u => u.email === email);
+      const matchingUser = data.users.find(u => u.email === userEmail);
       
       if (!matchingUser) {
         toast.error("User not found with this email");
@@ -776,7 +777,7 @@ export default function Admin() {
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={item.seller.avatar_url || ''} />
                         <AvatarFallback>
-                          <User className="h-3 w-3" />
+                          <UserIcon className="h-3 w-3" />
                         </AvatarFallback>
                       </Avatar>
                       <span 
@@ -926,7 +927,7 @@ export default function Admin() {
                       <Avatar className="h-10 w-10">
                         <AvatarImage src={user.avatar_url || ''} />
                         <AvatarFallback>
-                          <User className="h-5 w-5" />
+                          <UserIcon className="h-5 w-5" />
                         </AvatarFallback>
                       </Avatar>
                       <div className="space-y-1">
@@ -1190,7 +1191,7 @@ export default function Admin() {
                     <Avatar className="h-16 w-16">
                       <AvatarImage src={viewingUser.avatar_url || ''} />
                       <AvatarFallback>
-                        <User className="h-8 w-8" />
+                        <UserIcon className="h-8 w-8" />
                       </AvatarFallback>
                     </Avatar>
                     <div className="space-y-1">
