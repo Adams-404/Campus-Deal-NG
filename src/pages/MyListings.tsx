@@ -1,12 +1,20 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { SellModal } from '@/components/SellModal';
+import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface UserItem {
   id: string;
@@ -15,6 +23,7 @@ interface UserItem {
   images: string[];
   status: string;
   created_at: string;
+  description?: string;
 }
 
 export default function MyListings() {
@@ -56,6 +65,7 @@ export default function MyListings() {
           price: item.price,
           status: item.status,
           created_at: item.created_at,
+          description: item.description,
           images: item.item_images?.map((img: any) => img.image_url) || []
         }));
         setItems(formattedItems);
@@ -68,7 +78,31 @@ export default function MyListings() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string, description?: string) => {
+    // Check if item was deleted by admin
+    const isAdminDeleted = description?.includes('[ADMIN DELETED]');
+    const adminReason = isAdminDeleted && description
+      ? description.split('[ADMIN DELETED] Reason:')[1]?.trim() 
+      : '';
+    
+    if (status === 'deleted' && isAdminDeleted) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Badge variant="secondary" className="bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20 cursor-help flex items-center gap-1">
+                <AlertCircle className="h-3 w-3" />
+                Removed by Admin
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              <p>{adminReason || 'Violated community guidelines'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    
     switch (status) {
       case 'active':
         return (
@@ -132,7 +166,10 @@ export default function MyListings() {
               {items.map((item) => (
                 <div 
                   key={item.id}
-                  className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 cursor-pointer"
+                  className={cn(
+                    "group relative aspect-square rounded-lg overflow-hidden border border-white/10 cursor-pointer",
+                    item.status === 'deleted' && "opacity-70"
+                  )}
                   onClick={() => navigate(`/item/${item.id}`)}
                 >
                   <img 
@@ -144,7 +181,7 @@ export default function MyListings() {
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-white line-clamp-2">{item.title}</p>
-                        {getStatusBadge(item.status)}
+                        {getStatusBadge(item.status, item.description)}
                       </div>
                       <p className="text-sm text-primary">₦{item.price}</p>
                       <p className="text-xs text-gray-400">
@@ -176,4 +213,4 @@ export default function MyListings() {
       />
     </div>
   );
-} 
+}

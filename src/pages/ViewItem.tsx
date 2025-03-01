@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,6 @@ import {
   ArrowLeft, 
   Heart, 
   MessageCircle, 
-  Share2, 
   User, 
   ZoomIn, 
   ZoomOut,
@@ -56,9 +56,11 @@ export default function ViewItem() {
   const [item, setItem] = useState<Item | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isOwner, setIsOwner] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
 
   const handleItemUpdated = async () => {
     if (!id) return;
@@ -118,6 +120,16 @@ export default function ViewItem() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
+        // Check if user is admin
+        if (user) {
+          const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id);
+
+          setIsAdmin(roles?.some(r => r.role === 'admin') ?? false);
+        }
+
         const { data: itemData, error: itemError } = await supabase
           .from('items')
           .select(`
@@ -215,21 +227,34 @@ export default function ViewItem() {
           .eq('item_id', id);
       }
 
-      // Delete the item
-      const { error: deleteError } = await supabase
-        .from('items')
-        .delete()
-        .eq('id', id)
-        .eq('seller_id', user.id);
+      // Check if admin is deleting
+      if (isAdmin && !isOwner) {
+        // Update the item status to 'deleted' and add admin reason
+        const { error: updateError } = await supabase
+          .from('items')
+          .update({
+            status: 'deleted',
+            description: item?.description + "\n\n[ADMIN DELETED] Reason: " + (deleteReason || "Violated community guidelines")
+          })
+          .eq('id', id);
+          
+        if (updateError) throw updateError;
+        
+        toast.success('Item has been removed by admin');
+        navigate('/admin');
+      } else {
+        // Regular delete for owner
+        const { error: deleteError } = await supabase
+          .from('items')
+          .delete()
+          .eq('id', id)
+          .eq('seller_id', user.id);
 
-      if (deleteError) {
-        console.error('Error deleting item:', deleteError);
-        console.error('Error details:', deleteError.message);
-        throw new Error('Failed to delete item. Please try again.');
+        if (deleteError) throw deleteError;
+        
+        toast.success('Item deleted successfully');
+        navigate('/my-listings');
       }
-
-      toast.success('Item deleted successfully');
-      navigate('/my-listings');
     } catch (error: any) {
       console.error('Error deleting item:', error);
       console.error('Error details:', error.message);
@@ -349,6 +374,17 @@ export default function ViewItem() {
                   </Button>
                 </>
               )}
+              {/* Show delete button for admins */}
+              {isAdmin && !isOwner && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="h-9 w-9 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                >
+                  <Trash2 className="h-5 w-5" />
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -464,12 +500,36 @@ export default function ViewItem() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your item listing.
+              {isAdmin && !isOwner 
+                ? "You are about to remove this listing as an admin. This will mark the item as deleted and notify the seller." 
+                : "This action cannot be undone. This will permanently delete your item listing."}
             </AlertDialogDescription>
           </AlertDialogHeader>
+          
+          {isAdmin && !isOwner && (
+            <div className="mb-4">
+              <label htmlFor="deleteReason" className="block text-sm font-medium mb-1">
+                Reason for removal (will be shown to seller)
+              </label>
+              <textarea
+                id="deleteReason"
+                className="w-full border rounded-md p-2 bg-background border-gray-600"
+                rows={3}
+                placeholder="Violates community guidelines..."
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+              />
+            </div>
+          )}
+          
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className={isAdmin && !isOwner ? "bg-red-600 hover:bg-red-700" : ""}
+            >
+              {isAdmin && !isOwner ? "Remove Listing" : "Delete"}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

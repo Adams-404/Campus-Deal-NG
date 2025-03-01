@@ -24,7 +24,10 @@ import {
   Phone,
   MapPin,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  Image,
+  Trash2,
+  Eye
 } from "lucide-react";
 import {
   AreaChart,
@@ -32,13 +35,25 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell
 } from 'recharts';
 import { AdminActionModal } from "@/components/AdminActionModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { ImageCarousel } from "@/components/ui/image-carousel";
 
 // Define the KYC status type to match the database enum
 type KycStatus = 'pending' | 'processing' | 'verified' | 'rejected';
@@ -79,10 +94,20 @@ interface UserProfile extends Profile {
   roles: UserRole[] | null;
 }
 
-// Interface for Auth users from admin.listUsers()
-interface AuthUser {
+interface ItemType {
   id: string;
-  email?: string;
+  title: string;
+  price: number;
+  status: string;
+  created_at: string;
+  description: string;
+  seller: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  };
+  images: string[];
 }
 
 export default function Admin() {
@@ -90,6 +115,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
+  const [items, setItems] = useState<ItemType[]>([]);
   const [stats, setStats] = useState({
     totalUsers: 0,
     pendingKYC: 0,
@@ -102,6 +128,12 @@ export default function Admin() {
   const [adminAction, setAdminAction] = useState<'add' | 'remove'>('add');
   const [showAdminModal, setShowAdminModal] = useState(false);
   const [documentUrls, setDocumentUrls] = useState<Record<string, string>>({});
+  const [selectedItem, setSelectedItem] = useState<ItemType | null>(null);
+  const [showDeleteItemDialog, setShowDeleteItemDialog] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [showUserDetailsModal, setShowUserDetailsModal] = useState(false);
+  const [viewingUser, setViewingUser] = useState<UserProfile | null>(null);
+  const [userItems, setUserItems] = useState<ItemType[]>([]);
 
   useEffect(() => {
     checkAdminAccess();
@@ -234,6 +266,48 @@ export default function Admin() {
 
       if (profileError) throw profileError;
 
+      // Fetch all items
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('items')
+        .select(`
+          id,
+          title,
+          price,
+          status,
+          created_at,
+          description,
+          seller_id,
+          item_images (
+            image_url
+          ),
+          profiles:seller_id (
+            id,
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (itemsError) throw itemsError;
+
+      // Format items data
+      const formattedItems = (itemsData || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        status: item.status,
+        created_at: item.created_at,
+        description: item.description,
+        seller: {
+          id: item.profiles?.id || '',
+          first_name: item.profiles?.first_name || '',
+          last_name: item.profiles?.last_name || '',
+          avatar_url: item.profiles?.avatar_url || ''
+        },
+        images: item.item_images?.map((img: any) => img.image_url) || []
+      }));
+
       // Then fetch roles for each profile
       const usersWithRoles: UserProfile[] = [];
       
@@ -280,6 +354,7 @@ export default function Admin() {
 
       setKycDocuments(processedKycData);
       setUsers(usersWithRoles);
+      setItems(formattedItems);
       setStats({
         totalUsers: usersWithRoles.length,
         pendingKYC: processedKycData.filter(doc => doc.status === 'pending').length,
@@ -420,6 +495,87 @@ export default function Admin() {
     }
   };
 
+  const handleDeleteItem = async () => {
+    if (!selectedItem) return;
+
+    try {
+      // Update the item status to 'deleted' and add admin reason
+      const { error: updateError } = await supabase
+        .from('items')
+        .update({
+          status: 'deleted',
+          description: selectedItem.description + 
+            "\n\n[ADMIN DELETED] Reason: " + (deleteReason || "Violated community guidelines")
+        })
+        .eq('id', selectedItem.id);
+        
+      if (updateError) throw updateError;
+      
+      toast.success('Item has been removed successfully');
+      setShowDeleteItemDialog(false);
+      setSelectedItem(null);
+      setDeleteReason("");
+      fetchData();
+    } catch (error: any) {
+      console.error('Error deleting item:', error);
+      toast.error(error.message || 'Failed to delete item');
+    }
+  };
+
+  const handleViewUserProfile = async (userId: string) => {
+    try {
+      // Find user in existing users array
+      const user = users.find(u => u.id === userId);
+      if (!user) {
+        toast.error("User not found");
+        return;
+      }
+      
+      // Fetch user's items
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('items')
+        .select(`
+          id,
+          title,
+          price,
+          status,
+          created_at,
+          description,
+          item_images (
+            image_url
+          )
+        `)
+        .eq('seller_id', userId)
+        .order('created_at', { ascending: false });
+        
+      if (itemsError) throw itemsError;
+
+      // Format items data
+      const formattedItems = (itemsData || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        status: item.status,
+        created_at: item.created_at,
+        description: item.description,
+        seller: {
+          id: userId,
+          first_name: user.first_name || '',
+          last_name: user.last_name || '',
+          avatar_url: user.avatar_url || ''
+        },
+        images: item.item_images?.map((img: any) => img.image_url) || []
+      }));
+
+      setViewingUser(user);
+      setUserItems(formattedItems);
+      setShowUserDetailsModal(true);
+    } catch (error: any) {
+      console.error('Error fetching user details:', error);
+      toast.error(error.message || 'Failed to fetch user details');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -505,7 +661,7 @@ export default function Admin() {
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="date" className="text-xs" />
                     <YAxis className="text-xs" />
-                    <Tooltip 
+                    <RechartsTooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--background))',
                         border: '1px solid rgba(59, 130, 246, 0.2)',
@@ -550,7 +706,7 @@ export default function Admin() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip
+                    <RechartsTooltip
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--background))',
                         border: '1px solid rgba(59, 130, 246, 0.2)',
@@ -572,8 +728,11 @@ export default function Admin() {
           </Card>
         </div>
 
-        <Tabs defaultValue="kyc" className="space-y-4">
+        <Tabs defaultValue="posts" className="space-y-4">
           <TabsList className="bg-secondary/50 border border-blue-500/20">
+            <TabsTrigger value="posts" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
+              Posts
+            </TabsTrigger>
             <TabsTrigger value="admins" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
               Admins
             </TabsTrigger>
@@ -584,6 +743,87 @@ export default function Admin() {
               KYC Verification
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="posts" className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {items.map((item) => (
+                <Card key={item.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm hover:shadow-lg transition-shadow">
+                  <div className="aspect-square relative">
+                    {item.images.length > 0 ? (
+                      <ImageCarousel images={item.images} showZoom={false} />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-gray-800">
+                        <Image className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
+                    <Badge 
+                      className={`absolute top-2 right-2 ${
+                        item.status === 'active' 
+                          ? 'bg-green-500/20 text-green-500 border-green-500/20' 
+                          : item.status === 'deleted' 
+                          ? 'bg-red-500/20 text-red-500 border-red-500/20'
+                          : 'bg-gray-500/20 text-gray-500 border-gray-500/20'
+                      }`}
+                    >
+                      {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                    </Badge>
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold line-clamp-1 mb-1">{item.title}</h3>
+                    <p className="text-sm text-primary font-medium mb-2">₦{item.price}</p>
+                    
+                    <div className="flex items-center gap-2 mb-3">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={item.seller.avatar_url || ''} />
+                        <AvatarFallback>
+                          <User className="h-3 w-3" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <span 
+                        className="text-sm text-gray-400 hover:text-gray-300 cursor-pointer"
+                        onClick={() => handleViewUserProfile(item.seller.id)}
+                      >
+                        {item.seller.first_name || 'Anonymous'}
+                      </span>
+                    </div>
+                    
+                    <div className="flex gap-2 mt-3">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1 h-8"
+                        onClick={() => navigate(`/item/${item.id}`)}
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-1" />
+                        View
+                      </Button>
+                      <Button 
+                        variant="destructive" 
+                        size="sm" 
+                        className="flex-1 h-8"
+                        onClick={() => {
+                          setSelectedItem(item);
+                          setShowDeleteItemDialog(true);
+                        }}
+                        disabled={item.status === 'deleted'}
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                        Remove
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {items.length === 0 && (
+              <Card className="border-blue-500/30 bg-secondary/50 backdrop-blur-sm">
+                <CardContent className="p-6 text-center">
+                  <p className="text-muted-foreground">No posts found</p>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
 
           <TabsContent value="admins" className="space-y-4">
             <div className="flex justify-end">
@@ -616,6 +856,14 @@ export default function Admin() {
                           </h3>
                           <p className="text-sm text-muted-foreground">Administrator</p>
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="ml-auto"
+                          onClick={() => handleViewUserProfile(admin.id)}
+                        >
+                          View Profile
+                        </Button>
                       </div>
 
                       <div className="grid gap-2">
@@ -674,31 +922,53 @@ export default function Admin() {
               <Card key={user.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold">
-                        {user.first_name} {user.last_name}
-                      </h3>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={user.avatar_url || ''} />
+                        <AvatarFallback>
+                          <User className="h-5 w-5" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="space-y-1">
+                        <h3 className="font-semibold">
+                          {user.first_name} {user.last_name}
+                        </h3>
+                        <p className="text-sm text-gray-400">
+                          Joined {new Date(user.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <Badge variant={
-                      user.kyc_status === 'verified'
-                        ? 'outline'
-                        : user.kyc_status === 'rejected'
-                        ? 'destructive'
-                        : user.kyc_status === 'processing'
-                        ? 'secondary'
-                        : 'secondary'
-                    }
-                    className={
-                      user.kyc_status === 'verified'
-                        ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
-                        : user.kyc_status === 'rejected'
-                        ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
-                        : user.kyc_status === 'processing'
-                        ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20'
-                        : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
-                    }>
-                      {user.kyc_status?.charAt(0).toUpperCase() + user.kyc_status?.slice(1)}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={
+                        user.kyc_status === 'verified'
+                          ? 'outline'
+                          : user.kyc_status === 'rejected'
+                          ? 'destructive'
+                          : user.kyc_status === 'processing'
+                          ? 'secondary'
+                          : 'secondary'
+                      }
+                      className={
+                        user.kyc_status === 'verified'
+                          ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
+                          : user.kyc_status === 'rejected'
+                          ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
+                          : user.kyc_status === 'processing'
+                          ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20'
+                          : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
+                      }>
+                        {user.kyc_status?.charAt(0).toUpperCase() + user.kyc_status?.slice(1)}
+                      </Badge>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="ml-2"
+                        onClick={() => handleViewUserProfile(user.id)}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -862,6 +1132,218 @@ export default function Admin() {
           onConfirm={handleAdminConfirm}
           action={adminAction}
         />
+
+        {/* Item Deletion Dialog */}
+        <Dialog open={showDeleteItemDialog} onOpenChange={setShowDeleteItemDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Remove Listing</DialogTitle>
+              <DialogDescription>
+                This will mark the item as deleted and notify the seller.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Reason for removal:</label>
+                <Input
+                  placeholder="Violates community guidelines..."
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  className="bg-background/50 border-blue-500/20"
+                />
+                <p className="text-xs text-muted-foreground">
+                  This reason will be shown to the seller.
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowDeleteItemDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleDeleteItem}
+                variant="destructive"
+              >
+                Remove Listing
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* User Details Modal */}
+        <Dialog open={showUserDetailsModal} onOpenChange={setShowUserDetailsModal}>
+          <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+            {viewingUser && (
+              <>
+                <DialogHeader>
+                  <DialogTitle>User Profile</DialogTitle>
+                  <DialogDescription>
+                    View details and listings for this user
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="space-y-6 py-4">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={viewingUser.avatar_url || ''} />
+                      <AvatarFallback>
+                        <User className="h-8 w-8" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-semibold">{viewingUser.first_name} {viewingUser.last_name}</h3>
+                      <div className="flex gap-2">
+                        <Badge variant={
+                          viewingUser.kyc_status === 'verified'
+                            ? 'outline'
+                            : viewingUser.kyc_status === 'rejected'
+                            ? 'destructive'
+                            : viewingUser.kyc_status === 'processing'
+                            ? 'secondary'
+                            : 'secondary'
+                        }
+                        className={
+                          viewingUser.kyc_status === 'verified'
+                            ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
+                            : viewingUser.kyc_status === 'rejected'
+                            ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
+                            : viewingUser.kyc_status === 'processing'
+                            ? 'bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20'
+                            : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
+                        }>
+                          {viewingUser.kyc_status?.charAt(0).toUpperCase() + viewingUser.kyc_status?.slice(1)}
+                        </Badge>
+                        {viewingUser.roles?.some(r => r.role === 'admin') && (
+                          <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+                            <Crown className="w-3 h-3 mr-1" />
+                            Admin
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Contact Information</h4>
+                      <div className="space-y-2">
+                        {viewingUser.phone && (
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span>{viewingUser.phone}</span>
+                          </div>
+                        )}
+                        {viewingUser.address && (
+                          <div className="flex items-center gap-2">
+                            <MapPin className="h-4 w-4 text-muted-foreground" />
+                            <span>{viewingUser.address}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span>Joined {new Date(viewingUser.created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <h4 className="text-sm font-medium mb-2">Account Details</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <UserCheck className="h-4 w-4 text-muted-foreground" />
+                          <span>User ID: {viewingUser.id}</span>
+                        </div>
+                        {viewingUser.updated_at && (
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <span>Last updated: {new Date(viewingUser.updated_at).toLocaleDateString()}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <h4 className="text-sm font-medium mb-4">User Listings ({userItems.length})</h4>
+                    
+                    {userItems.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        {userItems.map(item => (
+                          <div key={item.id} className="border rounded-md overflow-hidden bg-background/50">
+                            <div className="aspect-video relative">
+                              {item.images.length > 0 ? (
+                                <img 
+                                  src={item.images[0]}
+                                  alt={item.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-800">
+                                  <Image className="h-8 w-8 text-gray-600" />
+                                </div>
+                              )}
+                              <Badge 
+                                className={`absolute top-2 right-2 ${
+                                  item.status === 'active' 
+                                    ? 'bg-green-500/20 text-green-500 border-green-500/20' 
+                                    : item.status === 'deleted' 
+                                    ? 'bg-red-500/20 text-red-500 border-red-500/20'
+                                    : 'bg-gray-500/20 text-gray-500 border-gray-500/20'
+                                }`}
+                              >
+                                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                              </Badge>
+                            </div>
+                            <div className="p-3">
+                              <h5 className="font-medium line-clamp-1">{item.title}</h5>
+                              <p className="text-sm text-primary mt-1">₦{item.price}</p>
+                              <div className="flex justify-between items-center mt-2">
+                                <span className="text-xs text-gray-400">
+                                  {new Date(item.created_at).toLocaleDateString()}
+                                </span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  className="h-7 px-2"
+                                  onClick={() => navigate(`/item/${item.id}`)}
+                                >
+                                  <Eye className="h-3.5 w-3.5 mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground text-center py-4">No listings found for this user</p>
+                    )}
+                  </div>
+                </div>
+                
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowUserDetailsModal(false)}>
+                    Close
+                  </Button>
+                  <Button 
+                    onClick={() => navigate(`/user/${viewingUser.id}`)}
+                    className="flex items-center gap-2"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    View Public Profile
+                  </Button>
+                </DialogFooter>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </PageTransition>
   );
