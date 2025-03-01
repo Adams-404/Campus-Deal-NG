@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,13 +26,15 @@ import {
   CheckCircle,
   AlertTriangle,
   ExternalLink,
+  LayoutDashboard,
+  Menu,
 } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import { PageTransition } from "@/components/PageTransition";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DataTable } from "@/components/ui/data-table";
-import { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,17 +49,18 @@ import { UsersTab } from "@/components/admin/UsersTab";
 import { AdminsTab } from "@/components/admin/AdminsTab";
 import { UserDetailsModal } from "@/components/admin/UserDetailsModal";
 import { KYCDocumentsTab } from "@/components/admin/KYCDocumentsTab";
+import { DashboardOverview } from "@/components/admin/DashboardOverview";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Profile, UserProfile, KYCDocument, ItemType, KycStatus } from "@/components/admin/types";
+import { Profile, UserProfile, KYCDocument, ItemType, KycStatus, DashboardStats } from "@/components/admin/types";
 
 const Admin = () => {
   const [loading, setLoading] = useState(true);
@@ -75,9 +79,16 @@ const Admin = () => {
   const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<ItemType | null>(null);
-  const [activeTab, setActiveTab] = useState<'users' | 'admins' | 'kyc' | 'posts'>('users');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'admins' | 'kyc' | 'posts'>('dashboard');
   const [adminNotes, setAdminNotes] = useState('');
   const [isUpdatingKYC, setIsUpdatingKYC] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+    totalUsers: 0,
+    totalItems: 0,
+    pendingKyc: 0,
+    activeSellers: 0
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -135,7 +146,7 @@ const Admin = () => {
       // Fetch roles for each user
       const usersWithRoles = await Promise.all(
         usersData.map(async (userData) => {
-          const { data: roles, error: roleError } = await supabase
+          const { data: userRoles, error: roleError } = await supabase
             .from('user_roles')
             .select('role')
             .eq('user_id', userData.id);
@@ -145,7 +156,7 @@ const Admin = () => {
             return { ...userData, roles: [] }; // Return user without roles in case of error
           }
 
-          return { ...userData, roles: roles || [] };
+          return { ...userData, roles: userRoles || [] };
         })
       );
 
@@ -199,7 +210,8 @@ const Admin = () => {
           *,
           profile:profiles (
             first_name,
-            last_name
+            last_name,
+            avatar_url
           )
         `)
         .order('created_at', { ascending: false });
@@ -211,6 +223,14 @@ const Admin = () => {
       }
 
       setKycDocuments(kycData);
+
+      // Calculate dashboard stats
+      setDashboardStats({
+        totalUsers: usersData.length,
+        totalItems: formattedItems.length,
+        pendingKyc: kycData.filter(doc => doc.status === 'pending').length,
+        activeSellers: [...new Set(formattedItems.filter(item => item.status === 'active').map(item => item.seller.id))].length
+      });
     } catch (error) {
       console.error('Error in getProfile:', error);
       toast.error('An error occurred while fetching data');
@@ -280,7 +300,11 @@ const Admin = () => {
     try {
       const { error } = await supabase
         .from('kyc_documents')
-        .update({ status: newStatus, admin_notes: adminNotes, updated_at: new Date().toISOString() })
+        .update({ 
+          status: newStatus, 
+          admin_notes: adminNotes, 
+          updated_at: new Date().toISOString() 
+        })
         .eq('id', documentId);
 
       if (error) {
@@ -530,22 +554,25 @@ const Admin = () => {
 
   return (
     <PageTransition>
-      <div className="container max-w-7xl mx-auto px-4 py-8 pb-32">
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <div className="flex items-center gap-4">
+      <div className="container max-w-7xl mx-auto px-4 py-4 pb-32">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-xl md:text-2xl font-bold">Admin Dashboard</h1>
+          <div className="flex items-center gap-2 md:gap-4">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={profile?.avatar_url} />
+              <AvatarImage src={profile?.avatar_url || ''} />
               <AvatarFallback>
                 {profile?.first_name?.[0]}{profile?.last_name?.[0]}
               </AvatarFallback>
             </Avatar>
-            <span>{profile?.first_name} {profile?.last_name}</span>
+            <span className="hidden md:inline">{profile?.first_name} {profile?.last_name}</span>
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+              <Menu className="h-5 w-5" />
+            </Button>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="md:col-span-1">
+          <div className={`${mobileMenuOpen ? 'block' : 'hidden'} md:block md:col-span-1 sticky top-20`}>
             <Card className="border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
               <CardContent className="p-4">
                 <div className="space-y-2">
@@ -553,9 +580,26 @@ const Admin = () => {
                     variant="outline"
                     className={cn(
                       "w-full justify-start",
+                      activeTab === 'dashboard' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
+                    )}
+                    onClick={() => {
+                      setActiveTab('dashboard');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start",
                       activeTab === 'users' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
                     )}
-                    onClick={() => setActiveTab('users')}
+                    onClick={() => {
+                      setActiveTab('users');
+                      setMobileMenuOpen(false);
+                    }}
                   >
                     <UserIcon className="w-4 h-4 mr-2" />
                     Users
@@ -566,7 +610,10 @@ const Admin = () => {
                       "w-full justify-start",
                       activeTab === 'admins' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
                     )}
-                    onClick={() => setActiveTab('admins')}
+                    onClick={() => {
+                      setActiveTab('admins');
+                      setMobileMenuOpen(false);
+                    }}
                   >
                     <Crown className="w-4 h-4 mr-2" />
                     Admins
@@ -577,7 +624,10 @@ const Admin = () => {
                       "w-full justify-start",
                       activeTab === 'kyc' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
                     )}
-                    onClick={() => setActiveTab('kyc')}
+                    onClick={() => {
+                      setActiveTab('kyc');
+                      setMobileMenuOpen(false);
+                    }}
                   >
                     <Shield className="w-4 h-4 mr-2" />
                     KYC Documents
@@ -588,7 +638,10 @@ const Admin = () => {
                       "w-full justify-start",
                       activeTab === 'posts' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
                     )}
-                    onClick={() => setActiveTab('posts')}
+                    onClick={() => {
+                      setActiveTab('posts');
+                      setMobileMenuOpen(false);
+                    }}
                   >
                     <Image className="w-4 h-4 mr-2" />
                     Posts
@@ -596,10 +649,15 @@ const Admin = () => {
                 </div>
               </CardContent>
             </Card>
-            <AdminGuide />
+            <div className="hidden md:block mt-4">
+              <AdminGuide />
+            </div>
           </div>
 
           <div className="md:col-span-3">
+            {activeTab === 'dashboard' && (
+              <DashboardOverview stats={dashboardStats} recentItems={items} kycDocuments={kycDocuments} />
+            )}
             {activeTab === 'users' && (
               <UsersTab users={users} onViewUserProfile={handleViewUserProfile} />
             )}
@@ -618,9 +676,11 @@ const Admin = () => {
             )}
             {activeTab === 'posts' && (
               <Card className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-                <CardContent className="p-6">
-                  <h2 className="text-2xl font-semibold mb-4">All Posts</h2>
-                  <DataTable columns={columns} data={items} />
+                <CardContent className="p-4 md:p-6">
+                  <h2 className="text-xl md:text-2xl font-semibold mb-4">All Posts</h2>
+                  <div className="overflow-auto">
+                    <DataTable columns={columns} data={items} />
+                  </div>
                 </CardContent>
               </Card>
             )}

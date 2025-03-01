@@ -53,3 +53,21 @@ export interface ItemType {
   };
   images: string[];
 }
+
+export interface DashboardStats {
+  totalUsers: number;
+  totalItems: number;
+  pendingKyc: number;
+  activeSellers: number;
+}
+
+export interface ChartData {
+  name: string;
+  value: number;
+}
+
+export interface TimeSeriesData {
+  date: string;
+  users: number;
+  items: number;
+}
