@@ -21,6 +21,7 @@ import {
   MapPin,
   Calendar,
   Check,
+  CheckCircle,
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
@@ -426,12 +427,26 @@ export default function UserProfile() {
                         {profile?.last_name?.[0]}
                       </AvatarFallback>
                     </Avatar>
-                    {profile.kyc_status === "verified" && (
+                    {profile.kyc_status === "verified" ? (
                       <Badge
                         variant="outline"
                         className="absolute top-0 right-0 bg-green-500 text-white border border-green-500 px-2 py-1 rounded-full shadow-lg"
                       >
-                        <Check className="w-5 h-5" />
+                        <CheckCircle className="w-5 h-5" />
+                      </Badge>
+                    ) : profile.kyc_status === "pending" ? (
+                      <Badge
+                        variant="outline"
+                        className="absolute top-0 right-0 bg-yellow-500 text-white border border-yellow-500 px-2 py-1 rounded-full shadow-lg"
+                      >
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="absolute top-0 right-0 bg-red-500 text-white border border-red-500 px-2 py-1 rounded-full shadow-lg"
+                      >
+                        <AlertTriangle className="w-5 h-5" />
                       </Badge>
                     )}
                   </div>

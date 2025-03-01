@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { SellModal } from '@/components/SellModal';
 
 interface UserItem {
   id: string;
@@ -19,6 +20,7 @@ interface UserItem {
 export default function MyListings() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<UserItem[]>([]);
+  const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -119,10 +121,6 @@ export default function MyListings() {
               </Button>
               <h1 className="text-xl font-semibold">My Listings</h1>
             </div>
-            <Button onClick={() => navigate('/sell')} className="bg-primary/10 text-primary hover:bg-primary/20">
-              <Plus className="h-4 w-4 mr-2" />
-              New Listing
-            </Button>
           </div>
         </div>
       </div>
@@ -161,7 +159,7 @@ export default function MyListings() {
             {items.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-gray-400 mb-4">You haven't listed any items yet</p>
-                <Button onClick={() => navigate('/sell')} className="bg-primary/10 text-primary hover:bg-primary/20">
+                <Button onClick={() => setIsSellModalOpen(true)} className="bg-primary/10 text-primary hover:bg-primary/20">
                   <Plus className="h-4 w-4 mr-2" />
                   Create Your First Listing
                 </Button>
@@ -170,6 +168,12 @@ export default function MyListings() {
           </div>
         </PageTransition>
       </main>
+
+      <SellModal 
+        isOpen={isSellModalOpen} 
+        onClose={() => setIsSellModalOpen(false)} 
+        onItemListed={() => { fetchUserItems(); setIsSellModalOpen(false); }} 
+      />
     </div>
   );
 } 
