@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -915,4 +916,67 @@ const Admin = () => {
                 </Label>
                 <Input
                   id="email"
-                  value={new
+                  value={newAdminEmail}
+                  onChange={(e) => setNewAdminEmail(e.target.value)}
+                  className="col-span-3"
+                  type="email"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowAddAdminModal(false)}>
+                Cancel
+              </Button>
+              <Button onClick={() => handleMakeAdmin(newAdminEmail)} disabled={isAddingAdmin}>
+                {isAddingAdmin ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  'Make Admin'
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirmation</DialogTitle>
+              <DialogDescription>
+                {itemToDelete ? 
+                  `Are you sure you want to delete this item: ${itemToDelete.title}?` : 
+                  `Are you sure you want to remove admin role from ${selectedUser?.first_name} ${selectedUser?.last_name}?`}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setShowDeleteConfirmation(false)}>
+                Cancel
+              </Button>
+              {itemToDelete ? (
+                <Button variant="destructive" onClick={confirmDeleteItem}>
+                  Delete Item
+                </Button>
+              ) : (
+                <Button variant="destructive" onClick={handleRemoveAdmin} disabled={isAddingAdmin}>
+                  {isAddingAdmin ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Removing...
+                    </>
+                  ) : (
+                    'Remove Admin'
+                  )}
+                </Button>
+              )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageTransition>
+  );
+};
+
+export default Admin;
