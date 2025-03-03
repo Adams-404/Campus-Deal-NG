@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   ColumnDef,
@@ -54,18 +53,31 @@ export function DataTable<TData, TValue>({
     },
   });
 
+  const getFilterColumnId = () => {
+    const hasTitle = table.getAllColumns().some(col => col.id === 'title');
+    if (hasTitle) {
+      return 'title';
+    }
+    const firstColumn = table.getAllColumns()[0];
+    return firstColumn ? firstColumn.id : '';
+  };
+
+  const filterColumnId = getFilterColumnId();
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter by title..."
-          value={(table.getColumn("title")?.getFilterValue() as string) ?? ""}
-          onChange={(event) =>
-            table.getColumn("title")?.setFilterValue(event.target.value)
-          }
-          className="max-w-sm"
-        />
-      </div>
+      {filterColumnId && (
+        <div className="flex items-center py-4">
+          <Input
+            placeholder={`Filter by ${filterColumnId}...`}
+            value={(table.getColumn(filterColumnId)?.getFilterValue() as string) ?? ""}
+            onChange={(event) =>
+              table.getColumn(filterColumnId)?.setFilterValue(event.target.value)
+            }
+            className="max-w-sm"
+          />
+        </div>
+      )}
       <div className="rounded-md border overflow-hidden">
         <div className="overflow-x-auto">
           <Table>

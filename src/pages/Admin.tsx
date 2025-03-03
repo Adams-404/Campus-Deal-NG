@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,7 +100,7 @@ interface SimpleItem {
   description: string;
   seller: SimpleItemSeller;
   item_images?: SimpleItemImage[];
-  images: string[];
+  images?: string[];
 }
 
 const Admin = () => {
@@ -228,7 +227,7 @@ const Admin = () => {
         return;
       }
 
-      const formattedItems = itemsData.map((item: SimpleItem) => {
+      const formattedItems = itemsData.map((item: any) => {
         return {
           id: item.id,
           title: item.title,
@@ -272,7 +271,7 @@ const Admin = () => {
         totalUsers: usersData.length,
         totalItems: formattedItems.length,
         pendingKyc: kycData.filter(doc => doc.status === 'pending').length,
-        activeSellers: [...new Set(formattedItems.filter(item => item.status === 'active').map(item => item.seller.id))].length
+        activeSellers: [...new Set(formattedItems.filter(item => item.status === 'active').map(item => item.seller?.id).filter(Boolean))].length
       });
     } catch (error) {
       console.error('Error in getProfile:', error);
@@ -314,7 +313,7 @@ const Admin = () => {
         toast.error('Error fetching user items');
         setUserItems([]);
       } else {
-        const formattedItems = itemsData.map((item: SimpleItem) => ({
+        const formattedItems = itemsData.map((item: any) => ({
           id: item.id,
           title: item.title,
           price: item.price,
@@ -471,7 +470,6 @@ const Admin = () => {
     if (!itemToDelete) return;
 
     try {
-      // Optimistically update the UI first
       setItems(prevItems => prevItems.filter(item => item.id !== itemToDelete.id));
       setItemToDelete(null);
       setShowDeleteConfirmation(false);
@@ -481,7 +479,6 @@ const Admin = () => {
 
       if (isAdmin) {
         if (itemToDelete.seller && itemToDelete.seller.id !== user?.id) {
-          // Admin deleting another user's item (soft delete)
           const { error: updateError } = await supabase
             .from('items')
             .update({
@@ -492,7 +489,6 @@ const Admin = () => {
             
           if (updateError) throw updateError;
           
-          // Notify the seller
           const { error: notificationError } = await supabase
             .from('notifications')
             .insert({
@@ -513,7 +509,6 @@ const Admin = () => {
           
           toast.success('Item has been removed by admin');
         } else {
-          // Admin deleting their own item
           const { error } = await supabase
             .from('items')
             .delete()
@@ -523,7 +518,6 @@ const Admin = () => {
           toast.success('Item deleted successfully!');
         }
       } else {
-        // Regular user deleting their own item
         const { error } = await supabase
           .from('items')
           .delete()
@@ -535,10 +529,10 @@ const Admin = () => {
     } catch (error: any) {
       console.error('Error in confirmDeleteItem:', error);
       toast.error('An unexpected error occurred');
-      getProfile(); // Refresh the data in case of error
+      getProfile();
     }
   };
-  
+
   const checkIfUserIsAdmin = async (userId: string): Promise<boolean> => {
     try {
       const { data: roles, error: roleError } = await supabase
