@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -131,6 +132,7 @@ const Admin = () => {
     pendingKyc: 0,
     activeSellers: 0
   });
+  const [deleteReason, setDeleteReason] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -463,6 +465,7 @@ const Admin = () => {
 
   const handleDeleteItem = async (item: ItemType) => {
     setItemToDelete(item);
+    setDeleteReason("");
     setShowDeleteConfirmation(true);
   };
 
@@ -475,53 +478,54 @@ const Admin = () => {
       setShowDeleteConfirmation(false);
 
       const { data: { user } } = await supabase.auth.getUser();
-      const isAdmin = user ? await checkIfUserIsAdmin(user.id) : false;
+      const { data: isAdminCheck } = await supabase.rpc('is_admin', { 
+        user_id: user?.id 
+      });
 
-      if (isAdmin) {
-        if (itemToDelete.seller && itemToDelete.seller.id !== user?.id) {
-          const { error: updateError } = await supabase
-            .from('items')
-            .update({
-              status: 'deleted',
-              description: itemToDelete.description + "\n\n[ADMIN DELETED] Reason: Violated community guidelines"
-            })
-            .eq('id', itemToDelete.id);
-            
-          if (updateError) throw updateError;
+      if (isAdminCheck && itemToDelete.seller && itemToDelete.seller.id !== user?.id) {
+        // Add admin delete reason to description
+        const updatedDescription = itemToDelete.description + 
+          "\n\n[ADMIN DELETED] Reason: " + 
+          (deleteReason || "Violated community guidelines");
           
+        const { error: updateError } = await supabase
+          .from('items')
+          .update({
+            status: 'deleted',
+            description: updatedDescription
+          })
+          .eq('id', itemToDelete.id);
+          
+        if (updateError) throw updateError;
+        
+        // Notify the seller
+        if (itemToDelete.seller.id) {
           const { error: notificationError } = await supabase
             .from('notifications')
             .insert({
               user_id: itemToDelete.seller.id,
               type: 'admin_action',
               title: 'Your listing has been removed',
-              content: `Your listing "${itemToDelete.title}" has been removed by an admin.\nReason: Violated community guidelines`,
+              content: `Your listing "${itemToDelete.title}" has been removed by an admin.\nReason: ${deleteReason || "Violated community guidelines"}`,
               metadata: {
                 item_id: itemToDelete.id,
                 item_title: itemToDelete.title,
-                admin_reason: "Violated community guidelines"
+                admin_reason: deleteReason || "Violated community guidelines"
               }
             });
             
           if (notificationError) {
             console.error('Error creating notification:', notificationError);
           }
-          
-          toast.success('Item has been removed by admin');
-        } else {
-          const { error } = await supabase
-            .from('items')
-            .delete()
-            .eq('id', itemToDelete.id);
-
-          if (error) throw error;
-          toast.success('Item deleted successfully!');
         }
+        
+        toast.success('Item has been removed by admin');
       } else {
         const { error } = await supabase
           .from('items')
           .delete()
-          .eq('id', itemToDelete.id);
+          .eq('id', itemToDelete.id)
+          .eq('seller_id', user?.id);
 
         if (error) throw error;
         toast.success('Item deleted successfully!');
@@ -945,6 +949,24 @@ const Admin = () => {
                   `Are you sure you want to remove admin role from ${selectedUser?.first_name} ${selectedUser?.last_name}?`}
               </DialogDescription>
             </DialogHeader>
+            
+            {itemToDelete && profile?.roles?.some(r => r.role === 'admin') && 
+              itemToDelete.seller && itemToDelete.seller.id !== user?.id && (
+              <div className="mb-4">
+                <label htmlFor="deleteReason" className="block text-sm font-medium mb-1">
+                  Reason for removal (will be shown to seller)
+                </label>
+                <textarea
+                  id="deleteReason"
+                  className="w-full border rounded-md p-2 bg-background border-gray-600"
+                  rows={3}
+                  placeholder="Violates community guidelines..."
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                />
+              </div>
+            )}
+            
             <DialogFooter className="gap-2 sm:gap-0">
               <Button variant="outline" onClick={() => setShowDeleteConfirmation(false)}>
                 Cancel

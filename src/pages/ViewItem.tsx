@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -222,17 +223,38 @@ export default function ViewItem() {
           .eq('item_id', id);
       }
 
+      // For admins who are not the owner, perform a soft delete and notify the seller
       if (isAdmin && !isOwner) {
+        // First check if we have admin permissions using our custom function
+        const { data: isAdminCheck } = await supabase.rpc('is_admin', {
+          user_id: user.id
+        });
+        
+        if (!isAdminCheck) {
+          toast.error('You do not have admin privileges');
+          return;
+        }
+        
+        // Add admin delete reason to description
+        const updatedDescription = item?.description + 
+          "\n\n[ADMIN DELETED] Reason: " + 
+          (deleteReason || "Violated community guidelines");
+        
+        // Using RPC function to handle the admin delete (this would need to be created)
         const { error: updateError } = await supabase
           .from('items')
           .update({
             status: 'deleted',
-            description: item?.description + "\n\n[ADMIN DELETED] Reason: " + (deleteReason || "Violated community guidelines")
+            description: updatedDescription
           })
           .eq('id', id);
           
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating item status:', updateError);
+          throw updateError;
+        }
         
+        // Notify the seller about the deletion
         if (item?.seller_id) {
           const { error: notificationError } = await supabase
             .from('notifications')
@@ -257,10 +279,12 @@ export default function ViewItem() {
         toast.success('Item has been removed by admin');
         navigate('/admin');
       } else {
+        // Regular delete for owners or admins deleting their own items
         const { error: deleteError } = await supabase
           .from('items')
           .delete()
-          .eq('id', id);
+          .eq('id', id)
+          .eq('seller_id', user.id);
 
         if (deleteError) throw deleteError;
         
