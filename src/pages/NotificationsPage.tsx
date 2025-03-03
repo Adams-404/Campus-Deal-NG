@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -63,7 +64,8 @@ export default function NotificationsPage() {
               message: notification.content,
               time: formatTimestamp(notification.created_at),
               read: notification.is_read,
-              type: notification.type,
+              // Ensure the type is one of the allowed values in the Notification interface
+              type: validateNotificationType(notification.type),
               title: notification.title,
               content: notification.content,
               metadata: notification.metadata
@@ -252,7 +254,7 @@ export default function NotificationsPage() {
             message: newNotification.content,
             time: formatTimestamp(newNotification.created_at),
             read: newNotification.is_read,
-            type: newNotification.type,
+            type: validateNotificationType(newNotification.type),
             title: newNotification.title,
             content: newNotification.content,
             metadata: newNotification.metadata
@@ -268,6 +270,14 @@ export default function NotificationsPage() {
       supabase.removeChannel(channel)
     }
   }, [currentUserId])
+  
+  // Helper function to validate notification type
+  const validateNotificationType = (type: string): Notification['type'] => {
+    const validTypes: Notification['type'][] = ["message", "sale", "purchase", "system", "wishlist", "admin_action"];
+    return validTypes.includes(type as Notification['type']) 
+      ? (type as Notification['type']) 
+      : "system"; // Default to system if not a valid type
+  }
   
   // Helper function to format timestamp
   const formatTimestamp = (timestamp: string): string => {
@@ -319,13 +329,16 @@ export default function NotificationsPage() {
     {} as Record<string, Notification[]>,
   )
 
-  const markAsRead = async (id: number | string) => {
+  const markAsRead = async (id: string | number) => {
     if (currentUserId) {
       try {
+        // Convert id to string if it's a number
+        const idStr = id.toString();
+        
         const { error } = await supabase
           .from('notifications')
           .update({ is_read: true })
-          .eq('id', id)
+          .eq('id', idStr)
         
         if (error) throw error
         

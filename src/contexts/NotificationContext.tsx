@@ -101,9 +101,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           const registration = await navigator.serviceWorker.register('/service-worker.js');
           
           // Subscribe to push notifications
+          const applicationServerKey = process.env.REACT_APP_VAPID_PUBLIC_KEY;
+          
+          if (!applicationServerKey) {
+            console.error('VAPID public key is not defined');
+            toast.error("Push notification setup is incomplete");
+            return;
+          }
+          
           const subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: process.env.REACT_APP_VAPID_PUBLIC_KEY
+            applicationServerKey
           });
 
           // Send subscription to backend
