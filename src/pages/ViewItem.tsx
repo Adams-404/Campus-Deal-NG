@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -120,7 +119,6 @@ export default function ViewItem() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         
-        // Check if user is admin
         if (user) {
           const { data: roles } = await supabase
             .from('user_roles')
@@ -205,14 +203,12 @@ export default function ViewItem() {
         return;
       }
 
-      // First, delete all images from storage
       const { data: images } = await supabase
         .from('item_images')
         .select('image_url')
         .eq('item_id', id);
 
       if (images?.length) {
-        // Delete image files from storage
         for (const image of images) {
           const path = image.image_url.split('/').slice(-2).join('/');
           await supabase.storage
@@ -220,16 +216,13 @@ export default function ViewItem() {
             .remove([path]);
         }
 
-        // Delete image records
         await supabase
           .from('item_images')
           .delete()
           .eq('item_id', id);
       }
 
-      // Check if admin is deleting
       if (isAdmin && !isOwner) {
-        // Update the item status to 'deleted' and add admin reason
         const { error: updateError } = await supabase
           .from('items')
           .update({
@@ -240,7 +233,6 @@ export default function ViewItem() {
           
         if (updateError) throw updateError;
         
-        // Create a notification for the seller
         if (item?.seller_id) {
           const { error: notificationError } = await supabase
             .from('notifications')
@@ -258,13 +250,13 @@ export default function ViewItem() {
             
           if (notificationError) {
             console.error('Error creating notification:', notificationError);
+            toast.error('Failed to notify seller about deletion');
           }
         }
         
         toast.success('Item has been removed by admin');
         navigate('/admin');
       } else {
-        // Regular delete for owner
         const { error: deleteError } = await supabase
           .from('items')
           .delete()
@@ -307,7 +299,6 @@ export default function ViewItem() {
         return;
       }
 
-      // Create a new conversation
       const { data: newConversation, error: conversationError } = await supabase
         .from('conversations')
         .insert({
@@ -321,7 +312,6 @@ export default function ViewItem() {
 
       if (conversationError) throw conversationError;
 
-      // Send initial message
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
@@ -334,7 +324,6 @@ export default function ViewItem() {
 
       if (messageError) throw messageError;
 
-      // Navigate to the conversation
       navigate(`/messages/${newConversation.id}`);
     } catch (error: any) {
       console.error('Error starting conversation:', error);
@@ -395,7 +384,6 @@ export default function ViewItem() {
                   </Button>
                 </>
               )}
-              {/* Show delete button for admins */}
               {isAdmin && !isOwner && (
                 <Button
                   variant="ghost"

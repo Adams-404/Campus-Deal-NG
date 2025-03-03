@@ -205,7 +205,12 @@ const Admin = () => {
           status: item.status,
           created_at: item.created_at,
           description: item.description,
-          seller: item.seller,
+          seller: item.seller ? {
+            id: item.seller.id,
+            first_name: item.seller.first_name || '',
+            last_name: item.seller.last_name || '',
+            avatar_url: item.seller.avatar_url || ''
+          } : null,
           images: item.item_images ? item.item_images.map((img: any) => img.image_url) : []
         };
       });
