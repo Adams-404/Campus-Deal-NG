@@ -1,3 +1,4 @@
+<lov-code>
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,7 +62,14 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
-import { Profile, UserProfile, KYCDocument, ItemType, KycStatus, DashboardStats } from "@/components/admin/types";
+import { 
+  Profile, 
+  UserProfile, 
+  KYCDocument, 
+  ItemType, 
+  KycStatus, 
+  DashboardStats 
+} from "@/components/admin/types";
 import {
   Sheet,
   SheetClose,
@@ -72,6 +80,29 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+
+interface SimpleItemSeller {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  avatar_url: string | null;
+}
+
+interface SimpleItemImage {
+  image_url: string;
+}
+
+interface SimpleItem {
+  id: string;
+  title: string;
+  price: number;
+  status: string;
+  created_at: string;
+  description: string;
+  seller: SimpleItemSeller;
+  item_images?: SimpleItemImage[];
+  images: string[];
+}
 
 const Admin = () => {
   const [loading, setLoading] = useState(true);
@@ -197,7 +228,7 @@ const Admin = () => {
         return;
       }
 
-      const formattedItems = itemsData.map(item => {
+      const formattedItems = itemsData.map((item: SimpleItem) => {
         return {
           id: item.id,
           title: item.title,
@@ -211,7 +242,7 @@ const Admin = () => {
             last_name: item.seller.last_name || '',
             avatar_url: item.seller.avatar_url || ''
           } : null,
-          images: item.item_images ? item.item_images.map((img: any) => img.image_url) : []
+          images: item.item_images ? item.item_images.map((img: SimpleItemImage) => img.image_url) : []
         };
       });
 
@@ -283,16 +314,20 @@ const Admin = () => {
         toast.error('Error fetching user items');
         setUserItems([]);
       } else {
-        // Fix for deep type instantiation error
-        const formattedItems = itemsData.map(item => ({
+        const formattedItems = itemsData.map((item: SimpleItem) => ({
           id: item.id,
           title: item.title,
           price: item.price,
           status: item.status,
           created_at: item.created_at,
           description: item.description,
-          seller: item.seller,
-          images: item.item_images ? item.item_images.map((img: any) => img.image_url) : []
+          seller: item.seller ? {
+            id: item.seller.id,
+            first_name: item.seller.first_name || '',
+            last_name: item.seller.last_name || '',
+            avatar_url: item.seller.avatar_url || ''
+          } : null,
+          images: item.item_images ? item.item_images.map((img: SimpleItemImage) => img.image_url) : []
         }));
         
         setUserItems(formattedItems);
@@ -440,19 +475,56 @@ const Admin = () => {
       setItemToDelete(null);
       setShowDeleteConfirmation(false);
 
-      const { error } = await supabase
-        .from('items')
-        .delete()
-        .eq('id', itemToDelete.id);
+      if (isAdmin) {
+        if (itemToDelete.seller && itemToDelete.seller.id !== user?.id) {
+          const { error: updateError } = await supabase
+            .from('items')
+            .update({
+              status: 'deleted',
+              description: itemToDelete.description + "\n\n[ADMIN DELETED] Reason: Violated community guidelines"
+            })
+            .eq('id', itemToDelete.id);
+            
+          if (updateError) throw updateError;
+          
+          const { error: notificationError } = await supabase
+            .from('notifications')
+            .insert({
+              user_id: itemToDelete.seller.id,
+              type: 'admin_action',
+              title: 'Your listing has been removed',
+              content: `Your listing "${itemToDelete.title}" has been removed by an admin.\nReason: Violated community guidelines`,
+              metadata: {
+                item_id: itemToDelete.id,
+                item_title: itemToDelete.title,
+                admin_reason: "Violated community guidelines"
+              }
+            });
+            
+          if (notificationError) {
+            console.error('Error creating notification:', notificationError);
+          }
+          
+          toast.success('Item has been removed by admin');
+        } else {
+          const { error } = await supabase
+            .from('items')
+            .delete()
+            .eq('id', itemToDelete.id);
 
-      if (error) {
-        console.error('Error deleting item:', error);
-        toast.error('Failed to delete item');
-        getProfile();
+          if (error) throw error;
+          toast.success('Item deleted successfully!');
+        }
       } else {
+        const { error } = await supabase
+          .from('items')
+          .delete()
+          .eq('id', itemToDelete.id);
+
+        if (error) throw error;
         toast.success('Item deleted successfully!');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in confirmDeleteItem:', error);
       toast.error('An unexpected error occurred');
       getProfile();
@@ -571,7 +643,6 @@ const Admin = () => {
             </Avatar>
             <span className="hidden md:inline">{profile?.first_name} {profile?.last_name}</span>
             
-            {/* Mobile menu button with Sheet for AdminGuide */}
             <Sheet open={showGuideSheet} onOpenChange={setShowGuideSheet}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative md:hidden">
@@ -598,7 +669,6 @@ const Admin = () => {
               <Menu className="h-5 w-5" />
             </Button>
             
-            {/* Add help button for desktop */}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="hidden md:flex">
@@ -849,29 +919,4 @@ const Admin = () => {
             <DialogHeader>
               <DialogTitle>Confirmation</DialogTitle>
               <DialogDescription>
-                Are you sure you want to {selectedUser ? 'remove admin privileges from' : 'delete'} this {selectedUser ? 'user' : 'item'}?
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDeleteConfirmation(false)}>
-                Cancel
-              </Button>
-              <Button variant="destructive" onClick={selectedUser ? handleRemoveAdmin : confirmDeleteItem} disabled={isAddingAdmin}>
-                {isAddingAdmin ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  'Confirm'
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </PageTransition>
-  );
-};
-
-export default Admin;
+                Are you sure you want to {selectedUser

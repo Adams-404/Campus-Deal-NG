@@ -260,8 +260,7 @@ export default function ViewItem() {
         const { error: deleteError } = await supabase
           .from('items')
           .delete()
-          .eq('id', id)
-          .eq('seller_id', user.id);
+          .eq('id', id);
 
         if (deleteError) throw deleteError;
         
@@ -415,7 +414,7 @@ export default function ViewItem() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setZoom(prev => Math.max(prev - 0.25, 1))}
+                  onClick={handleZoomOut}
                   disabled={zoom <= 1}
                   className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70"
                 >
@@ -424,7 +423,7 @@ export default function ViewItem() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setZoom(prev => Math.min(prev + 0.25, 3))}
+                  onClick={handleZoomIn}
                   disabled={zoom >= 3}
                   className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70"
                 >
