@@ -1,10 +1,13 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface NotificationContextType {
   isEnabled: boolean;
   isPushSupported: boolean;
   isSubscribed: boolean;
+  unreadCount: number;
   toggleNotifications: () => Promise<void>;
 }
 
@@ -14,6 +17,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [isEnabled, setIsEnabled] = useState(false);
   const [isPushSupported, setIsPushSupported] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     // Check if push notifications are supported
@@ -26,7 +31,61 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         setIsSubscribed(true);
       }
     }
+
+    // Get the current user 
+    const getUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+
+    getUserId();
   }, []);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('is_read', false);
+
+        if (error) {
+          console.error('Error fetching unread count:', error);
+          return;
+        }
+
+        setUnreadCount(count || 0);
+      } catch (error) {
+        console.error('Error fetching unread count:', error);
+      }
+    };
+
+    fetchUnreadCount();
+
+    // Set up realtime subscription for notifications
+    const channel = supabase
+      .channel('unread-count')
+      .on('postgres_changes', {
+        event: '*', // Listen for all changes (INSERT, UPDATE, DELETE)
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`
+      }, () => {
+        // Refetch the count when notifications change
+        fetchUnreadCount();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
 
   const toggleNotifications = async () => {
     if (!isPushSupported) {
@@ -89,6 +148,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         isEnabled, 
         isPushSupported, 
         isSubscribed, 
+        unreadCount,
         toggleNotifications 
       }}
     >
@@ -103,4 +163,4 @@ export function useNotifications() {
     throw new Error('useNotifications must be used within a NotificationProvider');
   }
   return context;
-} 
+}

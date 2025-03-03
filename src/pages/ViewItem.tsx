@@ -240,6 +240,27 @@ export default function ViewItem() {
           
         if (updateError) throw updateError;
         
+        // Create a notification for the seller
+        if (item?.seller_id) {
+          const { error: notificationError } = await supabase
+            .from('notifications')
+            .insert({
+              user_id: item.seller_id,
+              type: 'admin_action',
+              title: 'Your listing has been removed',
+              content: `Your listing "${item.title}" has been removed by an admin.\nReason: ${deleteReason || "Violated community guidelines"}`,
+              metadata: {
+                item_id: id,
+                item_title: item.title,
+                admin_reason: deleteReason || "Violated community guidelines"
+              }
+            });
+            
+          if (notificationError) {
+            console.error('Error creating notification:', notificationError);
+          }
+        }
+        
         toast.success('Item has been removed by admin');
         navigate('/admin');
       } else {
