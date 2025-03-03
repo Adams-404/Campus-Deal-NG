@@ -66,7 +66,7 @@ interface ChartProps {
 }
 
 export function AdminCharts({ userGrowthData, kycStatusData }: ChartProps) {
-  const COLORS = ['#22c55e', '#f97316', '#eab308', '#ef4444']; // Green, Orange, Yellow, Red
+  const COLORS = ['#22c55e', '#f97316', '#eab308', '#ef4444'];
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
