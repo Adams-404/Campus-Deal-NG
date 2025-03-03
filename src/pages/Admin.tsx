@@ -1,4 +1,3 @@
-<lov-code>
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -471,12 +470,17 @@ const Admin = () => {
     if (!itemToDelete) return;
 
     try {
+      // Optimistically update the UI first
       setItems(prevItems => prevItems.filter(item => item.id !== itemToDelete.id));
       setItemToDelete(null);
       setShowDeleteConfirmation(false);
 
+      const { data: { user } } = await supabase.auth.getUser();
+      const isAdmin = user ? await checkIfUserIsAdmin(user.id) : false;
+
       if (isAdmin) {
         if (itemToDelete.seller && itemToDelete.seller.id !== user?.id) {
+          // Admin deleting another user's item (soft delete)
           const { error: updateError } = await supabase
             .from('items')
             .update({
@@ -487,6 +491,7 @@ const Admin = () => {
             
           if (updateError) throw updateError;
           
+          // Notify the seller
           const { error: notificationError } = await supabase
             .from('notifications')
             .insert({
@@ -507,6 +512,7 @@ const Admin = () => {
           
           toast.success('Item has been removed by admin');
         } else {
+          // Admin deleting their own item
           const { error } = await supabase
             .from('items')
             .delete()
@@ -516,6 +522,7 @@ const Admin = () => {
           toast.success('Item deleted successfully!');
         }
       } else {
+        // Regular user deleting their own item
         const { error } = await supabase
           .from('items')
           .delete()
@@ -527,7 +534,26 @@ const Admin = () => {
     } catch (error: any) {
       console.error('Error in confirmDeleteItem:', error);
       toast.error('An unexpected error occurred');
-      getProfile();
+      getProfile(); // Refresh the data in case of error
+    }
+  };
+  
+  const checkIfUserIsAdmin = async (userId: string): Promise<boolean> => {
+    try {
+      const { data: roles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+
+      if (roleError) {
+        console.error('Error checking admin status:', roleError);
+        return false;
+      }
+
+      return roles?.some(r => r.role === 'admin') ?? false;
+    } catch (error) {
+      console.error('Error in checkIfUserIsAdmin:', error);
+      return false;
     }
   };
 
@@ -889,34 +915,4 @@ const Admin = () => {
                 </Label>
                 <Input
                   id="email"
-                  value={newAdminEmail}
-                  onChange={(e) => setNewAdminEmail(e.target.value)}
-                  className="col-span-3"
-                  type="email"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddAdminModal(false)}>
-                Cancel
-              </Button>
-              <Button onClick={() => handleMakeAdmin(newAdminEmail)} disabled={isAddingAdmin}>
-                {isAddingAdmin ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Adding...
-                  </>
-                ) : (
-                  'Make Admin'
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Confirmation</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to {selectedUser
+                  value={new
