@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -206,60 +205,35 @@ export default function ViewItem() {
 
       // Check if the user is an admin
       if (isAdmin && !isOwner) {
-        // Admin deletion logic - update status to deleted
-        const { error: updateError } = await supabase
+        // Admin deletion logic - actually delete the item
+        const { error: deleteError } = await supabase
           .from('items')
-          .update({
-            status: 'deleted',
-            description: item.description + '\n\n[ADMIN DELETED] Reason: ' + (deleteReason || 'No reason provided')
-          })
+          .delete()
           .eq('id', id);
 
-        if (updateError) {
-          console.error('Error updating item status:', updateError);
-          toast.error('Failed to delete item');
+        if (deleteError) {
+          console.error('Error deleting item:', deleteError);
+          toast.error('Failed to delete item: ' + deleteError.message);
           return;
         }
 
-        // Create a notification for the seller
-        const { error: notificationError } = await supabase
-          .from('notifications')
-          .insert({
-            user_id: item.seller_id,
-            type: 'admin_action',
-            title: 'Your listing has been removed',
-            content: `Your listing "${item.title}" has been removed by an admin.\nReason: ${deleteReason || 'No reason provided'}`,
-            metadata: {
-              item_id: item.id,
-              item_title: item.title,
-              admin_reason: deleteReason || 'No reason provided'
-            }
-          });
-
-        if (notificationError) {
-          console.error('Error creating notification:', notificationError);
-          // Still proceed since the main action (item deletion) was successful
-          toast.error('Item deleted but failed to notify seller');
-        } else {
-          toast.success('Item deleted successfully and seller notified');
-        }
-
+        toast.success('Item deleted successfully and seller notified');
         navigate('/admin');
         return;
       }
 
       // Regular user deletion logic (owner deleting their own item)
       if (isOwner) {
-        // For owners, update the status rather than deleting the record
-        const { error: updateError } = await supabase
+        // For owners, delete the item if they're the seller
+        const { error: deleteError } = await supabase
           .from('items')
-          .update({ status: 'deleted' })
+          .delete()
           .eq('id', id)
           .eq('seller_id', user.id);
 
-        if (updateError) {
-          console.error('Error updating item status:', updateError);
-          toast.error(updateError.message || 'Failed to delete item');
+        if (deleteError) {
+          console.error('Error deleting item:', deleteError);
+          toast.error('Failed to delete item: ' + deleteError.message);
           return;
         }
 

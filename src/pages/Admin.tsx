@@ -488,69 +488,23 @@ const Admin = () => {
         return;
       }
       
-      const { data: isAdminCheck } = await supabase.rpc('is_admin', { 
-        user_id: currentUser.id 
-      });
-
-      if (isAdminCheck && itemToDelete.seller && itemToDelete.seller.id !== currentUser.id) {
-        const { error: updateError } = await supabase
-          .from('items')
-          .update({
-            status: 'deleted',
-            description: itemToDelete.description + 
-              "\n\n[ADMIN DELETED] Reason: " + 
-              (deleteReason || "Violated community guidelines")
-          })
-          .eq('id', itemToDelete.id);
-          
-        if (updateError) {
-          console.error('Error updating item:', updateError);
-          toast.error('Failed to remove item');
-          return;
-        }
-        
-        if (itemToDelete.seller.id) {
-          const { error: notificationError } = await supabase
-            .from('notifications')
-            .insert({
-              user_id: itemToDelete.seller.id,
-              type: 'admin_action',
-              title: 'Your listing has been removed',
-              content: `Your listing "${itemToDelete.title}" has been removed by an admin.\nReason: ${deleteReason || "Violated community guidelines"}`,
-              metadata: {
-                item_id: itemToDelete.id,
-                item_title: itemToDelete.title,
-                admin_reason: deleteReason || "Violated community guidelines"
-              }
-            });
-            
-          if (notificationError) {
-            console.error('Error creating notification:', notificationError);
-            toast.error('Item removed but failed to notify seller');
-          } else {
-            toast.success('Item has been removed and seller notified');
-          }
-        } else {
-          toast.success('Item has been removed by admin');
-        }
-      } else {
-        const { error } = await supabase
-          .from('items')
-          .delete()
-          .eq('id', itemToDelete.id)
-          .eq('seller_id', currentUser.id);
-
-        if (error) {
-          console.error('Error deleting item:', error);
-          toast.error('Failed to delete item');
-          return;
-        }
-        
-        toast.success('Item deleted successfully!');
+      const { error: deleteError } = await supabase
+        .from('items')
+        .delete()
+        .eq('id', itemToDelete.id);
+      
+      if (deleteError) {
+        console.error('Error deleting item:', deleteError);
+        toast.error('Failed to delete item: ' + deleteError.message);
+        getProfile();
+        return;
       }
+      
+      toast.success('Item deleted successfully');
     } catch (error: any) {
       console.error('Error in confirmDeleteItem:', error);
       toast.error(error.message || 'An unexpected error occurred');
+      getProfile();
     } finally {
       setItemToDelete(null);
       setShowDeleteConfirmation(false);
