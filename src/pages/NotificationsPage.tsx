@@ -95,8 +95,8 @@ const NotificationsPage = () => {
     setLoading(true);
     try {
       // Get the authenticated user
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
+      const { data: userData } = await supabase.auth.getUser();
+      const user = userData.user;
       
       if (!user) {
         navigate('/sign-in');

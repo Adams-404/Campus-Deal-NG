@@ -238,6 +238,7 @@ export default function ViewItem() {
 
         if (notificationError) {
           console.error('Error creating notification:', notificationError);
+          // Still proceed since the main action (item deletion) was successful
           toast.error('Item deleted but failed to notify seller');
         } else {
           toast.success('Item deleted successfully and seller notified');

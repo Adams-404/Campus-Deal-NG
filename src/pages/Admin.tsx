@@ -267,7 +267,6 @@ const Admin = () => {
 
       setKycDocuments(kycData);
 
-      // Fix the calculation for activeSellers to avoid deep recursion
       const activeSellersCount = new Set(
         formattedItems
           .filter(item => item.status === 'active')
@@ -489,14 +488,11 @@ const Admin = () => {
         return;
       }
       
-      // Check if user is admin
       const { data: isAdminCheck } = await supabase.rpc('is_admin', { 
         user_id: currentUser.id 
       });
 
-      // Admin deleting another user's item
       if (isAdminCheck && itemToDelete.seller && itemToDelete.seller.id !== currentUser.id) {
-        // Update item status to deleted instead of actually deleting
         const { error: updateError } = await supabase
           .from('items')
           .update({
@@ -513,7 +509,6 @@ const Admin = () => {
           return;
         }
         
-        // Create notification for the seller
         if (itemToDelete.seller.id) {
           const { error: notificationError } = await supabase
             .from('notifications')
@@ -539,7 +534,6 @@ const Admin = () => {
           toast.success('Item has been removed by admin');
         }
       } else {
-        // Regular delete - owner deleting their own item
         const { error } = await supabase
           .from('items')
           .delete()
