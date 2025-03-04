@@ -250,13 +250,18 @@ export default function ViewItem() {
 
       // Regular user deletion logic (owner deleting their own item)
       if (isOwner) {
-        const { error: deleteError } = await supabase
+        // For owners, update the status rather than deleting the record
+        const { error: updateError } = await supabase
           .from('items')
-          .delete()
+          .update({ status: 'deleted' })
           .eq('id', id)
           .eq('seller_id', user.id);
 
-        if (deleteError) throw deleteError;
+        if (updateError) {
+          console.error('Error updating item status:', updateError);
+          toast.error(updateError.message || 'Failed to delete item');
+          return;
+        }
 
         toast.success('Item deleted successfully');
         navigate('/my-listings');
