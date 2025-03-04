@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -204,82 +203,36 @@ export default function ViewItem() {
         return;
       }
 
-      const { data: images } = await supabase
-        .from('item_images')
-        .select('image_url')
-        .eq('item_id', id);
+      // Check if the user is an admin
+      if (isAdmin) {
+        // Admin deletion logic
+        const { error: deleteError } = await supabase
+          .from('items')
+          .delete()
+          .eq('id', id);
 
-      if (images?.length) {
-        for (const image of images) {
-          const path = image.image_url.split('/').slice(-2).join('/');
-          await supabase.storage
-            .from('item_images')
-            .remove([path]);
+        if (deleteError) throw deleteError;
+
+        // Call the function to send notification
+        const { error: notificationError } = await supabase.rpc('notify_seller_about_deletion', {
+          seller_id: item.seller_id,
+          item_title: item.title,
+          reason: deleteReason || 'No reason provided'
+        });
+
+        if (notificationError) {
+          console.error('Error creating notification:', notificationError);
+          toast.error('Failed to notify seller about deletion');
+        } else {
+          toast.success('Item deleted successfully by admin and seller notified');
         }
 
-        await supabase
-          .from('item_images')
-          .delete()
-          .eq('item_id', id);
+        navigate('/admin');
+        return;
       }
 
-      // For admins who are not the owner, perform a soft delete and notify the seller
-      if (isAdmin && !isOwner) {
-        // First check if we have admin permissions using our custom function
-        const { data: isAdminCheck } = await supabase.rpc('is_admin', {
-          user_id: user.id
-        });
-        
-        if (!isAdminCheck) {
-          toast.error('You do not have admin privileges');
-          return;
-        }
-        
-        // Add admin delete reason to description
-        const updatedDescription = item?.description + 
-          "\n\n[ADMIN DELETED] Reason: " + 
-          (deleteReason || "Violated community guidelines");
-        
-        // Using RPC function to handle the admin delete (this would need to be created)
-        const { error: updateError } = await supabase
-          .from('items')
-          .update({
-            status: 'deleted',
-            description: updatedDescription
-          })
-          .eq('id', id);
-          
-        if (updateError) {
-          console.error('Error updating item status:', updateError);
-          throw updateError;
-        }
-        
-        // Notify the seller about the deletion
-        if (item?.seller_id) {
-          const { error: notificationError } = await supabase
-            .from('notifications')
-            .insert({
-              user_id: item.seller_id,
-              type: 'admin_action',
-              title: 'Your listing has been removed',
-              content: `Your listing "${item.title}" has been removed by an admin.\nReason: ${deleteReason || "Violated community guidelines"}`,
-              metadata: {
-                item_id: id,
-                item_title: item.title,
-                admin_reason: deleteReason || "Violated community guidelines"
-              }
-            });
-            
-          if (notificationError) {
-            console.error('Error creating notification:', notificationError);
-            toast.error('Failed to notify seller about deletion');
-          }
-        }
-        
-        toast.success('Item has been removed by admin');
-        navigate('/admin');
-      } else {
-        // Regular delete for owners or admins deleting their own items
+      // Existing logic for regular users
+      if (isOwner) {
         const { error: deleteError } = await supabase
           .from('items')
           .delete()
@@ -287,13 +240,12 @@ export default function ViewItem() {
           .eq('seller_id', user.id);
 
         if (deleteError) throw deleteError;
-        
+
         toast.success('Item deleted successfully');
         navigate('/my-listings');
       }
     } catch (error: any) {
       console.error('Error deleting item:', error);
-      console.error('Error details:', error.message);
       toast.error(error.message || 'Failed to delete item');
     } finally {
       setShowDeleteDialog(false);
