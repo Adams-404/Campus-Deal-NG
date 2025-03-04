@@ -430,6 +430,22 @@ export type Database = {
         }
         Returns: boolean
       }
+      notify_seller_about_deletion: {
+        Args: {
+          seller_id: string
+          item_title: string
+          reason: string
+        }
+        Returns: undefined
+      }
+      notify_user_about_deletion: {
+        Args: {
+          seller_id: string
+          item_title: string
+          reason: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       item_condition: "new" | "like_new" | "good" | "fair" | "poor"

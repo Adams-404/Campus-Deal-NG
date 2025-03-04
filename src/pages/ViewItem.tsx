@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -194,7 +195,7 @@ export default function ViewItem() {
   }, [id, navigate]);
 
   const handleDelete = async () => {
-    if (!id) return;
+    if (!id || !item) return;
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -204,34 +205,49 @@ export default function ViewItem() {
       }
 
       // Check if the user is an admin
-      if (isAdmin) {
-        // Admin deletion logic
-        const { error: deleteError } = await supabase
+      if (isAdmin && !isOwner) {
+        // Admin deletion logic - update status to deleted
+        const { error: updateError } = await supabase
           .from('items')
-          .delete()
+          .update({
+            status: 'deleted',
+            description: item.description + '\n\n[ADMIN DELETED] Reason: ' + (deleteReason || 'No reason provided')
+          })
           .eq('id', id);
 
-        if (deleteError) throw deleteError;
+        if (updateError) {
+          console.error('Error updating item status:', updateError);
+          toast.error('Failed to delete item');
+          return;
+        }
 
-        // Call the function to send notification
-        const { error: notificationError } = await supabase.rpc('notify_seller_about_deletion', {
-          seller_id: item.seller_id,
-          item_title: item.title,
-          reason: deleteReason || 'No reason provided'
-        });
+        // Create a notification for the seller
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .insert({
+            user_id: item.seller_id,
+            type: 'admin_action',
+            title: 'Your listing has been removed',
+            content: `Your listing "${item.title}" has been removed by an admin.\nReason: ${deleteReason || 'No reason provided'}`,
+            metadata: {
+              item_id: item.id,
+              item_title: item.title,
+              admin_reason: deleteReason || 'No reason provided'
+            }
+          });
 
         if (notificationError) {
           console.error('Error creating notification:', notificationError);
-          toast.error('Failed to notify seller about deletion');
+          toast.error('Item deleted but failed to notify seller');
         } else {
-          toast.success('Item deleted successfully by admin and seller notified');
+          toast.success('Item deleted successfully and seller notified');
         }
 
         navigate('/admin');
         return;
       }
 
-      // Existing logic for regular users
+      // Regular user deletion logic (owner deleting their own item)
       if (isOwner) {
         const { error: deleteError } = await supabase
           .from('items')
@@ -243,6 +259,8 @@ export default function ViewItem() {
 
         toast.success('Item deleted successfully');
         navigate('/my-listings');
+      } else {
+        toast.error('You do not have permission to delete this item');
       }
     } catch (error: any) {
       console.error('Error deleting item:', error);

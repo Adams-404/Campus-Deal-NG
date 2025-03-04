@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,7 +100,7 @@ interface SimpleItem {
   description: string;
   seller: SimpleItemSeller;
   item_images?: SimpleItemImage[];
-  images?: string[];
+  images?: string[]; // Make images optional since it's derived from item_images
 }
 
 const Admin = () => {
@@ -142,7 +141,8 @@ const Admin = () => {
   const getProfile = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
 
       if (!user) {
         navigate('/sign-in');
@@ -229,23 +229,21 @@ const Admin = () => {
         return;
       }
 
-      const formattedItems = itemsData.map((item: any) => {
-        return {
-          id: item.id,
-          title: item.title,
-          price: item.price,
-          status: item.status,
-          created_at: item.created_at,
-          description: item.description,
-          seller: item.seller ? {
-            id: item.seller.id,
-            first_name: item.seller.first_name || '',
-            last_name: item.seller.last_name || '',
-            avatar_url: item.seller.avatar_url || ''
-          } : null,
-          images: item.item_images ? item.item_images.map((img: SimpleItemImage) => img.image_url) : []
-        };
-      });
+      const formattedItems = itemsData.map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        status: item.status,
+        created_at: item.created_at,
+        description: item.description,
+        seller: item.seller ? {
+          id: item.seller.id,
+          first_name: item.seller.first_name || '',
+          last_name: item.seller.last_name || '',
+          avatar_url: item.seller.avatar_url || ''
+        } : null,
+        images: item.item_images ? item.item_images.map((img: SimpleItemImage) => img.image_url) : []
+      }));
 
       setItems(formattedItems);
 
@@ -269,11 +267,19 @@ const Admin = () => {
 
       setKycDocuments(kycData);
 
+      // Fix the calculation for activeSellers to avoid deep recursion
+      const activeSellersCount = new Set(
+        formattedItems
+          .filter(item => item.status === 'active')
+          .map(item => item.seller?.id)
+          .filter(Boolean)
+      ).size;
+
       setDashboardStats({
         totalUsers: usersData.length,
         totalItems: formattedItems.length,
         pendingKyc: kycData.filter(doc => doc.status === 'pending').length,
-        activeSellers: [...new Set(formattedItems.filter(item => item.status === 'active').map(item => item.seller?.id).filter(Boolean))].length
+        activeSellers: activeSellersCount
       });
     } catch (error) {
       console.error('Error in getProfile:', error);
@@ -474,31 +480,40 @@ const Admin = () => {
 
     try {
       setItems(prevItems => prevItems.filter(item => item.id !== itemToDelete.id));
-      setItemToDelete(null);
-      setShowDeleteConfirmation(false);
-
-      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { data } = await supabase.auth.getUser();
+      const currentUser = data.user;
+      
+      if (!currentUser) {
+        toast.error('You must be logged in to delete an item');
+        return;
+      }
+      
+      // Check if user is admin
       const { data: isAdminCheck } = await supabase.rpc('is_admin', { 
-        user_id: user?.id 
+        user_id: currentUser.id 
       });
 
-      if (isAdminCheck && itemToDelete.seller && itemToDelete.seller.id !== user?.id) {
-        // Add admin delete reason to description
-        const updatedDescription = itemToDelete.description + 
-          "\n\n[ADMIN DELETED] Reason: " + 
-          (deleteReason || "Violated community guidelines");
-          
+      // Admin deleting another user's item
+      if (isAdminCheck && itemToDelete.seller && itemToDelete.seller.id !== currentUser.id) {
+        // Update item status to deleted instead of actually deleting
         const { error: updateError } = await supabase
           .from('items')
           .update({
             status: 'deleted',
-            description: updatedDescription
+            description: itemToDelete.description + 
+              "\n\n[ADMIN DELETED] Reason: " + 
+              (deleteReason || "Violated community guidelines")
           })
           .eq('id', itemToDelete.id);
           
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Error updating item:', updateError);
+          toast.error('Failed to remove item');
+          return;
+        }
         
-        // Notify the seller
+        // Create notification for the seller
         if (itemToDelete.seller.id) {
           const { error: notificationError } = await supabase
             .from('notifications')
@@ -516,24 +531,35 @@ const Admin = () => {
             
           if (notificationError) {
             console.error('Error creating notification:', notificationError);
+            toast.error('Item removed but failed to notify seller');
+          } else {
+            toast.success('Item has been removed and seller notified');
           }
+        } else {
+          toast.success('Item has been removed by admin');
         }
-        
-        toast.success('Item has been removed by admin');
       } else {
+        // Regular delete - owner deleting their own item
         const { error } = await supabase
           .from('items')
           .delete()
           .eq('id', itemToDelete.id)
-          .eq('seller_id', user?.id);
+          .eq('seller_id', currentUser.id);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error deleting item:', error);
+          toast.error('Failed to delete item');
+          return;
+        }
+        
         toast.success('Item deleted successfully!');
       }
     } catch (error: any) {
       console.error('Error in confirmDeleteItem:', error);
-      toast.error('An unexpected error occurred');
-      getProfile();
+      toast.error(error.message || 'An unexpected error occurred');
+    } finally {
+      setItemToDelete(null);
+      setShowDeleteConfirmation(false);
     }
   };
 

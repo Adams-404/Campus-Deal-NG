@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Toast } from 'sonner';
+import { toast } from 'sonner';
 import { PageTransition } from '@/components/PageTransition';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
@@ -95,7 +95,8 @@ const NotificationsPage = () => {
     setLoading(true);
     try {
       // Get the authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data } = await supabase.auth.getUser();
+      const user = data.user;
       
       if (!user) {
         navigate('/sign-in');
@@ -103,7 +104,7 @@ const NotificationsPage = () => {
       }
 
       // Fetch notifications for the user
-      const { data, error } = await supabase
+      const { data: notificationsData, error } = await supabase
         .from('notifications')
         .select('*')
         .eq('user_id', user.id)
@@ -111,7 +112,7 @@ const NotificationsPage = () => {
 
       if (error) throw error;
       
-      setNotifications(data || []);
+      setNotifications(notificationsData || []);
     } catch (error) {
       console.error('Error fetching notifications:', error);
     } finally {
