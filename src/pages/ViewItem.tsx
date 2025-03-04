@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -205,7 +206,7 @@ export default function ViewItem() {
 
       // Check if the user is an admin
       if (isAdmin && !isOwner) {
-        // Admin deletion logic - actually delete the item
+        // Admin deleting someone else's item
         const { error: deleteError } = await supabase
           .from('items')
           .delete()
@@ -483,7 +484,7 @@ export default function ViewItem() {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               {isAdmin && !isOwner 
-                ? "You are about to remove this listing as an admin. This will mark the item as deleted and notify the seller." 
+                ? "You are about to remove this listing as an admin. This will permanently delete the item and notify the seller." 
                 : "This action cannot be undone. This will permanently delete your item listing."}
             </AlertDialogDescription>
           </AlertDialogHeader>
