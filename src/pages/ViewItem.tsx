@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
@@ -218,6 +217,19 @@ export default function ViewItem() {
           return;
         }
 
+        // Create notification with delete reason
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: item.seller_id,
+            type: 'admin_action',
+            title: 'Your listing has been removed',
+            content: `Your listing "${item.title}" has been completely removed by an administrator. Reason: ${deleteReason}`,
+            metadata: { item_id: id, item_title: item.title },
+            created_at: new Date().toISOString(),
+            is_read: false,
+          });
+
         toast.success('Item deleted successfully and seller notified');
         navigate('/admin');
         return;
@@ -225,7 +237,6 @@ export default function ViewItem() {
 
       // Regular user deletion logic (owner deleting their own item)
       if (isOwner) {
-        // For owners, delete the item if they're the seller
         const { error: deleteError } = await supabase
           .from('items')
           .delete()
@@ -237,6 +248,19 @@ export default function ViewItem() {
           toast.error('Failed to delete item: ' + deleteError.message);
           return;
         }
+
+        // Create notification for the owner
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: user.id,
+            type: 'admin_action',
+            title: 'Your listing has been removed',
+            content: `Your listing "${item.title}" has been completely removed.`,
+            metadata: { item_id: id, item_title: item.title },
+            created_at: new Date().toISOString(),
+            is_read: false,
+          });
 
         toast.success('Item deleted successfully');
         navigate('/my-listings');
