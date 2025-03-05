@@ -1,721 +1,264 @@
-"use client"
 
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { supabase } from "@/integrations/supabase/client"
-import { PageTransition } from "@/components/PageTransition"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
-import {
-  ArrowLeft,
-  Loader2,
-  MessageCircle,
-  ShoppingBag,
-  User,
-  Shield,
-  AlertTriangle,
-  Phone,
-  Star,
-  MapPin,
-  Calendar,
-  Check,
-  CheckCircle,
-} from "lucide-react"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faWhatsapp } from "@fortawesome/free-brands-svg-icons"
-import { motion } from "framer-motion"
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { PageTransition } from '@/components/PageTransition';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertTriangle, ShieldCheck, Loader2, Calendar, Shield, MapPin, Phone, User } from 'lucide-react';
+import ProductGrid from '@/components/ProductGrid';
+import { getKycStatusBadgeProps } from '@/utils/kycUtils';
 
-// Define the KYC status type to match the database enum
-type KycStatus = "pending" | "processing" | "verified" | "rejected"
-
-interface SimpleUserProfile {
-  id: string
-  first_name: string | null
-  last_name: string | null
-  avatar_url: string | null
-  kyc_status: KycStatus
-  phone: string | null
-  joined_date?: string // Added for UI enhancement
-  location?: string // Added for UI enhancement
-  rating?: number // Added for UI enhancement
-  address?: string // Added for UI enhancement
-  created_at?: string // Ensure this is defined
+interface UserProfile {
+  id: string;
+  avatar_url: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  address: string | null;
+  phone: string | null;
+  kyc_status: string | null;
+  created_at: string;
+  updated_at: string | null;
 }
 
-interface SimpleItem {
-  id: string
-  title: string
-  price: number
-  images: string[]
-  description: string
-  created_at?: string // Added for UI enhancement
+interface Item {
+  id: string;
+  title: string;
+  price: number;
+  category: string;
+  description: string | null;
+  condition: string;
+  status: string;
+  images: string[];
+  seller?: {
+    id: string;
+    first_name: string | null;
+    last_name: string | null;
+    avatar_url: string | null;
+  };
 }
 
-export default function UserProfile() {
-  const { userId } = useParams<{ userId: string }>()
-  const navigate = useNavigate()
-  const [profile, setProfile] = useState<SimpleUserProfile | null>(null)
-  const [items, setItems] = useState<SimpleItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<"listings" | "about">("listings")
+const UserProfile = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [userItems, setUserItems] = useState<Item[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isCurrentUser, setIsCurrentUser] = useState(false);
 
   useEffect(() => {
-    if (userId) {
-      fetchUserProfile()
-    }
-  }, [userId])
-
-  const fetchUserProfile = async () => {
-    try {
-      setLoading(true)
-
-      // Get user profile
-      const { data: profileData, error: profileError } = (await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single()) as { data: SimpleUserProfile | null; error: any }
-
-      if (profileError || !profileData || typeof profileData !== "object") {
-        console.error("Profile fetch error:", profileError)
-        toast.error(`Failed to load user profile: ${profileError.message}`)
-        throw new Error("Profile data is not available.")
+    const fetchUserData = async () => {
+      setLoading(true);
+      
+      try {
+        // Get the current authenticated user
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!id) {
+          navigate('/');
+          return;
+        }
+        
+        setIsCurrentUser(user?.id === id);
+        
+        // Fetch user profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          toast.error("Failed to load user profile");
+          navigate('/');
+          return;
+        }
+        
+        setProfile(profileData);
+        
+        // Fetch user's listings
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('items')
+          .select(`
+            *,
+            images:item_images(image_url)
+          `)
+          .eq('seller_id', id)
+          .eq('status', 'active')
+          .order('created_at', { ascending: false });
+          
+        if (itemsError) {
+          console.error("Error fetching items:", itemsError);
+          toast.error("Failed to load user's listings");
+          return;
+        }
+        
+        // Format the data
+        const formattedItems = itemsData.map((item: any) => ({
+          ...item,
+          images: item.images.map((img: any) => img.image_url)
+        }));
+        
+        setUserItems(formattedItems);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        toast.error("An error occurred while loading user data");
+      } finally {
+        setLoading(false);
       }
+    };
+    
+    fetchUserData();
+  }, [id, navigate]);
 
-      // Type assertion to SimpleUserProfile
-      const typedProfileData = profileData as SimpleUserProfile
-
-      if (typedProfileData) {
-        setProfile({
-          ...typedProfileData,
-          joined_date: new Date(typedProfileData.created_at || Date.now()).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-          }),
-          rating: 4.8, // Mock data for UI enhancement
-        })
-      }
-
-      // Get user items
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("items")
-        .select(`
-          id,
-          title,
-          price,
-          item_images (
-            image_url
-          ),
-          description,
-          created_at
-        `)
-        .eq("seller_id", userId)
-        .eq("status", "active")
-        .order("created_at", { ascending: false })
-
-      if (itemsError) {
-        console.error("Items fetch error:", itemsError)
-        throw itemsError
-      }
-
-      // Process items to extract images
-      const processedItems: SimpleItem[] = (itemsData || []).map((item) => ({
-        id: item.id,
-        title: item.title,
-        price: item.price,
-        images: item.item_images?.map((img: any) => img.image_url) || [],
-        description: item.description || "",
-        created_at: new Date(item.created_at).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-        }),
-      }))
-
-      setItems(processedItems)
-    } catch (error: any) {
-      console.error("Error fetching user profile:", error)
-      toast.error("Failed to load user profile.")
-      navigate("/home")
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Format price with currency symbol
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price)
-  }
-
-  // Render verification badge based on KYC status
-  const renderVerificationBadge = (status: KycStatus) => {
-    switch (status) {
-      case "verified":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-green-500/10 text-green-500 border-green-500/20 flex items-center gap-1 px-3 py-1"
-          >
-            <Check className="w-3.5 h-3.5" />
-          </Badge>
-        )
-      case "rejected":
-        return (
-          <Badge
-            variant="destructive"
-            className="bg-red-500/10 text-red-500 border-red-500/20 flex items-center gap-1 px-3 py-1"
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-          </Badge>
-        )
-      case "processing":
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-orange-500/10 text-orange-500 border-orange-500/20 flex items-center gap-1 px-3 py-1"
-          >
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          </Badge>
-        )
-      default:
-        return (
-          <Badge
-            variant="secondary"
-            className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20 flex items-center gap-1 px-3 py-1"
-          >
-            <User className="w-3.5 h-3.5" />
-          </Badge>
-        )
-    }
-  }
+  // Subscribe to profile changes
+  useEffect(() => {
+    if (!id) return;
+    
+    const channel = supabase
+      .channel('profile-changes')
+      .on('postgres_changes', { 
+        event: 'UPDATE', 
+        schema: 'public', 
+        table: 'profiles',
+        filter: `id=eq.${id}`
+      }, (payload) => {
+        // Update the profile when it changes
+        setProfile(payload.new as UserProfile);
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id]);
 
   if (loading) {
     return (
-      <PageTransition>
-        <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pt-20">
-            <div className="flex flex-col items-center sm:items-start sm:flex-row gap-6">
-              <Skeleton className="h-24 w-24 sm:h-32 sm:w-32 rounded-full" />
-              <div className="flex flex-col items-center sm:items-start gap-2 w-full max-w-md">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-6 w-32" />
-                <div className="mt-4 flex gap-2">
-                  <Skeleton className="h-10 w-24" />
-                  <Skeleton className="h-10 w-32" />
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-12">
-              <Skeleton className="h-8 w-64 mb-6" />
-              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                {[1, 2, 3, 4, 5, 6].map((i) => (
-                  <Skeleton key={i} className="aspect-square rounded-lg" />
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </PageTransition>
-    )
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
-
+  
   if (!profile) {
     return (
-      <PageTransition>
-        <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-green-950/20 dark:to-background flex flex-col items-center justify-center gap-4 p-4">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ duration: 0.5 }}
-            className="bg-secondary/30 rounded-full p-6"
-          >
-            <User className="h-12 w-12 text-muted-foreground" />
-          </motion.div>
-          <motion.h1
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1, duration: 0.5 }}
-            className="text-2xl font-semibold"
-          >
-            User not found
-          </motion.h1>
-          <motion.p
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-muted-foreground text-center max-w-md"
-          >
-            The user profile you're looking for doesn't exist or may have been removed.
-          </motion.p>
-          <motion.div
-            initial={{ y: 10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            <Button onClick={() => navigate("/home")} className="mt-2" size="lg">
-              Go Home
-            </Button>
-          </motion.div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-2">User not found</h2>
+          <p className="text-muted-foreground mb-4">The user profile you're looking for doesn't exist.</p>
+          <Button onClick={() => navigate('/')}>Return Home</Button>
         </div>
-      </PageTransition>
-    )
+      </div>
+    );
   }
+
+  const statusBadgeProps = getKycStatusBadgeProps(profile.kyc_status);
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-black pb-32">
-        {/* Header with dark background */}
-        <header className="fixed top-0 z-50 bg-black backdrop-blur-md opacity-80 border-b border-gray-800 w-full">
-          <div className="max-w-4xl mx-auto px-4 flex justify-between items-center py-3">
-            <Button
-              onClick={() => navigate("/")}
-              variant="ghost"
-              size="sm"
-              className="text-green-500 hover:bg-gray-800"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <h2 className="font-medium text-white">User Profile</h2>
-            <div className="w-16"></div> {/* Spacer for centering */}
-          </div>
-        </header>
-
-        {/* Profile content */}
-        <div className="pt-20 pb-6">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6">
-            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.5 }}>
-              <Card className="border border-green-500 shadow-lg bg-black rounded-xl overflow-hidden">
-                <div className="relative">
-                  {/* Pattern background */}
-                  <div className="h-32 bg-black relative rounded-t-xl shadow-lg overflow-hidden">
-                    <svg
-                      className="absolute inset-0 h-full w-full opacity-60"
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="100%"
-                      height="100%"
-                      viewBox="0 0 100 100"
-                      preserveAspectRatio="xMidYMid slice"
-                    >
-                      <defs>
-                        <pattern id="shapes" x="0" y="0" width="25" height="25" patternUnits="userSpaceOnUse">
-                          {/* Circles */}
-                          <circle
-                            cx="4"
-                            cy="4"
-                            r="2"
-                            fill="none"
-                            stroke="rgb(59, 130, 246)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                          />
-                          <circle
-                            cx="20"
-                            cy="18"
-                            r="1.5"
-                            fill="none"
-                            stroke="rgb(59, 130, 246)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                          />
-                          {/* Squares */}
-                          <rect
-                            x="15"
-                            y="2"
-                            width="4"
-                            height="4"
-                            fill="none"
-                            stroke="rgb(249, 115, 22)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                            transform="rotate(45, 17, 4)"
-                          />
-                          <rect
-                            x="2"
-                            y="15"
-                            width="3"
-                            height="3"
-                            fill="none"
-                            stroke="rgb(249, 115, 22)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                            transform="rotate(30, 3.5, 16.5)"
-                          />
-                          {/* Triangles */}
-                          <path
-                            d="M 20 12 L 22 15 L 18 15 Z"
-                            fill="none"
-                            stroke="rgb(239, 68, 68)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                          />
-                          <path
-                            d="M 8 8 L 10 11 L 6 11 Z"
-                            fill="none"
-                            stroke="rgb(239, 68, 68)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                            transform="rotate(180, 8, 9.5)"
-                          />
-                          {/* Hexagons */}
-                          <path
-                            d="M 12 20 L 14 18 L 16 20 L 14 22 Z"
-                            fill="none"
-                            stroke="rgb(34, 197, 94)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                          />
-                          <path
-                            d="M 22 8 L 24 6 L 26 8 L 24 10 Z"
-                            fill="none"
-                            stroke="rgb(34, 197, 94)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                          />
-                          {/* Stars */}
-                          <path
-                            d="M 6 22 L 7 20 L 8 22 L 6 21 L 8 21 Z"
-                            fill="none"
-                            stroke="rgb(168, 85, 247)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                          />
-                          <path
-                            d="M 16 7 L 17 5 L 18 7 L 16 6 L 18 6 Z"
-                            fill="none"
-                            stroke="rgb(168, 85, 247)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                          />
-                          {/* Plus signs */}
-                          <path
-                            d="M 12 3 L 12 5 M 11 4 L 13 4"
-                            stroke="rgb(234, 179, 8)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                          />
-                          <path
-                            d="M 3 12 L 3 14 M 2 13 L 4 13"
-                            stroke="rgb(234, 179, 8)"
-                            strokeWidth="0.5"
-                            opacity="0.5"
-                          />
-                        </pattern>
-                      </defs>
-                      <rect x="0" y="0" width="100%" height="100%" fill="url(#shapes)" />
-                    </svg>
-                  </div>
-
-                  {/* Centered Avatar with verification badge */}
-                  <div
-                    className="absolute left-1/2 transform -translate-x-1/2"
-                    style={{ top: "100%", transform: "translate(-50%, -50%)" }}
-                  >
-                    <Avatar className="h-32 w-32 border-2 border-green-800 ring-1 ring-green-500/20">
-                      <AvatarImage src={profile?.avatar_url} alt={`${profile?.first_name} ${profile?.last_name}`} />
-                      <AvatarFallback className="bg-secondary">
-                        {profile?.first_name?.[0]}
-                        {profile?.last_name?.[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    {profile.kyc_status === "verified" ? (
-                      <Badge
-                        variant="outline"
-                        className="absolute top-0 right-0 bg-green-500 text-white border border-green-500 px-2 py-1 rounded-full shadow-lg"
-                      >
-                        <CheckCircle className="w-5 h-5" />
-                      </Badge>
-                    ) : profile.kyc_status === "pending" ? (
-                      <Badge
-                        variant="outline"
-                        className="absolute top-0 right-0 bg-yellow-500 text-white border border-yellow-500 px-2 py-1 rounded-full shadow-lg"
-                      >
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="absolute top-0 right-0 bg-red-500 text-white border border-red-500 px-2 py-1 rounded-full shadow-lg"
-                      >
-                        <AlertTriangle className="w-5 h-5" />
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                <CardContent className="pt-16 pb-6 px-6 flex flex-col items-center">
-                  <h1 className="text-2xl font-bold text-white">
+      <div className="container max-w-4xl mx-auto px-4 py-8 pb-32">
+        <Card className="mb-8">
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+              <Avatar className="h-24 w-24">
+                <AvatarImage src={profile.avatar_url || undefined} />
+                <AvatarFallback className="text-3xl">
+                  {profile.first_name?.[0] || ''}{profile.last_name?.[0] || ''}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1 text-center sm:text-left">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                  <CardTitle className="text-2xl">
                     {profile.first_name} {profile.last_name}
-                  </h1>
-
-                  <div className="mt-2 flex flex-col items-center gap-1">
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Calendar className="w-3.5 h-3.5 mr-1" />
-                      Joined {profile.joined_date}
-                    </div>
-
-                    <div className="flex items-center text-yellow-400">
-                      <Star className="w-4 h-4 mr-1 fill-yellow-400" />
-                      <span>{profile.rating} rating</span>
-                    </div>
-
-                    {profile.kyc_status !== "verified" && (
-                      <div className="mt-1 text-red-500">KYC Status: Not Verified</div>
-                    )}
+                  </CardTitle>
+                  
+                  <Badge 
+                    variant={statusBadgeProps.variant} 
+                    className={statusBadgeProps.className}
+                  >
+                    {statusBadgeProps.icon}
+                    {statusBadgeProps.label}
+                  </Badge>
+                </div>
+                
+                <CardDescription>
+                  <div className="flex items-center justify-center sm:justify-start gap-1 text-muted-foreground">
+                    <Calendar className="h-3.5 w-3.5" />
+                    <span>Joined {new Date(profile.created_at).toLocaleDateString()}</span>
                   </div>
-
-                  <div className="mt-4 w-full space-y-3">
-                    {profile.phone && (
-                      <a
-                        href={`https://wa.me/${profile.phone}`}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors w-full h-12"
-                      >
-                        <FontAwesomeIcon icon={faWhatsapp} className="w-5 h-5" />
-                        <span>WhatsApp</span>
-                      </a>
-                    )}
-
-                    <Button
-                      onClick={() => navigate("/")}
-                      variant="outline"
-                      className="w-full border-green-500/50 bg-transparent hover:bg-green-500/10 text-green-500 rounded-md py-3 h-12"
+                </CardDescription>
+                
+                <div className="mt-3 flex flex-col sm:flex-row gap-3">
+                  {profile.address && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span className="truncate">{profile.address}</span>
+                    </div>
+                  )}
+                  
+                  {profile.phone && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                      <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                      <span>{profile.phone}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {isCurrentUser && (
+                <div className="flex-shrink-0">
+                  <Button variant="outline" onClick={() => navigate('/profile')}>
+                    Edit Profile
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+        </Card>
+        
+        <Tabs defaultValue="listings">
+          <TabsList className="mb-6">
+            <TabsTrigger value="listings">Listings</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="listings">
+            {userItems.length === 0 ? (
+              <Card>
+                <CardContent className="pt-6 text-center">
+                  <User className="h-12 w-12 mx-auto opacity-20 mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No Listings Yet</h3>
+                  <p className="text-muted-foreground">
+                    {isCurrentUser 
+                      ? "You haven't listed any items for sale yet."
+                      : "This user hasn't listed any items for sale yet."}
+                  </p>
+                  
+                  {isCurrentUser && (
+                    <Button 
+                      variant="default"
+                      className="mt-4"
+                      onClick={() => document.getElementById('sell-button')?.click()}
                     >
-                      <ShoppingBag className="w-4 h-4 mr-2" />
-                      Browse Items
+                      Create Your First Listing
                     </Button>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
-            </motion.div>
-
-            {/* Tabs */}
-            <div className="mt-8">
-              <div className="flex space-x-8">
-                <button
-                  onClick={() => setActiveTab("listings")}
-                  className={`pb-2 px-1 font-medium text-sm transition-colors relative ${
-                    activeTab === "listings" ? "text-green-500" : "text-gray-400 hover:text-gray-300"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4" />
-                    Listings
-                    <Badge variant="secondary" className="ml-1 bg-gray-800 text-gray-300">
-                      {items.length}
-                    </Badge>
-                  </div>
-                  {activeTab === "listings" && (
-                    <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500" />
-                  )}
-                </button>
-                <button
-                  onClick={() => setActiveTab("about")}
-                  className={`pb-2 px-1 font-medium text-sm transition-colors relative ${
-                    activeTab === "about" ? "text-green-500" : "text-gray-400 hover:text-gray-300"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4" />
-                    About
-                  </div>
-                  {activeTab === "about" && (
-                    <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500" />
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Tab content */}
-            <div className="mt-6">
-              {activeTab === "listings" && (
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-                  {items.length === 0 ? (
-                    <Card className="border border-gray-800 bg-gray-900">
-                      <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                        <div className="bg-green-500/10 rounded-full p-4 mb-4">
-                          <ShoppingBag className="w-8 h-8 text-green-500/70" />
-                        </div>
-                        <p className="text-lg font-medium mb-1 text-white">No active listings</p>
-                        <p className="text-gray-400 max-w-md">
-                          This seller doesn't have any active items for sale at the moment.
-                        </p>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                      {items.map((item, index) => (
-                        <motion.div
-                          key={item.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05, duration: 0.3 }}
-                        >
-                          <Card
-                            className="group overflow-hidden border border-green-500 hover:border-green-500/50 transition-all duration-200 hover:shadow-md h-full flex flex-col bg-black"
-                            onClick={() => navigate(`/item/${item.id}`)}
-                          >
-                            <div className="aspect-[4/3] overflow-hidden relative">
-                              <img
-                                src={item.images[0] || "/placeholder.svg?height=300&width=400"}
-                                alt={item.title}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              />
-                              {item.created_at && (
-                                <Badge className="absolute top-2 right-2 bg-black/70 text-white">
-                                  {item.created_at}
-                                </Badge>
-                              )}
-                            </div>
-                            <CardContent className="p-4 flex-grow">
-                              <h3 className="font-medium line-clamp-1 group-hover:text-green-500 transition-colors">
-                                {item.title}
-                              </h3>
-                              <p className="text-lg font-bold text-green-600 dark:text-green-400 mt-1">
-                                {formatPrice(item.price)}
-                              </p>
-                              <p className="text-muted-foreground text-sm mt-2 line-clamp-2">{item.description}</p>
-                            </CardContent>
-                            <CardFooter className="p-4 pt-0">
-                              <Button
-                                variant="outline"
-                                className="w-full border-green-500/50 text-green-500 hover:bg-green-500/10"
-                              >
-                                View Details
-                              </Button>
-                            </CardFooter>
-                          </Card>
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </motion.div>
-              )}
-
-              {activeTab === "about" && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-6"
-                >
-                  <Card className="border border-green-500 shadow-lg bg-black rounded-xl overflow-hidden">
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-medium mb-4">About the Seller</h3>
-                      <div className="space-y-4">
-                        <div className="flex items-start gap-3">
-                          <Shield className="w-5 h-5 text-green-500 mt-0.5" />
-                          <div>
-                            <h4 className="font-medium">Verification Status</h4>
-                            <p className="text-muted-foreground text-sm">
-                              {profile.kyc_status === "verified"
-                                ? "This seller has completed identity verification and is trusted on our platform."
-                                : "This seller has not completed the verification process yet."}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start gap-3">
-                          <Calendar className="w-5 h-5 text-blue-500 mt-0.5" />
-                          <div>
-                            <h4 className="font-medium">Member Since</h4>
-                            <p className="text-muted-foreground text-sm">{profile.joined_date || "Unknown"}</p>
-                          </div>
-                        </div>
-
-                        {profile.location && (
-                          <div className="flex items-start gap-3">
-                            <MapPin className="w-5 h-5 text-red-500 mt-0.5" />
-                            <div>
-                              <h4 className="font-medium">Location</h4>
-                              <p className="text-muted-foreground text-sm">{profile.location}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {profile.address && (
-                          <div className="flex items-start gap-3">
-                            <MapPin className="w-5 h-5 text-red-500 mt-0.5" />
-                            <div>
-                              <h4 className="font-medium">Address</h4>
-                              <p className="text-muted-foreground text-sm">{profile.address}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        {profile.rating && (
-                          <div className="flex items-start gap-3">
-                            <Star className="w-5 h-5 text-amber-500 mt-0.5 fill-amber-500" />
-                            <div>
-                              <h4 className="font-medium">Seller Rating</h4>
-                              <div className="flex items-center gap-1 mt-1">
-                                {[...Array(5)].map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className={`w-4 h-4 ${
-                                      i < Math.floor(profile.rating || 0)
-                                        ? "text-amber-500 fill-amber-500"
-                                        : "text-gray-300 fill-gray-300"
-                                    }`}
-                                  />
-                                ))}
-                                <span className="text-sm ml-1">{profile.rating} out of 5</span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="border border-green-500 shadow-lg bg-black rounded-xl overflow-hidden">
-                    <CardContent className="p-6">
-                      <h3 className="text-lg font-medium mb-4">Contact Information</h3>
-                      {profile.phone ? (
-                        <div className="flex items-start gap-3">
-                          <Phone className="w-5 h-5 text-green-500 mt-0.5" />
-                          <div>
-                            <h4 className="font-medium">WhatsApp</h4>
-                            <p className="text-muted-foreground text-sm mb-2">
-                              Contact this seller directly via WhatsApp
-                            </p>
-                            <a
-                              href={`https://wa.me/${profile.phone}`}
-                              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-green-500 text-white hover:bg-green-600 transition-colors"
-                            >
-                              <FontAwesomeIcon icon={faWhatsapp} className="w-4 h-4" />
-                              <span>Message on WhatsApp</span>
-                            </a>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-start gap-3">
-                          <MessageCircle className="w-5 h-5 text-blue-500 mt-0.5" />
-                          <div>
-                            <h4 className="font-medium">In-App Messaging</h4>
-                            <p className="text-muted-foreground text-sm mb-2">
-                              Contact this seller through our messaging system
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )}
-            </div>
-          </div>
-        </div>
+            ) : (
+              <ProductGrid items={userItems} />
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </PageTransition>
-  )
-}
+  );
+};
 
+export default UserProfile;

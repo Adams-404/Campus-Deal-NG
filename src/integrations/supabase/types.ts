@@ -477,6 +477,15 @@ export type Database = {
             Args: {
               document_id: string
               user_id: string
+              new_status: Database["public"]["Enums"]["kyc_status"]
+              admin_notes_param?: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              document_id: string
+              user_id: string
               new_status: Database["public"]["Enums"]["kycstatus"]
               admin_notes: string
             }

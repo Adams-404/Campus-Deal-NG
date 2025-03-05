@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ShieldCheck, AlertTriangle, Loader2, Shield } from "lucide-react";
 
 export async function updateKYCStatus(
   documentId: string, 
@@ -9,56 +10,15 @@ export async function updateKYCStatus(
   adminNotes?: string
 ) {
   try {
-    // Update the KYC document
-    const { error: docError } = await supabase
-      .from('kyc_documents')
-      .update({ 
-        status: newStatus,
-        admin_notes: adminNotes || null,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', documentId);
+    // Call the new stored procedure that handles all updates in a transaction
+    const { error } = await supabase.rpc('update_kyc_status', {
+      document_id: documentId,
+      user_id: userId,
+      new_status: newStatus,
+      admin_notes_param: adminNotes || null
+    });
     
-    if (docError) throw docError;
-    
-    // Update the user's profile KYC status
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .update({ 
-        kyc_status: newStatus,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', userId);
-    
-    if (profileError) throw profileError;
-    
-    // Create a notification for the user
-    const title = newStatus === 'verified' 
-      ? 'KYC Verification Approved' 
-      : newStatus === 'rejected'
-      ? 'KYC Verification Rejected'
-      : 'KYC Status Updated';
-    
-    const content = adminNotes || (
-      newStatus === 'verified' 
-        ? 'Your identity verification has been approved. You now have full access to all platform features.'
-        : newStatus === 'rejected'
-        ? 'Your identity verification was rejected. Please submit new documents or contact support.'
-        : 'Your identity verification status has been updated.'
-    );
-    
-    const { error: notificationError } = await supabase
-      .from('notifications')
-      .insert({
-        user_id: userId,
-        title,
-        content,
-        type: 'verification',
-        is_read: false,
-        metadata: { document_id: documentId }
-      });
-    
-    if (notificationError) throw notificationError;
+    if (error) throw error;
     
     return { success: true };
   } catch (error) {
@@ -107,6 +67,3 @@ export function getKycStatusBadgeProps(status: string | null) {
       };
   }
 }
-
-// Import these at the top of the file
-import { ShieldCheck, AlertTriangle, Loader2, Shield } from "lucide-react";
