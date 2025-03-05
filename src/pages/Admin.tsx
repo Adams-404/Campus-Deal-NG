@@ -1,207 +1,113 @@
+
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  User as UserIcon,
-  Mail,
-  Calendar,
-  Shield,
-  Edit2,
-  AlertCircle,
-  Phone,
-  MapPin,
-  BadgeCheck,
-  Crown,
-  Image,
-  Eye,
-  Trash2,
-  Loader2,
-  CheckCircle,
-  AlertTriangle,
-  ExternalLink,
-  LayoutDashboard,
-  Menu,
-  HelpCircle,
-  X,
-} from "lucide-react";
+import { toast } from 'sonner';
+import { Card, CardContent } from '@/components/ui/card';
+import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import { UserProfile, KYCDocument, ItemType, DashboardStats, ChartData, TimeSeriesData } from '@/components/admin/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { PageTransition } from '@/components/PageTransition';
+import { supabase } from '@/integrations/supabase/client';
+import UserDetailsModal from '@/components/admin/UserDetailsModal';
+import { AdminActionModal } from '@/components/AdminActionModal';
 import { useNavigate } from 'react-router-dom';
-import { PageTransition } from "@/components/PageTransition";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { DataTable } from "@/components/ui/data-table";
-import type { ColumnDef } from "@tanstack/react-table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AdminGuide } from "@/components/admin/AdminGuide";
-import { UsersTab } from "@/components/admin/UsersTab";
-import { AdminsTab } from "@/components/admin/AdminsTab";
-import { UserDetailsModal } from "@/components/admin/UserDetailsModal";
-import { KYCDocumentsTab } from "@/components/admin/KYCDocumentsTab";
-import { DashboardOverview } from "@/components/admin/DashboardOverview";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
-import { 
-  Profile, 
-  UserProfile, 
-  KYCDocument, 
-  ItemType, 
-  KycStatus, 
-  DashboardStats 
-} from "@/components/admin/types";
-import {
-  Sheet,
-  SheetClose,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-
-interface SimpleItemSeller {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  avatar_url: string | null;
-}
-
-interface SimpleItemImage {
-  image_url: string;
-}
-
-interface SimpleItem {
-  id: string;
-  title: string;
-  price: number;
-  status: string;
-  created_at: string;
-  description: string;
-  seller: SimpleItemSeller;
-  item_images?: SimpleItemImage[];
-  images?: string[]; // Make images optional since it's derived from item_images
-}
 
 const Admin = () => {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [items, setItems] = useState<ItemType[]>([]);
   const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
-  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [selectedKYCDocument, setSelectedKYCDocument] = useState<KYCDocument | null>(null);
-  const [showUserDetailsModal, setShowUserDetailsModal] = useState(false);
-  const [showKYCDetailsModal, setShowKYCDetailsModal] = useState(false);
-  const [userItems, setUserItems] = useState<ItemType[]>([]);
-  const [isAddingAdmin, setIsAddingAdmin] = useState(false);
-  const [newAdminEmail, setNewAdminEmail] = useState('');
-  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<ItemType | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'admins' | 'kyc' | 'posts'>('dashboard');
-  const [adminNotes, setAdminNotes] = useState('');
-  const [isUpdatingKYC, setIsUpdatingKYC] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [showGuideSheet, setShowGuideSheet] = useState(false);
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
+  const [items, setItems] = useState<ItemType[]>([]);
+  const [isUserDetailsOpen, setIsUserDetailsOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
     totalItems: 0,
     pendingKyc: 0,
     activeSellers: 0
   });
-  const [deleteReason, setDeleteReason] = useState("");
+  const [userStats, setUserStats] = useState<ChartData[]>([]);
+  const [itemStats, setItemStats] = useState<ChartData[]>([]);
+  const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalAction, setModalAction] = useState<'add' | 'remove'>('add');
+  const [targetUser, setTargetUser] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    getProfile();
-  }, []);
-
-  const getProfile = async () => {
+  // Fetch users, items, and KYC documents
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const { data } = await supabase.auth.getUser();
-      const user = data.user;
-
-      if (!user) {
+      // Check if the current user is an admin
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) {
         navigate('/sign-in');
         return;
       }
 
-      setUser(user);
+      const { data: isAdminData, error: isAdminError } = await supabase.rpc('is_admin', {
+        user_id: userData.user.id
+      });
 
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        toast.error('Error fetching profile');
+      if (isAdminError) {
+        console.error('Error checking admin status:', isAdminError);
+        toast.error('Error checking admin permission');
+        navigate('/');
         return;
       }
 
-      const { data: roles, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
-
-      if (roleError) {
-        console.error('Error fetching role:', roleError);
-      }
-
-      setProfile({ ...profileData, roles: roles || [] });
-
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('*');
-
-      if (usersError) {
-        console.error('Error fetching users:', usersError);
-        toast.error('Error fetching users');
+      if (!isAdminData) {
+        toast.error('You do not have admin permissions');
+        navigate('/');
         return;
       }
 
-      const usersWithRoles = await Promise.all(
-        usersData.map(async (userData) => {
-          const { data: userRoles, error: roleError } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', userData.id);
+      setIsAdmin(true);
 
-          if (roleError) {
-            console.error('Error fetching role:', roleError);
-            return { ...userData, roles: [] };
-          }
+      // Fetch users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          first_name,
+          last_name,
+          avatar_url,
+          address,
+          phone,
+          kyc_status,
+          created_at,
+          updated_at,
+          roles:user_roles(role)
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (profilesError) throw profilesError;
+      setUsers(profilesData || []);
 
-          return { ...userData, roles: userRoles || [] };
-        })
-      );
+      // Fetch KYC documents
+      const { data: kycDocumentsData, error: kycDocumentsError } = await supabase
+        .from('kyc_documents')
+        .select(`
+          id,
+          user_id,
+          document_type,
+          document_url,
+          status,
+          created_at,
+          admin_notes,
+          updated_at,
+          profile:profiles(
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `)
+        .order('created_at', { ascending: false });
+        
+      if (kycDocumentsError) throw kycDocumentsError;
+      setKycDocuments(kycDocumentsData || []);
 
-      setUsers(usersWithRoles);
-
+      // Fetch items
       const { data: itemsData, error: itemsError } = await supabase
         .from('items')
         .select(`
@@ -211,401 +117,176 @@ const Admin = () => {
           status,
           created_at,
           description,
-          seller:profiles (
+          seller:profiles(
             id,
             first_name,
             last_name,
             avatar_url
           ),
-          item_images (
-            image_url
-          )
+          images:item_images(image_url)
         `)
         .order('created_at', { ascending: false });
-
-      if (itemsError) {
-        console.error('Error fetching items:', itemsError);
-        toast.error('Error fetching items');
-        return;
-      }
-
-      const formattedItems = itemsData.map((item: any) => ({
-        id: item.id,
-        title: item.title,
-        price: item.price,
-        status: item.status,
-        created_at: item.created_at,
-        description: item.description,
-        seller: item.seller ? {
-          id: item.seller.id,
-          first_name: item.seller.first_name || '',
-          last_name: item.seller.last_name || '',
-          avatar_url: item.seller.avatar_url || ''
-        } : null,
-        images: item.item_images ? item.item_images.map((img: SimpleItemImage) => img.image_url) : []
+        
+      if (itemsError) throw itemsError;
+      
+      // Format the items data
+      const formattedItems = itemsData.map(item => ({
+        ...item,
+        seller: item.seller,
+        images: item.images.map((img: { image_url: string }) => img.image_url)
       }));
+      
+      setItems(formattedItems || []);
 
-      setItems(formattedItems);
-
-      const { data: kycData, error: kycError } = await supabase
-        .from('kyc_documents')
-        .select(`
-          *,
-          profile:profiles (
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
-        .order('created_at', { ascending: false });
-
-      if (kycError) {
-        console.error('Error fetching KYC documents:', kycError);
-        toast.error('Error fetching KYC documents');
-        return;
-      }
-
-      setKycDocuments(kycData);
-
-      const activeSellersCount = new Set(
-        formattedItems
-          .filter(item => item.status === 'active')
-          .map(item => item.seller?.id)
-          .filter(Boolean)
-      ).size;
-
-      setDashboardStats({
-        totalUsers: usersData.length,
-        totalItems: formattedItems.length,
-        pendingKyc: kycData.filter(doc => doc.status === 'pending').length,
-        activeSellers: activeSellersCount
+      // Calculate dashboard stats
+      setStats({
+        totalUsers: profilesData?.length || 0,
+        totalItems: formattedItems?.length || 0,
+        pendingKyc: kycDocumentsData?.filter(doc => doc.status === 'pending' || doc.status === 'processing').length || 0,
+        activeSellers: new Set(formattedItems?.map(item => item.seller.id)).size || 0
       });
+
+      // Calculate user stats by KYC status
+      const kycStatusCounts: Record<string, number> = {};
+      profilesData?.forEach(user => {
+        const status = user.kyc_status || 'pending';
+        kycStatusCounts[status] = (kycStatusCounts[status] || 0) + 1;
+      });
+      
+      setUserStats(Object.entries(kycStatusCounts).map(([name, value]) => ({ name, value })));
+
+      // Calculate item stats by status
+      const itemStatusCounts: Record<string, number> = {};
+      formattedItems?.forEach(item => {
+        const status = item.status || 'active';
+        itemStatusCounts[status] = (itemStatusCounts[status] || 0) + 1;
+      });
+      
+      setItemStats(Object.entries(itemStatusCounts).map(([name, value]) => ({ name, value })));
+
+      // Generate time series data (last 7 days)
+      const timeSeriesPoints: TimeSeriesData[] = [];
+      const now = new Date();
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dateString = date.toISOString().split('T')[0];
+        
+        const usersCountBeforeDate = profilesData?.filter(user => 
+          new Date(user.created_at) <= date
+        ).length || 0;
+        
+        const itemsCountBeforeDate = formattedItems?.filter(item => 
+          new Date(item.created_at) <= date
+        ).length || 0;
+        
+        timeSeriesPoints.push({
+          date: dateString,
+          users: usersCountBeforeDate,
+          items: itemsCountBeforeDate
+        });
+      }
+      
+      setTimeSeriesData(timeSeriesPoints);
+      
     } catch (error) {
-      console.error('Error in getProfile:', error);
-      toast.error('An error occurred while fetching data');
+      console.error('Error fetching admin data:', error);
+      toast.error('Failed to fetch admin data');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleViewUserProfile = async (userId: string) => {
-    const selected = users.find(user => user.id === userId);
-    setSelectedUser(selected || null);
+  useEffect(() => {
+    fetchData();
+    
+    // Set up realtime subscriptions
+    const profilesChannel = supabase
+      .channel('admin-profiles-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'profiles'
+      }, () => {
+        fetchData();
+      })
+      .subscribe();
+      
+    const kycDocumentsChannel = supabase
+      .channel('admin-kyc-documents-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'kyc_documents'
+      }, () => {
+        fetchData();
+      })
+      .subscribe();
+      
+    const itemsChannel = supabase
+      .channel('admin-items-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'items'
+      }, () => {
+        fetchData();
+      })
+      .subscribe();
 
-    if (selected) {
-      const { data: itemsData, error: itemsError } = await supabase
+    return () => {
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(kycDocumentsChannel);
+      supabase.removeChannel(itemsChannel);
+    };
+  }, [navigate]);
+
+  const handleViewUserProfile = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsUserDetailsOpen(true);
+  };
+
+  const handleDeleteItem = async (itemId: string) => {
+    try {
+      const { error } = await supabase
         .from('items')
-        .select(`
-          id,
-          title,
-          price,
-          status,
-          created_at,
-          description,
-          seller:profiles (
-            id,
-            first_name,
-            last_name,
-            avatar_url
-          ),
-          item_images (
-            image_url
-          )
-        `)
-        .eq('seller_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (itemsError) {
-        console.error('Error fetching user items:', itemsError);
-        toast.error('Error fetching user items');
-        setUserItems([]);
-      } else {
-        const formattedItems = itemsData.map((item: any) => ({
-          id: item.id,
-          title: item.title,
-          price: item.price,
-          status: item.status,
-          created_at: item.created_at,
-          description: item.description,
-          seller: item.seller ? {
-            id: item.seller.id,
-            first_name: item.seller.first_name || '',
-            last_name: item.seller.last_name || '',
-            avatar_url: item.seller.avatar_url || ''
-          } : null,
-          images: item.item_images ? item.item_images.map((img: SimpleItemImage) => img.image_url) : []
-        }));
-        
-        setUserItems(formattedItems);
-      }
+        .delete()
+        .eq('id', itemId);
+      
+      if (error) throw error;
+      
+      toast.success('Item deleted successfully');
+      
+      // Update items list
+      setItems(prev => prev.filter(item => item.id !== itemId));
+      
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast.error('Failed to delete item');
     }
-
-    setShowUserDetailsModal(true);
   };
 
   const handleViewKYCDocument = (document: KYCDocument) => {
-    setSelectedKYCDocument(document);
-    setAdminNotes(document.admin_notes || '');
-    setShowKYCDetailsModal(true);
-  };
-
-  const handleKYCStatusUpdate = async (documentId: string, newStatus: KycStatus) => {
-    setIsUpdatingKYC(true);
-    try {
-      const { error } = await supabase
-        .from('kyc_documents')
-        .update({ 
-          status: newStatus, 
-          admin_notes: adminNotes, 
-          updated_at: new Date().toISOString() 
-        })
-        .eq('id', documentId);
-
-      if (error) {
-        console.error('Error updating KYC status:', error);
-        toast.error('Failed to update KYC status');
-      } else {
-        toast.success('KYC status updated successfully!');
-        getProfile();
-      }
-    } catch (error) {
-      console.error('Error updating KYC status:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setIsUpdatingKYC(false);
-      setShowKYCDetailsModal(false);
-    }
+    // Navigate to KYC tab
+    navigate('/admin?tab=kyc');
   };
 
   const handleAdminAction = (user: UserProfile | null, action: 'add' | 'remove') => {
-    if (action === 'add') {
-      setShowAddAdminModal(true);
-    } else if (action === 'remove' && user) {
-      setSelectedUser(user);
-      setShowDeleteConfirmation(true);
+    setTargetUser(user);
+    setModalAction(action);
+    setIsModalOpen(true);
+  };
+
+  const handleCompleteAdminAction = async (success: boolean) => {
+    setIsModalOpen(false);
+    if (success) {
+      // Refresh the user list
+      fetchData();
     }
   };
 
-  const handleMakeAdmin = async (userEmail: string) => {
-    setIsAddingAdmin(true);
-    try {
-      const { data: usersData, error: usersError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('email', userEmail);
-
-      if (usersError || !usersData || usersData.length === 0) {
-        console.error('Error finding user:', usersError);
-        toast.error('User not found with that email');
-        return;
-      }
-
-      const targetUser = usersData[0];
-
-      const { data: roles, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', targetUser.id);
-
-      if (roleError) {
-        console.error('Error checking role:', roleError);
-        toast.error('Error checking user role');
-        return;
-      }
-
-      const isAdmin = roles?.some(r => r.role === 'admin') ?? false;
-      if (isAdmin) {
-        toast.error('User is already an admin');
-        return;
-      }
-
-      const { error: insertError } = await supabase
-        .from('user_roles')
-        .insert([{ user_id: targetUser.id, role: 'admin' }]);
-
-      if (insertError) {
-        console.error('Error adding admin role:', insertError);
-        toast.error('Failed to add admin role');
-        return;
-      }
-
-      toast.success('Admin role added successfully!');
-      getProfile();
-    } catch (error) {
-      console.error('Error in handleMakeAdmin:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setIsAddingAdmin(false);
-      setShowAddAdminModal(false);
-    }
-  };
-
-  const handleRemoveAdmin = async () => {
-    setIsAddingAdmin(true);
-    if (!selectedUser) return;
-
-    try {
-      const { error: deleteError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', selectedUser.id)
-        .eq('role', 'admin');
-
-      if (deleteError) {
-        console.error('Error removing admin role:', deleteError);
-        toast.error('Failed to remove admin role');
-        return;
-      }
-
-      toast.success('Admin role removed successfully!');
-      getProfile();
-    } catch (error) {
-      console.error('Error in handleRemoveAdmin:', error);
-      toast.error('An unexpected error occurred');
-    } finally {
-      setIsAddingAdmin(false);
-      setShowDeleteConfirmation(false);
-    }
-  };
-
-  const handleDeleteItem = async (item: ItemType) => {
-    setItemToDelete(item);
-    setDeleteReason("");
-    setShowDeleteConfirmation(true);
-  };
-
-  const confirmDeleteItem = async () => {
-    if (!itemToDelete) return;
-
-    try {
-      setItems(prevItems => prevItems.filter(item => item.id !== itemToDelete.id));
-      
-      const { data } = await supabase.auth.getUser();
-      const currentUser = data.user;
-      
-      if (!currentUser) {
-        toast.error('You must be logged in to delete an item');
-        return;
-      }
-      
-      const { error: deleteError } = await supabase
-        .from('items')
-        .delete()
-        .eq('id', itemToDelete.id);
-      
-      if (deleteError) {
-        console.error('Error deleting item:', deleteError);
-        toast.error('Failed to delete item: ' + deleteError.message);
-        getProfile();
-        return;
-      }
-      
-      toast.success('Item deleted successfully');
-    } catch (error: any) {
-      console.error('Error in confirmDeleteItem:', error);
-      toast.error(error.message || 'An unexpected error occurred');
-      getProfile();
-    } finally {
-      setItemToDelete(null);
-      setShowDeleteConfirmation(false);
-    }
-  };
-
-  const checkIfUserIsAdmin = async (userId: string): Promise<boolean> => {
-    try {
-      const { data: roles, error: roleError } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-
-      if (roleError) {
-        console.error('Error checking admin status:', roleError);
-        return false;
-      }
-
-      return roles?.some(r => r.role === 'admin') ?? false;
-    } catch (error) {
-      console.error('Error in checkIfUserIsAdmin:', error);
-      return false;
-    }
-  };
-
-  const columns: ColumnDef<ItemType>[] = [
-    {
-      accessorKey: 'title',
-      header: 'Title',
-    },
-    {
-      accessorKey: 'price',
-      header: 'Price',
-      cell: ({ row }) => `₦${row.getValue("price")}`,
-    },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => (
-        <Badge
-          variant="outline"
-          className={cn(
-            row.getValue("status") === 'active'
-              ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
-              : row.getValue("status") === 'deleted'
-                ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
-                : 'bg-gray-500/10 text-gray-500 hover:bg-gray-500/20 border-gray-500/20'
-          )}
-        >
-          {row.getValue("status")}
-        </Badge>
-      ),
-    },
-    {
-      accessorKey: 'seller',
-      header: 'Seller',
-      cell: ({ row }) => (
-        <div className="flex items-center gap-2">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={row.original.seller?.avatar_url || ''} />
-            <AvatarFallback>
-              <UserIcon className="h-3 w-3" />
-            </AvatarFallback>
-          </Avatar>
-          <span>{row.original.seller?.first_name} {row.original.seller?.last_name}</span>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'created_at',
-      header: 'Created At',
-      cell: ({ row }) => new Date(row.getValue("created_at")).toLocaleDateString(),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <ExternalLink className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem onClick={() => navigate(`/item/${row.original.id}`)}>
-              <Eye className="h-4 w-4 mr-2" />
-              View Item
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleDeleteItem(row.original)}>
-              <Trash2 className="h-4 w-4 mr-2 text-red-500" />
-              Delete Item
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ];
-
-  if (loading) {
+  if (loading && !isAdmin) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -613,357 +294,56 @@ const Admin = () => {
     );
   }
 
-  if (profile?.roles?.every(r => r.role !== 'admin')) {
-    return (
-      <PageTransition>
-        <div className="container max-w-2xl mx-auto px-4 py-8">
-          <Alert variant="destructive">
-            <AlertTitle>Unauthorized</AlertTitle>
-            <AlertDescription>
-              You do not have permission to access this page.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </PageTransition>
-    );
-  }
-
   return (
     <PageTransition>
-      <div className="container max-w-7xl mx-auto px-4 py-4 pb-32">
-        <div className="mb-6 flex items-center justify-between">
-          <h1 className="text-xl md:text-2xl font-bold">Admin Dashboard</h1>
-          <div className="flex items-center gap-2 md:gap-4">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={profile?.avatar_url || ''} />
-              <AvatarFallback>
-                {profile?.first_name?.[0]}{profile?.last_name?.[0]}
-              </AvatarFallback>
-            </Avatar>
-            <span className="hidden md:inline">{profile?.first_name} {profile?.last_name}</span>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-32">
+        <h1 className="text-3xl font-bold my-8">Admin Dashboard</h1>
+        
+        {isAdmin ? (
+          <>
+            <AdminDashboard 
+              users={users}
+              kycDocuments={kycDocuments}
+              items={items}
+              stats={stats}
+              userStats={userStats}
+              itemStats={itemStats}
+              timeSeriesData={timeSeriesData}
+              onViewUserProfile={handleViewUserProfile}
+              onViewKYCDocument={handleViewKYCDocument}
+              onDeleteItem={handleDeleteItem}
+              onAdminAction={handleAdminAction}
+            />
             
-            <Sheet open={showGuideSheet} onOpenChange={setShowGuideSheet}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative md:hidden">
-                  <HelpCircle className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-[90vw] sm:w-[385px] overflow-y-auto">
-                <SheetHeader className="mb-4">
-                  <SheetTitle>Admin Guide</SheetTitle>
-                  <SheetDescription>
-                    Learn how to use the admin dashboard effectively
-                  </SheetDescription>
-                </SheetHeader>
-                <AdminGuide />
-                <SheetFooter className="mt-4">
-                  <SheetClose asChild>
-                    <Button variant="outline" className="w-full">Close</Button>
-                  </SheetClose>
-                </SheetFooter>
-              </SheetContent>
-            </Sheet>
+            {/* User Details Modal */}
+            <UserDetailsModal
+              isOpen={isUserDetailsOpen}
+              onClose={() => setIsUserDetailsOpen(false)}
+              userId={selectedUserId}
+            />
             
-            <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              <Menu className="h-5 w-5" />
-            </Button>
-            
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="hidden md:flex">
-                  <HelpCircle className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="overflow-y-auto">
-                <SheetHeader className="mb-4">
-                  <SheetTitle>Admin Guide</SheetTitle>
-                  <SheetDescription>
-                    Learn how to use the admin dashboard effectively
-                  </SheetDescription>
-                </SheetHeader>
-                <AdminGuide />
-              </SheetContent>
-            </Sheet>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className={`${mobileMenuOpen ? 'block' : 'hidden'} md:block md:col-span-1 sticky top-20`}>
-            <Card className="border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-              <CardContent className="p-4">
-                <div className="space-y-2">
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start",
-                      activeTab === 'dashboard' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
-                    )}
-                    onClick={() => {
-                      setActiveTab('dashboard');
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <LayoutDashboard className="w-4 h-4 mr-2" />
-                    Dashboard
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start",
-                      activeTab === 'users' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
-                    )}
-                    onClick={() => {
-                      setActiveTab('users');
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <UserIcon className="w-4 h-4 mr-2" />
-                    Users
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start",
-                      activeTab === 'admins' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
-                    )}
-                    onClick={() => {
-                      setActiveTab('admins');
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <Crown className="w-4 h-4 mr-2" />
-                    Admins
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start",
-                      activeTab === 'kyc' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
-                    )}
-                    onClick={() => {
-                      setActiveTab('kyc');
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <Shield className="w-4 h-4 mr-2" />
-                    KYC Documents
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start",
-                      activeTab === 'posts' ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 border-blue-500/20" : "text-muted-foreground hover:bg-secondary/50"
-                    )}
-                    onClick={() => {
-                      setActiveTab('posts');
-                      setMobileMenuOpen(false);
-                    }}
-                  >
-                    <Image className="w-4 h-4 mr-2" />
-                    Posts
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-            <div className="hidden md:block mt-4">
-              <AdminGuide />
-            </div>
-          </div>
-
-          <div className="md:col-span-3">
-            {activeTab === 'dashboard' && (
-              <DashboardOverview stats={dashboardStats} recentItems={items} kycDocuments={kycDocuments} />
-            )}
-            {activeTab === 'users' && (
-              <UsersTab users={users} onViewUserProfile={handleViewUserProfile} />
-            )}
-            {activeTab === 'admins' && (
-              <AdminsTab
-                users={users}
-                onViewUserProfile={handleViewUserProfile}
-                onAdminAction={handleAdminAction}
-              />
-            )}
-            {activeTab === 'kyc' && (
-              <KYCDocumentsTab
-                kycDocuments={kycDocuments}
-                onViewKYCDocument={handleViewKYCDocument}
-              />
-            )}
-            {activeTab === 'posts' && (
-              <Card className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-                <CardContent className="p-4 md:p-6">
-                  <h2 className="text-xl md:text-2xl font-semibold mb-4">All Posts</h2>
-                  <div className="overflow-auto">
-                    <DataTable columns={columns} data={items} />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-
-        <UserDetailsModal
-          open={showUserDetailsModal}
-          onOpenChange={setShowUserDetailsModal}
-          user={selectedUser}
-          userItems={userItems}
-        />
-
-        <Dialog open={showKYCDetailsModal} onOpenChange={setShowKYCDetailsModal}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>KYC Document Details</DialogTitle>
-              <DialogDescription>
-                Review and update the status of the KYC document.
-              </DialogDescription>
-            </DialogHeader>
-            {selectedKYCDocument && (
-              <div className="space-y-4 py-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback>
-                      {selectedKYCDocument.profile?.first_name?.[0]}{selectedKYCDocument.profile?.last_name?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="text-lg font-semibold">{selectedKYCDocument.profile?.first_name} {selectedKYCDocument.profile?.last_name}</h3>
-                    <p className="text-sm text-muted-foreground">User ID: {selectedKYCDocument.user_id}</p>
-                  </div>
-                </div>
-                <Separator />
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Document Type</p>
-                  <p className="text-sm text-muted-foreground">{selectedKYCDocument.document_type}</p>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Document URL</p>
-                  <a href={selectedKYCDocument.document_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-500 hover:underline flex items-center gap-1">
-                    View Document
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Admin Notes</p>
-                  <Textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="Add notes about the document"
-                    className="resize-none"
-                  />
-                </div>
-              </div>
-            )}
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowKYCDetailsModal(false)} disabled={isUpdatingKYC}>
-                Cancel
+            {/* Admin Action Modal */}
+            <AdminActionModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              action={modalAction}
+              user={targetUser}
+              onComplete={handleCompleteAdminAction}
+            />
+          </>
+        ) : (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <h2 className="text-xl font-semibold mb-4">Access Denied</h2>
+              <p className="mb-6">
+                You do not have permission to access the admin dashboard.
+              </p>
+              <Button onClick={() => navigate('/')}>
+                Return to Homepage
               </Button>
-              <Button onClick={() => handleKYCStatusUpdate(selectedKYCDocument!.id, 'rejected')} variant="destructive" disabled={isUpdatingKYC}>
-                Reject
-              </Button>
-              <Button onClick={() => handleKYCStatusUpdate(selectedKYCDocument!.id, 'verified')} disabled={isUpdatingKYC}>
-                {isUpdatingKYC ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Updating
-                  </>
-                ) : 'Verify'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showAddAdminModal} onOpenChange={setShowAddAdminModal}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Add New Admin</DialogTitle>
-              <DialogDescription>
-                Enter the email address of the user you want to make an admin.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="email" className="text-right">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  value={newAdminEmail}
-                  onChange={(e) => setNewAdminEmail(e.target.value)}
-                  className="col-span-3"
-                  type="email"
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowAddAdminModal(false)}>
-                Cancel
-              </Button>
-              <Button onClick={() => handleMakeAdmin(newAdminEmail)} disabled={isAddingAdmin}>
-                {isAddingAdmin ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Adding...
-                  </>
-                ) : (
-                  'Make Admin'
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Confirmation</DialogTitle>
-              <DialogDescription>
-                {itemToDelete ? 
-                  `Are you sure you want to delete this item: ${itemToDelete.title}?` : 
-                  `Are you sure you want to remove admin role from ${selectedUser?.first_name} ${selectedUser?.last_name}?`}
-              </DialogDescription>
-            </DialogHeader>
-            
-            {itemToDelete && profile?.roles?.some(r => r.role === 'admin') && 
-              itemToDelete.seller && itemToDelete.seller.id !== user?.id && (
-              <div className="mb-4">
-                <label htmlFor="deleteReason" className="block text-sm font-medium mb-1">
-                  Reason for removal (will be shown to seller)
-                </label>
-                <textarea
-                  id="deleteReason"
-                  className="w-full border rounded-md p-2 bg-background border-gray-600"
-                  rows={3}
-                  placeholder="Violates community guidelines..."
-                  value={deleteReason}
-                  onChange={(e) => setDeleteReason(e.target.value)}
-                />
-              </div>
-            )}
-            
-            <DialogFooter className="gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setShowDeleteConfirmation(false)}>
-                Cancel
-              </Button>
-              {itemToDelete ? (
-                <Button variant="destructive" onClick={confirmDeleteItem}>
-                  Delete Item
-                </Button>
-              ) : (
-                <Button variant="destructive" onClick={handleRemoveAdmin} disabled={isAddingAdmin}>
-                  {isAddingAdmin ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Removing...
-                    </>
-                  ) : (
-                    'Remove Admin'
-                  )}
-                </Button>
-              )}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </PageTransition>
   );

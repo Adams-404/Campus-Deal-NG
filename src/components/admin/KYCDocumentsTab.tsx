@@ -6,13 +6,23 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { KYCDocument } from "@/components/admin/types";
 import { cn } from "@/lib/utils";
 import { AlertTriangle, Eye, ShieldCheck, Loader2, Shield } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface KYCDocumentsTabProps {
   kycDocuments: KYCDocument[];
   onViewKYCDocument: (document: KYCDocument) => void;
+  onStatusChange?: (documentId: string, newStatus: string) => void;
 }
 
-export function KYCDocumentsTab({ kycDocuments, onViewKYCDocument }: KYCDocumentsTabProps) {
+export function KYCDocumentsTab({ 
+  kycDocuments, 
+  onViewKYCDocument, 
+  onStatusChange 
+}: KYCDocumentsTabProps) {
+  const [updatingDocuments, setUpdatingDocuments] = useState<Set<string>>(new Set());
+
   const getKycStatusColors = (status: string) => {
     switch (status) {
       case 'verified':
@@ -58,6 +68,69 @@ export function KYCDocumentsTab({ kycDocuments, onViewKYCDocument }: KYCDocument
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  // Handle KYC status update
+  const updateKycStatus = async (document: KYCDocument, newStatus: string) => {
+    setUpdatingDocuments(prev => new Set(prev).add(document.id));
+    
+    try {
+      // Update kyc_documents table
+      const { error: docError } = await supabase
+        .from('kyc_documents')
+        .update({ 
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', document.id);
+      
+      if (docError) throw docError;
+      
+      // Also update the profile's kyc_status
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          kyc_status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', document.user_id);
+      
+      if (profileError) throw profileError;
+      
+      // Create notification for the user
+      const notificationContent = newStatus === 'verified' 
+        ? 'Your KYC verification has been approved. You now have full access to all platform features.'
+        : 'Your KYC verification has been rejected. Please submit new documents or contact support for assistance.';
+      
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: document.user_id,
+          title: `KYC ${newStatus === 'verified' ? 'Approved' : 'Rejected'}`,
+          content: notificationContent,
+          type: 'verification',
+          is_read: false,
+          metadata: { document_id: document.id }
+        });
+      
+      if (notificationError) throw notificationError;
+      
+      toast.success(`KYC document ${newStatus === 'verified' ? 'approved' : 'rejected'} successfully`);
+      
+      // Call the parent component's callback if provided
+      if (onStatusChange) {
+        onStatusChange(document.id, newStatus);
+      }
+    } catch (error) {
+      console.error('Error updating KYC status:', error);
+      toast.error('Failed to update KYC status');
+    } finally {
+      setUpdatingDocuments(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(document.id);
+        return newSet;
+      });
+    }
   };
 
   return (
@@ -106,6 +179,40 @@ export function KYCDocumentsTab({ kycDocuments, onViewKYCDocument }: KYCDocument
                       <Eye className="h-4 w-4 mr-1" />
                       View
                     </Button>
+                    
+                    {document.status === 'pending' || document.status === 'processing' ? (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updateKycStatus(document, 'verified')}
+                          className="ml-2 bg-green-500/10 text-green-600 border-green-500/20 hover:bg-green-500/20"
+                          disabled={updatingDocuments.has(document.id)}
+                        >
+                          {updatingDocuments.has(document.id) ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                          ) : (
+                            <ShieldCheck className="h-4 w-4 mr-1" />
+                          )}
+                          Approve
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updateKycStatus(document, 'rejected')}
+                          className="ml-2 bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20"
+                          disabled={updatingDocuments.has(document.id)}
+                        >
+                          {updatingDocuments.has(document.id) ? (
+                            <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                          ) : (
+                            <AlertTriangle className="h-4 w-4 mr-1" />
+                          )}
+                          Reject
+                        </Button>
+                      </>
+                    ) : null}
                   </div>
                 </div>
               </div>

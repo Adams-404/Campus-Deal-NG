@@ -6,7 +6,7 @@ import { PageTransition } from '@/components/PageTransition';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { Card, CardContent } from '@/components/ui/card';
-import { Bell, Badge, ShoppingBag, AlertTriangle, Shield, ExternalLink } from 'lucide-react';
+import { Bell, Badge, ShoppingBag, AlertTriangle, Shield, ExternalLink, ShieldCheck } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 interface Notification {
@@ -31,7 +31,9 @@ const NotificationCard = ({ notification, onRead, onNavigate }: NotificationCard
       case 'admin_action':
         return <Shield className="h-5 w-5 text-red-500" />;
       case 'verification':
-        return <Badge className="h-5 w-5 text-green-500" />;
+        return notification.title.includes('Rejected') 
+          ? <AlertTriangle className="h-5 w-5 text-red-500" />
+          : <ShieldCheck className="h-5 w-5 text-green-500" />;
       case 'listing':
         return <ShoppingBag className="h-5 w-5 text-blue-500" />;
       default:
@@ -89,6 +91,28 @@ const NotificationsPage = () => {
 
   useEffect(() => {
     fetchNotifications();
+    
+    // Set up realtime subscription for new notifications
+    const channel = supabase
+      .channel('notifications-changes')
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${supabase.auth.getUser() ? supabase.auth.getUser()?.data.user?.id : ''}`
+      }, (payload) => {
+        // Add new notification to the list
+        setNotifications(prev => [payload.new as Notification, ...prev]);
+        // Show a toast for the new notification
+        toast(payload.new.title, {
+          description: payload.new.content,
+        });
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchNotifications = async () => {
@@ -146,6 +170,9 @@ const NotificationsPage = () => {
     // Handle navigation based on notification type and metadata
     if (notification.metadata?.item_id) {
       navigate(`/item/${notification.metadata.item_id}`);
+    } else if (notification.type === 'verification') {
+      // Navigate to profile page for verification notifications
+      navigate('/profile');
     }
   };
 

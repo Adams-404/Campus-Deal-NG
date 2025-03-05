@@ -1,260 +1,244 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { KYCDocumentsTab } from "./KYCDocumentsTab";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent } from "@/components/ui/card";
+import { Check, X, FileText, Calendar, User as UserIcon } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { ExternalLink, CheckCircle2, XCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { KYCDocument } from "./types";
+import { cn } from "@/lib/utils";
+import { updateKYCStatus } from "@/utils/kycUtils";
 
-// Type definitions
-type KycStatus = 'pending' | 'processing' | 'verified' | 'rejected';
+export function KYCTab() {
+  const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
+  const [selectedDocument, setSelectedDocument] = useState<KYCDocument | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
+  const [adminNotes, setAdminNotes] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
 
-interface KYCDocument {
-  id: string;
-  user_id: string;
-  document_type: string;
-  document_url: string;
-  status: KycStatus;
-  created_at: string;
-  admin_notes: string | null;
-  updated_at: string;
-  profile: {
-    first_name: string | null;
-    last_name: string | null;
+  const fetchKYCDocuments = async () => {
+    let query = supabase
+      .from('kyc_documents')
+      .select(`
+        id,
+        user_id,
+        document_type,
+        document_url,
+        status,
+        created_at,
+        admin_notes,
+        updated_at,
+        profile:profiles(
+          first_name,
+          last_name,
+          avatar_url
+        )
+      `);
+
+    if (activeTab !== "all") {
+      query = query.eq('status', activeTab);
+    }
+
+    query = query.order('created_at', { ascending: false });
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching KYC documents:', error);
+      toast.error('Failed to fetch KYC documents');
+    } else {
+      setKycDocuments(data || []);
+    }
   };
-}
-
-interface KYCTabProps {
-  kycDocuments: KYCDocument[];
-  onRefresh: () => Promise<void>;
-}
-
-export function KYCTab({ kycDocuments, onRefresh }: KYCTabProps) {
-  const [documentUrls, setDocumentUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    // Generate signed URLs for documents when kycDocuments change
-    const generateSignedUrls = async () => {
-      const urls: Record<string, string> = {};
-      
-      for (const doc of kycDocuments) {
-        // Extract the file path from the document_url
-        try {
-          const url = new URL(doc.document_url);
-          const pathParts = url.pathname.split('/');
-          const bucketIndex = pathParts.findIndex(part => part === 'kyc_documents');
-          
-          if (bucketIndex !== -1 && bucketIndex + 2 < pathParts.length) {
-            const userId = pathParts[bucketIndex + 1];
-            const fileName = pathParts[bucketIndex + 2];
-            const filePath = `${userId}/${fileName}`;
-            
-            try {
-              const { data, error } = await supabase.storage
-                .from('kyc_documents')
-                .createSignedUrl(filePath, 60 * 60); // 1 hour expiry
-              
-              if (data && !error) {
-                urls[doc.id] = data.signedUrl;
-              } else {
-                console.error("Error getting signed URL:", error);
-              }
-            } catch (error) {
-              console.error("Error in createSignedUrl:", error);
-            }
-          }
-        } catch (error) {
-          console.error("Invalid URL format:", doc.document_url, error);
-        }
-      }
-      
-      setDocumentUrls(urls);
-    };
+    fetchKYCDocuments();
     
-    if (kycDocuments.length > 0) {
-      generateSignedUrls();
-    }
-  }, [kycDocuments]);
+    // Set up realtime subscription for KYC document updates
+    const channel = supabase
+      .channel('kyc-documents-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'kyc_documents'
+      }, () => {
+        // Refetch when changes happen
+        fetchKYCDocuments();
+      })
+      .subscribe();
 
-  const handleKYCAction = async (documentId: string, userId: string, action: 'verify' | 'reject', notes?: string) => {
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeTab]);
+
+  const handleViewDocument = (document: KYCDocument) => {
+    setSelectedDocument(document);
+    setAdminNotes(document.admin_notes || "");
+    setIsViewerOpen(true);
+  };
+
+  const handleStatusUpdate = async (status: 'verified' | 'rejected') => {
+    if (!selectedDocument) return;
+    
+    setUpdatingStatus(true);
+    
     try {
-      const status = action === 'verify' ? 'verified' : 'rejected';
-
-      const { error: docError } = await supabase
-        .from('kyc_documents')
-        .update({ 
-          status: status as KycStatus,
-          admin_notes: notes,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', documentId);
-
-      if (docError) throw docError;
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ 
-          kyc_status: status as KycStatus,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', userId);
-
-      if (profileError) throw profileError;
-
-      toast.success(`KYC ${action === 'verify' ? 'verified' : 'rejected'} successfully`);
-      onRefresh();
-    } catch (error: any) {
-      toast.error(error.message);
+      const result = await updateKYCStatus(
+        selectedDocument.id,
+        selectedDocument.user_id,
+        status,
+        adminNotes
+      );
+      
+      if (result.success) {
+        toast.success(`KYC document ${status === 'verified' ? 'approved' : 'rejected'} successfully`);
+        
+        // Update local state
+        setKycDocuments(prev => 
+          prev.map(doc => 
+            doc.id === selectedDocument.id 
+              ? { ...doc, status, admin_notes: adminNotes } 
+              : doc
+          )
+        );
+        
+        // Close the dialog
+        setIsViewerOpen(false);
+      }
+    } catch (error) {
+      console.error('Error updating KYC status:', error);
+      toast.error('Failed to update KYC status');
+    } finally {
+      setUpdatingStatus(false);
     }
+  };
+
+  const handleDocumentStatusChange = (documentId: string, newStatus: string) => {
+    // Update local state when a document status changes
+    setKycDocuments(prev => 
+      prev.map(doc => 
+        doc.id === documentId 
+          ? { ...doc, status: newStatus } 
+          : doc
+      )
+    );
   };
 
   return (
-    <>
-      {kycDocuments
-        .filter(doc => doc.status === 'processing') // First show all documents in 'processing' status
-        .map((doc) => (
-          <Card key={doc.id} className="overflow-hidden border-orange-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(249,115,22,0.1)]">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h3 className="font-semibold">
-                    {doc.profile.first_name} {doc.profile.last_name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Submitted on {new Date(doc.created_at).toLocaleDateString()}
-                  </p>
+    <div>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="all">All Documents</TabsTrigger>
+          <TabsTrigger value="pending">Pending</TabsTrigger>
+          <TabsTrigger value="processing">Processing</TabsTrigger>
+          <TabsTrigger value="verified">Verified</TabsTrigger>
+          <TabsTrigger value="rejected">Rejected</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value={activeTab}>
+          <KYCDocumentsTab 
+            kycDocuments={kycDocuments} 
+            onViewKYCDocument={handleViewDocument} 
+            onStatusChange={handleDocumentStatusChange}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Document Viewer Modal */}
+      <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>KYC Document Review</DialogTitle>
+          </DialogHeader>
+
+          {selectedDocument && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarFallback>
+                      {selectedDocument.profile.first_name?.[0]}
+                      {selectedDocument.profile.last_name?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">
+                      {selectedDocument.profile.first_name} {selectedDocument.profile.last_name}
+                    </p>
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                      <FileText className="h-3.5 w-3.5" />
+                      {selectedDocument.document_type}
+                    </div>
+                  </div>
                 </div>
+                
                 <Badge 
-                  className="bg-orange-500/10 text-orange-500 hover:bg-orange-500/20 border-orange-500/20"
+                  variant="outline" 
+                  className={cn(
+                    selectedDocument.status === 'verified' && "bg-green-500/10 text-green-500 border-green-500/20",
+                    selectedDocument.status === 'rejected' && "bg-red-500/10 text-red-500 border-red-500/20",
+                    selectedDocument.status === 'processing' && "bg-orange-500/10 text-orange-500 border-orange-500/20",
+                    selectedDocument.status === 'pending' && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                  )}
                 >
-                  Processing
+                  {selectedDocument.status}
                 </Badge>
               </div>
+              
+              <Card>
+                <CardContent className="p-4 flex justify-center">
+                  <img 
+                    src={selectedDocument.document_url} 
+                    alt="KYC Document" 
+                    className="max-w-full rounded-md shadow-md" 
+                  />
+                </CardContent>
+              </Card>
 
-              <div className="mt-4">
-                {documentUrls[doc.id] ? (
-                  <a 
-                    href={documentUrls[doc.id]} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-500 hover:underline flex items-center gap-1"
-                  >
-                    View Document
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                ) : (
-                  <p className="text-sm text-yellow-500">
-                    Generating document link...
-                  </p>
-                )}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Admin Notes</h3>
+                <Textarea
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  placeholder="Add notes about this document (will be visible to the user)"
+                  rows={3}
+                />
               </div>
 
-              <div className="mt-4 flex gap-2">
-                <Button
-                  size="sm"
-                  onClick={() => handleKYCAction(doc.id, doc.user_id, 'verify')}
-                  className="bg-green-500 hover:bg-green-600 text-white"
-                >
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Verify
-                </Button>
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => handleKYCAction(doc.id, doc.user_id, 'reject')}
-                  className="bg-red-500 hover:bg-red-600"
-                >
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Reject
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-      {kycDocuments
-        .filter(doc => doc.status !== 'processing') // Then show all other documents
-        .map((doc) => (
-          <Card key={doc.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <h3 className="font-semibold">
-                    {doc.profile.first_name} {doc.profile.last_name}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Submitted on {new Date(doc.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <Badge variant={
-                  doc.status === 'verified' 
-                    ? 'outline' 
-                    : doc.status === 'rejected'
-                    ? 'destructive'
-                    : 'secondary'
-                }
-                className={
-                  doc.status === 'verified'
-                    ? 'bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20'
-                    : doc.status === 'rejected'
-                    ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20 border-red-500/20'
-                    : 'bg-yellow-500/10 text-yellow-500 hover:bg-yellow-500/20 border-yellow-500/20'
-                }>
-                  {doc.status.charAt(0).toUpperCase() + doc.status.slice(1)}
-                </Badge>
-              </div>
-
-              <div className="mt-4">
-                {documentUrls[doc.id] ? (
-                  <a 
-                    href={documentUrls[doc.id]} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-500 hover:underline flex items-center gap-1"
-                  >
-                    View Document
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
-                ) : (
-                  <p className="text-sm text-yellow-500">
-                    Generating document link...
-                  </p>
-                )}
-              </div>
-
-              {doc.status === 'pending' && (
-                <div className="mt-4 flex gap-2">
+              {(selectedDocument.status === 'pending' || selectedDocument.status === 'processing') && (
+                <div className="flex justify-end gap-3">
                   <Button
-                    size="sm"
-                    onClick={() => handleKYCAction(doc.id, doc.user_id, 'verify')}
-                    className="bg-green-500 hover:bg-green-600 text-white"
+                    variant="outline"
+                    className="bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20"
+                    onClick={() => handleStatusUpdate('rejected')}
+                    disabled={updatingStatus}
                   >
-                    <CheckCircle2 className="w-4 h-4 mr-2" />
-                    Verify
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => handleKYCAction(doc.id, doc.user_id, 'reject')}
-                    className="bg-red-500 hover:bg-red-600"
-                  >
-                    <XCircle className="w-4 h-4 mr-2" />
+                    <X className="h-4 w-4 mr-1" />
                     Reject
+                  </Button>
+                  
+                  <Button
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                    onClick={() => handleStatusUpdate('verified')}
+                    disabled={updatingStatus}
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Approve
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        ))}
-      
-      {kycDocuments.length === 0 && (
-        <Card className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm">
-          <CardContent className="p-6 text-center">
-            <p className="text-muted-foreground">No KYC verification documents submitted yet</p>
-          </CardContent>
-        </Card>
-      )}
-    </>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,13 +5,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserProfile } from "./types";
 import { Calendar, MapPin, Phone, ShieldCheck, Shield, Mail, User as UserIcon, Eye, AlertTriangle, Loader2, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UsersTabProps {
   users: UserProfile[];
   onViewUserProfile: (userId: string) => void;
 }
 
-export function UsersTab({ users, onViewUserProfile }: UsersTabProps) {
+export function UsersTab({ users: initialUsers, onViewUserProfile }: UsersTabProps) {
+  const [users, setUsers] = useState<UserProfile[]>(initialUsers);
+
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
+
   const getKycStatusColors = (status: string) => {
     switch (status) {
       case 'verified':
@@ -50,7 +57,6 @@ export function UsersTab({ users, onViewUserProfile }: UsersTabProps) {
     }
   };
 
-  // Format date to be more readable
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -59,6 +65,30 @@ export function UsersTab({ users, onViewUserProfile }: UsersTabProps) {
       day: 'numeric'
     });
   };
+
+  useEffect(() => {
+    const channel = supabase
+      .channel('profile-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles'
+      }, (payload) => {
+        const updatedProfileId = payload.new.id;
+        setUsers(prevUsers => 
+          prevUsers.map(user => 
+            user.id === updatedProfileId 
+              ? { ...user, kyc_status: payload.new.kyc_status, updated_at: payload.new.updated_at } 
+              : user
+          )
+        );
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
   return (
     <div className="space-y-4">

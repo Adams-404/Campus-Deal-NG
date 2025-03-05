@@ -361,6 +361,32 @@ export type Database = {
         }
         Relationships: []
       }
+      roles: {
+        Row: {
+          id: number
+          role: string
+          user_id: string | null
+        }
+        Insert: {
+          id?: number
+          role: string
+          user_id?: string | null
+        }
+        Update: {
+          id?: number
+          role?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_items: {
         Row: {
           created_at: string
@@ -446,11 +472,31 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_kyc_status:
+        | {
+            Args: {
+              document_id: string
+              user_id: string
+              new_status: Database["public"]["Enums"]["kycstatus"]
+              admin_notes: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              document_id: string
+              user_id: string
+              new_status: string
+              admin_notes_param: string
+            }
+            Returns: undefined
+          }
     }
     Enums: {
       item_condition: "new" | "like_new" | "good" | "fair" | "poor"
       item_status: "active" | "sold" | "deleted"
       kyc_status: "pending" | "verified" | "rejected" | "processing"
+      kycstatus: "pending" | "processing" | "verified" | "rejected"
       user_role: "admin" | "user"
     }
     CompositeTypes: {
