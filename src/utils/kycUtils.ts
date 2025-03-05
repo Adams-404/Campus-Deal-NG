@@ -28,33 +28,6 @@ export async function updateKYCStatus(
       throw error;
     }
     
-    // Also update the documents table directly to ensure UI consistency
-    const { error: docUpdateError } = await supabase
-      .from('kyc_documents')
-      .update({ 
-        status: newStatus, 
-        admin_notes: adminNotes || null,
-        updated_at: new Date().toISOString() 
-      })
-      .eq('id', documentId);
-    
-    if (docUpdateError) {
-      console.error('Document update error:', docUpdateError);
-    }
-    
-    // Also update the profile table directly to ensure UI consistency
-    const { error: profileUpdateError } = await supabase
-      .from('profiles')
-      .update({ 
-        kyc_status: newStatus,
-        updated_at: new Date().toISOString() 
-      })
-      .eq('id', userId);
-    
-    if (profileUpdateError) {
-      console.error('Profile update error:', profileUpdateError);
-    }
-    
     // Delay a bit to allow the database changes to propagate
     await new Promise(resolve => setTimeout(resolve, 500));
     

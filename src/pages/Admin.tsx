@@ -385,12 +385,36 @@ const Admin = () => {
               onConfirm={async (email) => {
                 try {
                   if (modalAction === 'add') {
-                    const { error } = await supabase.rpc('add_admin_role', { user_email: email });
+                    // Fix: Changed from 'add_admin_role' to custom implementation
+                    const { data: userData } = await supabase
+                      .from('profiles')
+                      .select('id')
+                      .eq('email', email)
+                      .single();
+                      
+                    if (!userData) {
+                      throw new Error('User not found');
+                    }
+                    
+                    const { error } = await supabase
+                      .from('user_roles')
+                      .insert({
+                        user_id: userData.id,
+                        role: 'admin'
+                      });
+                      
                     if (error) throw error;
                     toast.success('User has been made an admin');
                   } else {
                     if (!targetUser) return;
-                    const { error } = await supabase.rpc('remove_admin_role', { user_id: targetUser.id });
+                    
+                    // Fix: Changed from 'remove_admin_role' to custom implementation
+                    const { error } = await supabase
+                      .from('user_roles')
+                      .delete()
+                      .eq('user_id', targetUser.id)
+                      .eq('role', 'admin');
+                      
                     if (error) throw error;
                     toast.success('Admin privileges removed');
                   }
