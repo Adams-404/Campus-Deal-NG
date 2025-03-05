@@ -35,7 +35,7 @@ export function getKycStatusBadgeProps(status: KycStatus | null) {
   if (!status) return {
     variant: 'outline' as const,
     className: 'bg-gray-500/10 text-gray-500 border-gray-500/20',
-    icon: null,
+    icon: React.createElement(Shield, { className: "h-3.5 w-3.5 mr-1" }),
     label: 'Unknown'
   };
   

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -105,7 +104,7 @@ export function KYCTab() {
         setKycDocuments(prev => 
           prev.map(doc => 
             doc.id === selectedDocument.id 
-              ? { ...doc, status: status as any } 
+              ? { ...doc, status } 
               : doc
           )
         );
@@ -126,7 +125,7 @@ export function KYCTab() {
     setKycDocuments(prev => 
       prev.map(doc => 
         doc.id === documentId 
-          ? { ...doc, status: newStatus as any } 
+          ? { ...doc, status: newStatus } 
           : doc
       )
     );
@@ -146,7 +145,7 @@ export function KYCTab() {
         <TabsContent value={activeTab}>
           <KYCDocumentsTab 
             documents={kycDocuments} 
-            onViewKYCDocument={handleViewDocument} 
+            onView={handleViewDocument} 
             onStatusChange={handleDocumentStatusChange}
           />
         </TabsContent>

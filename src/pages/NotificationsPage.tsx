@@ -22,9 +22,9 @@ const NotificationsPage = () => {
 
   const fetchCurrentUser = async () => {
     try {
-      const { data: { user }, error } = await supabase.auth.getUser();
+      const { data, error } = await supabase.auth.getUser();
       if (error) throw error;
-      return user;
+      return data.user;
     } catch (error) {
       console.error("Error fetching current user:", error);
       return null;
@@ -66,31 +66,42 @@ const NotificationsPage = () => {
     loadNotifications();
 
     // Setup Realtime subscription
-    const channel = supabase
-      .channel('notifications')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'notifications',
-        filter: 'user_id=eq.' + (supabase.auth.user()?.id || '')
-      }, (payload) => {
-        // Optimistically update the notifications
-        if (payload.eventType === 'INSERT') {
-          setNotifications(prev => [payload.new as Notification, ...prev]);
-        } else if (payload.eventType === 'UPDATE') {
-          setNotifications(prev =>
-            prev.map(notification =>
-              notification.id === (payload.new as Notification).id ? (payload.new as Notification) : notification
-            )
-          );
-        } else if (payload.eventType === 'DELETE') {
-          setNotifications(prev => prev.filter(notification => notification.id !== (payload.old as Notification).id));
-        }
-      })
-      .subscribe();
+    const setupRealtimeSubscription = async () => {
+      const user = await fetchCurrentUser();
+      if (!user) return;
+      
+      const channel = supabase
+        .channel('notifications')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        }, (payload) => {
+          // Optimistically update the notifications
+          if (payload.eventType === 'INSERT') {
+            setNotifications(prev => [payload.new as Notification, ...prev]);
+          } else if (payload.eventType === 'UPDATE') {
+            setNotifications(prev =>
+              prev.map(notification =>
+                notification.id === (payload.new as Notification).id ? (payload.new as Notification) : notification
+              )
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setNotifications(prev => prev.filter(notification => notification.id !== (payload.old as Notification).id));
+          }
+        })
+        .subscribe();
 
+      return channel;
+    };
+    
+    const channelPromise = setupRealtimeSubscription();
+    
     return () => {
-      supabase.removeChannel(channel);
+      channelPromise.then(channel => {
+        if (channel) supabase.removeChannel(channel);
+      });
     };
   }, []);
 

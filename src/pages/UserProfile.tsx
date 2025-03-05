@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, ShieldCheck, Loader2, Calendar, Shield, MapPin, Phone, User } from 'lucide-react';
 import { ProductGrid } from '@/components/ProductGrid';
-import { getKycStatusBadgeProps } from '@/utils/kycUtils';
+import { getKycStatusBadgeProps, KycStatus } from '@/utils/kycUtils';
 
 interface UserProfile {
   id: string;
@@ -20,7 +19,7 @@ interface UserProfile {
   last_name: string | null;
   address: string | null;
   phone: string | null;
-  kyc_status: string | null;
+  kyc_status: KycStatus | null;
   created_at: string;
   updated_at: string | null;
 }
@@ -55,7 +54,6 @@ const UserProfile = () => {
       setLoading(true);
       
       try {
-        // Get the current authenticated user
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!id) {
@@ -65,7 +63,6 @@ const UserProfile = () => {
         
         setIsCurrentUser(user?.id === id);
         
-        // Fetch user profile
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -81,7 +78,6 @@ const UserProfile = () => {
         
         setProfile(profileData);
         
-        // Fetch user's listings
         const { data: itemsData, error: itemsError } = await supabase
           .from('items')
           .select(`
@@ -98,7 +94,6 @@ const UserProfile = () => {
           return;
         }
         
-        // Format the data
         const formattedItems = itemsData.map((item: any) => ({
           ...item,
           images: item.images.map((img: any) => img.image_url)
@@ -116,7 +111,6 @@ const UserProfile = () => {
     fetchUserData();
   }, [id, navigate]);
 
-  // Subscribe to profile changes
   useEffect(() => {
     if (!id) return;
     
@@ -128,7 +122,6 @@ const UserProfile = () => {
         table: 'profiles',
         filter: `id=eq.${id}`
       }, (payload) => {
-        // Update the profile when it changes
         setProfile(payload.new as UserProfile);
       })
       .subscribe();

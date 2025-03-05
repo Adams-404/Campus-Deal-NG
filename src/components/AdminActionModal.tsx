@@ -30,7 +30,6 @@ export function AdminActionModal({
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // Reset state when modal opens/closes
   useEffect(() => {
     if (!open) {
       setEmail('');
@@ -196,4 +195,4 @@ export function AdminActionModal({
       </SheetContent>
     </Sheet>
   );
-} 
+}
