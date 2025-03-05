@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +41,6 @@ interface Item {
   };
 }
 
-// Let's create a ProductGridWrapper component to handle the props correctly
 const ProductGridWrapper: React.FC<{ items: Item[] }> = ({ items }) => {
   return <ProductGrid items={items as any} />;
 };
@@ -251,7 +249,7 @@ const UserProfile = () => {
                 </CardContent>
               </Card>
             ) : (
-              <ProductGridWrapper items={userItems} />
+              <ProductGrid items={userItems} title={`${profile.first_name}'s Listings`} />
             )}
           </TabsContent>
         </Tabs>

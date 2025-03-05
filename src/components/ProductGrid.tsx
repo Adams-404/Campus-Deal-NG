@@ -1,3 +1,4 @@
+
 import { ProductCard } from "./ProductCard";
 import { ProductCardSkeleton } from "./ProductCardSkeleton";
 import { useState, useEffect } from "react";
@@ -64,9 +65,14 @@ const SAMPLE_PRODUCTS = [
   },
 ];
 
-export const ProductGrid = () => {
+interface ProductGridProps {
+  items?: any[];
+  title?: string;
+}
+
+export const ProductGrid = ({ items = SAMPLE_PRODUCTS, title = "Featured Listings" }: ProductGridProps) => {
   const [isLoading, setIsLoading] = useState(true);
-  const [products, setProducts] = useState(SAMPLE_PRODUCTS);
+  const [products, setProducts] = useState(items);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -76,9 +82,13 @@ export const ProductGrid = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    setProducts(items);
+  }, [items]);
+
   return (
     <div className="py-8">
-      <h2 className="text-2xl font-semibold mb-6">Featured Listings</h2>
+      <h2 className="text-2xl font-semibold mb-6">{title}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {isLoading ? (
           <>
