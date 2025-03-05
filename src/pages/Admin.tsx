@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,6 +11,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
 import { AdminActionModal } from '@/components/AdminActionModal';
 import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { UsersTab } from '@/components/admin/UsersTab';
+import { KYCTab } from '@/components/admin/KYCTab';
+import { PostsTab } from '@/components/admin/PostsTab';
+import { AdminsTab } from '@/components/admin/AdminsTab';
+import { AdminGuide } from '@/components/admin/AdminGuide';
 
 const Admin = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -299,12 +306,73 @@ const Admin = () => {
                 kycStatusData={userStats}
               />
               
-              {/* Insert the rest of your admin dashboard components here */}
-              
-              {/* This code is a placeholder for the tabs that were used in the adminDashboard */}
               <Card>
                 <CardContent className="py-6">
-                  {/* You'll need to add your tab components here */}
+                  <Tabs defaultValue="users" className="w-full">
+                    <TabsList className="w-full justify-start mb-6 overflow-x-auto">
+                      <TabsTrigger value="users">Users</TabsTrigger>
+                      <TabsTrigger value="kyc">KYC Verification</TabsTrigger>
+                      <TabsTrigger value="posts">Listings</TabsTrigger>
+                      <TabsTrigger value="admins">Administrators</TabsTrigger>
+                      <TabsTrigger value="guide">Admin Guide</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="users">
+                      <UsersTab 
+                        users={users} 
+                        onViewProfile={handleViewUserProfile}
+                        onMakeAdmin={(user) => handleAdminAction(user, 'add')}
+                        onRemoveAdmin={(user) => handleAdminAction(user, 'remove')}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="kyc">
+                      <KYCTab 
+                        documents={kycDocuments} 
+                        onViewDocument={handleViewKYCDocument}
+                        onStatusChange={async (documentId, newStatus) => {
+                          try {
+                            const document = kycDocuments.find(doc => doc.id === documentId);
+                            if (!document) return;
+                            
+                            const { error } = await supabase.rpc('update_kyc_status', {
+                              document_id: documentId,
+                              user_id: document.user_id,
+                              new_status: newStatus,
+                              admin_notes_param: 'Updated by admin on ' + new Date().toLocaleDateString()
+                            });
+                            
+                            if (error) throw error;
+                            
+                            toast.success(`KYC status updated to ${newStatus}`);
+                            fetchData();
+                          } catch (error) {
+                            console.error('Error updating KYC status:', error);
+                            toast.error('Failed to update KYC status');
+                          }
+                        }}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="posts">
+                      <PostsTab 
+                        items={items} 
+                        onViewSeller={handleViewUserProfile}
+                        onDeleteItem={handleDeleteItem}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="admins">
+                      <AdminsTab 
+                        admins={users.filter(user => user.roles?.some(role => role.role === 'admin'))} 
+                        onRemoveAdmin={(user) => handleAdminAction(user, 'remove')}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="guide">
+                      <AdminGuide />
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
             </div>
