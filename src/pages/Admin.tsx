@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import AdminDashboard from '@/components/admin/AdminDashboard';
 import { UserProfile, KYCDocument, ItemType, DashboardStats, ChartData, TimeSeriesData } from '@/components/admin/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -309,17 +310,19 @@ const Admin = () => {
             
             <AdminActionModal
               open={isModalOpen}
-              onClose={setIsModalOpen}
+              onClose={() => setIsModalOpen(false)}
               action={modalAction}
               onConfirm={async (email) => {
                 try {
                   if (modalAction === 'add') {
-                    const { error } = await supabase.rpc('add_admin_role', { user_email: email });
+                    // Use a more specific type for the RPC function or cast it
+                    const { error } = await supabase.rpc('add_admin_role' as any, { user_email: email });
                     if (error) throw error;
                     toast.success('User has been made an admin');
                   } else {
                     if (!targetUser) return;
-                    const { error } = await supabase.rpc('remove_admin_role', { user_id: targetUser.id });
+                    // Use a more specific type for the RPC function or cast it
+                    const { error } = await supabase.rpc('remove_admin_role' as any, { user_id: targetUser.id });
                     if (error) throw error;
                     toast.success('Admin privileges removed');
                   }

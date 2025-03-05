@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -40,6 +41,11 @@ interface Item {
     avatar_url: string | null;
   };
 }
+
+// Let's create a ProductGridWrapper component to handle the props correctly
+const ProductGridWrapper: React.FC<{ items: Item[] }> = ({ items }) => {
+  return <ProductGrid items={items as any} />;
+};
 
 const UserProfile = () => {
   const { id } = useParams<{ id: string }>();
@@ -245,7 +251,7 @@ const UserProfile = () => {
                 </CardContent>
               </Card>
             ) : (
-              <ProductGrid items={userItems} />
+              <ProductGridWrapper items={userItems} />
             )}
           </TabsContent>
         </Tabs>

@@ -60,7 +60,6 @@ export function KYCTab() {
   useEffect(() => {
     fetchKYCDocuments();
     
-    // Set up realtime subscription for KYC document updates
     const channel = supabase
       .channel('kyc-documents-changes')
       .on('postgres_changes', {
@@ -68,7 +67,6 @@ export function KYCTab() {
         schema: 'public',
         table: 'kyc_documents'
       }, () => {
-        // Refetch when changes happen
         fetchKYCDocuments();
       })
       .subscribe();
@@ -100,7 +98,6 @@ export function KYCTab() {
       if (result.success) {
         toast.success(`KYC document ${status === 'verified' ? 'approved' : 'rejected'} successfully`);
         
-        // Update local state
         setKycDocuments(prev => 
           prev.map(doc => 
             doc.id === selectedDocument.id 
@@ -109,7 +106,6 @@ export function KYCTab() {
           )
         );
         
-        // Close the dialog
         setIsViewerOpen(false);
       }
     } catch (error) {
@@ -121,7 +117,6 @@ export function KYCTab() {
   };
 
   const handleDocumentStatusChange = (documentId: string, newStatus: KycStatus) => {
-    // Update local state when a document status changes
     setKycDocuments(prev => 
       prev.map(doc => 
         doc.id === documentId 
@@ -145,13 +140,12 @@ export function KYCTab() {
         <TabsContent value={activeTab}>
           <KYCDocumentsTab 
             documents={kycDocuments} 
-            onView={handleViewDocument} 
+            onViewDocument={handleViewDocument} 
             onStatusChange={handleDocumentStatusChange}
           />
         </TabsContent>
       </Tabs>
 
-      {/* Document Viewer Modal */}
       <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
