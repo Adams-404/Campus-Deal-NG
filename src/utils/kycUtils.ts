@@ -4,10 +4,12 @@ import { toast } from "sonner";
 import { ShieldCheck, AlertTriangle, Loader2, Shield } from "lucide-react";
 import React from "react";
 
+export type KycStatus = 'pending' | 'processing' | 'verified' | 'rejected';
+
 export async function updateKYCStatus(
   documentId: string, 
   userId: string, 
-  newStatus: 'pending' | 'processing' | 'verified' | 'rejected',
+  newStatus: KycStatus,
   adminNotes?: string
 ) {
   try {
@@ -29,7 +31,7 @@ export async function updateKYCStatus(
   }
 }
 
-export function getKycStatusBadgeProps(status: string | null) {
+export function getKycStatusBadgeProps(status: KycStatus | null) {
   if (!status) return {
     variant: 'outline' as const,
     className: 'bg-gray-500/10 text-gray-500 border-gray-500/20',

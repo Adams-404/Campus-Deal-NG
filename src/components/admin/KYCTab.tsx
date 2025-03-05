@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { KYCDocument } from "./types";
 import { cn } from "@/lib/utils";
-import { updateKYCStatus } from "@/utils/kycUtils";
+import { KycStatus, updateKYCStatus } from "@/utils/kycUtils";
 
 export function KYCTab() {
   const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
@@ -21,7 +21,7 @@ export function KYCTab() {
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState<KycStatus | 'all'>('all');
 
   const fetchKYCDocuments = async () => {
     let query = supabase
@@ -42,7 +42,7 @@ export function KYCTab() {
         )
       `);
 
-    if (activeTab !== "all") {
+    if (activeTab !== 'all') {
       query = query.eq('status', activeTab);
     }
 
@@ -85,7 +85,7 @@ export function KYCTab() {
     setIsViewerOpen(true);
   };
 
-  const handleStatusUpdate = async (status: 'verified' | 'rejected') => {
+  const handleStatusUpdate = async (status: KycStatus) => {
     if (!selectedDocument) return;
     
     setUpdatingStatus(true);
@@ -105,7 +105,7 @@ export function KYCTab() {
         setKycDocuments(prev => 
           prev.map(doc => 
             doc.id === selectedDocument.id 
-              ? { ...doc, status, admin_notes: adminNotes } 
+              ? { ...doc, status: status as any } 
               : doc
           )
         );
@@ -121,12 +121,12 @@ export function KYCTab() {
     }
   };
 
-  const handleDocumentStatusChange = (documentId: string, newStatus: string) => {
+  const handleDocumentStatusChange = (documentId: string, newStatus: KycStatus) => {
     // Update local state when a document status changes
     setKycDocuments(prev => 
       prev.map(doc => 
         doc.id === documentId 
-          ? { ...doc, status: newStatus } 
+          ? { ...doc, status: newStatus as any } 
           : doc
       )
     );
@@ -134,7 +134,7 @@ export function KYCTab() {
 
   return (
     <div>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as KycStatus | 'all')}>
         <TabsList className="mb-4">
           <TabsTrigger value="all">All Documents</TabsTrigger>
           <TabsTrigger value="pending">Pending</TabsTrigger>
@@ -145,7 +145,7 @@ export function KYCTab() {
         
         <TabsContent value={activeTab}>
           <KYCDocumentsTab 
-            kycDocuments={kycDocuments} 
+            documents={kycDocuments} 
             onViewKYCDocument={handleViewDocument} 
             onStatusChange={handleDocumentStatusChange}
           />

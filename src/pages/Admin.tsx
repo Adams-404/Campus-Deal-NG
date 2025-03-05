@@ -1,14 +1,13 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
-import { AdminDashboard } from '@/components/admin/AdminDashboard';
+import AdminDashboard from '@/components/admin/AdminDashboard';
 import { UserProfile, KYCDocument, ItemType, DashboardStats, ChartData, TimeSeriesData } from '@/components/admin/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PageTransition } from '@/components/PageTransition';
 import { supabase } from '@/integrations/supabase/client';
-import UserDetailsModal from '@/components/admin/UserDetailsModal';
+import { UserDetailsModal } from '@/components/admin/UserDetailsModal';
 import { AdminActionModal } from '@/components/AdminActionModal';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,11 +33,9 @@ const Admin = () => {
   const [targetUser, setTargetUser] = useState<UserProfile | null>(null);
   const navigate = useNavigate();
 
-  // Fetch users, items, and KYC documents
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Check if the current user is an admin
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) {
         navigate('/sign-in');
@@ -64,7 +61,6 @@ const Admin = () => {
 
       setIsAdmin(true);
 
-      // Fetch users
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select(`
@@ -84,7 +80,6 @@ const Admin = () => {
       if (profilesError) throw profilesError;
       setUsers(profilesData || []);
 
-      // Fetch KYC documents
       const { data: kycDocumentsData, error: kycDocumentsError } = await supabase
         .from('kyc_documents')
         .select(`
@@ -107,7 +102,6 @@ const Admin = () => {
       if (kycDocumentsError) throw kycDocumentsError;
       setKycDocuments(kycDocumentsData || []);
 
-      // Fetch items
       const { data: itemsData, error: itemsError } = await supabase
         .from('items')
         .select(`
@@ -129,7 +123,6 @@ const Admin = () => {
         
       if (itemsError) throw itemsError;
       
-      // Format the items data
       const formattedItems = itemsData.map(item => ({
         ...item,
         seller: item.seller,
@@ -138,7 +131,6 @@ const Admin = () => {
       
       setItems(formattedItems || []);
 
-      // Calculate dashboard stats
       setStats({
         totalUsers: profilesData?.length || 0,
         totalItems: formattedItems?.length || 0,
@@ -146,7 +138,6 @@ const Admin = () => {
         activeSellers: new Set(formattedItems?.map(item => item.seller.id)).size || 0
       });
 
-      // Calculate user stats by KYC status
       const kycStatusCounts: Record<string, number> = {};
       profilesData?.forEach(user => {
         const status = user.kyc_status || 'pending';
@@ -155,7 +146,6 @@ const Admin = () => {
       
       setUserStats(Object.entries(kycStatusCounts).map(([name, value]) => ({ name, value })));
 
-      // Calculate item stats by status
       const itemStatusCounts: Record<string, number> = {};
       formattedItems?.forEach(item => {
         const status = item.status || 'active';
@@ -164,7 +154,6 @@ const Admin = () => {
       
       setItemStats(Object.entries(itemStatusCounts).map(([name, value]) => ({ name, value })));
 
-      // Generate time series data (last 7 days)
       const timeSeriesPoints: TimeSeriesData[] = [];
       const now = new Date();
       
@@ -201,7 +190,6 @@ const Admin = () => {
   useEffect(() => {
     fetchData();
     
-    // Set up realtime subscriptions
     const profilesChannel = supabase
       .channel('admin-profiles-changes')
       .on('postgres_changes', {
@@ -258,7 +246,6 @@ const Admin = () => {
       
       toast.success('Item deleted successfully');
       
-      // Update items list
       setItems(prev => prev.filter(item => item.id !== itemId));
       
     } catch (error) {
@@ -268,7 +255,6 @@ const Admin = () => {
   };
 
   const handleViewKYCDocument = (document: KYCDocument) => {
-    // Navigate to KYC tab
     navigate('/admin?tab=kyc');
   };
 
@@ -281,7 +267,6 @@ const Admin = () => {
   const handleCompleteAdminAction = async (success: boolean) => {
     setIsModalOpen(false);
     if (success) {
-      // Refresh the user list
       fetchData();
     }
   };
@@ -315,16 +300,14 @@ const Admin = () => {
               onAdminAction={handleAdminAction}
             />
             
-            {/* User Details Modal */}
             <UserDetailsModal
               isOpen={isUserDetailsOpen}
               onClose={() => setIsUserDetailsOpen(false)}
               userId={selectedUserId}
             />
             
-            {/* Admin Action Modal */}
             <AdminActionModal
-              isOpen={isModalOpen}
+              open={isModalOpen}
               onClose={() => setIsModalOpen(false)}
               action={modalAction}
               user={targetUser}

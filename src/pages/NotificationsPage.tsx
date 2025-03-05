@@ -1,178 +1,134 @@
-
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { PageTransition } from '@/components/PageTransition';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Bell, CheckCircle, Info, XCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
-import { Card, CardContent } from '@/components/ui/card';
-import { Bell, Badge, ShoppingBag, AlertTriangle, Shield, ExternalLink, ShieldCheck } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 
 interface Notification {
   id: string;
   title: string;
   content: string;
   type: string;
-  created_at: string;
   is_read: boolean;
-  metadata: any;
+  created_at: string;
 }
-
-interface NotificationCardProps {
-  notification: Notification;
-  onRead: (id: string) => void;
-  onNavigate: (notification: Notification) => void;
-}
-
-const NotificationCard = ({ notification, onRead, onNavigate }: NotificationCardProps) => {
-  const getIcon = () => {
-    switch (notification.type) {
-      case 'admin_action':
-        return <Shield className="h-5 w-5 text-red-500" />;
-      case 'verification':
-        return notification.title.includes('Rejected') 
-          ? <AlertTriangle className="h-5 w-5 text-red-500" />
-          : <ShieldCheck className="h-5 w-5 text-green-500" />;
-      case 'listing':
-        return <ShoppingBag className="h-5 w-5 text-blue-500" />;
-      default:
-        return <Bell className="h-5 w-5 text-yellow-500" />;
-    }
-  };
-
-  return (
-    <Card 
-      className={`mb-3 ${!notification.is_read ? 'bg-primary/5 border-primary/20' : ''} cursor-pointer hover:bg-secondary/50 transition-colors`} 
-      onClick={() => {
-        if (!notification.is_read) {
-          onRead(notification.id);
-        }
-        onNavigate(notification);
-      }}
-    >
-      <CardContent className="p-4">
-        <div className="flex items-start gap-3">
-          <div className="mt-1 p-2 rounded-full bg-background flex items-center justify-center">
-            {getIcon()}
-          </div>
-          <div className="flex-1">
-            <div className="flex items-start justify-between">
-              <h3 className="font-semibold">{notification.title}</h3>
-              <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-              </span>
-            </div>
-            <p className="text-sm mt-1 text-muted-foreground whitespace-pre-line">{notification.content}</p>
-            
-            {notification.metadata?.item_id && (
-              <div className="mt-2 flex items-center text-xs text-blue-500 hover:underline">
-                <ExternalLink className="h-3 w-3 mr-1" />
-                View Item
-              </div>
-            )}
-            
-            {!notification.is_read && (
-              <div className="mt-2 flex justify-end">
-                <span className="px-2 py-0.5 bg-primary text-primary-foreground text-xs rounded-full">New</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-};
 
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+
+  const fetchCurrentUser = async () => {
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return user;
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      return null;
+    }
+  };
 
   useEffect(() => {
-    fetchNotifications();
-    
-    // Set up realtime subscription for new notifications
+    const loadNotifications = async () => {
+      try {
+        setLoading(true);
+        
+        const user = await fetchCurrentUser();
+        if (!user) {
+          toast.error("Failed to get user information");
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error("Error fetching notifications:", error);
+          toast.error("Failed to load notifications");
+          return;
+        }
+
+        setNotifications(data || []);
+      } catch (error) {
+        console.error("Error loading notifications:", error);
+        toast.error("An unexpected error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNotifications();
+
+    // Setup Realtime subscription
     const channel = supabase
-      .channel('notifications-changes')
+      .channel('notifications')
       .on('postgres_changes', {
-        event: 'INSERT',
+        event: '*',
         schema: 'public',
         table: 'notifications',
-        filter: `user_id=eq.${supabase.auth.getUser() ? supabase.auth.getUser()?.data.user?.id : ''}`
+        filter: 'user_id=eq.' + (supabase.auth.user()?.id || '')
       }, (payload) => {
-        // Add new notification to the list
-        setNotifications(prev => [payload.new as Notification, ...prev]);
-        // Show a toast for the new notification
-        toast(payload.new.title, {
-          description: payload.new.content,
-        });
+        // Optimistically update the notifications
+        if (payload.eventType === 'INSERT') {
+          setNotifications(prev => [payload.new as Notification, ...prev]);
+        } else if (payload.eventType === 'UPDATE') {
+          setNotifications(prev =>
+            prev.map(notification =>
+              notification.id === (payload.new as Notification).id ? (payload.new as Notification) : notification
+            )
+          );
+        } else if (payload.eventType === 'DELETE') {
+          setNotifications(prev => prev.filter(notification => notification.id !== (payload.old as Notification).id));
+        }
       })
       .subscribe();
-      
+
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
 
-  const fetchNotifications = async () => {
-    setLoading(true);
-    try {
-      // Get the authenticated user
-      const { data: userData } = await supabase.auth.getUser();
-      const user = userData.user;
-      
-      if (!user) {
-        navigate('/sign-in');
-        return;
-      }
-
-      // Fetch notifications for the user
-      const { data: notificationsData, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      setNotifications(notificationsData || []);
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const markAsRead = async (id: string) => {
+  const markAsRead = async (notificationId: string) => {
     try {
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
-        .eq('id', id);
+        .eq('id', notificationId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error marking notification as read:", error);
+        toast.error("Failed to mark notification as read");
+        return;
+      }
 
-      // Update the local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === id 
-            ? { ...notification, is_read: true } 
-            : notification
+      // Optimistically update the local state
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === notificationId ? { ...notification, is_read: true } : notification
         )
       );
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
+      toast.error("An unexpected error occurred");
     }
   };
 
-  const handleNavigate = (notification: Notification) => {
-    // Handle navigation based on notification type and metadata
-    if (notification.metadata?.item_id) {
-      navigate(`/item/${notification.metadata.item_id}`);
-    } else if (notification.type === 'verification') {
-      // Navigate to profile page for verification notifications
-      navigate('/profile');
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'success':
+        return <CheckCircle className="h-4 w-4 mr-2 text-green-500" />;
+      case 'info':
+        return <Info className="h-4 w-4 mr-2 text-blue-500" />;
+      case 'error':
+        return <XCircle className="h-4 w-4 mr-2 text-red-500" />;
+      default:
+        return <Bell className="h-4 w-4 mr-2 text-gray-500" />;
     }
   };
 
@@ -185,32 +141,62 @@ const NotificationsPage = () => {
   }
 
   return (
-    <PageTransition>
-      <div className="container max-w-xl mx-auto px-4 py-4 pb-32">
-        <h1 className="text-2xl font-bold mb-6">Notifications</h1>
-        
-        {notifications.length === 0 ? (
-          <div className="text-center py-12">
-            <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">No notifications yet</h2>
-            <p className="text-muted-foreground">
-              When you receive notifications, they'll appear here.
-            </p>
-          </div>
-        ) : (
-          <div>
-            {notifications.map((notification) => (
-              <NotificationCard 
-                key={notification.id} 
-                notification={notification} 
-                onRead={markAsRead}
-                onNavigate={handleNavigate}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </PageTransition>
+    <div className="container max-w-3xl mx-auto py-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold">Notifications</CardTitle>
+          <CardDescription>
+            Here are all of your notifications.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <ScrollArea className="h-[400px] w-full">
+            <div className="divide-y divide-border">
+              {notifications.length > 0 ? (
+                notifications.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className="p-4 hover:bg-secondary transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {getIcon(notification.type)}
+                        <div className="flex flex-col">
+                          <span className="font-medium">{notification.title}</span>
+                          <p className="text-sm text-muted-foreground">
+                            {notification.content}
+                          </p>
+                        </div>
+                      </div>
+                      <div>
+                        {!notification.is_read && (
+                          <Badge
+                            variant="secondary"
+                            onClick={() => markAsRead(notification.id)}
+                            className="cursor-pointer"
+                          >
+                            Mark as Read
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      {formatDistanceToNow(new Date(notification.created_at), {
+                        addSuffix: true,
+                      })}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-muted-foreground">
+                  No notifications yet.
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

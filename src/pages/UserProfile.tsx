@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, ShieldCheck, Loader2, Calendar, Shield, MapPin, Phone, User } from 'lucide-react';
-import ProductGrid from '@/components/ProductGrid';
+import { ProductGrid } from '@/components/ProductGrid';
 import { getKycStatusBadgeProps } from '@/utils/kycUtils';
 
 interface UserProfile {

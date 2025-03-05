@@ -1,5 +1,5 @@
 
-export type KycStatus = 'pending' | 'processing' | 'verified' | 'rejected';
+import { KycStatus } from "@/utils/kycUtils";
 
 export interface Profile {
   id: string;
