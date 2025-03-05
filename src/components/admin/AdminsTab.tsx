@@ -3,36 +3,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Crown, Phone, MapPin, Calendar } from "lucide-react";
+import { UserProfile } from "./types";
 
-// Type definitions
-type KycStatus = 'pending' | 'processing' | 'verified' | 'rejected';
-
-interface UserRole {
-  role: 'admin' | 'user';
-}
-
-interface UserProfile {
-  id: string;
-  first_name: string | null;
-  last_name: string | null;
-  avatar_url: string | null;
-  address: string | null;
-  phone: string | null;
-  kyc_status: KycStatus;
-  created_at: string;
-  updated_at: string | null;
-  roles: UserRole[] | null;
-}
-
-interface AdminsTabProps {
+export interface AdminsTabProps {
   users: UserProfile[];
   onViewUserProfile: (userId: string) => void;
   onAdminAction: (user: UserProfile | null, action: 'add' | 'remove') => void;
 }
 
 export function AdminsTab({ users, onViewUserProfile, onAdminAction }: AdminsTabProps) {
-  const adminUsers = users.filter(user => user.roles?.some(r => r.role === 'admin'));
-
   return (
     <>
       <div className="flex justify-end">
@@ -45,7 +24,7 @@ export function AdminsTab({ users, onViewUserProfile, onAdminAction }: AdminsTab
         </Button>
       </div>
 
-      {adminUsers.map((admin) => (
+      {users.map((admin) => (
         <Card key={admin.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm shadow-[0_0_15px_rgba(59,130,246,0.1)]">
           <CardContent className="p-6">
             <div className="grid gap-6">

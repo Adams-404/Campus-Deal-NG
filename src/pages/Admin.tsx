@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -320,52 +319,29 @@ const Admin = () => {
                     <TabsContent value="users">
                       <UsersTab 
                         users={users} 
-                        onViewProfile={handleViewUserProfile}
-                        onMakeAdmin={(user) => handleAdminAction(user, 'add')}
-                        onRemoveAdmin={(user) => handleAdminAction(user, 'remove')}
+                        onViewUserProfile={handleViewUserProfile}
+                        onAdminAction={handleAdminAction}
                       />
                     </TabsContent>
                     
                     <TabsContent value="kyc">
-                      <KYCTab 
-                        documents={kycDocuments} 
-                        onViewDocument={handleViewKYCDocument}
-                        onStatusChange={async (documentId, newStatus) => {
-                          try {
-                            const document = kycDocuments.find(doc => doc.id === documentId);
-                            if (!document) return;
-                            
-                            const { error } = await supabase.rpc('update_kyc_status', {
-                              document_id: documentId,
-                              user_id: document.user_id,
-                              new_status: newStatus,
-                              admin_notes_param: 'Updated by admin on ' + new Date().toLocaleDateString()
-                            });
-                            
-                            if (error) throw error;
-                            
-                            toast.success(`KYC status updated to ${newStatus}`);
-                            fetchData();
-                          } catch (error) {
-                            console.error('Error updating KYC status:', error);
-                            toast.error('Failed to update KYC status');
-                          }
-                        }}
-                      />
+                      <KYCTab />
                     </TabsContent>
                     
                     <TabsContent value="posts">
                       <PostsTab 
                         items={items} 
-                        onViewSeller={handleViewUserProfile}
+                        onViewUserProfile={handleViewUserProfile}
                         onDeleteItem={handleDeleteItem}
+                        onRefresh={fetchData}
                       />
                     </TabsContent>
                     
                     <TabsContent value="admins">
                       <AdminsTab 
-                        admins={users.filter(user => user.roles?.some(role => role.role === 'admin'))} 
-                        onRemoveAdmin={(user) => handleAdminAction(user, 'remove')}
+                        users={users.filter(user => user.roles?.some(role => role.role === 'admin'))} 
+                        onViewUserProfile={handleViewUserProfile}
+                        onAdminAction={handleAdminAction}
                       />
                     </TabsContent>
                     
@@ -391,13 +367,11 @@ const Admin = () => {
               onConfirm={async (email) => {
                 try {
                   if (modalAction === 'add') {
-                    // Use a type assertion for the RPC function
                     const { error } = await supabase.rpc('add_admin_role' as any, { user_email: email });
                     if (error) throw error;
                     toast.success('User has been made an admin');
                   } else {
                     if (!targetUser) return;
-                    // Use a type assertion for the RPC function
                     const { error } = await supabase.rpc('remove_admin_role' as any, { user_id: targetUser.id });
                     if (error) throw error;
                     toast.success('Admin privileges removed');

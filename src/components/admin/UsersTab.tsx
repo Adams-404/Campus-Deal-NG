@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -15,13 +15,11 @@ import {
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MoreVertical, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,9 +32,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { UserProfile, UserRole } from "./types";
+import { UserProfile } from "./types";
 
-interface UsersTabProps {
+export interface UsersTabProps {
   users: UserProfile[];
   onViewUserProfile: (userId: string) => void;
   onAdminAction: (user: UserProfile | null, action: 'add' | 'remove') => void;
@@ -64,7 +62,6 @@ export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabPr
       accessorKey: "email",
       header: "Email",
       cell: ({ row }) => {
-        // Assuming you have email stored somewhere, e.g., in row.original.email
         return row.original.email || "N/A";
       },
     },

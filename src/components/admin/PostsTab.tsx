@@ -11,30 +11,16 @@ import { toast } from "sonner";
 import { Image, Trash2, Eye, UserIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ImageCarousel } from "@/components/ui/image-carousel";
+import { ItemType } from "./types";
 
-interface ItemType {
-  id: string;
-  title: string;
-  price: number;
-  status: string;
-  created_at: string;
-  description: string;
-  seller: {
-    id: string;
-    first_name: string | null;
-    last_name: string | null;
-    avatar_url: string | null;
-  };
-  images: string[];
-}
-
-interface PostsTabProps {
+export interface PostsTabProps {
   items: ItemType[];
-  onRefresh: () => Promise<void>;
   onViewUserProfile: (userId: string) => void;
+  onDeleteItem: (itemId: string) => Promise<void>;
+  onRefresh: () => Promise<void>;
 }
 
-export function PostsTab({ items, onRefresh, onViewUserProfile }: PostsTabProps) {
+export function PostsTab({ items, onViewUserProfile, onDeleteItem, onRefresh }: PostsTabProps) {
   const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState<ItemType | null>(null);
   const [showDeleteItemDialog, setShowDeleteItemDialog] = useState(false);
