@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +17,7 @@ import { KYCTab } from '@/components/admin/KYCTab';
 import { PostsTab } from '@/components/admin/PostsTab';
 import { AdminsTab } from '@/components/admin/AdminsTab';
 import { AdminGuide } from '@/components/admin/AdminGuide';
+import { ArrowLeft } from 'lucide-react';
 
 const Admin = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -288,33 +290,49 @@ const Admin = () => {
   return (
     <PageTransition>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-32">
-        <h1 className="text-3xl font-bold my-8">Admin Dashboard</h1>
+        <div className="flex items-center justify-between my-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-2"
+            onClick={() => navigate('/profile')}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Profile
+          </Button>
+          <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
+          <div className="w-24 sm:w-32"></div> {/* Spacer for alignment */}
+        </div>
         
         {isAdmin ? (
           <>
             <div className="space-y-8">
-              <AdminStats 
-                totalUsers={stats.totalUsers}
-                pendingKYC={stats.pendingKyc}
-                processingKYC={kycDocuments.filter(doc => doc.status === 'processing').length}
-                verifiedUsers={users.filter(user => user.kyc_status === 'verified').length}
-              />
-              
-              <AdminCharts 
-                userGrowthData={timeSeriesData}
-                kycStatusData={userStats}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <AdminStats 
+                  totalUsers={stats.totalUsers}
+                  pendingKYC={stats.pendingKyc}
+                  processingKYC={kycDocuments.filter(doc => doc.status === 'processing').length}
+                  verifiedUsers={users.filter(user => user.kyc_status === 'verified').length}
+                />
+                
+                <AdminCharts 
+                  userGrowthData={timeSeriesData}
+                  kycStatusData={userStats}
+                />
+              </div>
               
               <Card>
-                <CardContent className="py-6">
+                <CardContent className="p-4 sm:py-6">
                   <Tabs defaultValue="users" className="w-full">
-                    <TabsList className="w-full justify-start mb-6 overflow-x-auto">
-                      <TabsTrigger value="users">Users</TabsTrigger>
-                      <TabsTrigger value="kyc">KYC Verification</TabsTrigger>
-                      <TabsTrigger value="posts">Listings</TabsTrigger>
-                      <TabsTrigger value="admins">Administrators</TabsTrigger>
-                      <TabsTrigger value="guide">Admin Guide</TabsTrigger>
-                    </TabsList>
+                    <div className="overflow-x-auto pb-2">
+                      <TabsList className="w-full justify-start mb-4 sm:mb-6">
+                        <TabsTrigger value="users">Users</TabsTrigger>
+                        <TabsTrigger value="kyc">KYC Verification</TabsTrigger>
+                        <TabsTrigger value="posts">Listings</TabsTrigger>
+                        <TabsTrigger value="admins">Administrators</TabsTrigger>
+                        <TabsTrigger value="guide">Admin Guide</TabsTrigger>
+                      </TabsList>
+                    </div>
                     
                     <TabsContent value="users">
                       <UsersTab 
@@ -367,12 +385,12 @@ const Admin = () => {
               onConfirm={async (email) => {
                 try {
                   if (modalAction === 'add') {
-                    const { error } = await supabase.rpc('add_admin_role' as any, { user_email: email });
+                    const { error } = await supabase.rpc('add_admin_role', { user_email: email });
                     if (error) throw error;
                     toast.success('User has been made an admin');
                   } else {
                     if (!targetUser) return;
-                    const { error } = await supabase.rpc('remove_admin_role' as any, { user_id: targetUser.id });
+                    const { error } = await supabase.rpc('remove_admin_role', { user_id: targetUser.id });
                     if (error) throw error;
                     toast.success('Admin privileges removed');
                   }

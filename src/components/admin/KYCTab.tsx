@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,37 +24,62 @@ export function KYCTab() {
   const [activeTab, setActiveTab] = useState<KycStatus | 'all'>('all');
 
   const fetchKYCDocuments = async () => {
-    let query = supabase
-      .from('kyc_documents')
-      .select(`
-        id,
-        user_id,
-        document_type,
-        document_url,
-        status,
-        created_at,
-        admin_notes,
-        updated_at,
-        profile:profiles(
-          first_name,
-          last_name,
-          avatar_url
-        )
-      `);
+    try {
+      // First, get the latest user profiles to ensure we have up-to-date KYC statuses
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, kyc_status');
+      
+      if (profilesError) throw profilesError;
+      
+      // Create a map of user_id to kyc_status for quick lookup
+      const profileKycStatusMap = new Map();
+      profilesData?.forEach(profile => {
+        profileKycStatusMap.set(profile.id, profile.kyc_status);
+      });
 
-    if (activeTab !== 'all') {
-      query = query.eq('status', activeTab);
-    }
+      // Query kyc_documents
+      let query = supabase
+        .from('kyc_documents')
+        .select(`
+          id,
+          user_id,
+          document_type,
+          document_url,
+          status,
+          created_at,
+          admin_notes,
+          updated_at,
+          profile:profiles(
+            first_name,
+            last_name,
+            avatar_url
+          )
+        `);
 
-    query = query.order('created_at', { ascending: false });
+      if (activeTab !== 'all') {
+        query = query.eq('status', activeTab);
+      }
 
-    const { data, error } = await query;
+      query = query.order('created_at', { ascending: false });
 
-    if (error) {
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      // Update the document status to match the profile status
+      const updatedDocuments = data?.map(doc => ({
+        ...doc,
+        // Ensure the document status matches the current profile status
+        status: profileKycStatusMap.get(doc.user_id) || doc.status
+      })) || [];
+
+      setKycDocuments(updatedDocuments);
+    } catch (error) {
       console.error('Error fetching KYC documents:', error);
       toast.error('Failed to fetch KYC documents');
-    } else {
-      setKycDocuments(data || []);
     }
   };
 
@@ -71,8 +97,22 @@ export function KYCTab() {
       })
       .subscribe();
 
+    // Also listen for changes in the profiles table to catch KYC status updates
+    const profilesChannel = supabase
+      .channel('profiles-changes')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: 'kyc_status=eq.processing,kyc_status=eq.verified,kyc_status=eq.rejected'
+      }, () => {
+        fetchKYCDocuments();
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(profilesChannel);
     };
   }, [activeTab]);
 
@@ -107,6 +147,7 @@ export function KYCTab() {
         );
         
         setIsViewerOpen(false);
+        fetchKYCDocuments(); // Refresh to get latest data
       }
     } catch (error) {
       console.error('Error updating KYC status:', error);
@@ -124,18 +165,28 @@ export function KYCTab() {
           : doc
       )
     );
+    fetchKYCDocuments(); // Refresh to get latest data
   };
 
   return (
-    <div>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 className="text-lg font-semibold">KYC Verification Documents</h2>
+        <Button size="sm" onClick={fetchKYCDocuments} variant="outline">
+          Refresh
+        </Button>
+      </div>
+
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as KycStatus | 'all')}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="all">All Documents</TabsTrigger>
-          <TabsTrigger value="pending">Pending</TabsTrigger>
-          <TabsTrigger value="processing">Processing</TabsTrigger>
-          <TabsTrigger value="verified">Verified</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-2">
+          <TabsList className="mb-4">
+            <TabsTrigger value="all">All Documents</TabsTrigger>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="processing">Processing</TabsTrigger>
+            <TabsTrigger value="verified">Verified</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          </TabsList>
+        </div>
         
         <TabsContent value={activeTab}>
           <KYCDocumentsTab 

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +10,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertTriangle, ShieldCheck, Loader2, Calendar, Shield, MapPin, Phone, User } from 'lucide-react';
-import { ProductGrid } from '@/components/ProductGrid';
 import { getKycStatusBadgeProps, KycStatus } from '@/utils/kycUtils';
 
 interface UserProfile {
@@ -41,8 +41,45 @@ interface Item {
   };
 }
 
-const ProductGridWrapper: React.FC<{ items: Item[] }> = ({ items }) => {
-  return <ProductGrid items={items as any} />;
+interface ProductGridProps {
+  items: Item[];
+  title?: string;
+}
+
+const ProductGridWrapper: React.FC<ProductGridProps> = ({ items, title }) => {
+  // This component just correctly passes the props to ProductGrid
+  return (
+    <div>
+      {title && <h2 className="text-xl font-semibold mb-4">{title}</h2>}
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        {items.map((item) => (
+          <a 
+            key={item.id} 
+            href={`/item/${item.id}`}
+            className="block border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+          >
+            <div className="aspect-square relative bg-muted">
+              {item.images && item.images.length > 0 ? (
+                <img
+                  src={item.images[0]}
+                  alt={item.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-secondary">
+                  <span className="text-muted-foreground">No image</span>
+                </div>
+              )}
+            </div>
+            <div className="p-3">
+              <h3 className="font-medium truncate">{item.title}</h3>
+              <p className="text-primary font-semibold mt-1">₦{item.price}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 const UserProfile = () => {
@@ -249,7 +286,7 @@ const UserProfile = () => {
                 </CardContent>
               </Card>
             ) : (
-              <ProductGrid items={userItems} title={`${profile.first_name}'s Listings`} />
+              <ProductGridWrapper items={userItems} title={`${profile.first_name}'s Listings`} />
             )}
           </TabsContent>
         </Tabs>
