@@ -13,10 +13,12 @@ export async function updateKYCStatus(
   adminNotes?: string
 ) {
   try {
-    console.log(`Updating KYC status for document ${documentId}, user ${userId} to ${newStatus}`);
+    console.log(`Updating KYC status for document ${documentId}, user ${userId} to ${newStatus}`, {
+      adminNotes
+    });
     
     // Call the stored procedure that handles all updates in a transaction
-    const { error } = await supabase.rpc('update_kyc_status', {
+    const { data, error } = await supabase.rpc("update_kyc_status", {
       document_id: documentId,
       user_id: userId,
       new_status: newStatus,
@@ -27,6 +29,8 @@ export async function updateKYCStatus(
       console.error('RPC Error:', error);
       throw error;
     }
+    
+    console.log("KYC status update successful", data);
     
     // Delay a bit to allow the database changes to propagate
     await new Promise(resolve => setTimeout(resolve, 500));

@@ -25,18 +25,25 @@ export function KYCTab() {
 
   const fetchKYCDocuments = async () => {
     try {
+      console.log("Fetching KYC documents with activeTab:", activeTab);
+      
       // First, get the latest user profiles to ensure we have up-to-date KYC statuses
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, kyc_status');
       
-      if (profilesError) throw profilesError;
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+        throw profilesError;
+      }
       
       // Create a map of user_id to kyc_status for quick lookup
       const profileKycStatusMap = new Map();
       profilesData?.forEach(profile => {
         profileKycStatusMap.set(profile.id, profile.kyc_status);
       });
+      
+      console.log("Profile KYC status map:", Object.fromEntries(profileKycStatusMap));
 
       // Query kyc_documents
       let query = supabase
@@ -66,15 +73,27 @@ export function KYCTab() {
       const { data, error } = await query;
 
       if (error) {
+        console.error("Error fetching KYC documents:", error);
         throw error;
       }
 
+      console.log("Fetched KYC documents:", data?.length);
+
       // Update the document status to match the profile status
-      const updatedDocuments = data?.map(doc => ({
-        ...doc,
-        // Ensure the document status matches the current profile status
-        status: profileKycStatusMap.get(doc.user_id) || doc.status
-      })) || [];
+      const updatedDocuments = data?.map(doc => {
+        const profileStatus = profileKycStatusMap.get(doc.user_id);
+        
+        // Check if there's a mismatch between document and profile statuses
+        if (profileStatus && doc.status !== profileStatus) {
+          console.log(`Status mismatch for document ${doc.id}: doc status=${doc.status}, profile status=${profileStatus}`);
+        }
+
+        return {
+          ...doc,
+          // Always use the profile status as the source of truth
+          status: profileStatus || doc.status
+        };
+      }) || [];
 
       setKycDocuments(updatedDocuments);
     } catch (error) {
@@ -92,7 +111,8 @@ export function KYCTab() {
         event: '*',
         schema: 'public',
         table: 'kyc_documents'
-      }, () => {
+      }, (payload) => {
+        console.log("KYC document change detected:", payload);
         fetchKYCDocuments();
       })
       .subscribe();
@@ -104,8 +124,9 @@ export function KYCTab() {
         event: 'UPDATE',
         schema: 'public',
         table: 'profiles',
-        filter: 'kyc_status=eq.processing,kyc_status=eq.verified,kyc_status=eq.rejected'
-      }, () => {
+        filter: 'kyc_status=eq.processing,kyc_status=eq.verified,kyc_status=eq.rejected,kyc_status=eq.pending'
+      }, (payload) => {
+        console.log("Profile KYC status change detected:", payload);
         fetchKYCDocuments();
       })
       .subscribe();
@@ -128,6 +149,8 @@ export function KYCTab() {
     setUpdatingStatus(true);
     
     try {
+      console.log(`Updating KYC status for document ${selectedDocument.id} to ${status}...`);
+      
       const result = await updateKYCStatus(
         selectedDocument.id,
         selectedDocument.user_id,
@@ -138,6 +161,7 @@ export function KYCTab() {
       if (result.success) {
         toast.success(`KYC document ${status === 'verified' ? 'approved' : 'rejected'} successfully`);
         
+        // Update local state
         setKycDocuments(prev => 
           prev.map(doc => 
             doc.id === selectedDocument.id 
@@ -147,7 +171,13 @@ export function KYCTab() {
         );
         
         setIsViewerOpen(false);
-        fetchKYCDocuments(); // Refresh to get latest data
+        // Wait a bit for the database to update before refreshing
+        setTimeout(() => {
+          fetchKYCDocuments();
+        }, 500);
+      } else {
+        console.error("Error updating KYC status:", result.error);
+        toast.error("Failed to update KYC status");
       }
     } catch (error) {
       console.error('Error updating KYC status:', error);
@@ -155,17 +185,6 @@ export function KYCTab() {
     } finally {
       setUpdatingStatus(false);
     }
-  };
-
-  const handleDocumentStatusChange = (documentId: string, newStatus: KycStatus) => {
-    setKycDocuments(prev => 
-      prev.map(doc => 
-        doc.id === documentId 
-          ? { ...doc, status: newStatus } 
-          : doc
-      )
-    );
-    fetchKYCDocuments(); // Refresh to get latest data
   };
 
   return (
@@ -191,8 +210,13 @@ export function KYCTab() {
         <TabsContent value={activeTab}>
           <KYCDocumentsTab 
             documents={kycDocuments} 
-            onViewDocument={handleViewDocument} 
-            onStatusChange={handleDocumentStatusChange}
+            onViewDocument={handleViewDocument}
+            onStatusChange={(documentId, newStatus) => {
+              const document = kycDocuments.find(doc => doc.id === documentId);
+              if (document) {
+                handleStatusUpdate(newStatus);
+              }
+            }}
           />
         </TabsContent>
       </Tabs>
@@ -208,6 +232,7 @@ export function KYCTab() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
+                    <AvatarImage src={selectedDocument.profile.avatar_url || undefined} />
                     <AvatarFallback>
                       {selectedDocument.profile.first_name?.[0]}
                       {selectedDocument.profile.last_name?.[0]}

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -277,11 +278,6 @@ const Admin = () => {
     }
   }
 
-  const handleViewKYCDocument = (document: KYCDocument) => {
-    setActiveTab("kyc")
-    navigate("/admin?tab=kyc")
-  }
-
   const handleAdminAction = (user: UserProfile | null, action: "add" | "remove") => {
     setTargetUser(user)
     setModalAction(action)
@@ -298,6 +294,10 @@ const Admin = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value)
     setIsMobileMenuOpen(false)
+    // Update the URL without full page reload
+    const url = new URL(window.location.href);
+    url.searchParams.set('tab', value);
+    window.history.pushState({}, '', url);
   }
 
   const tabItems = [
@@ -386,7 +386,9 @@ const Admin = () => {
               <div className="flex items-center">
                 <h1 className="text-xl font-bold">Admin Dashboard</h1>
               </div>
-              <div className="w-24 sm:w-32 flex justify-end">{/* Placeholder for potential actions */}</div>
+              <div className="w-24 sm:w-32 flex justify-end">
+                {/* Placeholder to maintain spacing */}
+              </div>
             </div>
           </div>
         </header>
@@ -470,7 +472,9 @@ const Admin = () => {
 
                         <TabsContent value="admins" className="m-0 mt-2">
                           <AdminsTab
-                            users={users.filter((user) => user.roles?.some((role) => role.role === "admin"))}
+                            users={users.filter((user) => 
+                              user.roles && user.roles.some((role) => role.role === "admin")
+                            )}
                             onViewUserProfile={handleViewUserProfile}
                             onAdminAction={handleAdminAction}
                           />
@@ -499,7 +503,7 @@ const Admin = () => {
                 onConfirm={async (email) => {
                   try {
                     if (modalAction === "add") {
-                      // Fix: Changed from 'add_admin_role' to custom implementation
+                      // Changed from 'add_admin_role' to custom implementation
                       const { data: userData } = await supabase
                         .from("profiles")
                         .select("id")
@@ -520,7 +524,7 @@ const Admin = () => {
                     } else {
                       if (!targetUser) return
 
-                      // Fix: Changed from 'remove_admin_role' to custom implementation
+                      // Changed from 'remove_admin_role' to custom implementation
                       const { error } = await supabase
                         .from("user_roles")
                         .delete()
@@ -564,4 +568,3 @@ const Admin = () => {
 }
 
 export default Admin
-
