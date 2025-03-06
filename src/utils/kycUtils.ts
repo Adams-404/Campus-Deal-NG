@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShieldCheck, AlertTriangle, Loader2, Shield } from "lucide-react";
@@ -31,12 +32,18 @@ export async function updateKYCStatus(
     
     console.log("KYC status update result:", data);
     
-    if (!data.success) {
-      console.error('Function reported error:', data.error);
-      throw new Error(data.error || 'Unknown error occurred');
+    // Ensure data is an object with the expected properties
+    if (typeof data === 'object' && data !== null) {
+      if (!data.success) {
+        console.error('Function reported error:', data.error);
+        throw new Error(typeof data.error === 'string' ? data.error : 'Unknown error occurred');
+      }
+      
+      return { success: true };
     }
     
-    return { success: true };
+    // If data is not an object as expected, throw an error
+    throw new Error('Invalid response format from server');
   } catch (error) {
     console.error('Error updating KYC status:', error);
     toast.error('Failed to update KYC status');

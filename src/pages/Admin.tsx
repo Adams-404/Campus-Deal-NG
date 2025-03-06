@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, React } from "react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AdminStats, AdminCharts } from "@/components/admin/AdminDashboard"
@@ -51,6 +51,13 @@ const Admin = () => {
   const [activeTab, setActiveTab] = useState("users")
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
+
+  const adminUsers = React.useMemo(() => {
+    return users.filter(user => {
+      if (!user.roles) return false;
+      return user.roles.some(role => role.role === "admin");
+    });
+  }, [users]);
 
   const fetchData = async () => {
     setLoading(true)
@@ -470,10 +477,7 @@ const Admin = () => {
 
                         <TabsContent value="admins" className="m-0 mt-2">
                           <AdminsTab
-                            users={users.filter((user) => {
-                              if (!user.roles) return false;
-                              return Array.isArray(user.roles) && user.roles.some((role) => role.role === "admin");
-                            })}
+                            users={adminUsers}
                             onViewUserProfile={handleViewUserProfile}
                             onAdminAction={handleAdminAction}
                           />
