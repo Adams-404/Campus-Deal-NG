@@ -85,20 +85,23 @@ const getColorByIndex = (index: number) => {
   return colors[index % colors.length]
 }
 
-// Update the ProfileHeader component to make it more sticky and blurry with a styled back button
+// Update the ProfileHeader component to make it fixed so that the content of the page can scroll over it
 const ProfileHeader = ({ onBack }: { onBack: () => void }) => {
   return (
-    <div className="sticky top-0 z-50 bg-black/70 backdrop-blur-xl border-b border-green-500/40 py-3 px-4 mb-6 transition-all duration-200">
-      <div className="container max-w-4xl mx-auto flex items-center justify-between">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onBack}
-          className="border-green-500 text-green-400 hover:bg-green-500/10 hover:text-green-300 transition-colors"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back
-        </Button>
+    <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 py-2 px-4 transition-all duration-200">
+      <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
+        <div className="h-12 flex items-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onBack}
+            className="border-green-500 text-green-400 hover:bg-green-500/10 hover:text-green-300 transition-colors mr-4"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back
+          </Button>
+          <h1 className="text-lg font-semibold text-center flex-1">User Profile</h1>
+        </div>
       </div>
     </div>
   )
@@ -393,8 +396,7 @@ const UserProfile = () => {
   return (
     <PageTransition>
       <ProfileHeader onBack={() => navigate(-1)} />
-
-      <div className="container max-w-4xl mx-auto px-4 pb-32 bg-black text-white">
+      <div className="container max-w-4xl mx-auto px-4 pb-32 mt-20 bg-black text-white flex flex-col items-center">
         <Card className="mb-8 overflow-hidden border border-green-500/50 shadow-sm rounded-xl bg-black">
           <CardHeader className="p-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
