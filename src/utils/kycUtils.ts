@@ -17,20 +17,68 @@ export async function updateKYCStatus(
       adminNotes
     });
     
-    // Call the stored procedure that handles all updates in a transaction
-    const { data, error } = await supabase.rpc("update_kyc_status", {
-      document_id: documentId,
-      user_id: userId,
-      new_status: newStatus,
-      admin_notes_param: adminNotes || null
-    });
+    // Instead of calling the RPC function which is causing issues,
+    // we'll perform a direct update to both the document and profile in sequence
     
-    if (error) {
-      console.error('RPC Error:', error);
-      throw error;
+    // 1. Update the KYC document
+    const { error: docError } = await supabase
+      .from('kyc_documents')
+      .update({
+        status: newStatus,
+        admin_notes: adminNotes || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', documentId);
+      
+    if (docError) {
+      console.error('Document update error:', docError);
+      throw docError;
     }
     
-    console.log("KYC status update successful", data);
+    // 2. Update the user's profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .update({
+        kyc_status: newStatus,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', userId);
+      
+    if (profileError) {
+      console.error('Profile update error:', profileError);
+      throw profileError;
+    }
+    
+    // 3. Create a notification
+    const notificationTitle = 
+      newStatus === 'verified' ? 'KYC Verification Approved' :
+      newStatus === 'rejected' ? 'KYC Verification Rejected' :
+      'KYC Status Updated';
+      
+    const notificationContent = adminNotes || 
+      (newStatus === 'verified' ? 'Your identity verification has been approved. You now have full access to all platform features.' :
+      newStatus === 'rejected' ? 'Your identity verification was rejected. Please submit new documents or contact support.' :
+      'Your identity verification status has been updated.');
+    
+    const { error: notifError } = await supabase
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        title: notificationTitle,
+        content: notificationContent,
+        type: 'verification',
+        created_at: new Date().toISOString(),
+        is_read: false,
+        metadata: { document_id: documentId }
+      });
+      
+    if (notifError) {
+      console.error('Notification creation error:', notifError);
+      // We don't throw here as the main update was successful
+      // Just log for debugging purposes
+    }
+    
+    console.log("KYC status update successful");
     
     return { success: true };
   } catch (error) {

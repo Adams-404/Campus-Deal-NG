@@ -470,11 +470,10 @@ const Admin = () => {
 
                         <TabsContent value="admins" className="m-0 mt-2">
                           <AdminsTab
-                            users={users.filter((user) => 
-                              user.roles && 
-                              Array.isArray(user.roles) && 
-                              user.roles.some((role: any) => role.role === "admin")
-                            )}
+                            users={users.filter((user) => {
+                              if (!user.roles) return false;
+                              return Array.isArray(user.roles) && user.roles.some((role) => role.role === "admin");
+                            })}
                             onViewUserProfile={handleViewUserProfile}
                             onAdminAction={handleAdminAction}
                           />

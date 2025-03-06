@@ -8,6 +8,7 @@ import { FileText, Calendar, Check, X } from "lucide-react";
 import { KYCDocument } from "./types";
 import { cn } from "@/lib/utils";
 import { KycStatus, getKycStatusBadgeProps } from "@/utils/kycUtils";
+import { toast } from "sonner";
 
 export interface KYCDocumentsTabProps {
   documents: KYCDocument[];
@@ -20,6 +21,14 @@ export function KYCDocumentsTab({
   onViewDocument, 
   onStatusChange 
 }: KYCDocumentsTabProps) {
+  const handleStatusChange = (documentId: string, newStatus: KycStatus) => {
+    try {
+      onStatusChange(documentId, newStatus);
+    } catch (error) {
+      console.error("Error changing status:", error);
+      toast.error(`Failed to update status: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
   
   if (documents.length === 0) {
     return (
@@ -101,7 +110,7 @@ export function KYCDocumentsTab({
                     <div className="space-y-3 w-full">
                       <Button
                         className="w-full justify-start bg-green-500 hover:bg-green-600 text-white"
-                        onClick={() => onStatusChange(document.id, 'verified')}
+                        onClick={() => handleStatusChange(document.id, 'verified')}
                       >
                         <Check className="mr-2 h-4 w-4" />
                         Approve
@@ -109,7 +118,7 @@ export function KYCDocumentsTab({
                       <Button
                         variant="outline"
                         className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50"
-                        onClick={() => onStatusChange(document.id, 'rejected')}
+                        onClick={() => handleStatusChange(document.id, 'rejected')}
                       >
                         <X className="mr-2 h-4 w-4" />
                         Reject
