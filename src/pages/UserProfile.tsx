@@ -103,6 +103,7 @@ const UserProfile = () => {
           return;
         }
 
+        // Get current user to check if viewing own profile
         const { data: { user } } = await supabase.auth.getUser();
         setIsCurrentUser(user?.id === id);
         
@@ -128,6 +129,7 @@ const UserProfile = () => {
           return;
         }
         
+        console.log("Fetched profile data:", profileData);
         setProfile(profileData);
         
         // Fetch user's listings
@@ -176,6 +178,7 @@ const UserProfile = () => {
         table: 'profiles',
         filter: `id=eq.${id}`
       }, (payload) => {
+        console.log("Profile updated:", payload.new);
         setProfile(payload.new as UserProfile);
       })
       .subscribe();

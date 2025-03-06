@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -53,6 +54,7 @@ const Admin = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
 
+  // Fix the excessive type instantiation by memoizing the admin users filter
   const adminUsers = React.useMemo(() => {
     return users.filter(user => {
       if (!user.roles) return false;

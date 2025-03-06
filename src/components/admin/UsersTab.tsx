@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import {
   ColumnDef,
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { UserProfile } from "./types";
+import { getKycStatusBadgeProps } from "@/utils/kycUtils";
 
 export interface UsersTabProps {
   users: UserProfile[];
@@ -68,9 +70,20 @@ export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabPr
     {
       accessorKey: "kyc_status",
       header: "KYC Status",
-      cell: ({ row }) => (
-        <Badge variant="secondary">{row.getValue("kyc_status")}</Badge>
-      ),
+      cell: ({ row }) => {
+        const status = row.getValue("kyc_status");
+        // Use getKycStatusBadgeProps to get consistent styling
+        const badgeProps = getKycStatusBadgeProps(status as any);
+        return (
+          <Badge 
+            variant="outline" 
+            className={badgeProps.className}
+          >
+            {badgeProps.icon}
+            {badgeProps.label}
+          </Badge>
+        );
+      },
     },
     {
       id: "role",

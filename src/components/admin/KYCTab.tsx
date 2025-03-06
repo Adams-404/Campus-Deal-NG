@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -70,7 +71,7 @@ export function KYCTab() {
   useEffect(() => {
     fetchKYCDocuments();
     
-    // Listen for changes in KYC documents
+    // Listen for changes in KYC documents and profiles
     const channel = supabase
       .channel('kyc-documents-changes')
       .on('postgres_changes', {

@@ -33,7 +33,7 @@ export async function updateKYCStatus(
     console.log("KYC status update result:", data);
     
     // Check if data is available and contains a success property
-    if (data && typeof data === 'object') {
+    if (data && typeof data === 'object' && !Array.isArray(data)) {
       // Safe type assertion after we've confirmed data is an object
       const responseObject = data as Record<string, unknown>;
       
