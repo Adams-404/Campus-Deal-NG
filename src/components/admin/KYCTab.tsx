@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -13,7 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { KYCDocument } from "./types";
 import { cn } from "@/lib/utils";
-import { KycStatus, updateKYCStatus } from "@/utils/kycUtils";
+import { KycStatus, updateKYCStatus, getKycStatusBadgeProps } from "@/utils/kycUtils";
 
 export function KYCTab() {
   const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
@@ -61,24 +60,7 @@ export function KYCTab() {
       }
 
       console.log("Fetched KYC documents:", data?.length);
-
-      // Ensure the document status matches the profile status
-      // Profile status is the source of truth
-      const updatedDocuments = data?.map(doc => {
-        const profileKycStatus = doc.profile?.kyc_status;
-        
-        if (profileKycStatus && doc.status !== profileKycStatus) {
-          console.log(`Status mismatch for document ${doc.id}: document status=${doc.status}, profile status=${profileKycStatus}`);
-          return {
-            ...doc,
-            status: profileKycStatus
-          };
-        }
-        
-        return doc;
-      }) || [];
-
-      setKycDocuments(updatedDocuments);
+      setKycDocuments(data || []);
     } catch (error) {
       console.error('Error fetching KYC documents:', error);
       toast.error('Failed to fetch KYC documents');

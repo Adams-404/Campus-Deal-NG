@@ -21,9 +21,10 @@ export function KYCDocumentsTab({
   onViewDocument, 
   onStatusChange 
 }: KYCDocumentsTabProps) {
-  const handleStatusChange = (documentId: string, newStatus: KycStatus) => {
+  const handleStatusChange = async (documentId: string, newStatus: KycStatus) => {
     try {
-      onStatusChange(documentId, newStatus);
+      console.log(`Attempting to change status to ${newStatus} for document ${documentId}`);
+      await onStatusChange(documentId, newStatus);
     } catch (error) {
       console.error("Error changing status:", error);
       toast.error(`Failed to update status: ${error instanceof Error ? error.message : 'Unknown error'}`);
