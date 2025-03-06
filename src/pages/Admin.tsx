@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, React } from "react"
+import { useState, useEffect } from "react"
+import * as React from "react"
 import { toast } from "sonner"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { AdminStats, AdminCharts } from "@/components/admin/AdminDashboard"

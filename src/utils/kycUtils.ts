@@ -32,17 +32,21 @@ export async function updateKYCStatus(
     
     console.log("KYC status update result:", data);
     
-    // Ensure data is an object with the expected properties
-    if (typeof data === 'object' && data !== null) {
-      if (!data.success) {
-        console.error('Function reported error:', data.error);
-        throw new Error(typeof data.error === 'string' ? data.error : 'Unknown error occurred');
+    // Check if data is available and contains a success property
+    if (data && typeof data === 'object') {
+      // Safe type assertion after we've confirmed data is an object
+      const responseObject = data as Record<string, unknown>;
+      
+      if (responseObject.success === false) {
+        const errorMessage = responseObject.error;
+        console.error('Function reported error:', errorMessage);
+        throw new Error(typeof errorMessage === 'string' ? errorMessage : 'Unknown error occurred');
       }
       
       return { success: true };
     }
     
-    // If data is not an object as expected, throw an error
+    // If data doesn't match our expected format, throw an error
     throw new Error('Invalid response format from server');
   } catch (error) {
     console.error('Error updating KYC status:', error);
