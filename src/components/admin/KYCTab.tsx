@@ -27,25 +27,7 @@ export function KYCTab() {
     try {
       console.log("Fetching KYC documents with activeTab:", activeTab);
       
-      // First, get the latest user profiles to ensure we have up-to-date KYC statuses
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, kyc_status');
-      
-      if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
-        throw profilesError;
-      }
-      
-      // Create a map of user_id to kyc_status for quick lookup
-      const profileKycStatusMap = new Map();
-      profilesData?.forEach(profile => {
-        profileKycStatusMap.set(profile.id, profile.kyc_status);
-      });
-      
-      console.log("Profile KYC status map:", Object.fromEntries(profileKycStatusMap));
-
-      // Query kyc_documents
+      // Query kyc_documents with proper join to profiles
       let query = supabase
         .from('kyc_documents')
         .select(`
@@ -60,7 +42,8 @@ export function KYCTab() {
           profile:profiles(
             first_name,
             last_name,
-            avatar_url
+            avatar_url,
+            kyc_status
           )
         `);
 
@@ -79,20 +62,20 @@ export function KYCTab() {
 
       console.log("Fetched KYC documents:", data?.length);
 
-      // Update the document status to match the profile status
+      // Ensure the document status matches the profile status
+      // Profile status is the source of truth
       const updatedDocuments = data?.map(doc => {
-        const profileStatus = profileKycStatusMap.get(doc.user_id);
+        const profileKycStatus = doc.profile?.kyc_status;
         
-        // Check if there's a mismatch between document and profile statuses
-        if (profileStatus && doc.status !== profileStatus) {
-          console.log(`Status mismatch for document ${doc.id}: doc status=${doc.status}, profile status=${profileStatus}`);
+        if (profileKycStatus && doc.status !== profileKycStatus) {
+          console.log(`Status mismatch for document ${doc.id}: document status=${doc.status}, profile status=${profileKycStatus}`);
+          return {
+            ...doc,
+            status: profileKycStatus
+          };
         }
-
-        return {
-          ...doc,
-          // Always use the profile status as the source of truth
-          status: profileStatus || doc.status
-        };
+        
+        return doc;
       }) || [];
 
       setKycDocuments(updatedDocuments);
@@ -105,6 +88,7 @@ export function KYCTab() {
   useEffect(() => {
     fetchKYCDocuments();
     
+    // Listen for changes in KYC documents
     const channel = supabase
       .channel('kyc-documents-changes')
       .on('postgres_changes', {
@@ -117,7 +101,7 @@ export function KYCTab() {
       })
       .subscribe();
 
-    // Also listen for changes in the profiles table to catch KYC status updates
+    // Listen for changes in profiles to catch KYC status updates
     const profilesChannel = supabase
       .channel('profiles-changes')
       .on('postgres_changes', {
@@ -161,7 +145,8 @@ export function KYCTab() {
       if (result.success) {
         toast.success(`KYC document ${status === 'verified' ? 'approved' : 'rejected'} successfully`);
         
-        // Update local state
+        // Update the selected document and the documents list with the new status
+        setSelectedDocument(prev => prev ? {...prev, status} : null);
         setKycDocuments(prev => 
           prev.map(doc => 
             doc.id === selectedDocument.id 
@@ -170,9 +155,9 @@ export function KYCTab() {
           )
         );
         
-        setIsViewerOpen(false);
-        // Wait a bit for the database to update before refreshing
+        // Close the viewer and refresh the documents after a short delay
         setTimeout(() => {
+          setIsViewerOpen(false);
           fetchKYCDocuments();
         }, 500);
       } else {
@@ -214,6 +199,7 @@ export function KYCTab() {
             onStatusChange={(documentId, newStatus) => {
               const document = kycDocuments.find(doc => doc.id === documentId);
               if (document) {
+                setSelectedDocument(document);
                 handleStatusUpdate(newStatus);
               }
             }}

@@ -32,9 +32,6 @@ export async function updateKYCStatus(
     
     console.log("KYC status update successful", data);
     
-    // Delay a bit to allow the database changes to propagate
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
     return { success: true };
   } catch (error) {
     console.error('Error updating KYC status:', error);

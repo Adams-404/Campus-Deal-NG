@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -294,7 +293,6 @@ const Admin = () => {
   const handleTabChange = (value: string) => {
     setActiveTab(value)
     setIsMobileMenuOpen(false)
-    // Update the URL without full page reload
     const url = new URL(window.location.href);
     url.searchParams.set('tab', value);
     window.history.pushState({}, '', url);
@@ -473,7 +471,9 @@ const Admin = () => {
                         <TabsContent value="admins" className="m-0 mt-2">
                           <AdminsTab
                             users={users.filter((user) => 
-                              user.roles && user.roles.some((role) => role.role === "admin")
+                              user.roles && 
+                              Array.isArray(user.roles) && 
+                              user.roles.some((role: any) => role.role === "admin")
                             )}
                             onViewUserProfile={handleViewUserProfile}
                             onAdminAction={handleAdminAction}
@@ -503,7 +503,6 @@ const Admin = () => {
                 onConfirm={async (email) => {
                   try {
                     if (modalAction === "add") {
-                      // Changed from 'add_admin_role' to custom implementation
                       const { data: userData } = await supabase
                         .from("profiles")
                         .select("id")
@@ -524,7 +523,6 @@ const Admin = () => {
                     } else {
                       if (!targetUser) return
 
-                      // Changed from 'remove_admin_role' to custom implementation
                       const { error } = await supabase
                         .from("user_roles")
                         .delete()

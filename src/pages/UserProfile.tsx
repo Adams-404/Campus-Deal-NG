@@ -89,21 +89,24 @@ const UserProfile = () => {
   const [userItems, setUserItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCurrentUser, setIsCurrentUser] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true);
+      setError(null);
       
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
         if (!id) {
+          setError("No user ID provided");
           navigate('/');
           return;
         }
-        
+
+        const { data: { user } } = await supabase.auth.getUser();
         setIsCurrentUser(user?.id === id);
         
+        // Fetch user profile data
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
@@ -112,13 +115,22 @@ const UserProfile = () => {
           
         if (profileError) {
           console.error("Error fetching profile:", profileError);
-          toast.error("Failed to load user profile");
-          navigate('/');
+          if (profileError.code === 'PGRST116') {
+            setError("User not found");
+          } else {
+            setError("Failed to load user profile");
+          }
+          return;
+        }
+        
+        if (!profileData) {
+          setError("User not found");
           return;
         }
         
         setProfile(profileData);
         
+        // Fetch user's listings
         const { data: itemsData, error: itemsError } = await supabase
           .from('items')
           .select(`
@@ -141,9 +153,9 @@ const UserProfile = () => {
         }));
         
         setUserItems(formattedItems);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching user data:", error);
-        toast.error("An error occurred while loading user data");
+        setError(error.message || "An error occurred while loading user data");
       } finally {
         setLoading(false);
       }
@@ -155,6 +167,7 @@ const UserProfile = () => {
   useEffect(() => {
     if (!id) return;
     
+    // Subscribe to real-time profile updates
     const channel = supabase
       .channel('profile-changes')
       .on('postgres_changes', { 
@@ -180,12 +193,12 @@ const UserProfile = () => {
     );
   }
   
-  if (!profile) {
+  if (error || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">User not found</h2>
-          <p className="text-muted-foreground mb-4">The user profile you're looking for doesn't exist.</p>
+          <p className="text-muted-foreground mb-4">{error || "The user profile you're looking for doesn't exist."}</p>
           <Button onClick={() => navigate('/')}>Return Home</Button>
         </div>
       </div>
