@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -268,8 +267,8 @@ const Admin = () => {
   }, [navigate])
 
   const handleViewUserProfile = (userId: string) => {
-    setSelectedUserId(userId)
-    setIsUserDetailsOpen(true)
+    console.log('Navigating to UserProfile with ID:', userId);
+    navigate(`/user/${userId}`);
   }
 
   const handleDeleteItem = async (itemId: string) => {

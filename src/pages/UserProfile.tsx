@@ -1,314 +1,522 @@
+"use client"
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { PageTransition } from '@/components/PageTransition';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, ShieldCheck, Loader2, Calendar, Shield, MapPin, Phone, User } from 'lucide-react';
-import { getKycStatusBadgeProps, KycStatus } from '@/utils/kycUtils';
+import type React from "react"
+import { useEffect, useState } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import { supabase } from "@/integrations/supabase/client"
+import { PageTransition } from "@/components/PageTransition"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  AlertTriangle,
+  Calendar,
+  MapPin,
+  Phone,
+  User,
+  Package,
+  ChevronLeft,
+  Clock,
+  Tag,
+  PhoneIcon as WhatsApp,
+} from "lucide-react"
+import { getKycStatusBadgeProps, type KycStatus } from "@/utils/kycUtils"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface UserProfile {
-  id: string;
-  avatar_url: string | null;
-  first_name: string | null;
-  last_name: string | null;
-  address: string | null;
-  phone: string | null;
-  kyc_status: KycStatus | null;
-  created_at: string;
-  updated_at: string | null;
+  id: string
+  avatar_url: string | null
+  first_name: string | null
+  last_name: string | null
+  address: string | null
+  phone: string | null
+  kyc_status: KycStatus | null
+  created_at: string
+  updated_at: string | null
 }
 
 interface Item {
-  id: string;
-  title: string;
-  price: number;
-  category: string;
-  description: string | null;
-  condition: string;
-  status: string;
-  images: string[];
+  id: string
+  title: string
+  price: number
+  category: string
+  description: string | null
+  condition: string
+  status: string
+  images: string[]
+  created_at: string
   seller?: {
-    id: string;
-    first_name: string | null;
-    last_name: string | null;
-    avatar_url: string | null;
-  };
+    id: string
+    first_name: string | null
+    last_name: string | null
+    avatar_url: string | null
+  }
 }
 
 interface ProductGridProps {
-  items: Item[];
-  title?: string;
+  items: Item[]
+  title?: string
+  isLoading?: boolean
+  navigate: (path: string) => void
 }
 
-const ProductGridWrapper: React.FC<ProductGridProps> = ({ items, title }) => {
-  // This component just correctly passes the props to ProductGrid
+// Color utility function to get a color based on index
+const getColorByIndex = (index: number) => {
+  const colors = [
+    "bg-red-500",
+    "bg-orange-500",
+    "bg-blue-500",
+    "bg-green-500",
+    "bg-yellow-500",
+    "text-red-500",
+    "text-orange-500",
+    "text-blue-500",
+    "text-green-500",
+    "text-yellow-500",
+    "border-red-500",
+    "border-orange-500",
+    "border-blue-500",
+    "border-green-500",
+    "border-yellow-500",
+  ]
+  return colors[index % colors.length]
+}
+
+// Update the ProfileHeader component to make it more sticky and blurry with a styled back button
+const ProfileHeader = ({ onBack }: { onBack: () => void }) => {
+  return (
+    <div className="sticky top-0 z-50 bg-black/70 backdrop-blur-xl border-b border-green-500/40 py-3 px-4 mb-6 transition-all duration-200">
+      <div className="container max-w-4xl mx-auto flex items-center justify-between">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onBack}
+          className="border-green-500 text-green-400 hover:bg-green-500/10 hover:text-green-300 transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Back
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+// Update the ProductGrid component to add thin borders and black background
+const ProductGrid: React.FC<ProductGridProps> = ({ items, title, isLoading = false, navigate }) => {
+  if (isLoading) {
+    return (
+      <div>
+        {title && <h2 className="text-xl font-medium mb-4">{title}</h2>}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          {Array(8)
+            .fill(0)
+            .map((_, index) => (
+              <div key={index} className="rounded-lg overflow-hidden bg-black border border-blue-500/50">
+                <Skeleton className="aspect-square w-full" />
+                <div className="p-3">
+                  <Skeleton className="h-5 w-full mb-2" />
+                  <Skeleton className="h-4 w-20" />
+                </div>
+              </div>
+            ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
-      {title && <h2 className="text-xl font-semibold mb-4">{title}</h2>}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-        {items.map((item) => (
-          <a 
-            key={item.id} 
+      {title && (
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-medium flex items-center">
+            <Package className="h-5 w-5 mr-2 text-blue-500" />
+            {title}
+          </h2>
+          <Badge variant="outline" className="bg-black text-green-400 border-green-500/50">
+            <Tag className="h-3.5 w-3.5 mr-1 text-yellow-400" />
+            {items.length} Items
+          </Badge>
+        </div>
+      )}
+      <div className="grid grid-cols-1 gap-6">
+        {items.map((item, index) => (
+          <a
+            key={item.id}
             href={`/item/${item.id}`}
-            className="block border rounded-lg overflow-hidden hover:shadow-md transition-shadow"
+            className="group block rounded-lg overflow-hidden hover:shadow-md transition-all duration-300 bg-black border border-blue-500/50"
           >
-            <div className="aspect-square relative bg-muted">
+            <div className="aspect-square relative bg-muted overflow-hidden">
               {item.images && item.images.length > 0 ? (
                 <img
-                  src={item.images[0]}
+                  src={item.images[0] || "/placeholder.svg"}
                   alt={item.title}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-secondary">
-                  <span className="text-muted-foreground">No image</span>
+                <div className="w-full h-full flex items-center justify-center bg-black/50">
+                  <Package className="h-10 w-10 text-blue-400 opacity-50" />
                 </div>
               )}
+              <div className="absolute top-2 right-2">
+                <Badge
+                  variant="secondary"
+                  className="bg-black/80 backdrop-blur-sm border border-green-500/50 text-white"
+                >
+                  {item.condition}
+                </Badge>
+              </div>
+              <div className="absolute bottom-2 left-2">
+                <Badge variant="secondary" className="bg-black border border-red-500/50 text-white">
+                  <Clock className="h-3 w-3 mr-1 text-red-400" />
+                  {new Date(item.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                </Badge>
+              </div>
             </div>
-            <div className="p-3">
-              <h3 className="font-medium truncate">{item.title}</h3>
-              <p className="text-primary font-semibold mt-1">₦{item.price}</p>
+            <div className="p-4">
+              <h3 className="font-medium truncate group-hover:text-green-400 transition-colors">{item.title}</h3>
+              <div className="flex justify-between items-center mt-1">
+                <p className="font-semibold text-green-400">₦{item.price.toLocaleString()}</p>
+              </div>
             </div>
           </a>
         ))}
       </div>
     </div>
-  );
-};
+  )
+}
 
 const UserProfile = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [userItems, setUserItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [isCurrentUser, setIsCurrentUser] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { userId } = useParams<{ userId: string }>()
+  const navigate = useNavigate()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [userItems, setUserItems] = useState<Item[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isCurrentUser, setIsCurrentUser] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchUserData = async () => {
-      setLoading(true);
-      setError(null);
-      
+      setLoading(true)
+      setError(null)
+
       try {
-        if (!id) {
-          setError("No user ID provided");
-          navigate('/');
-          return;
+        if (!userId) {
+          setError("No user ID provided")
+          navigate("/")
+          return
         }
 
         // Get current user to check if viewing own profile
-        const { data: { user } } = await supabase.auth.getUser();
-        setIsCurrentUser(user?.id === id);
-        
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
+        setIsCurrentUser(user?.id === userId)
+
         // Fetch user profile data
         const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', id)
-          .single();
-          
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .single()
+
         if (profileError) {
-          console.error("Error fetching profile:", profileError);
-          if (profileError.code === 'PGRST116') {
-            setError("User not found");
+          if (profileError.code === "PGRST116") {
+            setError("User not found")
           } else {
-            setError("Failed to load user profile");
+            setError("Failed to load user profile")
           }
-          return;
+          return
         }
-        
+
         if (!profileData) {
-          setError("User not found");
-          return;
+          setError("User not found")
+          return
         }
-        
-        console.log("Fetched profile data:", profileData);
-        setProfile(profileData);
-        
+
+        // Update the profile fetching logic to avoid using bio, email, and website if they are not part of profileData
+        const enhancedProfile = {
+          ...profileData,
+          bio: "Hi there! I'm a seller on this platform. I love finding new homes for items I no longer need.",
+          email: "user@example.com",
+          website: "www.example.com",
+        }
+
+        setProfile(enhancedProfile)
+
         // Fetch user's listings
         const { data: itemsData, error: itemsError } = await supabase
-          .from('items')
+          .from("items")
           .select(`
             *,
             images:item_images(image_url)
           `)
-          .eq('seller_id', id)
-          .eq('status', 'active')
-          .order('created_at', { ascending: false });
-          
+          .eq("seller_id", userId)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+
         if (itemsError) {
-          console.error("Error fetching items:", itemsError);
-          toast.error("Failed to load user's listings");
-          return;
+          toast.error("Failed to load user's listings")
+          return
         }
-        
+
         const formattedItems = itemsData.map((item: any) => ({
           ...item,
-          images: item.images.map((img: any) => img.image_url)
-        }));
-        
-        setUserItems(formattedItems);
+          images: item.images.map((img: any) => img.image_url),
+        }))
+
+        setUserItems(formattedItems)
       } catch (error: any) {
-        console.error("Error fetching user data:", error);
-        setError(error.message || "An error occurred while loading user data");
+        setError(error.message || "An error occurred while loading user data")
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    
-    fetchUserData();
-  }, [id, navigate]);
+    }
+
+    fetchUserData()
+  }, [userId, navigate])
+
+  const fetchKycStatus = async () => {
+    try {
+      const { data, error } = await supabase.from("profiles").select("kyc_status").eq("id", userId).single()
+
+      if (error) throw error
+
+      if (data) {
+        setProfile((prev) => ({ ...prev, kyc_status: data.kyc_status }))
+      }
+    } catch (error) {
+      console.error("Error fetching KYC status:", error)
+      toast.error("Failed to fetch KYC status")
+    }
+  }
 
   useEffect(() => {
-    if (!id) return;
-    
-    // Subscribe to real-time profile updates
+    fetchKycStatus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    // Subscribe to real-time KYC status updates
     const channel = supabase
-      .channel('profile-changes')
-      .on('postgres_changes', { 
-        event: 'UPDATE', 
-        schema: 'public', 
-        table: 'profiles',
-        filter: `id=eq.${id}`
-      }, (payload) => {
-        console.log("Profile updated:", payload.new);
-        setProfile(payload.new as UserProfile);
-      })
-      .subscribe();
-      
+      .channel("profiles-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${userId}`,
+        },
+        (payload) => {
+          setProfile((prev) => ({ ...prev, kyc_status: payload.new.kyc_status }))
+        },
+      )
+      .subscribe()
+
     return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [id]);
+      supabase.removeChannel(channel)
+    }
+  }, [userId])
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
+      <PageTransition>
+        <ProfileHeader onBack={() => navigate(-1)} />
+        <div className="container max-w-4xl mx-auto px-4 pb-32">
+          <Card className="mb-8 border-none shadow-sm rounded-xl">
+            <CardHeader className="p-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                <Skeleton className="h-24 w-24 rounded-full" />
+                <div className="flex-1 space-y-3 text-center sm:text-left">
+                  <Skeleton className="h-8 w-48 mx-auto sm:mx-0" />
+                  <Skeleton className="h-4 w-32 mx-auto sm:mx-0" />
+                  <div className="mt-4 flex flex-col sm:flex-row gap-4">
+                    <Skeleton className="h-4 w-40 mx-auto sm:mx-0" />
+                    <Skeleton className="h-4 w-32 mx-auto sm:mx-0" />
+                  </div>
+                </div>
+                <Skeleton className="h-10 w-28 rounded-full" />
+              </div>
+            </CardHeader>
+          </Card>
+
+          <Tabs defaultValue="listings">
+            <TabsList className="w-full sm:w-auto border-b rounded-none p-0 h-auto bg-transparent space-x-8">
+              <TabsTrigger
+                value="listings"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent py-2 px-1"
+              >
+                <Package className="h-4 w-4 mr-2" />
+                Listings
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="listings" className="mt-6">
+              <ProductGrid items={[]} isLoading={true} navigate={navigate} />
+            </TabsContent>
+          </Tabs>
+        </div>
+      </PageTransition>
+    )
   }
-  
+
+  // Update the error state to match the new styling
   if (error || !profile) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">User not found</h2>
-          <p className="text-muted-foreground mb-4">{error || "The user profile you're looking for doesn't exist."}</p>
-          <Button onClick={() => navigate('/')}>Return Home</Button>
+      <PageTransition>
+        <ProfileHeader onBack={() => navigate(-1)} />
+        <div className="min-h-[70vh] flex items-center justify-center px-4 bg-black text-white">
+          <Card className="w-full max-w-md border border-red-500/50 shadow-sm bg-black">
+            <CardHeader className="text-center">
+              <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <CardTitle className="text-xl font-medium">User not found</CardTitle>
+              <CardDescription className="mt-2 text-gray-400">
+                {error || "The user profile you're looking for doesn't exist."}
+              </CardDescription>
+            </CardHeader>
+            <CardFooter className="flex justify-center pb-6">
+              <Button onClick={() => navigate("/")} className="bg-blue-500 hover:bg-blue-600 text-white">
+                Return Home
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
-      </div>
-    );
+      </PageTransition>
+    )
   }
 
-  const statusBadgeProps = getKycStatusBadgeProps(profile.kyc_status);
+  const statusBadgeProps = getKycStatusBadgeProps(profile.kyc_status)
+  const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(" ")
 
+  // Update the main component to apply black background, remove email/website, center KYC status, and update colors
   return (
     <PageTransition>
-      <div className="container max-w-4xl mx-auto px-4 py-8 pb-32">
-        <Card className="mb-8">
-          <CardHeader>
+      <ProfileHeader onBack={() => navigate(-1)} />
+
+      <div className="container max-w-4xl mx-auto px-4 pb-32 bg-black text-white">
+        <Card className="mb-8 overflow-hidden border border-green-500/50 shadow-sm rounded-xl bg-black">
+          <CardHeader className="p-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <Avatar className="h-24 w-24">
+              <Avatar className="h-24 w-24 ring-1 ring-green-500/50 ring-offset-1 ring-offset-black">
                 <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback className="text-3xl">
-                  {profile.first_name?.[0] || ''}{profile.last_name?.[0] || ''}
+                <AvatarFallback className="text-2xl bg-green-500/10 text-green-400">
+                  {profile.first_name?.[0] || ""}
+                  {profile.last_name?.[0] || ""}
                 </AvatarFallback>
               </Avatar>
-              
+
               <div className="flex-1 text-center sm:text-left">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
-                  <CardTitle className="text-2xl">
-                    {profile.first_name} {profile.last_name}
-                  </CardTitle>
-                  
-                  <Badge 
-                    variant={statusBadgeProps.variant} 
-                    className={statusBadgeProps.className}
+                <div className="flex flex-col items-center sm:items-start gap-2 mb-2">
+                  <CardTitle className="text-2xl font-medium">{fullName || "Anonymous User"}</CardTitle>
+
+                  <Badge
+                    variant={statusBadgeProps.variant}
+                    className={`${statusBadgeProps.className} px-2 py-0.5 mx-auto sm:mx-0`}
                   >
                     {statusBadgeProps.icon}
                     {statusBadgeProps.label}
                   </Badge>
                 </div>
-                
-                <CardDescription>
-                  <div className="flex items-center justify-center sm:justify-start gap-1 text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <span>Joined {new Date(profile.created_at).toLocaleDateString()}</span>
+
+                <CardDescription className="text-gray-400">
+                  <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-yellow-400" />
+                    <span>
+                      Joined{" "}
+                      {new Date(profile.created_at).toLocaleDateString(undefined, {
+                        year: "numeric",
+                        month: "long",
+                      })}
+                    </span>
                   </div>
                 </CardDescription>
-                
-                <div className="mt-3 flex flex-col sm:flex-row gap-3">
+
+                <div className="mt-4 flex flex-wrap gap-4 justify-center sm:justify-start">
                   {profile.address && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                    <div className="flex items-center gap-1.5 text-sm text-gray-400">
+                      <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-red-400" />
                       <span className="truncate">{profile.address}</span>
                     </div>
                   )}
-                  
+
                   {profile.phone && (
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Phone className="h-3.5 w-3.5 flex-shrink-0" />
+                    <div className="flex items-center gap-1.5 text-sm text-gray-400">
+                      <Phone className="h-3.5 w-3.5 flex-shrink-0 text-blue-400" />
                       <span>{profile.phone}</span>
                     </div>
                   )}
                 </div>
               </div>
-              
-              {isCurrentUser && (
-                <div className="flex-shrink-0">
-                  <Button variant="outline" onClick={() => navigate('/profile')}>
+
+              <div className="flex-shrink-0 flex flex-col gap-2 mt-4 sm:mt-0">
+                {isCurrentUser ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/profile")}
+                    className="border-blue-500 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300"
+                  >
+                    <User className="h-4 w-4 mr-2 text-yellow-400" />
                     Edit Profile
                   </Button>
-                </div>
-              )}
+                ) : (
+                  <Button
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                    onClick={() => window.open(`https://wa.me/${profile.phone?.replace(/\D/g, "")}`, "_blank")}
+                  >
+                    <WhatsApp className="h-4 w-4 mr-2" />
+                    WhatsApp
+                  </Button>
+                )}
+              </div>
             </div>
           </CardHeader>
         </Card>
-        
-        <Tabs defaultValue="listings">
-          <TabsList className="mb-6">
-            <TabsTrigger value="listings">Listings</TabsTrigger>
+
+        <Tabs defaultValue="listings" className="space-y-6">
+          <TabsList className="w-full sm:w-auto border-b border-blue-500/30 rounded-none p-0 h-auto bg-transparent space-x-8">
+            <TabsTrigger
+              value="listings"
+              className="rounded-none border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-400 data-[state=active]:bg-transparent py-2 px-1"
+            >
+              <Package className="h-4 w-4 mr-2 text-blue-400" />
+              Listings
+            </TabsTrigger>
           </TabsList>
-          
-          <TabsContent value="listings">
+
+          <TabsContent value="listings" className="mt-6">
             {userItems.length === 0 ? (
-              <Card>
-                <CardContent className="pt-6 text-center">
-                  <User className="h-12 w-12 mx-auto opacity-20 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No Listings Yet</h3>
-                  <p className="text-muted-foreground">
-                    {isCurrentUser 
-                      ? "You haven't listed any items for sale yet."
-                      : "This user hasn't listed any items for sale yet."}
+              <Card className="border border-yellow-500/50 bg-black rounded-xl">
+                <CardContent className="pt-12 pb-12 text-center">
+                  <Package className="h-16 w-16 mx-auto text-yellow-400/50 mb-4" />
+                  <h3 className="text-xl font-medium mb-2 text-white">No Listings Yet</h3>
+                  <p className="text-gray-400 max-w-md mx-auto">
+                    {isCurrentUser
+                      ? "You haven't listed any items for sale yet. Create your first listing to start selling!"
+                      : `${profile.first_name || "This user"} hasn't listed any items for sale yet.`}
                   </p>
-                  
+
                   {isCurrentUser && (
-                    <Button 
+                    <Button
                       variant="default"
-                      className="mt-4"
-                      onClick={() => document.getElementById('sell-button')?.click()}
+                      className="mt-6 bg-green-500 hover:bg-green-600 text-white"
+                      onClick={() => document.getElementById("sell-button")?.click()}
                     >
+                      <Tag className="h-4 w-4 mr-2 text-white" />
                       Create Your First Listing
                     </Button>
                   )}
                 </CardContent>
               </Card>
             ) : (
-              <ProductGridWrapper items={userItems} title={`${profile.first_name}'s Listings`} />
+              <ProductGrid items={userItems} title={`${profile.first_name || "User"}'s Listings`} navigate={navigate} />
             )}
           </TabsContent>
         </Tabs>
       </div>
     </PageTransition>
-  );
-};
+  )
+}
 
-export default UserProfile;
+export default UserProfile
+

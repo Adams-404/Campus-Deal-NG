@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   ColumnDef,
@@ -117,7 +116,7 @@ export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabPr
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => onViewUserProfile(user.id)}>
+              <DropdownMenuItem onClick={() => handleViewUserProfile(user.id)}>
                 <Edit className="h-4 w-4 mr-2" />
                 View Profile
               </DropdownMenuItem>
@@ -146,6 +145,11 @@ export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabPr
       globalFilter,
     },
   });
+
+  const handleViewUserProfile = (userId: string) => {
+    console.log('User ID to view profile:', userId);
+    onViewUserProfile(userId);
+  };
 
   return (
     <Card>

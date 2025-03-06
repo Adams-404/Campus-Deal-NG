@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +11,11 @@ export interface AdminsTabProps {
 }
 
 export function AdminsTab({ users, onViewUserProfile, onAdminAction }: AdminsTabProps) {
+  const handleViewUserProfile = (adminId: string) => {
+    console.log('Admin ID to view profile:', adminId);
+    onViewUserProfile(adminId);
+  };
+
   return (
     <>
       <div className="flex justify-end">
@@ -42,7 +46,7 @@ export function AdminsTab({ users, onViewUserProfile, onAdminAction }: AdminsTab
                   variant="ghost"
                   size="sm"
                   className="ml-auto"
-                  onClick={() => onViewUserProfile(admin.id)}
+                  onClick={() => handleViewUserProfile(admin.id)}
                 >
                   View Profile
                 </Button>
