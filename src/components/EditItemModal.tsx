@@ -303,9 +303,9 @@ export const EditItemModal = ({ isOpen, onClose, onItemUpdated, itemId }: EditIt
   }
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-in fade-in duration-300">
-      <form onSubmit={handleSubmit} className="bg-secondary w-full sm:w-[95%] md:w-[90%] lg:w-[80%] max-w-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom duration-500">
-        <div className="sticky top-0 z-10 flex justify-between items-center p-3 sm:p-4 border-b border-white/10 bg-secondary/95 backdrop-blur-sm">
+    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 overflow-y-auto pt-16 pb-24">
+      <form onSubmit={handleSubmit} className="mx-auto max-w-2xl rounded-2xl overflow-hidden animate-in slide-in-from-bottom duration-500">
+        <div className="sticky top-0 z-10 flex justify-between items-center p-3 sm:p-4 border-b border-white/10 bg-background/95 backdrop-blur-sm">
           <h2 className="text-lg sm:text-xl font-semibold text-white">Edit Item</h2>
           <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 sm:h-10 sm:w-10">
             <X className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -482,15 +482,15 @@ export const EditItemModal = ({ isOpen, onClose, onItemUpdated, itemId }: EditIt
             />
           </div>
 
-          <div className="pt-2 sm:pt-4">
+          <div className="pt-2 sm:pt-4 pb-4">
             <Button 
-              type="submit" 
-              className="w-full h-10 sm:h-11 text-sm sm:text-base"
+              type="submit"
+              className="w-full h-12 text-lg"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                   Updating Item...
                 </>
               ) : (

@@ -21,7 +21,7 @@ import { useEffect, useState } from "react";
 // Enhanced Typewriter animation component
 const TypewriterText = () => {
   const [displayText, setDisplayText] = useState("");
-  const phrases = ["Connect & Exchange.", "Buy & Sell.", "Trade & Grow.", "GSU Market."];
+  const phrases = ["Connect & Exchange.", "Buy & Sell.", "Trade & Grow.", "Tradezy."];
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
 
   useEffect(() => {
@@ -171,7 +171,7 @@ const stats = [
 
 const testimonials = [
   {
-    quote: "GSU Market has made buying and selling textbooks so much easier! The verification process makes me feel safe.",
+    quote: "Tradezy has made buying and selling textbooks so much easier! The verification process makes me feel safe.",
     author: "Aisha M.",
     role: "Computer Science Student"
   },
@@ -270,7 +270,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl font-bold mb-4 text-white">
-              Why <span className="bg-blue-500 px-6 py-2 rounded-[15px] inline-block my-2">Choose GSU Market</span>
+              Why <span className="bg-blue-500 px-6 py-2 rounded-[15px] inline-block my-2">Choose Tradezy</span>
             </h2>
             <p className="text-white/80 max-w-2xl mx-auto">
               Experience the best of campus trading with our feature-rich platform designed specifically for GSU students.
@@ -380,7 +380,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
               <h3 className="font-bold mb-4 text-blue-500">
-                GSU Market
+                Tradezy
               </h3>
               <p className="text-sm text-white/80">
                 Your trusted platform for campus trading at Gombe State University.
@@ -420,7 +420,7 @@ const Index = () => {
             </div>
           </div>
           <div className="pt-8 border-t border-blue-200/10 text-center text-sm text-white/60">
-            <p>&copy; {new Date().getFullYear()} GSU Market. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Tradezy. All rights reserved.</p>
           </div>
         </div>
       </footer>

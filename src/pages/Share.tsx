@@ -21,7 +21,7 @@ const shareOptions = [
     icon: Copy,
     label: "Copy Link",
     action: async () => {
-      await navigator.clipboard.writeText("https://gsumarket.com");
+      await navigator.clipboard.writeText("https://tradezy.com");
       toast.success("Link copied to clipboard!");
     },
     color: "text-blue-500",
@@ -32,7 +32,7 @@ const shareOptions = [
     icon: Facebook,
     label: "Facebook",
     action: () => {
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://gsumarket.com")}`, "_blank");
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://tradezy.com")}`, "_blank");
     },
     color: "text-[#1877F2]",
     bgColor: "bg-[#1877F2]/10",
@@ -42,7 +42,7 @@ const shareOptions = [
     icon: Twitter,
     label: "Twitter",
     action: () => {
-      window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent("https://gsumarket.com")}&text=${encodeURIComponent("Check out GSU Market - Buy and sell within your university community!")}`, "_blank");
+      window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent("https://tradezy.com")}&text=${encodeURIComponent("Check out Tradezy - Buy and sell within your university community!")}`, "_blank");
     },
     color: "text-[#1DA1F2]",
     bgColor: "bg-[#1DA1F2]/10",
@@ -52,7 +52,7 @@ const shareOptions = [
     icon: MessageCircle,
     label: "WhatsApp",
     action: () => {
-      window.open(`https://wa.me/?text=${encodeURIComponent("Check out GSU Market: https://gsumarket.com")}`, "_blank");
+      window.open(`https://wa.me/?text=${encodeURIComponent("Check out Tradezy: https://tradezy.com")}`, "_blank");
     },
     color: "text-[#25D366]",
     bgColor: "bg-[#25D366]/10",
@@ -62,7 +62,7 @@ const shareOptions = [
     icon: Instagram,
     label: "Instagram",
     action: () => {
-      navigator.clipboard.writeText("https://gsumarket.com");
+      navigator.clipboard.writeText("https://tradezy.com");
       toast.info("Link copied! Share it on your Instagram story or post");
     },
     color: "text-[#E4405F]",
@@ -73,7 +73,7 @@ const shareOptions = [
     icon: Linkedin,
     label: "LinkedIn",
     action: () => {
-      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://gsumarket.com")}`, "_blank");
+      window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://tradezy.com")}`, "_blank");
     },
     color: "text-[#0A66C2]",
     bgColor: "bg-[#0A66C2]/10",
@@ -83,7 +83,7 @@ const shareOptions = [
     icon: MessageCircle,
     label: "Telegram",
     action: () => {
-      window.open(`https://t.me/share/url?url=${encodeURIComponent("https://gsumarket.com")}&text=${encodeURIComponent("Check out GSU Market - Buy and sell within your university community!")}`, "_blank");
+      window.open(`https://t.me/share/url?url=${encodeURIComponent("https://tradezy.com")}&text=${encodeURIComponent("Check out Tradezy - Buy and sell within your university community!")}`, "_blank");
     },
     color: "text-[#0088CC]",
     bgColor: "bg-[#0088CC]/10",
@@ -93,7 +93,7 @@ const shareOptions = [
     icon: Mail,
     label: "Email",
     action: () => {
-      window.location.href = `mailto:?subject=${encodeURIComponent("Check out GSU Market!")}&body=${encodeURIComponent("I found this great marketplace for university students: https://gsumarket.com")}`;
+      window.location.href = `mailto:?subject=${encodeURIComponent("Check out Tradezy!")}&body=${encodeURIComponent("I found this great marketplace for university students: https://tradezy.com")}`;
     },
     color: "text-pink-500",
     bgColor: "bg-pink-500/10",
@@ -103,7 +103,7 @@ const shareOptions = [
     icon: MessageCircle,
     label: "Messages",
     action: () => {
-      window.location.href = `sms:?&body=${encodeURIComponent("Check out GSU Market: https://gsumarket.com")}`;
+      window.location.href = `sms:?&body=${encodeURIComponent("Check out Tradezy: https://tradezy.com")}`;
     },
     color: "text-green-500",
     bgColor: "bg-green-500/10",
@@ -144,7 +144,7 @@ export default function Share() {
                 >
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <h1 className="text-lg font-semibold flex-1 text-center">Share GSU Market</h1>
+                <h1 className="text-lg font-semibold flex-1 text-center">Share Tradezy</h1>
                 <div className="w-9" /> {/* Spacer for centering */}
               </div>
             </div>
@@ -166,7 +166,7 @@ export default function Share() {
 
             <div className="mt-8 text-center">
               <p className="text-sm text-gray-400">
-                Share GSU Market with your friends and help grow our university community!
+                Share Tradezy with your friends and help grow our university community!
               </p>
             </div>
           </section>

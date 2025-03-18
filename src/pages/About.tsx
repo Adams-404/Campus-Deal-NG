@@ -70,7 +70,7 @@ export default function About() {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold flex-1 text-center">About GSU Market</h1>
+            <h1 className="text-lg font-semibold flex-1 text-center">About Tradezy</h1>
             <div className="w-9" /> {/* Spacer for centering */}
           </div>
           <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
@@ -87,7 +87,7 @@ export default function About() {
                 <h2 className="text-lg font-semibold">Our Mission</h2>
               </div>
               <p className="text-gray-400">
-                GSU Market aims to create a safe and efficient marketplace for the university
+                Tradezy aims to create a safe and efficient marketplace for the university
                 community. We're committed to making buying and selling within the campus
                 easy, secure, and sustainable.
               </p>
@@ -225,7 +225,7 @@ export default function About() {
             {/* Version */}
             <div className="mt-12 text-center text-sm text-gray-400">
               <p>Version 1.0.0</p>
-              <p className="mt-1">© 2025 GSU Market. All rights reserved.</p>
+              <p className="mt-1"> 2025 Tradezy. All rights reserved.</p>
             </div>
           </div>
         </PageTransition>

@@ -90,7 +90,7 @@ export default function Privacy() {
           <div className="pt-24 pb-32 space-y-6">
             <div className="prose prose-invert max-w-none mb-8">
               <p className="text-gray-400">
-                At GSU Market, we take your privacy seriously. This policy outlines how we collect,
+                At Tradezy, we take your privacy seriously. This policy outlines how we collect,
                 use, and protect your personal information. By using our service, you agree to
                 the collection and use of information in accordance with this policy.
               </p>
@@ -113,7 +113,7 @@ export default function Privacy() {
             </div>
 
             <div className="mt-8 text-center text-sm text-gray-400">
-              <p>Last updated: March 2024</p>
+              <p>Last updated: March 2025</p>
               <p className="mt-2">
                 If you have any questions about our Privacy Policy, please{" "}
                 <a href="/help" className="text-primary hover:underline">

@@ -91,7 +91,7 @@ export const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to="/home" className="text-xl font-semibold text-white">
-            GSU Market
+            Tradezy
           </Link>
 
           <div
@@ -236,4 +236,3 @@ export const Navbar = () => {
     </nav>
   )
 }
-
