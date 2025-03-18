@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ShieldCheck, AlertTriangle, Loader2, Shield } from "lucide-react";
@@ -21,7 +20,7 @@ export async function updateKYCStatus(
     const { data, error } = await supabase.rpc('update_kyc_status', {
       document_id: documentId,
       user_id: userId,
-      new_status: newStatus,
+      new_status: newStatus as 'verified' | 'rejected' | 'pending' | 'processing',
       admin_notes_param: adminNotes || null
     });
     

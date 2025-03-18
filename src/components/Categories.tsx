@@ -74,7 +74,7 @@ const tips: Tip[] = [
   },
 ]
 
-const TipCard = ({ tip }: { tip: Tip }) => {
+const TipCard = ({ tip, autoplay, isPaused, togglePause }: { tip: Tip, autoplay: boolean, isPaused: boolean, togglePause: (e: React.MouseEvent) => void }) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -84,7 +84,7 @@ const TipCard = ({ tip }: { tip: Tip }) => {
       className="flex flex-col items-center justify-center space-y-4 min-h-[180px] w-full mx-0"
     >
       <div className="flex items-center gap-3">
-        {tip.type === "do" ? (
+        {tip.type === 'do' ? (
           <div className="p-2 bg-green-500/20 rounded-full">
             <Check className="w-6 h-6 text-green-500" />
           </div>
@@ -93,14 +93,24 @@ const TipCard = ({ tip }: { tip: Tip }) => {
             <X className="w-6 h-6 text-red-500" />
           </div>
         )}
-        <h3 className={cn("text-xl md:text-2xl font-bold", tip.type === "do" ? "text-green-500" : "text-red-500")}>
+        <h3 className={cn('text-xl md:text-2xl font-bold', tip.type === 'do' ? 'text-green-500' : 'text-red-500')}>
           {tip.title}
         </h3>
       </div>
       <p className="text-center text-gray-700 dark:text-gray-300 text-base md:text-lg max-w-prose">{tip.content}</p>
+      <button
+        onClick={togglePause}
+        className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+      >
+        {isPaused ? (
+          <Play className="w-5 h-5" />
+        ) : (
+          <Pause className="w-5 h-5" />
+        )}
+      </button>
     </motion.div>
-  )
-}
+  );
+};
 
 export const Categories = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -202,45 +212,12 @@ export const Categories = () => {
     <section className="py-8 px-0 w-full" aria-labelledby="tips-heading">
       <div className="w-full mx-auto">
         <div className="flex flex-col gap-6 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3 justify-center sm:justify-start">
-              <Link
-                to="/saved"
-                className="inline-flex items-center justify-center gap-2 border border-blue-500 hover:border-blue-600 bg-transparent hover:bg-blue-500/10 px-4 py-2 rounded-lg transition-all"
-              >
-                <Heart className="w-5 h-5 text-blue-500" />
-                <span className="text-blue-500">Saved Items</span>
-              </Link>
-            </div>
-
-            <h2
-              id="tips-heading"
-              className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent text-center sm:text-left drop-shadow-md"
-            >
-              Safety Tips
-            </h2>
-
-            <div className="flex flex-wrap items-center gap-3 justify-center sm:justify-end">
-              <Badge
-                variant="outline"
-                className="cursor-pointer flex items-center gap-1 py-1.5"
-                onClick={toggleAutoplay}
-              >
-                {autoplay ? (
-                  <>
-                    <span>Autoplay: On</span>
-                    {isPaused ? (
-                      <Play className="h-3 w-3 ml-1 cursor-pointer" onClick={togglePause} />
-                    ) : (
-                      <Pause className="h-3 w-3 ml-1 cursor-pointer" onClick={togglePause} />
-                    )}
-                  </>
-                ) : (
-                  "Autoplay: Off"
-                )}
-              </Badge>
-            </div>
-          </div>
+          <h2
+            id="tips-heading"
+            className="text-2xl md:text-3xl font-semibold bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent text-center sm:text-left drop-shadow-md"
+          >
+            Safety Tips
+          </h2>
 
           <div
             {...handlers}
@@ -253,7 +230,13 @@ export const Categories = () => {
           >
             <div className="overflow-hidden">
               <AnimatePresence mode="wait">
-                <TipCard key={currentTip.id} tip={currentTip} />
+                <TipCard
+                  key={currentTip.id}
+                  tip={currentTip}
+                  autoplay={autoplay}
+                  isPaused={isPaused}
+                  togglePause={togglePause}
+                />
               </AnimatePresence>
             </div>
 
@@ -309,4 +292,3 @@ export const Categories = () => {
 }
 
 export default Categories
-

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -34,6 +34,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { UserProfile } from "./types";
 import { getKycStatusBadgeProps } from "@/utils/kycUtils";
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface UsersTabProps {
   users: UserProfile[];
@@ -49,6 +51,42 @@ export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabPr
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [usersData, setUsersData] = useState(users);
+
+  // Listen for profile updates
+  useEffect(() => {
+    const profilesChannel = supabase
+      .channel('users-tab-profiles-changes')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: 'kyc_status=eq.processing,kyc_status=eq.verified,kyc_status=eq.rejected,kyc_status=eq.pending'
+      }, (payload) => {
+        console.log('Profile update detected:', payload);
+        setUsersData(prevUsers => 
+          prevUsers.map(user => 
+            user.id === payload.new.id 
+              ? { ...user, kyc_status: payload.new.kyc_status } 
+              : user
+          )
+        );
+      })
+      .on('error', (error) => {
+        console.error('Profiles channel error:', error);
+        toast.error('Connection to profile updates lost. Please refresh the page.');
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+    };
+  }, []);
+
+  // Update usersData when users prop changes
+  useEffect(() => {
+    setUsersData(users);
+  }, [users]);
 
   const columns: ColumnDef<UserProfile>[] = [
     {
@@ -132,7 +170,7 @@ export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabPr
   ];
 
   const table = useReactTable({
-    data: users,
+    data: usersData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
@@ -199,7 +237,7 @@ export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabPr
                   ))}
                 </TableRow>
               ))}
-              {users.length === 0 && (
+              {usersData.length === 0 && (
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}

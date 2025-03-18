@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -82,6 +81,10 @@ export function KYCTab() {
         console.log("KYC document change detected:", payload);
         fetchKYCDocuments();
       })
+      .on('error', (error) => {
+        console.error('KYC documents channel error:', error);
+        toast.error('Connection to KYC updates lost. Please refresh the page.');
+      })
       .subscribe();
 
     // Listen for changes in profiles to catch KYC status updates
@@ -94,7 +97,18 @@ export function KYCTab() {
         filter: 'kyc_status=eq.processing,kyc_status=eq.verified,kyc_status=eq.rejected,kyc_status=eq.pending'
       }, (payload) => {
         console.log("Profile KYC status change detected:", payload);
-        fetchKYCDocuments();
+        // Update specific user's status in the local state
+        setKycDocuments(prevDocs => 
+          prevDocs.map(doc => 
+            doc.user_id === payload.new.id 
+              ? { ...doc, profile: { ...doc.profile, kyc_status: payload.new.kyc_status } } 
+              : doc
+          )
+        );
+      })
+      .on('error', (error) => {
+        console.error('Profiles channel error:', error);
+        toast.error('Connection to profile updates lost. Please refresh the page.');
       })
       .subscribe();
 
@@ -116,7 +130,20 @@ export function KYCTab() {
     setUpdatingStatus(true);
     
     try {
-      console.log(`Updating KYC status for document ${selectedDocument.id} to ${status}...`);
+      console.log(`Updating KYC status for document ${selectedDocument.id} to ${status}...`, {
+        userId: selectedDocument.user_id,
+        adminNotes
+      });
+      
+      // Optimistically update local state
+      setSelectedDocument(prev => prev ? {...prev, status} : null);
+      setKycDocuments(prev => 
+        prev.map(doc => 
+          doc.id === selectedDocument.id 
+            ? { ...doc, status } 
+            : doc
+        )
+      );
       
       const result = await updateKYCStatus(
         selectedDocument.id,
@@ -126,32 +153,74 @@ export function KYCTab() {
       );
       
       if (result.success) {
+        console.log('KYC status update successful:', {
+          documentId: selectedDocument.id,
+          newStatus: status
+        });
         toast.success(`KYC document ${status === 'verified' ? 'approved' : 'rejected'} successfully`);
         
-        // Update the selected document and the documents list with the new status
-        setSelectedDocument(prev => prev ? {...prev, status} : null);
+        // Force refresh documents after successful update
+        await fetchKYCDocuments();
+        
+        // Close the viewer after a short delay
+        setTimeout(() => {
+          setIsViewerOpen(false);
+        }, 500);
+      } else {
+        console.error('KYC status update failed:', result.error);
+        // Revert optimistic update if failed
+        setSelectedDocument(prev => prev ? {...prev, status: selectedDocument.status} : null);
         setKycDocuments(prev => 
           prev.map(doc => 
             doc.id === selectedDocument.id 
-              ? { ...doc, status } 
+              ? { ...doc, status: selectedDocument.status } 
               : doc
           )
         );
         
-        // Close the viewer and refresh the documents after a short delay
-        setTimeout(() => {
-          setIsViewerOpen(false);
-          fetchKYCDocuments();
-        }, 500);
-      } else {
-        console.error("Error updating KYC status:", result.error);
-        toast.error("Failed to update KYC status");
+        toast.error(
+          result.error?.message || 'Failed to update KYC status',
+          {
+            description: 'Please check the logs for more details'
+          }
+        );
       }
     } catch (error) {
-      console.error('Error updating KYC status:', error);
-      toast.error('Failed to update KYC status');
+      console.error('Error in handleStatusUpdate:', error);
+      // Revert optimistic update if error
+      setSelectedDocument(prev => prev ? {...prev, status: selectedDocument.status} : null);
+      setKycDocuments(prev => 
+        prev.map(doc => 
+          doc.id === selectedDocument.id 
+            ? { ...doc, status: selectedDocument.status } 
+            : doc
+        )
+      );
+      
+      toast.error('An unexpected error occurred while updating KYC status');
     } finally {
       setUpdatingStatus(false);
+    }
+  };
+
+  const handleVerifyUser = async (userId: string) => {
+    try {
+      console.log('Attempting to verify user:', userId);
+      const { data, error } = await supabase.rpc('verify_user', {
+        user_id: userId
+      });
+
+      if (error) {
+        console.error('Error verifying user:', error);
+        throw error;
+      }
+
+      console.log('User verification successful:', data);
+      toast.success('User verified successfully');
+      await fetchKYCDocuments();
+    } catch (error) {
+      console.error('Error in handleVerifyUser:', error);
+      toast.error('Failed to verify user');
     }
   };
 
@@ -229,6 +298,14 @@ export function KYCTab() {
                 >
                   {selectedDocument.status}
                 </Badge>
+                <Button 
+                  size="sm" 
+                  onClick={() => handleVerifyUser(selectedDocument.user_id)}
+                  variant="outline"
+                  className="ml-2"
+                >
+                  Verify User
+                </Button>
               </div>
               
               <Card>
