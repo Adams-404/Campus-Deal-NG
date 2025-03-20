@@ -1,4 +1,3 @@
-
 import { X, Upload, Video, ImagePlus, Trash2, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
 import { useState, useRef, FormEvent } from "react";
@@ -21,6 +20,20 @@ interface FormData {
   condition: "new" | "like_new" | "good" | "fair" | "poor";
   description: string;
 }
+
+const categories = [
+  'Food',
+  'Clothing',
+  'Beauty',
+  'Jewelry',
+  'Art',
+  'Baby',
+  'Bags',
+  'Shoes',
+  'Perfumes',
+  'Tools',
+  'Others'
+];
 
 export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => {
   const [images, setImages] = useState<File[]>([]);
@@ -338,10 +351,9 @@ export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => 
               required
             >
               <option value="">Select a category</option>
-              <option value="textbooks">Textbooks</option>
-              <option value="electronics">Electronics</option>
-              <option value="stationery">Stationery</option>
-              <option value="others">Others</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
             </select>
           </div>
 

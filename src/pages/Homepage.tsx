@@ -1,4 +1,3 @@
-import { Categories } from "@/components/Categories";
 import { ProductGrid } from "@/components/ProductGrid";
 import { PageTransition } from "@/components/PageTransition";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
@@ -25,7 +24,16 @@ interface Item {
     last_name?: string;
     avatar_url?: string;
   };
+  featured?: boolean;
 }
+
+const shuffleArray = (array: any[]) => {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+};
 
 const Homepage = () => {
   const [items, setItems] = useState<Item[]>([]);
@@ -82,7 +90,8 @@ const Homepage = () => {
             first_name: seller.first_name || 'Anonymous',
             last_name: seller.last_name,
             avatar_url: seller.avatar_url
-          } : undefined
+          } : undefined,
+          featured: item.featured
         };
       }).filter(item => item.images.length > 0); // Only show items with at least one image
 
@@ -124,81 +133,76 @@ const Homepage = () => {
     toast.success("Content refreshed");
   }, []);
 
-  // Filter and sort items based on search context
-  const filteredItems = useMemo(() => {
-    let result = [...items];
+  // Group items by category
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, Item[]> = {};
+    items.forEach(item => {
+      if (!groups[item.category]) {
+        groups[item.category] = [];
+      }
+      groups[item.category].push(item);
+    });
+    // Shuffle items in each category
+    Object.keys(groups).forEach(category => {
+      groups[category] = shuffleArray(groups[category]);
+    });
+    return groups;
+  }, [items]);
 
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(item => 
-        item.title.toLowerCase().includes(query)
-      );
-    }
-
-    // Filter by categories
-    if (selectedCategories.length > 0) {
-      result = result.filter(item =>
-        selectedCategories.includes(item.category)
-      );
-    }
-
-    // Sort items
-    switch (sortBy) {
-      case 'price-low':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'newest':
-        result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        break;
-      // Add more sorting options as needed
-    }
-
-    return result;
-  }, [items, searchQuery, selectedCategories, sortBy]);
-
-  useScrollPosition();
+  // Find featured items
+  const featuredItems = useMemo(() => {
+    return items.filter(item => item.featured);
+  }, [items]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className="max-w-3xl mx-auto px-4 sm:px-6">
         <PullToRefresh onRefresh={handleRefresh}>
           <PageTransition>
-            <section className="py-6 pb-32">
-              <div className="space-y-8">
-                <div>
-                  <Categories />
+            {/* Global Featured Item */}
+            {featuredItems.length > 0 && (
+              <section className="py-6">
+                <h2 className="text-2xl font-bold mb-6">Featured Item</h2>
+                <ProductCard
+                  item={featuredItems[0]}
+                  className="w-full"
+                />
+              </section>
+            )}
+
+            {/* Category Sections */}
+            {Object.entries(groupedItems).map(([category, categoryItems]) => (
+              <section key={category} className="py-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold capitalize">{category}</h2>
+                  <Link
+                    to={`/category/${category.toLowerCase()}`}
+                    className="text-primary hover:underline"
+                  >
+                    See All
+                  </Link>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold mb-6">
-                    {searchQuery ? 'Search Results' : 'Featured Items'}
-                  </h2>
-                  {loading ? (
-                    <div className="space-y-4">
-                      {[...Array(3)].map((_, i) => (
-                        <div key={i} className="w-full aspect-[16/9] animate-pulse bg-white/5 rounded-lg" />
-                      ))}
-                    </div>
-                  ) : filteredItems.length === 0 ? (
-                    <div className="text-center py-12 text-gray-400">
-                      {searchQuery ? 'No items found matching your search' : 'No items listed yet'}
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {filteredItems.map((item) => (
-                        <ProductCard
-                          key={item.id}
-                          item={item}
-                        />
-                      ))}
-                    </div>
-                  )}
+
+                {/* Featured Item for Category */}
+                <div className="mb-6">
+                  <ProductCard
+                    item={categoryItems[0]}
+                    className="w-full"
+                  />
                 </div>
-              </div>
-            </section>
+
+                {/* Horizontal Scroll for Other Items */}
+                <div className="overflow-x-auto pb-4">
+                  <div className="flex gap-4 w-max">
+                    {categoryItems.slice(1, 5).map(item => (
+                      <div key={item.id} className="w-64 flex-shrink-0">
+                        <ProductCard item={item} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            ))}
           </PageTransition>
         </PullToRefresh>
       </main>

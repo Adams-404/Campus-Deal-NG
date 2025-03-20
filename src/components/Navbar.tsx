@@ -86,6 +86,20 @@ export const Navbar = () => {
     setIsNotificationOpen(!isNotificationOpen)
   }
 
+  const categories = [
+    'Food',
+    'Clothing',
+    'Beauty',
+    'Jewelry',
+    'Art',
+    'Baby',
+    'Bags',
+    'Shoes',
+    'Perfumes',
+    'Tools',
+    'Others'
+  ];
+
   return (
     <nav className="fixed top-0 w-full bg-secondary/80 backdrop-blur-md z-50 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -204,10 +218,9 @@ export const Navbar = () => {
                   onChange={handleCategoryChange}
                 >
                   <option value="">All Categories</option>
-                  <option value="textbooks">Textbooks</option>
-                  <option value="electronics">Electronics</option>
-                  <option value="stationery">Stationery</option>
-                  <option value="others">Others</option>
+                  {categories.map(category => (
+                    <option key={category} value={category}>{category}</option>
+                  ))}
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
               </div>

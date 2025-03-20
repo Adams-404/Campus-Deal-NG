@@ -24,9 +24,10 @@ interface ProductCardProps {
       avatar_url?: string;
     };
   };
+  hideSellerName?: boolean;
 }
 
-export const ProductCard = ({ item }: ProductCardProps) => {
+export const ProductCard = ({ item, hideSellerName }: ProductCardProps) => {
   const { fontSizeClass } = useSettings();
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
@@ -116,6 +117,10 @@ export const ProductCard = ({ item }: ProductCardProps) => {
     }
   };
 
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US').format(price);
+  };
+
   return (
     <div className="bg-secondary rounded-lg border border-white/10 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group">
       <div className="relative aspect-[16/9]">
@@ -174,7 +179,7 @@ export const ProductCard = ({ item }: ProductCardProps) => {
               'text-lg': fontSizeClass === 'medium',
               'text-base': fontSizeClass === 'small',
             }
-          )}>₦{item.price}</p>
+          )}>₦{formatPrice(item.price)}</p>
           <div 
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity group/profile"
             onClick={handleViewProfile}
@@ -185,9 +190,11 @@ export const ProductCard = ({ item }: ProductCardProps) => {
                 <User className="h-3 w-3 text-primary" />
               </AvatarFallback>
             </Avatar>
-            <span className="text-sm text-gray-400 truncate group-hover/profile:text-primary transition-colors">
-              {item.seller?.first_name || 'Anonymous'}
-            </span>
+            {!hideSellerName && (
+              <span className="text-sm text-gray-400 truncate group-hover/profile:text-primary transition-colors">
+                {item.seller?.first_name || 'Anonymous'}
+              </span>
+            )}
           </div>
         </div>
       </div>

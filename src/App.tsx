@@ -34,6 +34,7 @@ import MyListings from "./pages/MyListings";
 import UserProfile from "./pages/UserProfile";
 import { SearchProvider } from "./contexts/SearchContext";
 import NotificationsPage from "./pages/NotificationsPage";
+import CategoryPage from "./pages/CategoryPage";
 
 const queryClient = new QueryClient();
 
@@ -111,6 +112,7 @@ const AnimatedRoutes = () => {
 
             {/* Protected Routes */}
             <Route path="/home" element={<ProtectedRoute allowGuest><Homepage /></ProtectedRoute>} />
+            <Route path="/category/:category" element={<ProtectedRoute allowGuest><CategoryPage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/messages/:conversationId" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
