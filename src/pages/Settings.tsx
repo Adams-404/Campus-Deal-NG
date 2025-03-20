@@ -40,7 +40,6 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function Settings() {
-  const { fontSize, setFontSize } = useSettings();
   const { theme, setTheme } = useTheme();
   const { isEnabled, isPushSupported, toggleNotifications } = useNotifications();
   const navigate = useNavigate();
@@ -95,38 +94,6 @@ export default function Settings() {
     {
       title: "Preferences",
       items: [
-        {
-          icon: Type,
-          label: "Font Size",
-          content: (
-            <div className="flex gap-2">
-              <Button
-                variant={fontSize === 'small' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setFontSize('small')}
-                className="h-8 text-xs"
-              >
-                Small
-              </Button>
-              <Button
-                variant={fontSize === 'medium' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setFontSize('medium')}
-                className="h-8 text-xs"
-              >
-                Medium
-              </Button>
-              <Button
-                variant={fontSize === 'large' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setFontSize('large')}
-                className="h-8 text-xs"
-              >
-                Large
-              </Button>
-            </div>
-          )
-        },
         {
           icon: theme === 'dark' ? Moon : Sun,
           label: "Theme",
@@ -243,40 +210,6 @@ export default function Settings() {
               <div>
                 <h2 className="text-sm font-medium text-gray-400 mb-4">Preferences</h2>
                 <div className="space-y-4">
-                  <ExpandableSection
-                    icon={Type}
-                    label="Font Size"
-                    iconColor="text-blue-500"
-                    bgColor="bg-blue-500/10"
-                  >
-                    <div className="flex gap-2">
-                      <Button
-                        variant={fontSize === 'small' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setFontSize('small')}
-                        className="flex-1"
-                      >
-                        Small
-                      </Button>
-                      <Button
-                        variant={fontSize === 'medium' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setFontSize('medium')}
-                        className="flex-1"
-                      >
-                        Medium
-                      </Button>
-                      <Button
-                        variant={fontSize === 'large' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setFontSize('large')}
-                        className="flex-1"
-                      >
-                        Large
-                      </Button>
-                    </div>
-                  </ExpandableSection>
-
                   <ExpandableSection
                     icon={theme === 'dark' ? Moon : Sun}
                     label="Theme"

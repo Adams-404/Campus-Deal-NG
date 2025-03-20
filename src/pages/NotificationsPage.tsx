@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, CheckCircle, Info, XCircle } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Bell, CheckCircle, Info, XCircle, ArrowLeft } from 'lucide-react';
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 interface Notification {
   id: string;
@@ -19,6 +19,7 @@ interface Notification {
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   const fetchCurrentUser = async () => {
     try {
@@ -65,7 +66,6 @@ const NotificationsPage = () => {
 
     loadNotifications();
 
-    // Setup Realtime subscription
     const setupRealtimeSubscription = async () => {
       const user = await fetchCurrentUser();
       if (!user) return;
@@ -78,7 +78,6 @@ const NotificationsPage = () => {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`
         }, (payload) => {
-          // Optimistically update the notifications
           if (payload.eventType === 'INSERT') {
             setNotifications(prev => [payload.new as Notification, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
@@ -118,7 +117,6 @@ const NotificationsPage = () => {
         return;
       }
 
-      // Optimistically update the local state
       setNotifications(prev =>
         prev.map(notification =>
           notification.id === notificationId ? { ...notification, is_read: true } : notification
@@ -133,80 +131,89 @@ const NotificationsPage = () => {
   const getIcon = (type: string) => {
     switch (type) {
       case 'success':
-        return <CheckCircle className="h-4 w-4 mr-2 text-green-500" />;
+        return <CheckCircle className="h-5 w-5 text-blue-700" />;
       case 'info':
-        return <Info className="h-4 w-4 mr-2 text-blue-500" />;
+        return <Info className="h-5 w-5 text-blue-700" />;
       case 'error':
-        return <XCircle className="h-4 w-4 mr-2 text-red-500" />;
+        return <XCircle className="h-5 w-5 text-blue-700" />;
       default:
-        return <Bell className="h-4 w-4 mr-2 text-gray-500" />;
+        return <Bell className="h-5 w-5 text-blue-700" />;
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
       </div>
     );
   }
 
   return (
-    <div className="container max-w-3xl mx-auto py-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Notifications</CardTitle>
-          <CardDescription>
-            Here are all of your notifications.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <ScrollArea className="h-[400px] w-full">
-            <div className="divide-y divide-border">
+    <div className="flex flex-col min-h-screen bg-background">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-sm border-b border-white/10">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6">
+          <div className="h-16 flex items-center justify-center relative">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="absolute left-0 h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-semibold">Notifications</h1>
+          </div>
+        </div>
+      </div>
+
+      <main className="max-w-3xl mx-auto px-4 sm:px-6">
+        <div className="pt-24 pb-32">
+          <ScrollArea className="h-[calc(100vh-180px)]">
+            <div className="divide-y divide-gray-800">
               {notifications.length > 0 ? (
                 notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className="p-4 hover:bg-secondary transition-colors"
+                    className="p-4 hover:bg-gray-900 transition-colors"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
+                    <div className="flex items-start space-x-3">
+                      <div className="mt-1">
                         {getIcon(notification.type)}
-                        <div className="flex flex-col">
-                          <span className="font-medium">{notification.title}</span>
-                          <p className="text-sm text-muted-foreground">
-                            {notification.content}
-                          </p>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="font-medium text-sm">{notification.title}</p>
+                            <p className="text-sm text-gray-300 mt-1">
+                              {notification.content}
+                            </p>
+                          </div>
+                          {!notification.is_read && (
+                            <button
+                              onClick={() => markAsRead(notification.id)}
+                              className="text-xs text-blue-400 hover:underline focus:outline-none"
+                            >
+                              Mark as Read
+                            </button>
+                          )}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-2">
+                          {formatDistanceToNow(new Date(notification.created_at), {
+                            addSuffix: true,
+                          })}
                         </div>
                       </div>
-                      <div>
-                        {!notification.is_read && (
-                          <Badge
-                            variant="secondary"
-                            onClick={() => markAsRead(notification.id)}
-                            className="cursor-pointer"
-                          >
-                            Mark as Read
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      {formatDistanceToNow(new Date(notification.created_at), {
-                        addSuffix: true,
-                      })}
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="p-4 text-center text-muted-foreground">
-                  No notifications yet.
-                </div>
+                <div className="p-4 text-center text-gray-500">No notifications</div>
               )}
             </div>
           </ScrollArea>
-        </CardContent>
-      </Card>
+        </div>
+      </main>
     </div>
   );
 };

@@ -27,19 +27,33 @@ const TypewriterText = () => {
   useEffect(() => {
     const currentPhrase = phrases[currentPhraseIndex];
     let currentIndex = 0;
+    let isDeleting = false;
+    let interval: NodeJS.Timeout;
 
-    const interval = setInterval(() => {
-      if (currentIndex <= currentPhrase.length) {
-        setDisplayText(currentPhrase.slice(0, currentIndex));
-        currentIndex++;
-      } else {
-        clearInterval(interval);
-        setTimeout(() => {
-          setCurrentPhraseIndex((prev) => (prev + 1) % phrases.length);
-        }, 2000);
-      }
-    }, 100);
+    const startTyping = () => {
+      interval = setInterval(() => {
+        if (!isDeleting && currentIndex <= currentPhrase.length) {
+          setDisplayText(currentPhrase.slice(0, currentIndex));
+          currentIndex++;
+          if (currentIndex > currentPhrase.length) {
+            isDeleting = true;
+            clearInterval(interval);
+            setTimeout(() => {
+              startTyping();
+            }, 1500);
+          }
+        } else if (isDeleting && currentIndex >= 0) {
+          setDisplayText(currentPhrase.slice(0, currentIndex));
+          currentIndex--;
+          if (currentIndex === 0) {
+            isDeleting = false;
+            setCurrentPhraseIndex((prev) => (prev + 1) % phrases.length);
+          }
+        }
+      }, 100);
+    };
 
+    startTyping();
     return () => clearInterval(interval);
   }, [currentPhraseIndex]);
 

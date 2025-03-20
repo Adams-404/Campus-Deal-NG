@@ -17,16 +17,19 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem('gsu-theme', theme);
+    console.log('Setting theme to:', theme);
     
     const root = window.document.documentElement;
+    console.log('Current root classes:', root.classList);
+    root.classList.remove('light', 'dark');
     if (theme === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      root.classList.remove('light', 'dark');
+      console.log('System theme detected:', systemTheme);
       root.classList.add(systemTheme);
     } else {
-      root.classList.remove('light', 'dark');
       root.classList.add(theme);
     }
+    console.log('New root classes:', root.classList);
   }, [theme]);
 
   // Listen for system theme changes
@@ -57,4 +60,4 @@ export function useTheme() {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-} 
+}

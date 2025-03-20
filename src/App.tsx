@@ -75,7 +75,14 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 const AnimatedRoutes = () => {
   const location = useLocation();
   const showNav = location.pathname === '/home';
-  const hideBottomNav = ["/", "/auth", "/auth/signin", "/auth/signup", "/admin"].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
+  const hideBottomNav = [
+    "/", 
+    "/auth", 
+    "/auth/signin", 
+    "/auth/signup", 
+    "/admin", 
+    "/notifications"
+  ].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
   
   useEffect(() => {
     if (location.pathname !== '/') {
