@@ -170,15 +170,6 @@ const Homepage = () => {
             <section className="py-6 pb-32">
               <div className="space-y-8">
                 <div>
-                  <div className="flex flex-wrap items-center gap-3 justify-start mb-6">
-                    <Link
-                      to="/saved"
-                      className="inline-flex items-center justify-center gap-2 border border-blue-500 hover:border-blue-600 bg-transparent hover:bg-blue-500/10 px-4 py-2 rounded-lg transition-all"
-                    >
-                      <Heart className="w-5 h-5 text-blue-500" />
-                      <span className="text-blue-500">Saved Items</span>
-                    </Link>
-                  </div>
                   <Categories />
                 </div>
                 <div>

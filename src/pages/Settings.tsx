@@ -126,6 +126,30 @@ export default function Settings() {
               </Button>
             </div>
           )
+        },
+        {
+          icon: theme === 'dark' ? Moon : Sun,
+          label: "Theme",
+          content: (
+            <div className="flex gap-2">
+              <Button
+                variant={theme === 'dark' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setTheme('dark')}
+                className="h-8 text-xs"
+              >
+                Dark
+              </Button>
+              <Button
+                variant={theme === 'light' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setTheme('light')}
+                className="h-8 text-xs"
+              >
+                Light
+              </Button>
+            </div>
+          )
         }
       ]
     },
@@ -145,29 +169,7 @@ export default function Settings() {
           href: "/admin",
           iconColor: "text-purple-500",
           bgColor: "bg-purple-500/10"
-        }] : []),
-        {
-          icon: Bell,
-          label: "Notifications",
-          onClick: () => setNotificationsEnabled(!notificationsEnabled),
-          iconColor: "text-pink-500",
-          bgColor: "bg-pink-500/10",
-          rightElement: (
-            <div className="flex items-center gap-2">
-              {notificationsEnabled ? (
-                <>
-                  <BellRing className="w-4 h-4 text-green-500" />
-                  <span className="text-sm text-muted-foreground">On</span>
-                </>
-              ) : (
-                <>
-                  <BellOff className="w-4 h-4 text-red-500" />
-                  <span className="text-sm text-muted-foreground">Off</span>
-                </>
-              )}
-            </div>
-          )
-        }
+        }] : [])
       ]
     },
     {
@@ -242,38 +244,61 @@ export default function Settings() {
                 <h2 className="text-sm font-medium text-gray-400 mb-4">Preferences</h2>
                 <div className="space-y-4">
                   <ExpandableSection
-                    icon={theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor}
+                    icon={Type}
+                    label="Font Size"
+                    iconColor="text-blue-500"
+                    bgColor="bg-blue-500/10"
+                  >
+                    <div className="flex gap-2">
+                      <Button
+                        variant={fontSize === 'small' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setFontSize('small')}
+                        className="flex-1"
+                      >
+                        Small
+                      </Button>
+                      <Button
+                        variant={fontSize === 'medium' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setFontSize('medium')}
+                        className="flex-1"
+                      >
+                        Medium
+                      </Button>
+                      <Button
+                        variant={fontSize === 'large' ? 'default' : 'ghost'}
+                        size="sm"
+                        onClick={() => setFontSize('large')}
+                        className="flex-1"
+                      >
+                        Large
+                      </Button>
+                    </div>
+                  </ExpandableSection>
+
+                  <ExpandableSection
+                    icon={theme === 'dark' ? Moon : Sun}
                     label="Theme"
                     iconColor="text-purple-500"
                     bgColor="bg-purple-500/10"
                   >
-                    <div className="grid grid-cols-3 gap-2">
-                      <Button
-                        variant={theme === 'light' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setTheme('light')}
-                        className="w-full"
-                      >
-                        <Sun className="w-4 h-4 mr-2" />
-                        Light
-                      </Button>
+                    <div className="flex gap-2">
                       <Button
                         variant={theme === 'dark' ? 'default' : 'ghost'}
                         size="sm"
                         onClick={() => setTheme('dark')}
-                        className="w-full"
+                        className="flex-1"
                       >
-                        <Moon className="w-4 h-4 mr-2" />
                         Dark
                       </Button>
                       <Button
-                        variant={theme === 'system' ? 'default' : 'ghost'}
+                        variant={theme === 'light' ? 'default' : 'ghost'}
                         size="sm"
-                        onClick={() => setTheme('system')}
-                        className="w-full"
+                        onClick={() => setTheme('light')}
+                        className="flex-1"
                       >
-                        <Monitor className="w-4 h-4 mr-2" />
-                        System
+                        Light
                       </Button>
                     </div>
                   </ExpandableSection>
@@ -308,40 +333,6 @@ export default function Settings() {
                           </Button>
                         </div>
                       ))}
-                    </div>
-                  </ExpandableSection>
-
-                  <ExpandableSection
-                    icon={Type}
-                    label="Font Size"
-                    iconColor="text-blue-500"
-                    bgColor="bg-blue-500/10"
-                  >
-                    <div className="flex gap-2">
-                      <Button
-                        variant={fontSize === 'small' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setFontSize('small')}
-                        className="flex-1"
-                      >
-                        Small
-                      </Button>
-                      <Button
-                        variant={fontSize === 'medium' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setFontSize('medium')}
-                        className="flex-1"
-                      >
-                        Medium
-                      </Button>
-                      <Button
-                        variant={fontSize === 'large' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setFontSize('large')}
-                        className="flex-1"
-                      >
-                        Large
-                      </Button>
                     </div>
                   </ExpandableSection>
                 </div>
