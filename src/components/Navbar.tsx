@@ -114,24 +114,82 @@ export const Navbar = () => {
             </div>
           </div>
 
-          <Link to="/profile">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
-            >
-              {profile?.avatar_url ? (
-                <Avatar>
-                  <AvatarImage src={profile.avatar_url} alt="Profile" />
-                  <AvatarFallback>
+          {user ? (
+            <>
+              <Link to="/profile">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
+                >
+                  {profile?.avatar_url ? (
+                    <Avatar>
+                      <AvatarImage src={profile.avatar_url} alt="Profile" />
+                      <AvatarFallback>
+                        <User className="h-5 w-5 text-primary" />
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
                     <User className="h-5 w-5 text-primary" />
-                  </AvatarFallback>
-                </Avatar>
-              ) : (
-                <User className="h-5 w-5 text-primary" />
-              )}
-            </Button>
-          </Link>
+                  )}
+                </Button>
+              </Link>
+              <div className="relative" ref={notificationRef}>
+                <Link to="/notifications">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20 relative"
+                    onClick={toggleNotification}
+                  >
+                    <Bell className="h-5 w-5 text-primary" />
+                    {notifications.some((n) => !n.read) && (
+                      <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 rounded-full"></span>
+                    )}
+                  </Button>
+                </Link>
+                {isNotificationOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-background rounded-lg shadow-lg border border-white/10 overflow-hidden z-50">
+                    <div className="p-3 border-b border-white/10 flex justify-between items-center">
+                      <h3 className="font-medium text-white">Notifications</h3>
+                      <Button variant="ghost" size="sm" className="text-xs text-primary hover:text-primary/80">
+                        Mark all as read
+                      </Button>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      {notifications.length > 0 ? (
+                        notifications.map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={cn(
+                              "p-3 border-b border-white/5 hover:bg-primary/5 transition-colors cursor-pointer",
+                              !notification.read && "bg-primary/10",
+                            )}
+                          >
+                            <p className="text-sm text-white">{notification.message}</p>
+                            <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-gray-500 text-sm">
+                          No new notifications
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex gap-2">
+              <Button asChild variant="outline" size="sm">
+                <Link to="/auth/signin">Login</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link to="/auth/signup">Sign Up</Link>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -166,68 +224,6 @@ export const Navbar = () => {
                   <option value="popular">Most Popular</option>
                 </select>
                 <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-              </div>
-
-              <div className="relative" ref={notificationRef}>
-                <Link to="/notifications">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20 relative"
-                    onClick={toggleNotification}
-                  >
-                    <Bell className="h-5 w-5 text-primary" />
-                    {notifications.some((n) => !n.read) && (
-                      <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 rounded-full"></span>
-                    )}
-                  </Button>
-                </Link>
-
-                {isNotificationOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-background rounded-lg shadow-lg border border-white/10 overflow-hidden z-50">
-                    <div className="p-3 border-b border-white/10 flex justify-between items-center">
-                      <h3 className="font-medium text-white">Notifications</h3>
-                      <Button variant="ghost" size="sm" className="text-xs text-primary hover:text-primary/80">
-                        Mark all as read
-                      </Button>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {notifications.length > 0 ? (
-                        notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={cn(
-                              "p-3 border-b border-white/5 hover:bg-primary/5 transition-colors cursor-pointer",
-                              !notification.read && "bg-primary/10",
-                            )}
-                          >
-                            <div className="flex items-start gap-2">
-                              <div
-                                className={cn(
-                                  "h-2 w-2 rounded-full mt-1.5",
-                                  notification.read ? "bg-gray-500" : "bg-primary",
-                                )}
-                              />
-                              <div className="flex-1">
-                                <p className="text-sm text-white">{notification.message}</p>
-                                <p className="text-xs text-gray-400 mt-1">{notification.time}</p>
-                              </div>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-4 text-center text-gray-400">
-                          <p>No notifications yet</p>
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-2 border-t border-white/10">
-                      <Link to="/notifications" className="block text-center text-xs text-primary hover:underline p-2">
-                        View all notifications
-                      </Link>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
