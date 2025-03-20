@@ -12,7 +12,8 @@ import {
   ShoppingBag,
   Star,
   Heart,
-  Github
+  Github,
+  Ghost
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion, useAnimation } from "framer-motion";
@@ -270,10 +271,13 @@ const Index = () => {
               transition={{ duration: 0.5, delay: 0.4 }}
             >
               <Link to="/auth">
-                <Button className="bg-blue-500 hover:bg-blue-600 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
+                <Button style={{ width: '200px' }} className="bg-blue-500 hover:bg-blue-600 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl w-full sm:w-auto">
                   Get Started <ArrowRight className="ml-2" />
                 </Button>
               </Link>
+              <Button style={{ width: '200px', backgroundColor: '#4CAF50' }} className="mt-4 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl w-full sm:w-auto" onClick={() => { /* Add guest exploration logic here */ }}>
+                Explore as Guest <Ghost className="ml-2" />
+              </Button>
             </motion.div>
           </div>
         </div>
@@ -380,7 +384,7 @@ const Index = () => {
               Join thousands of GSU students who are already buying and selling on our platform.
             </p>
             <Link to="/auth">
-              <Button className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
+              <Button style={{ width: '200px' }} className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
                 Join Now <ArrowRight className="ml-2" />
               </Button>
             </Link>
