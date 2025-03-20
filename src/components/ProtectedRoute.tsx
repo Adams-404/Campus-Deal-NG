@@ -4,26 +4,26 @@ import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
+  allowGuest?: boolean;
 }
 
-const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+const ProtectedRoute = ({ children, allowGuest = false }: ProtectedRouteProps) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [guestMode, setGuestMode] = useState(false);
   const location = useLocation();
 
+  const publicRoutes = ['/', '/item/:id', '/settings'];
+
   useEffect(() => {
-    // Check for user on component mount
     checkUser();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   async function checkUser() {
@@ -37,6 +37,15 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     }
   }
 
+  const handleGuestMode = () => {
+    setGuestMode(true);
+    // Show welcome message for first-time guests
+    if (!localStorage.getItem('guestWelcomeShown')) {
+      alert('Welcome to Tradezy as a Guest!\nYou can freely browse listings and discover great deals.');
+      localStorage.setItem('guestWelcomeShown', 'true');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -45,12 +54,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  if (!user) {
-    // Save the attempted URL to redirect back after login
-    return <Navigate to="/auth/signin" state={{ from: location }} replace />;
+  if (!user && !guestMode && !allowGuest) {
+    if (publicRoutes.includes(location.pathname)) {
+      handleGuestMode();
+    } else {
+      alert('Sign up or log in anytime to unlock the full experience.');
+      return <Navigate to="/auth/signin" state={{ from: location }} replace />;
+    }
   }
 
   return <>{children}</>;
 };
 
-export default ProtectedRoute; 
+export default ProtectedRoute;

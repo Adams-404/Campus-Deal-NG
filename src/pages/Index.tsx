@@ -15,7 +15,7 @@ import {
   Github,
   Ghost
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, useAnimation } from "framer-motion";
 import { useEffect, useState } from "react";
 
@@ -203,6 +203,8 @@ const testimonials = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-black text-foreground">
       {/* Hero Section */}
@@ -270,12 +272,14 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <Link to="/auth">
-                <Button style={{ width: '200px' }} className="bg-blue-500 hover:bg-blue-600 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl w-full sm:w-auto">
-                  Get Started <ArrowRight className="ml-2" />
-                </Button>
-              </Link>
-              <Button style={{ width: '200px', backgroundColor: '#4CAF50' }} className="mt-4 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl w-full sm:w-auto" onClick={() => { /* Add guest exploration logic here */ }}>
+              <Button className="w-full" asChild>
+                <Link to="/auth/signup">Get Started</Link>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="mt-4 bg-gradient-to-r from-teal-500 to-cyan-500 hover:from-teal-600 hover:to-cyan-600 text-white px-6 sm:px-8 py-4 sm:py-6 text-base sm:text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl w-full sm:w-auto"
+                onClick={() => navigate('/home')}
+              >
                 Explore as Guest <Ghost className="ml-2" />
               </Button>
             </motion.div>

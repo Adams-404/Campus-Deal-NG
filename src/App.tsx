@@ -110,15 +110,15 @@ const AnimatedRoutes = () => {
             <Route path="/help" element={<Help />} />
 
             {/* Protected Routes */}
-            <Route path="/home" element={<ProtectedRoute><Homepage /></ProtectedRoute>} />
+            <Route path="/home" element={<ProtectedRoute allowGuest><Homepage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/messages/:conversationId" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/user/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute allowGuest><Settings /></ProtectedRoute>} />
             <Route path="/saved" element={<ProtectedRoute><SavedItems /></ProtectedRoute>} />
             <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
-            <Route path="/item/:id" element={<ProtectedRoute><ViewItem /></ProtectedRoute>} />
+            <Route path="/item/:id" element={<ProtectedRoute allowGuest><ViewItem /></ProtectedRoute>} />
             <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
