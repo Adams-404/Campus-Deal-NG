@@ -1,0 +1,91 @@
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+
+interface OnboardingTutorialProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+export const OnboardingTutorial = ({ open, onClose }: OnboardingTutorialProps) => {
+  const [step, setStep] = useState(1);
+  const [dontShowAgain, setDontShowAgain] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      // localStorage.setItem('hasCompletedTutorial', 'true');
+    }
+  }, [open]);
+
+  const handleNext = async () => {
+    if (step < 3) {
+      setStep(step + 1);
+    } else {
+      if (dontShowAgain) {
+        const { data: { session } } = await supabase.auth.getSession();
+        supabase
+          .from('profiles')
+          .upsert({ id: session?.user.id, onboarding_completed: true })
+          .then(() => onClose());
+      } else {
+        onClose();
+      }
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Welcome to GSU Market Hub!</DialogTitle>
+        </DialogHeader>
+
+        {step === 1 && (
+          <div>
+            <h3 className="text-lg font-medium mb-4">Discover Products</h3>
+            <p className="text-muted-foreground">
+              Browse through various categories and find products you love.
+            </p>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div>
+            <h3 className="text-lg font-medium mb-4">Sell Your Items</h3>
+            <p className="text-muted-foreground">
+              Easily list your own items for sale and manage your listings.
+            </p>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div>
+            <h3 className="text-lg font-medium mb-4">Stay Connected</h3>
+            <p className="text-muted-foreground">
+              Message sellers directly and track your purchases.
+            </p>
+            <div className="mt-4 flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="dont-show-again"
+                checked={dontShowAgain}
+                onChange={(e) => setDontShowAgain(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="dont-show-again" className="text-sm text-gray-700">
+                Don't show this again
+              </label>
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-end mt-6">
+          <Button onClick={handleNext}>
+            {step === 3 ? 'Get Started' : 'Next'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

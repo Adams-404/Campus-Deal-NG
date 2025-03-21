@@ -126,7 +126,6 @@ export const ProductCard = ({ item, hideSellerName }: ProductCardProps) => {
       <div className="relative aspect-[16/9]">
         <ImageCarousel 
           images={item.images} 
-          showZoom={true}
         />
         <div className="absolute top-2 right-2 z-10 flex gap-2">
           <Button
@@ -145,16 +144,6 @@ export const ProductCard = ({ item, hideSellerName }: ProductCardProps) => {
             )} />
           </Button>
         </div>
-        {item.condition && (
-          <div className="absolute bottom-2 left-2 z-10">
-            <span className={cn(
-              "px-2 py-1 bg-black/50 backdrop-blur-sm rounded-full font-medium text-white",
-              fontSizeClass === 'large' ? 'text-base' : 'text-sm'
-            )}>
-              {item.condition}
-            </span>
-          </div>
-        )}
       </div>
       <div className="p-4">
         <div className="flex justify-between items-start gap-4 mb-3">

@@ -3,11 +3,12 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { User, ArrowLeft, Mail, Lock, Loader2, Github, ShieldCheck } from "lucide-react";
 import { motion } from "framer-motion";
+import { OnboardingTutorial } from '@/components/OnboardingTutorial';
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -15,13 +16,14 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
   const navigate = useNavigate();
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match");
+      toast.error('Passwords do not match');
       return;
     }
 
@@ -35,9 +37,9 @@ const SignUp = () => {
 
       if (error) throw error;
 
-      toast.success('Successfully signed up! Please check your email for verification.');
-      alert('Welcome! Please update your profile to get started.');
-      navigate('/profile');
+      toast.success('Successfully signed up! Please update your profile to get started.');
+      navigate('/auth/profile');
+      setShowTutorial(true);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -250,6 +252,8 @@ const SignUp = () => {
           </div>
         </div>
       </motion.div>
+
+      <OnboardingTutorial open={showTutorial} onClose={() => setShowTutorial(false)} />
     </div>
   );
 };

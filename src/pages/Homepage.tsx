@@ -201,7 +201,7 @@ const Homepage = () => {
                     {searchQuery ? (
                       <section className="py-6">
                         <h2 className="text-2xl font-bold mb-6">Search Results</h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
                           {filteredItems.map(item => (
                             <ProductCard key={item.id} item={item} />
                           ))}
@@ -245,8 +245,8 @@ const Homepage = () => {
                             <div className="overflow-x-auto pb-4">
                               <div className="flex gap-4 w-max">
                                 {categoryItems.slice(1, 5).map(item => (
-                                  <div key={item.id} className="w-64 flex-shrink-0">
-                                    <ProductCard item={item} />
+                                  <div key={item.id} className="w-48 md:w-64 flex-shrink-0">
+                                    <ProductCard item={item} hideSellerName={true} />
                                   </div>
                                 ))}
                               </div>
