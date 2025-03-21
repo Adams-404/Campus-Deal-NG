@@ -59,8 +59,7 @@ const Homepage = () => {
             avatar_url
           )
         `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+        .eq('status', 'active');
 
       if (itemsError) throw itemsError;
 
@@ -70,7 +69,7 @@ const Homepage = () => {
       }
 
       // Format items with their images and seller information
-      const formattedItems = itemsData.map(item => {
+      let formattedItems = itemsData.map(item => {
         const images = item.item_images || [];
         const allImages = images.map(img => img.image_url);
         const seller = item.profiles;
@@ -94,8 +93,10 @@ const Homepage = () => {
           } : undefined,
           featured: item.featured
         };
-      }).filter(item => item.images.length > 0); // Only show items with at least one image
+      }).filter(item => item.images.length > 0);
 
+      // Shuffle all items before setting state
+      formattedItems = shuffleArray(formattedItems);
       setItems(formattedItems);
     } catch (error: any) {
       console.error('Error fetching items:', error);
@@ -137,17 +138,21 @@ const Homepage = () => {
   // Group items by category
   const groupedItems = useMemo(() => {
     const groups: Record<string, Item[]> = {};
-    items.forEach(item => {
+    // Shuffle the order of items before grouping
+    const shuffledItems = shuffleArray(items);
+    shuffledItems.forEach(item => {
       if (!groups[item.category]) {
         groups[item.category] = [];
       }
       groups[item.category].push(item);
     });
-    // Shuffle items in each category
-    Object.keys(groups).forEach(category => {
-      groups[category] = shuffleArray(groups[category]);
+    // Shuffle the order of categories
+    const shuffledCategories = shuffleArray(Object.keys(groups));
+    const shuffledGroups: Record<string, Item[]> = {};
+    shuffledCategories.forEach(category => {
+      shuffledGroups[category] = groups[category];
     });
-    return groups;
+    return shuffledGroups;
   }, [items]);
 
   // Find featured items

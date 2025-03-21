@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Search, User, ChevronDown, Bell } from "lucide-react"
+import { Search, User, ChevronDown, Bell, Utensils, Shirt, Heart, Gem, Palette, Baby, ShoppingBag, Footprints, SprayCan, Wrench, Book, Monitor, Pen, MoreHorizontal } from "lucide-react"
 import { Button } from "./ui/button"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
@@ -10,6 +10,7 @@ import { Link } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { useSearch } from "@/contexts/SearchContext"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
 
 export const Navbar = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false)
@@ -18,6 +19,7 @@ export const Navbar = () => {
   const { searchQuery, setSearchQuery, selectedCategories, setSelectedCategories, sortBy, setSortBy } = useSearch()
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const notificationRef = useRef<HTMLDivElement>(null)
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   // Sample notifications - in a real app, you would fetch these from your backend
   const notifications = [
@@ -65,17 +67,45 @@ export const Navbar = () => {
     }
   }, [])
 
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (!user) return;
+      
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('read', false);
+
+      if (!error) {
+        setUnreadNotificationsCount(count || 0);
+      }
+    };
+
+    fetchUnreadCount();
+  }, [user]);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value)
   }
 
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const category = e.target.value;
-    if (category === "") {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      // Trigger search
+      e.currentTarget.blur();
+    }
+  }
+
+  const clearSearch = () => {
+    setSearchQuery('');
+  }
+
+  const handleCategoryChange = (values: string[]) => {
+    if (values.includes('all')) {
       setSelectedCategories([]);
       setSortBy('random');
     } else {
-      setSelectedCategories([category]);
+      setSelectedCategories(values);
       setSortBy('created_at');
     }
   }
@@ -89,52 +119,63 @@ export const Navbar = () => {
   }
 
   const categories = [
-    'Food',
-    'Clothing',
-    'Beauty',
-    'Jewelry',
-    'Art',
-    'Baby',
-    'Bags',
-    'Shoes',
-    'Perfumes',
-    'Tools',
-    'Books',
-    'Electronics',
-    'Stationary',
-    'Others'
+    { value: 'Food', label: 'Food', icon: Utensils },
+    { value: 'Clothing', label: 'Clothing', icon: Shirt },
+    { value: 'Beauty', label: 'Beauty', icon: Heart },
+    { value: 'Jewelry', label: 'Jewelry', icon: Gem },
+    { value: 'Art', label: 'Art', icon: Palette },
+    { value: 'Baby', label: 'Baby', icon: Baby },
+    { value: 'Bags', label: 'Bags', icon: ShoppingBag },
+    { value: 'Shoes', label: 'Shoes', icon: Footprints },
+    { value: 'Perfumes', label: 'Perfumes', icon: SprayCan },
+    { value: 'Tools', label: 'Tools', icon: Wrench },
+    { value: 'Books', label: 'Books', icon: Book },
+    { value: 'Electronics', label: 'Electronics', icon: Monitor },
+    { value: 'Stationary', label: 'Stationary', icon: Pen },
+    { value: 'Others', label: 'Others', icon: MoreHorizontal }
   ];
 
   return (
     <nav className="fixed top-0 w-full bg-secondary/80 backdrop-blur-md z-50 border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* First Row */}
         <div className="flex justify-between items-center h-16">
           <Link to="/home" className="text-xl font-semibold text-white">
             Tradezy
           </Link>
-
-          <div
-            className={cn(
+          
+          {/* Search and User Icons */}
+          <div className="flex items-center gap-4">
+            {/* Search Input */}
+            <div className={cn(
               "transition-all duration-300 ease-in-out",
-              isSearchFocused ? "flex-1 max-w-2xl mx-8" : "w-48 mx-4",
-            )}
-          >
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search for anything..."
-                className="w-full py-2 pl-10 pr-4 text-white bg-background rounded-full border border-white/10 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-gray-500"
-                value={searchQuery}
-                onChange={handleSearch}
-                onFocus={() => setIsSearchFocused(true)}
-                onBlur={() => setIsSearchFocused(false)}
-              />
-              <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
+              isSearchFocused ? "flex-1 max-w-2xl" : "w-48"
+            )}>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Search for anything..."
+                  className="w-full py-2 pl-10 pr-10 text-white bg-background rounded-full border border-white/10 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-gray-500"
+                  value={searchQuery}
+                  onChange={handleSearch}
+                  onKeyDown={handleKeyDown}
+                  onFocus={() => setIsSearchFocused(true)}
+                  onBlur={() => setIsSearchFocused(false)}
+                />
+                <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
+                {searchQuery && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute right-3 top-2.5 h-5 w-5 text-gray-500 hover:text-primary transition-colors"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
 
-          {user ? (
-            <>
+            {/* User Icon */}
+            {user && (
               <Link to="/profile">
                 <Button
                   variant="ghost"
@@ -153,98 +194,66 @@ export const Navbar = () => {
                   )}
                 </Button>
               </Link>
-              <div className="relative" ref={notificationRef}>
-                <Link to="/notifications">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20 relative"
-                    onClick={toggleNotification}
-                  >
-                    <Bell className="h-5 w-5 text-primary" />
-                    {notifications.some((n) => !n.read) && (
-                      <span className="absolute top-0 right-0 h-2.5 w-2.5 bg-red-500 rounded-full"></span>
-                    )}
-                  </Button>
-                </Link>
-                {isNotificationOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-background rounded-lg shadow-lg border border-white/10 overflow-hidden z-50">
-                    <div className="p-3 border-b border-white/10 flex justify-between items-center">
-                      <h3 className="font-medium text-white">Notifications</h3>
-                      <Button variant="ghost" size="sm" className="text-xs text-primary hover:text-primary/80">
-                        Mark all as read
-                      </Button>
-                    </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {notifications.length > 0 ? (
-                        notifications.map((notification) => (
-                          <div
-                            key={notification.id}
-                            className={cn(
-                              "p-3 border-b border-white/5 hover:bg-primary/5 transition-colors cursor-pointer",
-                              !notification.read && "bg-primary/10",
-                            )}
-                          >
-                            <p className="text-sm text-white">{notification.message}</p>
-                            <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="p-4 text-center text-gray-500 text-sm">
-                          No new notifications
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            )}
+          </div>
+        </div>
+
+        {/* Second Row - Compact Controls */}
+        <div className="flex items-center justify-between pb-2 gap-2">
+          {/* Category Selector */}
+          <div className="flex-1">
+            <Select
+              value={selectedCategories.length > 0 ? selectedCategories[0] : undefined}
+              onValueChange={(value) => handleCategoryChange([value])}
+              placeholder="Select category..."
+              className="w-full"
+            >
+              <SelectTrigger className="bg-background border-white/10 hover:bg-primary/10">
+                <SelectValue placeholder="Categories" />
+              </SelectTrigger>
+              <SelectContent 
+                className="bg-background border-white/10 w-[400px]"
+                onPointerDown={(e) => e.stopPropagation()}
+                onWheel={(e) => e.stopPropagation()}
+              >
+                <div className="grid grid-cols-2 gap-2 p-2">
+                  <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
+                    All Categories
+                  </SelectItem>
+                  {categories.map((category, index) => (
+                    <SelectItem 
+                      key={category.value} 
+                      value={category.value}
+                      className="hover:bg-primary/10"
+                    >
+                      <div className="flex items-center gap-2">
+                        <category.icon className="h-4 w-4 text-primary" />
+                        <span className="truncate">{category.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </div>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Notification Icon */}
+          {user && (
+            <Link to="/notifications">
+              <div className="relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
+                >
+                  <Bell className="h-5 w-5 text-primary" />
+                </Button>
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute top-0.5 right-0.5 h-2.5 w-2.5 bg-red-500 rounded-full"></span>
                 )}
               </div>
-            </>
-          ) : (
-            <div className="flex gap-2">
-              <Button asChild variant="outline" size="sm">
-                <Link to="/auth/signin">Login</Link>
-              </Button>
-              <Button asChild size="sm">
-                <Link to="/auth/signup">Sign Up</Link>
-              </Button>
-            </div>
+            </Link>
           )}
-        </div>
-      </div>
-
-      <div className="border-t border-white/5 bg-secondary/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-          <div className="flex justify-between items-center">
-            <div className="flex gap-4">
-              <div className="relative">
-                <select
-                  className="appearance-none bg-background text-white text-sm rounded-lg pl-3 pr-10 py-1.5 border border-white/10 focus:outline-none focus:border-primary"
-                  value={selectedCategories[0] || ""}
-                  onChange={handleCategoryChange}
-                >
-                  <option value="">All Categories</option>
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-              </div>
-
-              <div className="relative">
-                <select
-                  className="appearance-none bg-background text-white text-sm rounded-lg pl-3 pr-10 py-1.5 border border-white/10 focus:outline-none focus:border-primary"
-                  value={sortBy}
-                  onChange={handleSortChange}
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="popular">Most Popular</option>
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" />
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </nav>

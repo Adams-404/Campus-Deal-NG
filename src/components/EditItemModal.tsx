@@ -22,6 +22,23 @@ interface FormData {
   description: string;
 }
 
+const categories = [
+  'Food',
+  'Clothing',
+  'Beauty',
+  'Jewelry',
+  'Art',
+  'Baby',
+  'Bags',
+  'Shoes',
+  'Perfumes',
+  'Tools',
+  'Books',
+  'Electronics',
+  'Stationary',
+  'Others'
+];
+
 export const EditItemModal = ({ isOpen, onClose, onItemUpdated, itemId }: EditItemModalProps) => {
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
@@ -444,10 +461,9 @@ export const EditItemModal = ({ isOpen, onClose, onItemUpdated, itemId }: EditIt
               required
             >
               <option value="">Select a category</option>
-              <option value="textbooks">Textbooks</option>
-              <option value="electronics">Electronics</option>
-              <option value="stationery">Stationery</option>
-              <option value="others">Others</option>
+              {categories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
             </select>
           </div>
 
