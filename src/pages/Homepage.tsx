@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { useSearch } from "@/contexts/SearchContext";
 import { Link } from 'react-router-dom';
 import { Heart } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface Item {
   id: string;
@@ -177,9 +178,9 @@ const Homepage = () => {
                   <h2 className="text-2xl font-bold capitalize">{category}</h2>
                   <Link
                     to={`/category/${category.toLowerCase()}`}
-                    className="text-primary hover:underline"
+                    className="block text-sm text-white hover:underline border border-primary rounded-lg px-3 py-1 flex items-center gap-1"
                   >
-                    See All
+                    See All <ArrowRight className="h-4 w-4 text-primary" />
                   </Link>
                 </div>
 

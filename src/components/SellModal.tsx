@@ -32,6 +32,9 @@ const categories = [
   'Shoes',
   'Perfumes',
   'Tools',
+  'Books',
+  'Electronics',
+  'Stationary',
   'Others'
 ];
 

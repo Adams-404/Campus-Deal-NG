@@ -70,11 +70,13 @@ export const Navbar = () => {
   }
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const category = e.target.value
+    const category = e.target.value;
     if (category === "") {
-      setSelectedCategories([])
+      setSelectedCategories([]);
+      setSortBy('random');
     } else {
-      setSelectedCategories([category])
+      setSelectedCategories([category]);
+      setSortBy('created_at');
     }
   }
 
@@ -97,6 +99,9 @@ export const Navbar = () => {
     'Shoes',
     'Perfumes',
     'Tools',
+    'Books',
+    'Electronics',
+    'Stationary',
     'Others'
   ];
 
