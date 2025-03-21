@@ -8,8 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/ProductCard";
 import { useSearch } from "@/contexts/SearchContext";
 import { Link } from 'react-router-dom';
-import { Heart } from 'lucide-react';
-import { ArrowRight } from 'lucide-react';
+import { Heart, ArrowRight, Loader2 } from 'lucide-react';
 
 interface Item {
   id: string;
@@ -184,70 +183,78 @@ const Homepage = () => {
       <main className="max-w-3xl mx-auto px-4 sm:px-6">
         <PullToRefresh onRefresh={handleRefresh}>
           <PageTransition>
-            {filteredItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-                <h2 className="text-2xl font-bold mb-4">No results found</h2>
-                <p className="text-gray-500">
-                  No items match your search for "{searchQuery}".
-                </p>
+            {loading ? (
+              <div className="flex justify-center items-center h-[calc(100vh-200px)] hidden md:flex">
+                <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : (
-              <>
-                {searchQuery ? (
-                  <section className="py-6">
-                    <h2 className="text-2xl font-bold mb-6">Search Results</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {filteredItems.map(item => (
-                        <ProductCard key={item.id} item={item} />
-                      ))}
-                    </div>
-                  </section>
+              <> 
+                {searchQuery && filteredItems.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+                    <h2 className="text-2xl font-bold mb-4">No results found</h2>
+                    <p className="text-gray-500">
+                      No items match your search for "{searchQuery}".
+                    </p>
+                  </div>
                 ) : (
                   <>
-                    {/* Global Featured Item */}
-                    {featuredItems.length > 0 && (
+                    {searchQuery ? (
                       <section className="py-6">
-                        <h2 className="text-2xl font-bold mb-6">Featured Item</h2>
-                        <ProductCard
-                          item={featuredItems[0]}
-                          className="w-full"
-                        />
+                        <h2 className="text-2xl font-bold mb-6">Search Results</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {filteredItems.map(item => (
+                            <ProductCard key={item.id} item={item} />
+                          ))}
+                        </div>
                       </section>
-                    )}
+                    ) : (
+                      <>
+                        {/* Global Featured Item */}
+                        {featuredItems.length > 0 && (
+                          <section className="py-6">
+                            <h2 className="text-2xl font-bold mb-6">Featured Item</h2>
+                            <ProductCard
+                              item={featuredItems[0]}
+                              className="w-full"
+                            />
+                          </section>
+                        )}
 
-                    {/* Category Sections */}
-                    {Object.entries(groupedItems).map(([category, categoryItems]) => (
-                      <section key={category} className="py-6">
-                        <div className="flex justify-between items-center mb-6">
-                          <h2 className="text-2xl font-bold capitalize">{category}</h2>
-                          <Link
-                            to={`/category/${category.toLowerCase()}`}
-                            className="block text-sm text-white hover:underline border border-primary rounded-lg px-3 py-1 flex items-center gap-1"
-                          >
-                            See All <ArrowRight className="h-4 w-4 text-primary" />
-                          </Link>
-                        </div>
+                        {/* Category Sections */}
+                        {Object.entries(groupedItems).map(([category, categoryItems]) => (
+                          <section key={category} className="py-6">
+                            <div className="flex justify-between items-center mb-6">
+                              <h2 className="text-2xl font-bold capitalize">{category}</h2>
+                              <Link
+                                to={`/category/${category.toLowerCase()}`}
+                                className="block text-sm text-white hover:underline border border-primary rounded-lg px-3 py-1 flex items-center gap-1"
+                              >
+                                See All <ArrowRight className="h-4 w-4 text-primary" />
+                              </Link>
+                            </div>
 
-                        {/* Featured Item for Category */}
-                        <div className="mb-6">
-                          <ProductCard
-                            item={categoryItems[0]}
-                            className="w-full"
-                          />
-                        </div>
+                            {/* Featured Item for Category */}
+                            <div className="mb-6">
+                              <ProductCard
+                                item={categoryItems[0]}
+                                className="w-full"
+                              />
+                            </div>
 
-                        {/* Horizontal Scroll for Other Items */}
-                        <div className="overflow-x-auto pb-4">
-                          <div className="flex gap-4 w-max">
-                            {categoryItems.slice(1, 5).map(item => (
-                              <div key={item.id} className="w-64 flex-shrink-0">
-                                <ProductCard item={item} />
+                            {/* Horizontal Scroll for Other Items */}
+                            <div className="overflow-x-auto pb-4">
+                              <div className="flex gap-4 w-max">
+                                {categoryItems.slice(1, 5).map(item => (
+                                  <div key={item.id} className="w-64 flex-shrink-0">
+                                    <ProductCard item={item} />
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      </section>
-                    ))}
+                            </div>
+                          </section>
+                        ))}
+                      </>
+                    )}
                   </>
                 )}
               </>

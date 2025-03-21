@@ -47,7 +47,7 @@ const CategoryPage = () => {
             avatar_url
           )
         `)
-        .eq("category", category)
+        .ilike("category", `%${category}%`)
         .eq("status", "active")
 
       if (error) throw error
