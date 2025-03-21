@@ -46,11 +46,22 @@ export default function Settings() {
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(isEnabled);
+  const [user, setUser] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    checkAdminStatus();
-    window.scrollTo(0, 0);
+    const fetchData = async () => {
+      await checkAuthStatus();
+      await checkAdminStatus();
+      setIsLoading(false);
+    };
+    fetchData();
   }, []);
+
+  const checkAuthStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+  };
 
   const checkAdminStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -93,36 +104,11 @@ export default function Settings() {
   const sections = [
     {
       title: "Preferences",
-      items: [
-        {
-          icon: theme === 'dark' ? Moon : Sun,
-          label: "Theme",
-          content: (
-            <div className="flex gap-2">
-              <Button
-                variant={theme === 'dark' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTheme('dark')}
-                className="h-8 text-xs"
-              >
-                Dark
-              </Button>
-              <Button
-                variant={theme === 'light' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setTheme('light')}
-                className="h-8 text-xs"
-              >
-                Light
-              </Button>
-            </div>
-          )
-        }
-      ]
+      items: []
     },
     {
       title: "Account",
-      items: [
+      items: user ? [
         {
           icon: User,
           label: "Profile",
@@ -137,6 +123,14 @@ export default function Settings() {
           iconColor: "text-purple-500",
           bgColor: "bg-purple-500/10"
         }] : [])
+      ] : [
+        {
+          icon: User,
+          label: "Login",
+          href: "/auth/SignIn",
+          iconColor: "text-blue-500",
+          bgColor: "bg-blue-500/10"
+        }
       ]
     },
     {
@@ -204,118 +198,153 @@ export default function Settings() {
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6">
         <PageTransition>
-          <div className="pt-24 pb-32 space-y-8">
-            <div className="space-y-8">
-              {/* Theme Section */}
-              <div>
-                <h2 className="text-sm font-medium text-gray-400 mb-4">Preferences</h2>
-                <div className="space-y-4">
-                  <ExpandableSection
-                    icon={theme === 'dark' ? Moon : Sun}
-                    label="Theme"
-                    iconColor="text-purple-500"
-                    bgColor="bg-purple-500/10"
-                  >
-                    <div className="flex gap-2">
-                      <Button
-                        variant={theme === 'dark' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setTheme('dark')}
-                        className="flex-1"
-                      >
-                        Dark
-                      </Button>
-                      <Button
-                        variant={theme === 'light' ? 'default' : 'ghost'}
-                        size="sm"
-                        onClick={() => setTheme('light')}
-                        className="flex-1"
-                      >
-                        Light
-                      </Button>
-                    </div>
-                  </ExpandableSection>
-
-                  <ExpandableSection
-                    icon={Bell}
-                    label="Notifications"
-                    iconColor="text-pink-500"
-                    bgColor="bg-pink-500/10"
-                  >
-                    <div className="space-y-6">
-                      {notificationTypes.map((type) => (
-                        <div key={type.label} className="flex items-start gap-4 py-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                              <type.icon className="w-4 h-4 text-gray-400" />
-                              <span className="font-medium">{type.label}</span>
-                              {!type.supported && (
-                                <span className="text-xs text-yellow-500">(Not supported)</span>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-400 mt-2">{type.description}</p>
-                          </div>
-                          <Button
-                            variant={type.enabled ? 'default' : 'ghost'}
-                            size="sm"
-                            onClick={type.onToggle}
-                            className="h-8"
-                            disabled={!type.supported}
-                          >
-                            {type.enabled ? 'On' : 'Off'}
-                          </Button>
+          {isLoading ? (
+            <div className="pt-24 pb-32 space-y-8 animate-pulse">
+              <div className="space-y-8">
+                <div>
+                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-4" />
+                  <div className="space-y-4">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="flex items-center space-x-4">
+                        <div className="h-10 w-10 bg-gray-200 rounded-full" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 bg-gray-200 rounded w-3/4" />
+                          <div className="h-4 bg-gray-200 rounded w-1/2" />
                         </div>
-                      ))}
-                    </div>
-                  </ExpandableSection>
-                </div>
-              </div>
-
-              {/* Other Sections */}
-              {sections.slice(1).map((section) => (
-                <div key={section.title}>
-                  <h2 className="text-sm font-medium text-gray-400 mb-4">{section.title}</h2>
-                  <div className="space-y-2">
-                    {section.items.map((item) => (
-                      <Link
-                        key={item.label}
-                        to={item.href}
-                        className="bg-secondary/50 rounded-lg border border-white/10 p-4 flex items-center justify-between hover:bg-secondary/80 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={cn("p-2 rounded-full", item.bgColor)}>
-                            <item.icon className={cn("w-5 h-5", item.iconColor)} />
-                          </div>
-                          <span>{item.label}</span>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-gray-400" />
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 </div>
-              ))}
-            </div>
-
-            <div className="mt-24">
-              <Button
-                variant="ghost"
-                className="w-full h-[60px] bg-secondary/50 rounded-lg border border-white/10 flex items-center justify-between hover:bg-secondary/80 transition-colors group"
-                onClick={() => setShowSignOutDialog(true)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-full bg-red-500/10">
-                    <LogOut className="w-5 h-5 text-red-500" />
-                  </div>
-                  <span className="text-red-500">Sign Out</span>
+              </div>
+              <div>
+                <div className="h-4 bg-gray-200 rounded w-1/4 mb-4" />
+                <div className="space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex items-center space-x-4">
+                      <div className="h-10 w-10 bg-gray-200 rounded-full" />
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4" />
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <ChevronRight className="w-5 h-5 text-red-500 transition-transform group-hover:translate-x-0.5" />
-              </Button>
+              </div>
             </div>
+          ) : (
+            <div className="pt-24 pb-32 space-y-8">
+              <div className="space-y-8">
+                {/* Theme Section */}
+                <div>
+                  <h2 className="text-sm font-medium text-gray-400 mb-4">Preferences</h2>
+                  <div className="space-y-4">
+                    <ExpandableSection
+                      icon={theme === 'dark' ? Moon : Sun}
+                      label="Theme"
+                      iconColor="text-purple-500"
+                      bgColor="bg-purple-500/10"
+                    >
+                      <div className="flex gap-2">
+                        <Button
+                          variant={theme === 'dark' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setTheme('dark')}
+                          className="flex-1"
+                        >
+                          Dark
+                        </Button>
+                        <Button
+                          variant={theme === 'light' ? 'default' : 'ghost'}
+                          size="sm"
+                          onClick={() => setTheme('light')}
+                          className="flex-1"
+                        >
+                          Light
+                        </Button>
+                      </div>
+                    </ExpandableSection>
 
-            <div className="mt-8 text-center">
-              <p className="text-sm text-gray-400">GSU Market v1.0.0</p>
+                    <ExpandableSection
+                      icon={Bell}
+                      label="Notifications"
+                      iconColor="text-pink-500"
+                      bgColor="bg-pink-500/10"
+                    >
+                      <div className="space-y-6">
+                        {notificationTypes.map((type) => (
+                          <div key={type.label} className="flex items-start gap-4 py-2">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <type.icon className="w-4 h-4 text-gray-400" />
+                                <span className="font-medium">{type.label}</span>
+                                {!type.supported && (
+                                  <span className="text-xs text-yellow-500">(Not supported)</span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-400 mt-2">{type.description}</p>
+                            </div>
+                            <Button
+                              variant={type.enabled ? 'default' : 'ghost'}
+                              size="sm"
+                              onClick={type.onToggle}
+                              className="h-8"
+                              disabled={!type.supported}
+                            >
+                              {type.enabled ? 'On' : 'Off'}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </ExpandableSection>
+                  </div>
+                </div>
+
+                {/* Other Sections */}
+                {sections.map((section) => (
+                  <div key={section.title}>
+                    <h2 className="text-sm font-medium text-gray-400 mb-4">{section.title}</h2>
+                    <div className="space-y-2">
+                      {section.items.map((item) => (
+                        <Link
+                          key={item.label}
+                          to={item.href}
+                          className="bg-secondary/50 rounded-lg border border-white/10 p-4 flex items-center justify-between hover:bg-secondary/80 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={cn("p-2 rounded-full", item.bgColor)}>
+                              <item.icon className={cn("w-5 h-5", item.iconColor)} />
+                            </div>
+                            <span>{item.label}</span>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {user && (
+                <div className="mt-24">
+                  <Button
+                    variant="ghost"
+                    className="w-full h-[60px] bg-secondary/50 rounded-lg border border-white/10 flex items-center justify-between hover:bg-secondary/80 transition-colors group"
+                    onClick={() => setShowSignOutDialog(true)}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-full bg-red-500/10">
+                        <LogOut className="w-5 h-5 text-red-500" />
+                      </div>
+                      <span className="text-red-500">Sign Out</span>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-red-500 transition-transform group-hover:translate-x-0.5" />
+                  </Button>
+                </div>
+              )}
+              <div className="mt-8 text-center">
+                <p className="text-sm text-gray-400">GSU Market v1.0.0</p>
+              </div>
             </div>
-          </div>
+          )}
         </PageTransition>
       </main>
 

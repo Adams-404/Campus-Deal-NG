@@ -35,8 +35,9 @@ const SignUp = () => {
 
       if (error) throw error;
 
-      toast.success("Successfully signed up! Please check your email for verification.");
-      navigate("/auth/signin");
+      toast.success('Successfully signed up! Please check your email for verification.');
+      alert('Welcome! Please update your profile to get started.');
+      navigate('/profile');
     } catch (error: any) {
       toast.error(error.message);
     } finally {
