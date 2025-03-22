@@ -18,15 +18,14 @@ export const OnboardingTutorial = ({ open, onClose }: OnboardingTutorialProps) =
     }
   }, [open]);
 
-  const handleNext = async () => {
+  const handleNext = () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
       if (dontShowAgain) {
-        const { data: { session } } = await supabase.auth.getSession();
         supabase
-          .from('profiles')
-          .upsert({ id: session?.user.id, onboarding_completed: true })
+          .from('user_settings')
+          .upsert({ user_id: supabase.auth.user()?.id, onboarding_completed: true })
           .then(() => onClose());
       } else {
         onClose();

@@ -20,7 +20,9 @@ import {
   BellRing,
   BellOff,
   Mail,
-  ArrowLeft
+  ArrowLeft,
+  Headphones,
+  Headset
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -189,8 +191,16 @@ export default function Settings() {
     <div className="bg-background">
       <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10">
         <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
-          <div className="h-16 flex items-center justify-center">
+          <div className="h-16 flex items-center justify-center relative">
             <h1 className="text-lg font-semibold">Settings</h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate('/support')}
+              className="text-blue-500 hover:text-blue-400 absolute right-0"
+            >
+              <Headset className="h-9 w-9" />
+            </Button>
           </div>
           <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
         </div>
