@@ -358,8 +358,8 @@ export default function Support() {
                     </p>
                     <div className="flex items-center justify-center gap-4 p-4 border border-white/10 rounded-lg bg-black/20">
                       <Phone className="h-6 w-6 text-primary" />
-                      <a href="tel:+1234567890" className="text-xl font-semibold text-primary">
-                        +1 (234) 567-890
+                      <a href="tel:+2349067063781" className="text-xl font-semibold text-primary">
+                        +2349067063781
                       </a>
                     </div>
                     <p className="text-sm text-gray-400 mt-4 text-center">
