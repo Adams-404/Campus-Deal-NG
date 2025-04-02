@@ -17,14 +17,17 @@ import { SafetyTips } from './SafetyTips';
 interface SellModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onItemListed?: () => void;
 }
 
-export const SellModal = ({ isOpen, onClose }: SellModalProps) => {
+type ItemCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor';
+
+export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
-  const [condition, setCondition] = useState('');
+  const [condition, setCondition] = useState<ItemCondition>('new');
   const [images, setImages] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSellForm, setShowSellForm] = useState(false);
@@ -46,7 +49,7 @@ export const SellModal = ({ isOpen, onClose }: SellModalProps) => {
     setDescription('');
     setPrice('');
     setCategory('');
-    setCondition('');
+    setCondition('new');
     setImages([]);
     setShowSellForm(false);
     setShowSafetyTips(false);
@@ -140,6 +143,9 @@ export const SellModal = ({ isOpen, onClose }: SellModalProps) => {
       }
 
       toast.success('Item listed successfully!');
+      if (onItemListed) {
+        onItemListed();
+      }
       handleClose();
     } catch (error: any) {
       console.error('Error creating listing:', error);
@@ -223,7 +229,7 @@ export const SellModal = ({ isOpen, onClose }: SellModalProps) => {
               
               <div className="space-y-2">
                 <Label htmlFor="condition">Condition</Label>
-                <Select value={condition} onValueChange={setCondition} required>
+                <Select value={condition} onValueChange={(value: ItemCondition) => setCondition(value)} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>

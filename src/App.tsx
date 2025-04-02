@@ -21,7 +21,7 @@ import Help from "./pages/Help";
 import Privacy from "./pages/Privacy";
 import About from "./pages/About";
 import Support from "./pages/Support";
-import { SettingsProvider } from "./contexts/SettingsContext";
+import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Share from "./pages/Share";
 import { NotificationProvider } from "./contexts/NotificationContext";

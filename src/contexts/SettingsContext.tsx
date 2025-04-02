@@ -47,17 +47,17 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
-          // Check if user_settings table exists
+          // Instead of trying to access a non-existent table, we'll get settings from profiles
           const { data, error } = await supabase
-            .from('user_settings')
-            .select('*')
-            .eq('user_id', user.id)
+            .from('profiles')
+            .select('settings')
+            .eq('id', user.id)
             .single();
             
-          if (data && !error) {
+          if (data && !error && data.settings) {
             setSettings({
               ...defaultSettings,
-              ...data
+              ...data.settings
             });
           }
         }
@@ -80,14 +80,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         const updatedSettings = { ...settings, ...newSettings };
         setSettings(updatedSettings);
         
-        // Check if user_settings table exists before upserting
+        // Update settings in the profiles table
         const { error } = await supabase
-          .from('user_settings')
-          .upsert({ 
-            user_id: user.id, 
-            ...updatedSettings,
+          .from('profiles')
+          .update({ 
+            settings: updatedSettings,
             updated_at: new Date().toISOString()
-          });
+          })
+          .eq('id', user.id);
           
         if (error) {
           console.error('Error updating settings:', error);

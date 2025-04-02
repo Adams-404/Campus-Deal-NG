@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -77,20 +78,21 @@ export const Navbar = () => {
 
   useEffect(() => {
     // Get the current user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
+    const fetchUserProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
       if (user) {
         // Get the user's profile
-        supabase
+        const { data } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", user.id)
-          .single()
-          .then(({ data }) => {
-            setProfile(data)
-          })
+          .single();
+        setProfile(data);
       }
-    })
+    };
+    
+    fetchUserProfile();
 
     // Listen for auth changes
     const {
@@ -122,10 +124,10 @@ export const Navbar = () => {
         .from("notifications")
         .select("*", { count: "exact", head: true })
         .eq("user_id", user.id)
-        .eq("read", false)
+        .eq("is_read", false)
 
-      if (!error) {
-        setUnreadNotificationsCount(count || 0)
+      if (!error && count !== null) {
+        setUnreadNotificationsCount(count)
       }
     }
 
@@ -143,7 +145,7 @@ export const Navbar = () => {
     setSearchQuery(e.target.value)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       // Trigger search
       e.currentTarget.blur()
@@ -154,18 +156,14 @@ export const Navbar = () => {
     setSearchQuery("")
   }
 
-  const handleCategoryChange = (values: string[]) => {
-    if (values.includes("all")) {
+  const handleCategoryChange = (value: string) => {
+    if (value === "all") {
       setSelectedCategories([])
       setSortBy("random")
     } else {
-      setSelectedCategories(values)
+      setSelectedCategories([value])
       setSortBy("created_at")
     }
-  }
-
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortBy(e.target.value)
   }
 
   const toggleNotification = () => {
@@ -264,25 +262,19 @@ export const Navbar = () => {
           <div className="flex items-center justify-between pb-2 gap-2">
             {/* Category Selector */}
             <div className="flex-1">
-              <Select
-                value={selectedCategories.length > 0 ? selectedCategories[0] : undefined}
-                onValueChange={(value) => handleCategoryChange([value])}
-                placeholder="Select category..."
-                className="w-full"
-              >
+              <Select onValueChange={handleCategoryChange} value={selectedCategories[0] || ""}>
                 <SelectTrigger className="bg-background border-white/10 hover:bg-primary/10">
                   <SelectValue placeholder="Categories" />
                 </SelectTrigger>
                 <SelectContent
                   className="bg-background border-white/10 w-[400px]"
                   onPointerDown={(e) => e.stopPropagation()}
-                  onWheel={(e) => e.stopPropagation()}
                 >
                   <div className="grid grid-cols-2 gap-2 p-2">
                     <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
                       All Categories
                     </SelectItem>
-                    {categories.map((category, index) => (
+                    {categories.map((category) => (
                       <SelectItem key={category.value} value={category.value} className="hover:bg-primary/10">
                         <div className="flex items-center gap-2">
                           <category.icon className="h-4 w-4 text-primary" />
