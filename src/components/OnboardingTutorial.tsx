@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,18 @@ interface OnboardingTutorialProps {
 export const OnboardingTutorial = ({ open, onClose }: OnboardingTutorialProps) => {
   const [step, setStep] = useState(1);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const getUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    
+    getUserId();
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -18,18 +31,24 @@ export const OnboardingTutorial = ({ open, onClose }: OnboardingTutorialProps) =
     }
   }, [open]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
-      if (dontShowAgain) {
-        supabase
-          .from('user_settings')
-          .upsert({ user_id: supabase.auth.user()?.id, onboarding_completed: true })
-          .then(() => onClose());
-      } else {
-        onClose();
+      if (dontShowAgain && userId) {
+        try {
+          await supabase
+            .from('user_settings')
+            .upsert({ 
+              user_id: userId, 
+              onboarding_completed: true,
+              updated_at: new Date().toISOString()
+            });
+        } catch (error) {
+          console.error('Error updating onboarding status:', error);
+        }
       }
+      onClose();
     }
   };
 
