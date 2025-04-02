@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
+import { Checkbox } from './ui/checkbox';
 
 interface OnboardingTutorialProps {
   open: boolean;
@@ -71,15 +72,13 @@ export const OnboardingTutorial = ({ open, onClose }: OnboardingTutorialProps) =
             <p className="text-muted-foreground">
               Message sellers directly and track your purchases.
             </p>
-            <div className="mt-4 flex items-center space-x-2">
-              <input
-                type="checkbox"
+            <div className="mt-6 flex items-center space-x-2">
+              <Checkbox
                 id="dont-show-again"
                 checked={dontShowAgain}
-                onChange={(e) => setDontShowAgain(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                onCheckedChange={(checked) => setDontShowAgain(checked === true)}
               />
-              <label htmlFor="dont-show-again" className="text-sm text-gray-700">
+              <label htmlFor="dont-show-again" className="text-sm text-gray-700 cursor-pointer">
                 Don't show this again
               </label>
             </div>

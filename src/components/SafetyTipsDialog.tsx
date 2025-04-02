@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { Checkbox } from './ui/checkbox';
 
 interface SafetyTipsDialogProps {
   open: boolean;
@@ -63,6 +64,7 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
 
   const tips = tipsByTrigger[trigger];
   const totalSteps = tips.length;
+  const isLastStep = step === totalSteps;
 
   useEffect(() => {
     if (!open) {
@@ -124,17 +126,15 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
           <h3 className="text-lg font-medium mb-4">{tips[step - 1].title}</h3>
           <p className="text-muted-foreground">{tips[step - 1].content}</p>
           
-          {trigger === 'app_open' && (
-            <div className="mt-4 flex items-center space-x-2">
-              <input
-                type="checkbox"
+          {trigger === 'app_open' && isLastStep && (
+            <div className="mt-6 flex items-center space-x-2">
+              <Checkbox
                 id="dont-show-again"
                 checked={dontShowAgain}
-                onChange={(e) => setDontShowAgain(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                onCheckedChange={(checked) => setDontShowAgain(checked === true)}
               />
-              <label htmlFor="dont-show-again" className="text-sm text-gray-700">
-                Don't show this again
+              <label htmlFor="dont-show-again" className="text-sm text-gray-700 cursor-pointer">
+                Don't show safety tips on startup
               </label>
             </div>
           )}
@@ -145,7 +145,7 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
             Skip
           </Button>
           <Button onClick={handleNext}>
-            {step === totalSteps ? 'Got it' : 'Next'}
+            {isLastStep ? 'Got it' : 'Next'}
           </Button>
         </div>
 
