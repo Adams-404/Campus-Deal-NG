@@ -1,142 +1,101 @@
-import { X, Upload, Video, ImagePlus, Trash2, Loader2 } from "lucide-react";
-import { Button } from "./ui/button";
-import { useState, useRef, FormEvent } from "react";
-import { ImageCarousel } from "./ui/image-carousel";
-import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { v4 as uuidv4 } from 'uuid';
+
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useToast } from '@/components/ui/use-toast';
+import { ImageUploader } from './ImageUploader';
+import { supabase } from '@/integrations/supabase/client';
+import { X, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { useSettings } from '@/contexts/SettingsContext';
+import { SafetyTips } from './SafetyTips';
 
 interface SellModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onItemListed?: () => void;
 }
 
-interface FormData {
-  title: string;
-  price: string;
-  category: string;
-  condition: "new" | "like_new" | "good" | "fair" | "poor";
-  description: string;
-}
-
-const categories = [
-  'Food',
-  'Clothing',
-  'Beauty',
-  'Jewelry',
-  'Art',
-  'Baby',
-  'Bags',
-  'Shoes',
-  'Perfumes',
-  'Tools',
-  'Books',
-  'Electronics',
-  'Stationary',
-  'Others'
-];
-
-export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => {
+export const SellModal = ({ isOpen, onClose }: SellModalProps) => {
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [category, setCategory] = useState('');
+  const [condition, setCondition] = useState('');
   const [images, setImages] = useState<File[]>([]);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [videos, setVideos] = useState<File[]>([]);
-  const [videoUrls, setVideoUrls] = useState<string[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState<FormData>({
-    title: '',
-    price: '',
-    category: '',
-    condition: 'good', // Set a default value that matches the allowed types
-    description: ''
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSellForm, setShowSellForm] = useState(false);
+  const [showSafetyTips, setShowSafetyTips] = useState(false);
+  const { settings } = useSettings();
+  const { toast: uiToast } = useToast();
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleImageUpload = (files: FileList | null) => {
-    if (!files) return;
-
-    const newImages = Array.from(files).filter(file => file.type.startsWith('image/'));
-    if (images.length + newImages.length > 5) {
-      toast.error("Maximum 5 images allowed");
-      return;
+  useEffect(() => {
+    if (isOpen && settings.showSellingSafetyTips) {
+      setShowSafetyTips(true);
+    } else if (isOpen) {
+      setShowSellForm(true);
     }
+  }, [isOpen, settings.showSellingSafetyTips]);
 
-    setImages(prev => [...prev, ...newImages]);
-    const newImageUrls = newImages.map(file => URL.createObjectURL(file));
-    setImageUrls(prev => [...prev, ...newImageUrls]);
+  const handleClose = () => {
+    // Reset form
+    setTitle('');
+    setDescription('');
+    setPrice('');
+    setCategory('');
+    setCondition('');
+    setImages([]);
+    setShowSellForm(false);
+    setShowSafetyTips(false);
+    onClose();
   };
 
-  const handleVideoUpload = (files: FileList | null) => {
-    if (!files) return;
-
-    const newVideos = Array.from(files).filter(file => file.type.startsWith('video/'));
-    if (videos.length + newVideos.length > 1) {
-      toast.error("Only 1 video allowed");
-      return;
-    }
-
-    setVideos(prev => [...prev, ...newVideos]);
-    const newVideoUrls = newVideos.map(file => URL.createObjectURL(file));
-    setVideoUrls(prev => [...prev, ...newVideoUrls]);
+  const handleSafetyTipsClose = () => {
+    setShowSafetyTips(false);
+    setShowSellForm(true);
   };
 
-  const uploadFile = async (file: File, bucket: 'item_images' | 'item_videos', itemId: string) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${itemId}/${uuidv4()}.${fileExt}`;
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, file);
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
-
-    return publicUrl;
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return;
+    setIsLoading(true);
 
     try {
-      setIsSubmitting(true);
-
-      // Validate form
-      if (!formData.title || !formData.price || !formData.category || !formData.condition) {
-        toast.error("Please fill in all required fields");
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        uiToast({
+          title: "Authentication Error",
+          description: "You must be logged in to sell items",
+          variant: "destructive",
+        });
         return;
       }
 
-      if (images.length === 0) {
-        toast.error("Please add at least one image");
+      // Convert price to number
+      const numericPrice = parseFloat(price);
+      
+      if (isNaN(numericPrice) || numericPrice <= 0) {
+        uiToast({
+          title: "Invalid Price",
+          description: "Please enter a valid price",
+          variant: "destructive",
+        });
+        setIsLoading(false);
         return;
       }
 
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error("Please sign in to list items");
-
-      // Create item record
+      // Create item
       const { data: item, error: itemError } = await supabase
         .from('items')
         .insert({
-          title: formData.title,
-          description: formData.description,
-          price: parseFloat(formData.price),
-          condition: formData.condition,
-          category: formData.category,
+          title,
+          description,
+          price: numericPrice,
+          category,
+          condition,
           seller_id: user.id,
           status: 'active'
         })
@@ -146,269 +105,193 @@ export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => 
       if (itemError) throw itemError;
 
       // Upload images
-      const imagePromises = images.map(async (image, index) => {
-        const publicUrl = await uploadFile(image, 'item_images', item.id);
-        return supabase
-          .from('item_images')
-          .insert({
-            item_id: item.id,
-            image_url: publicUrl,
-            is_primary: index === 0
-          });
-      });
+      if (images.length > 0) {
+        const imageUploadPromises = images.map(async (file, index) => {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${item.id}/${Date.now()}-${index}.${fileExt}`;
+          const filePath = `items/${fileName}`;
 
-      // Upload video if exists
-      const videoPromises = videos.map(async (video) => {
-        const publicUrl = await uploadFile(video, 'item_videos', item.id);
-        return supabase
-          .from('item_videos')
-          .insert({
-            item_id: item.id,
-            video_url: publicUrl
-          });
-      });
+          const { error: uploadError } = await supabase
+            .storage
+            .from('item-images')
+            .upload(filePath, file);
 
-      await Promise.all([...imagePromises, ...videoPromises]);
+          if (uploadError) throw uploadError;
 
-      toast.success("Item listed successfully!");
-      onItemListed?.();
-      onClose();
+          const { data: { publicUrl } } = supabase
+            .storage
+            .from('item-images')
+            .getPublicUrl(filePath);
 
+          // Add image to item_images table
+          const { error: imageError } = await supabase
+            .from('item_images')
+            .insert({
+              item_id: item.id,
+              image_url: publicUrl
+            });
+
+          if (imageError) throw imageError;
+
+          return publicUrl;
+        });
+
+        await Promise.all(imageUploadPromises);
+      }
+
+      toast.success('Item listed successfully!');
+      handleClose();
     } catch (error: any) {
-      console.error('Error creating item:', error);
-      toast.error(error.message);
+      console.error('Error creating listing:', error);
+      uiToast({
+        title: "Error",
+        description: error.message || "Failed to create listing",
+        variant: "destructive",
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = e.dataTransfer.files;
-    handleImageUpload(files);
-  };
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImageUrls(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const removeVideo = (index: number) => {
-    setVideos(prev => prev.filter((_, i) => i !== index));
-    setVideoUrls(prev => prev.filter((_, i) => i !== index));
-  };
-
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-in fade-in duration-300">
-      <form onSubmit={handleSubmit} className="bg-secondary w-full sm:w-[95%] md:w-[90%] lg:w-[80%] max-w-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom duration-500">
-        <div className="sticky top-0 z-10 flex justify-between items-center p-3 sm:p-4 border-b border-white/10 bg-secondary/95 backdrop-blur-sm">
-          <h2 className="text-lg sm:text-xl font-semibold text-white">List an Item</h2>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 sm:h-10 sm:w-10">
-            <X className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
-        </div>
-
-        <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 max-h-[80vh] overflow-y-auto">
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Media</label>
-            {(imageUrls.length > 0 || videoUrls.length > 0) && (
-              <div className="mb-3 sm:mb-4 rounded-lg overflow-hidden">
-                <ImageCarousel 
-                  images={[...imageUrls, ...videoUrls]} 
-                  className="bg-black"
-                  aspectRatio="product"
-                />
-              </div>
-            )}
-            <div
-              className={cn(
-                "rounded-lg border-2 border-dashed transition-colors",
-                isDragging ? "border-primary/50 bg-primary/5" : "border-white/10",
-                "p-3 sm:p-4"
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="aspect-[4/3] sm:aspect-video rounded-lg border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-1 sm:gap-2 hover:border-primary/50 transition-colors"
-                >
-                  <ImagePlus className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
-                  <span className="text-xs sm:text-sm text-gray-400">Add Photos</span>
-                  <span className="text-[10px] sm:text-xs text-gray-400">or drag and drop</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="aspect-[4/3] sm:aspect-video rounded-lg border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-1 sm:gap-2 hover:border-primary/50 transition-colors"
-                >
-                  <Video className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
-                  <span className="text-xs sm:text-sm text-gray-400">Add Video</span>
-                  <span className="text-[10px] sm:text-xs text-gray-400">up to 30 seconds</span>
-                </button>
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files?.[0]?.type.startsWith('video/')) {
-                    handleVideoUpload(e.target.files);
-                  } else {
-                    handleImageUpload(e.target.files);
-                  }
-                }}
+    <>
+      <SafetyTips 
+        open={showSafetyTips} 
+        onClose={handleSafetyTipsClose} 
+        scenario="selling" 
+      />
+    
+      <Dialog open={isOpen && showSellForm} onOpenChange={handleClose}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Sell an Item</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="What are you selling?"
+                required
               />
             </div>
-          </div>
-
-          {/* Preview Grid */}
-          {(imageUrls.length > 0 || videoUrls.length > 0) && (
-            <div className="mt-4 space-y-2">
-              <h3 className="text-sm text-gray-400">Media Preview</h3>
-              <div className="grid grid-cols-5 gap-2">
-                {imageUrls.map((url, index) => (
-                  <div key={url} className="relative group">
-                    <img src={url} alt={`Preview ${index + 1}`} className="aspect-square object-cover rounded-lg" />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="h-4 w-4 text-white" />
-                    </button>
-                  </div>
-                ))}
-                {videoUrls.map((url, index) => (
-                  <div key={url} className="relative group">
-                    <video src={url} className="aspect-square object-cover rounded-lg" />
-                    <button
-                      type="button"
-                      onClick={() => removeVideo(index)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="h-4 w-4 text-white" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe your item"
+                rows={3}
+              />
             </div>
-          )}
-
-          <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-sm text-gray-400">Title</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="What are you selling?"
-              className="w-full h-10 sm:h-11 bg-background rounded-lg border border-white/10 px-3 sm:px-4 text-sm sm:text-base text-white focus:outline-none focus:border-primary"
-              required
-            />
-          </div>
-
-          <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-sm text-gray-400">Price</label>
-            <div className="relative">
-              <span className="absolute left-3 sm:left-4 top-[10px] sm:top-[13px] text-gray-400 text-sm sm:text-base">₦</span>
-              <input
+            
+            <div className="space-y-2">
+              <Label htmlFor="price">Price (₦)</Label>
+              <Input
+                id="price"
                 type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
                 placeholder="0.00"
-                className="w-full h-10 sm:h-11 bg-background rounded-lg border border-white/10 px-3 sm:px-4 pl-6 sm:pl-8 text-sm sm:text-base text-white focus:outline-none focus:border-primary"
                 required
                 min="0"
                 step="0.01"
               />
             </div>
-          </div>
-
-          <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-sm text-gray-400">Category</label>
-            <select 
-              name="category"
-              value={formData.category}
-              onChange={handleInputChange}
-              className="w-full h-10 sm:h-11 bg-background rounded-lg border border-white/10 px-3 sm:px-4 text-sm sm:text-base text-white focus:outline-none focus:border-primary appearance-none"
-              required
-            >
-              <option value="">Select a category</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-sm text-gray-400">Condition</label>
-            <select 
-              name="condition"
-              value={formData.condition}
-              onChange={handleInputChange}
-              className="w-full h-10 sm:h-11 bg-background rounded-lg border border-white/10 px-3 sm:px-4 text-sm sm:text-base text-white focus:outline-none focus:border-primary appearance-none"
-              required
-            >
-              <option value="">Select condition</option>
-              <option value="new">New</option>
-              <option value="like_new">Like New</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="poor">Poor</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-sm text-gray-400">Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Describe what you're selling..."
-              rows={4}
-              className="w-full bg-background rounded-lg border border-white/10 px-3 sm:px-4 py-2 text-sm sm:text-base text-white focus:outline-none focus:border-primary resize-none"
-              required
-            />
-          </div>
-
-          <div className="pt-2 sm:pt-4">
-            <Button 
-              type="submit" 
-              className="w-full h-10 sm:h-11 text-sm sm:text-base"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Listing Item...
-                </>
-              ) : (
-                "List Item"
-              )}
-            </Button>
-          </div>
-        </div>
-      </form>
-    </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="category">Category</Label>
+                <Select value={category} onValueChange={setCategory} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="electronics">Electronics</SelectItem>
+                    <SelectItem value="clothing">Clothing</SelectItem>
+                    <SelectItem value="books">Books</SelectItem>
+                    <SelectItem value="furniture">Furniture</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="condition">Condition</Label>
+                <Select value={condition} onValueChange={setCondition} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="new">New</SelectItem>
+                    <SelectItem value="like_new">Like New</SelectItem>
+                    <SelectItem value="good">Good</SelectItem>
+                    <SelectItem value="fair">Fair</SelectItem>
+                    <SelectItem value="poor">Poor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Images</Label>
+              <div className="grid grid-cols-4 gap-2">
+                {images.map((file, index) => (
+                  <div key={index} className="relative h-20 bg-gray-100 rounded-md overflow-hidden">
+                    <img 
+                      src={URL.createObjectURL(file)} 
+                      alt={`Preview ${index}`} 
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newImages = [...images];
+                        newImages.splice(index, 1);
+                        setImages(newImages);
+                      }}
+                      className="absolute top-1 right-1 bg-black/50 rounded-full p-1"
+                    >
+                      <X className="h-3 w-3 text-white" />
+                    </button>
+                  </div>
+                ))}
+                {images.length < 8 && (
+                  <ImageUploader
+                    onImageSelected={(file) => {
+                      if (images.length < 8) {
+                        setImages([...images, file]);
+                      } else {
+                        uiToast({
+                          title: "Maximum images reached",
+                          description: "You can only upload up to 8 images",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  />
+                )}
+              </div>
+              <p className="text-xs text-gray-500">Upload up to 8 images</p>
+            </div>
+            
+            <div className="pt-4 flex justify-end space-x-2">
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                List Item
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };

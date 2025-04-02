@@ -28,6 +28,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { useSettings } from '@/contexts/SettingsContext';
+import { SafetyTips } from '@/components/SafetyTips';
 
 interface Item {
   id: string;
@@ -60,6 +62,8 @@ export default function ViewItem() {
   const [zoom, setZoom] = useState(1);
   const [showEditModal, setShowEditModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
+  const [showSafetyTips, setShowSafetyTips] = useState(false);
+  const { settings } = useSettings();
 
   const handleItemUpdated = async () => {
     if (!id) return;
@@ -297,6 +301,28 @@ export default function ViewItem() {
         return;
       }
 
+      // Show safety tips first if enabled in settings
+      if (settings.showMessageSafetyTips) {
+        setShowSafetyTips(true);
+      } else {
+        // Otherwise proceed with messaging
+        startConversation();
+      }
+    } catch (error: any) {
+      console.error('Error starting conversation:', error);
+      toast.error(error.message);
+    }
+  };
+
+  const startConversation = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('Please sign in to message the seller');
+        return;
+      }
+
       const { data: newConversation, error: conversationError } = await supabase
         .from('conversations')
         .insert({
@@ -327,6 +353,11 @@ export default function ViewItem() {
       console.error('Error starting conversation:', error);
       toast.error(error.message);
     }
+  };
+
+  const handleSafetyTipsClose = () => {
+    setShowSafetyTips(false);
+    startConversation();
   };
 
   if (isLoading) {
@@ -494,6 +525,12 @@ export default function ViewItem() {
           </div>
         </PageTransition>
       </main>
+
+      <SafetyTips 
+        open={showSafetyTips} 
+        onClose={handleSafetyTipsClose} 
+        scenario="messaging" 
+      />
 
       <EditItemModal 
         isOpen={showEditModal} 

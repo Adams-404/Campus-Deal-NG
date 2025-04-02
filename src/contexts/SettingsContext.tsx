@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface UserSettings {
   language?: string;
@@ -8,12 +9,17 @@ interface UserSettings {
   emailFrequency?: 'daily' | 'weekly' | 'never';
   distance?: 'km' | 'miles';
   currency?: string;
+  showGeneralSafetyTips?: boolean;
+  showMessageSafetyTips?: boolean;
+  showSellingSafetyTips?: boolean;
+  fontSizeClass?: 'small' | 'medium' | 'large';
 }
 
 interface SettingsContextType {
   settings: UserSettings;
   updateSettings: (newSettings: Partial<UserSettings>) => Promise<void>;
   isLoading: boolean;
+  fontSizeClass: string;
 }
 
 const defaultSettings: UserSettings = {
@@ -21,7 +27,11 @@ const defaultSettings: UserSettings = {
   onboardingCompleted: false,
   emailFrequency: 'weekly',
   distance: 'miles',
-  currency: 'USD'
+  currency: 'USD',
+  showGeneralSafetyTips: true,
+  showMessageSafetyTips: true,
+  showSellingSafetyTips: true,
+  fontSizeClass: 'medium'
 };
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -37,6 +47,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (user) {
+          // Check if user_settings table exists
           const { data, error } = await supabase
             .from('user_settings')
             .select('*')
@@ -52,6 +63,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Error fetching settings:', error);
+        toast.error('Failed to load user settings');
       } finally {
         setIsLoading(false);
       }
@@ -68,6 +80,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         const updatedSettings = { ...settings, ...newSettings };
         setSettings(updatedSettings);
         
+        // Check if user_settings table exists before upserting
         const { error } = await supabase
           .from('user_settings')
           .upsert({ 
@@ -78,17 +91,22 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
           
         if (error) {
           console.error('Error updating settings:', error);
+          toast.error('Failed to save settings');
           throw error;
         }
       }
     } catch (error) {
       console.error('Failed to update settings:', error);
+      toast.error('Failed to save settings');
       throw error;
     }
   };
 
+  // Helper property for font size class
+  const fontSizeClass = settings.fontSizeClass || 'medium';
+
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, isLoading }}>
+    <SettingsContext.Provider value={{ settings, updateSettings, isLoading, fontSizeClass }}>
       {children}
     </SettingsContext.Provider>
   );

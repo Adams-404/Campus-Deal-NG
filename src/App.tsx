@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,6 +20,7 @@ import SavedItems from "./pages/SavedItems";
 import Help from "./pages/Help";
 import Privacy from "./pages/Privacy";
 import About from "./pages/About";
+import Support from "./pages/Support";
 import { SettingsProvider } from "./contexts/SettingsContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Share from "./pages/Share";
@@ -35,6 +37,7 @@ import UserProfile from "./pages/UserProfile";
 import { SearchProvider } from "./contexts/SearchContext";
 import NotificationsPage from "./pages/NotificationsPage";
 import CategoryPage from "./pages/CategoryPage";
+import { SafetyTips } from "./components/SafetyTips";
 
 const queryClient = new QueryClient();
 
@@ -82,8 +85,23 @@ const AnimatedRoutes = () => {
     "/auth/signin", 
     "/auth/signup", 
     "/admin", 
-    "/notifications"
+    "/notifications",
+    "/support"
   ].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
+  
+  const [showSafetyTips, setShowSafetyTips] = useState(false);
+  const { settings, isLoading } = useSettings();
+  
+  useEffect(() => {
+    // Show safety tips on app load if not disabled in settings
+    if (
+      location.pathname === '/home' && 
+      !isLoading && 
+      settings.showGeneralSafetyTips
+    ) {
+      setShowSafetyTips(true);
+    }
+  }, [location.pathname, settings, isLoading]);
   
   useEffect(() => {
     if (location.pathname !== '/') {
@@ -109,6 +127,7 @@ const AnimatedRoutes = () => {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/about" element={<About />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/support" element={<Support />} />
 
             {/* Protected Routes */}
             <Route path="/home" element={<ProtectedRoute allowGuest><Homepage /></ProtectedRoute>} />
@@ -133,6 +152,13 @@ const AnimatedRoutes = () => {
         </AnimatePresence>
       </main>
       {!hideBottomNav && <div className="fixed bottom-0 left-0 right-0 z-50"><BottomNav /></div>}
+      
+      {/* Global safety tips dialog */}
+      <SafetyTips 
+        open={showSafetyTips} 
+        onClose={() => setShowSafetyTips(false)} 
+        scenario="general" 
+      />
     </div>
   );
 };
