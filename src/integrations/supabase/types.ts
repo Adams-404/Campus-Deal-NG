@@ -334,7 +334,6 @@ export type Database = {
           id: string
           kyc_status: Database["public"]["Enums"]["kyc_status"] | null
           last_name: string | null
-          onboarding_completed: boolean | null
           phone: string | null
           updated_at: string | null
         }
@@ -346,7 +345,6 @@ export type Database = {
           id: string
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           last_name?: string | null
-          onboarding_completed?: boolean | null
           phone?: string | null
           updated_at?: string | null
         }
@@ -358,7 +356,6 @@ export type Database = {
           id?: string
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           last_name?: string | null
-          onboarding_completed?: boolean | null
           phone?: string | null
           updated_at?: string | null
         }
@@ -475,26 +472,40 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_kyc_status: {
-        Args: {
-          document_id: string
-          user_id: string
-          new_status: string
-          admin_notes_param?: string
-        }
-        Returns: Json
-      }
-      verify_user: {
-        Args: {
-          user_id: string
-        }
-        Returns: undefined
-      }
+      update_kyc_status:
+        | {
+            Args: {
+              document_id: string
+              user_id: string
+              new_status: Database["public"]["Enums"]["kycstatus"]
+              admin_notes: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              document_id: string
+              user_id: string
+              new_status: string
+              admin_notes_param: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              document_id: string
+              user_id: string
+              new_status: string
+              admin_notes_param?: string
+            }
+            Returns: Json
+          }
     }
     Enums: {
       item_condition: "new" | "like_new" | "good" | "fair" | "poor"
       item_status: "active" | "sold" | "deleted"
       kyc_status: "pending" | "verified" | "rejected" | "processing"
+      kycstatus: "pending" | "processing" | "verified" | "rejected"
       user_role: "admin" | "user"
     }
     CompositeTypes: {

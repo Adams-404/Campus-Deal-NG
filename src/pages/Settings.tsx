@@ -1,10 +1,8 @@
-
 import { PageTransition } from "@/components/PageTransition";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { ExpandableSection } from "@/components/ui/expandable-section";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   ChevronRight, 
   Type, 
@@ -24,13 +22,7 @@ import {
   Mail,
   ArrowLeft,
   Headphones,
-  Headset,
-  MessageCircle,
-  Phone,
-  PhoneCall,
-  Mail as MailIcon,
-  MessageCircleQuestion,
-  Contact
+  Headset
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -58,7 +50,6 @@ export default function Settings() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(isEnabled);
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showSupportDialog, setShowSupportDialog] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -186,36 +177,6 @@ export default function Settings() {
     }
   ];
 
-  const supportOptions = [
-    {
-      icon: MessageCircleQuestion,
-      label: "Chat Support",
-      description: "Chat with our support team",
-      action: () => {
-        toast.success("Chat support initiated!");
-        setShowSupportDialog(false);
-      }
-    },
-    {
-      icon: MailIcon,
-      label: "Email Support",
-      description: "Send us an email",
-      action: () => {
-        window.location.href = "mailto:support@gsumarket.com";
-        setShowSupportDialog(false);
-      }
-    },
-    {
-      icon: PhoneCall,
-      label: "Call Support",
-      description: "Call our support team",
-      action: () => {
-        window.location.href = "tel:+12345678900";
-        setShowSupportDialog(false);
-      }
-    }
-  ];
-
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
@@ -230,23 +191,15 @@ export default function Settings() {
     <div className="bg-background">
       <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10">
         <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
-          <div className="h-16 flex items-center justify-between relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="absolute left-0"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+          <div className="h-16 flex items-center justify-center relative">
             <h1 className="text-lg font-semibold">Settings</h1>
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setShowSupportDialog(true)}
-              className="text-primary hover:text-primary/80 absolute right-0"
+              onClick={() => navigate('/support')}
+              className="text-blue-500 hover:text-blue-400 absolute right-0"
             >
-              <Headset className="h-6 w-6" />
+              <Headset className="h-9 w-9" />
             </Button>
           </div>
           <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
@@ -404,32 +357,6 @@ export default function Settings() {
           )}
         </PageTransition>
       </main>
-
-      {/* Support Dialog */}
-      <Dialog open={showSupportDialog} onOpenChange={setShowSupportDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center">Contact Support</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {supportOptions.map((option) => (
-              <button
-                key={option.label}
-                onClick={option.action}
-                className="w-full bg-secondary/50 rounded-lg border border-white/10 p-4 flex items-center gap-4 hover:bg-secondary/80 transition-colors text-left"
-              >
-                <div className="p-2 rounded-full bg-primary/10">
-                  <option.icon className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-medium">{option.label}</h3>
-                  <p className="text-sm text-gray-400">{option.description}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
         <AlertDialogContent>
