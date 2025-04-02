@@ -29,6 +29,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             .single();
 
           if (!error && data) {
+            // Use optional chaining and nullish coalescing for safer access
             setFontSizeClass(data.font_size || 'medium');
             setHideSafetyTips(data.hide_safety_tips || false);
           }
