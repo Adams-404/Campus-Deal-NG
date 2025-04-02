@@ -1,3 +1,4 @@
+
 import { Home, MessageSquare, Plus, Heart, Settings, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -5,14 +6,18 @@ import { SellModal } from "./SellModal";
 import { Link, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { useSettings } from "../contexts/SettingsContext";
+import SafetyTipsDialog from "./SafetyTipsDialog";
 
 const lockedFeatures = ['/messages', '/saved', '#'];
 
 export const BottomNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
+  const { setShowSafetyTips } = useSettings();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -30,6 +35,15 @@ export const BottomNav = () => {
         variant: "destructive",
         className: "bg-black text-white border border-red-500",
       });
+    }
+  };
+
+  const handleSellClick = () => {
+    if (isLocked('#')) {
+      handleLockedFeature('#');
+    } else {
+      // Show safety tips before opening sell modal
+      setShowSellSafetyTips(true);
     }
   };
 
@@ -51,13 +65,7 @@ export const BottomNav = () => {
             index === 2 ? (
               <button
                 key={item.label}
-                onClick={() => {
-                  if (isLocked(item.href)) {
-                    handleLockedFeature(item.href);
-                  } else {
-                    setIsSellModalOpen(true);
-                  }
-                }}
+                onClick={handleSellClick}
                 className={cn(
                   "flex flex-col items-center gap-1 relative",
                   "-mt-8"
@@ -107,6 +115,18 @@ export const BottomNav = () => {
           ))}
         </div>
       </nav>
+      
+      {/* Safety Tips Dialog for Sell */}
+      <SafetyTipsDialog 
+        open={showSellSafetyTips} 
+        onClose={() => {
+          setShowSellSafetyTips(false);
+          setIsSellModalOpen(true);
+        }} 
+        trigger="sell"
+      />
+      
+      {/* Sell Modal */}
       <SellModal isOpen={isSellModalOpen} onClose={() => setIsSellModalOpen(false)} />
     </>
   );

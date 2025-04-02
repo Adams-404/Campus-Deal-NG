@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -19,7 +20,7 @@ import SavedItems from "./pages/SavedItems";
 import Help from "./pages/Help";
 import Privacy from "./pages/Privacy";
 import About from "./pages/About";
-import { SettingsProvider } from "./contexts/SettingsContext";
+import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Share from "./pages/Share";
 import { NotificationProvider } from "./contexts/NotificationContext";
@@ -35,6 +36,8 @@ import UserProfile from "./pages/UserProfile";
 import { SearchProvider } from "./contexts/SearchContext";
 import NotificationsPage from "./pages/NotificationsPage";
 import CategoryPage from "./pages/CategoryPage";
+import SafetyTipsDialog from "./components/SafetyTipsDialog";
+import Support from "./pages/Support";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +88,23 @@ const AnimatedRoutes = () => {
     "/notifications"
   ].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
   
+  const { hideSafetyTips, showSafetyTips, setShowSafetyTips } = useSettings();
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      
+      // Only show safety tips on app open if user is logged in and hasn't disabled them
+      if (user && !hideSafetyTips && location.pathname === '/home') {
+        setShowSafetyTips(true);
+      }
+    };
+    
+    checkUser();
+  }, [location.pathname, hideSafetyTips, setShowSafetyTips]);
+  
   useEffect(() => {
     if (location.pathname !== '/') {
       window.scrollTo(0, 0);
@@ -109,6 +129,7 @@ const AnimatedRoutes = () => {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/about" element={<About />} />
             <Route path="/help" element={<Help />} />
+            <Route path="/support" element={<Support />} />
 
             {/* Protected Routes */}
             <Route path="/home" element={<ProtectedRoute allowGuest><Homepage /></ProtectedRoute>} />
@@ -133,6 +154,13 @@ const AnimatedRoutes = () => {
         </AnimatePresence>
       </main>
       {!hideBottomNav && <div className="fixed bottom-0 left-0 right-0 z-50"><BottomNav /></div>}
+      
+      {/* Safety Tips Dialog */}
+      <SafetyTipsDialog 
+        open={showSafetyTips} 
+        onClose={() => setShowSafetyTips(false)} 
+        trigger="app_open"
+      />
     </div>
   );
 };

@@ -28,6 +28,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { useSettings } from "@/contexts/SettingsContext";
+import SafetyTipsDialog from "@/components/SafetyTipsDialog";
 
 interface Item {
   id: string;
@@ -60,6 +62,8 @@ export default function ViewItem() {
   const [zoom, setZoom] = useState(1);
   const [showEditModal, setShowEditModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
+  const { setShowSafetyTips } = useSettings();
+  const [showMessageSafetyTips, setShowMessageSafetyTips] = useState(false);
 
   const handleItemUpdated = async () => {
     if (!id) return;
@@ -297,12 +301,25 @@ export default function ViewItem() {
         return;
       }
 
+      setShowMessageSafetyTips(true);
+    } catch (error: any) {
+      console.error('Error preparing to message seller:', error);
+      toast.error(error.message);
+    }
+  };
+
+  const proceedWithMessaging = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user || !item) return;
+
       const { data: newConversation, error: conversationError } = await supabase
         .from('conversations')
         .insert({
           buyer_id: user.id,
-          seller_id: item?.seller_id,
-          last_message: `Interested in ${item?.title}`,
+          seller_id: item.seller_id,
+          last_message: `Interested in ${item.title}`,
           last_message_at: new Date().toISOString()
         })
         .select()
@@ -314,10 +331,10 @@ export default function ViewItem() {
         .from('messages')
         .insert({
           conversation_id: newConversation.id,
-          content: `Hi, I'm interested in ${item?.title}`,
+          content: `Hi, I'm interested in ${item.title}`,
           sender_id: user.id,
           created_at: new Date().toISOString(),
-          item_id: item?.id
+          item_id: item.id
         });
 
       if (messageError) throw messageError;
@@ -540,6 +557,15 @@ export default function ViewItem() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SafetyTipsDialog 
+        open={showMessageSafetyTips} 
+        onClose={() => {
+          setShowMessageSafetyTips(false);
+          proceedWithMessaging();
+        }} 
+        trigger="message_seller"
+      />
     </div>
   );
 }

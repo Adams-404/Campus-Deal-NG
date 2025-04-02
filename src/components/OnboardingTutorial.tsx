@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -14,22 +15,28 @@ export const OnboardingTutorial = ({ open, onClose }: OnboardingTutorialProps) =
 
   useEffect(() => {
     if (!open) {
-      // localStorage.setItem('hasCompletedTutorial', 'true');
+      setStep(1);
     }
   }, [open]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
       if (dontShowAgain) {
-        supabase
-          .from('user_settings')
-          .upsert({ user_id: supabase.auth.user()?.id, onboarding_completed: true })
-          .then(() => onClose());
-      } else {
-        onClose();
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase
+              .from('profiles')
+              .update({ onboarding_completed: true })
+              .eq('id', user.id);
+          }
+        } catch (error) {
+          console.error('Error updating onboarding status:', error);
+        }
       }
+      onClose();
     }
   };
 
@@ -79,7 +86,10 @@ export const OnboardingTutorial = ({ open, onClose }: OnboardingTutorialProps) =
           </div>
         )}
 
-        <div className="flex justify-end mt-6">
+        <div className="flex justify-between mt-6">
+          <Button variant="outline" onClick={onClose}>
+            Skip
+          </Button>
           <Button onClick={handleNext}>
             {step === 3 ? 'Get Started' : 'Next'}
           </Button>
