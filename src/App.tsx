@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -85,7 +84,8 @@ const AnimatedRoutes = () => {
     "/auth/signin", 
     "/auth/signup", 
     "/admin", 
-    "/notifications"
+    "/notifications",
+    "/support"
   ].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
   
   const { hideSafetyTips, showSafetyTips, setShowSafetyTips } = useSettings();
