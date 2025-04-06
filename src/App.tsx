@@ -88,7 +88,7 @@ const AnimatedRoutes = () => {
     "/support"
   ].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
   
-  const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings } = useSettings(); // Add loadingSettings
+  const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings } = useSettings();
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -111,7 +111,7 @@ const AnimatedRoutes = () => {
     };
     
     checkUserAndSettings();
-  }, [location.pathname, hideSafetyTips, setShowSafetyTips, loadingSettings, user, showSafetyTips]); // Add loadingSettings, user, showSafetyTips to dependencies
+  }, [location.pathname, hideSafetyTips, setShowSafetyTips, loadingSettings, user, showSafetyTips]);
   
   useEffect(() => {
     if (location.pathname !== '/') {

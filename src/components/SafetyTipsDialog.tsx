@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { X, ShieldCheck, UserCheck, MapPin, MessageCircle, FileText, CreditCard, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { Checkbox } from './ui/checkbox';
-import { Progress } from './ui/progress'; // Import Progress
+import { Progress } from './ui/progress';
 
 interface SafetyTipsDialogProps {
   open: boolean;
@@ -17,7 +17,7 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
   const [step, setStep] = useState(1);
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
-  // Different sets of tips based on the trigger, now with icons
+  // Different sets of tips based on the trigger, with icons
   const tipsByTrigger = useMemo(() => ({
     app_open: [
       {
@@ -33,7 +33,7 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
       {
         icon: <Info className="h-5 w-5 text-orange-500" />,
         title: "Trust Your Instincts",
-        content: "If something feels off, walk away. It’s better to be safe."
+        content: "If something feels off, walk away. It's better to be safe."
       }
     ],
     message_seller: [
@@ -87,13 +87,20 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
     if (step < totalSteps) {
       setStep(step + 1);
     } else {
-      if (dontShowAgain && trigger === 'app_open') {
+      if (dontShowAgain) {
         try {
           const { data: { user } } = await supabase.auth.getUser();
           if (user) {
+            // Update the appropriate preference based on trigger
+            const updateData = trigger === 'app_open' 
+              ? { hide_safety_tips: true }
+              : trigger === 'sell'
+                ? { hide_sell_tips: true }
+                : { hide_message_tips: true };
+                
             await supabase
               .from('profiles')
-              .update({ hide_safety_tips: true })
+              .update(updateData)
               .eq('id', user.id);
           }
         } catch (error) {
@@ -105,13 +112,20 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
   };
 
   const handleSkip = async () => {
-    if (dontShowAgain && trigger === 'app_open') {
+    if (dontShowAgain) {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          // Update the appropriate preference based on trigger
+          const updateData = trigger === 'app_open' 
+            ? { hide_safety_tips: true }
+            : trigger === 'sell'
+              ? { hide_sell_tips: true }
+              : { hide_message_tips: true };
+              
           await supabase
             .from('profiles')
-            .update({ hide_safety_tips: true })
+            .update(updateData)
             .eq('id', user.id);
         }
       } catch (error) {
@@ -123,10 +137,8 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      {/* Added rounded-lg, border, and border-blue-500 */}
       <DialogContent className="max-w-md rounded-lg border border-blue-500">
         <DialogHeader>
-          {/* Removed the explicit X button from here */}
           <DialogTitle>
             Safety Tips
           </DialogTitle>
@@ -144,7 +156,7 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
             </div>
           </div>
 
-          {trigger === 'app_open' && isLastStep && (
+          {isLastStep && (
             <div className="pt-4 flex items-center space-x-2">
               <Checkbox
                 id="dont-show-again"
@@ -152,7 +164,11 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
                 onCheckedChange={(checked) => setDontShowAgain(checked === true)}
               />
               <label htmlFor="dont-show-again" className="text-sm text-gray-700 cursor-pointer">
-                Don't show safety tips on startup
+                {trigger === 'app_open' 
+                  ? "Don't show safety tips on startup" 
+                  : trigger === 'sell'
+                    ? "Don't show safety tips when selling"
+                    : "Don't show safety tips when messaging"}
               </label>
             </div>
           )}
@@ -172,7 +188,6 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
             </Button>
           </div>
         </div>
-        {/* Removed the dot indicators */}
       </DialogContent>
     </Dialog>
   );

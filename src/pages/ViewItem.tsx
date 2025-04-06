@@ -62,7 +62,7 @@ export default function ViewItem() {
   const [zoom, setZoom] = useState(1);
   const [showEditModal, setShowEditModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState("");
-  const { setShowSafetyTips } = useSettings();
+  const { hideMessageTips } = useSettings();
   const [showMessageSafetyTips, setShowMessageSafetyTips] = useState(false);
 
   const handleItemUpdated = async () => {
@@ -301,7 +301,13 @@ export default function ViewItem() {
         return;
       }
 
-      setShowMessageSafetyTips(true);
+      // Check if user has opted out of message safety tips
+      if (!hideMessageTips) {
+        setShowMessageSafetyTips(true);
+      } else {
+        // Skip tips and proceed directly
+        proceedWithMessaging();
+      }
     } catch (error: any) {
       console.error('Error preparing to message seller:', error);
       toast.error(error.message);

@@ -17,7 +17,7 @@ export const BottomNav = () => {
   const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
-  const { setShowSafetyTips } = useSettings();
+  const { hideSellTips } = useSettings();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -42,8 +42,12 @@ export const BottomNav = () => {
     if (isLocked('#')) {
       handleLockedFeature('#');
     } else {
-      // Show safety tips before opening sell modal
-      setShowSellSafetyTips(true);
+      // Show safety tips before opening sell modal, unless user has opted out
+      if (!hideSellTips) {
+        setShowSellSafetyTips(true);
+      } else {
+        setIsSellModalOpen(true);
+      }
     }
   };
 

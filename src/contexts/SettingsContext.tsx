@@ -6,18 +6,22 @@ interface SettingsContextType {
   fontSizeClass: string;
   updateFontSize: (size: string) => Promise<void>;
   hideSafetyTips: boolean;
+  hideSellTips: boolean;
+  hideMessageTips: boolean;
   showSafetyTips: boolean;
   setShowSafetyTips: (show: boolean) => void;
-  loadingSettings: boolean; // Add loading state
+  loadingSettings: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [fontSizeClass, setFontSizeClass] = useState('medium');
-  const [hideSafetyTips, setHideSafetyTips] = useState(false); // Default to false initially
+  const [hideSafetyTips, setHideSafetyTips] = useState(false);
+  const [hideSellTips, setHideSellTips] = useState(false);
+  const [hideMessageTips, setHideMessageTips] = useState(false);
   const [showSafetyTips, setShowSafetyTips] = useState(false);
-  const [loadingSettings, setLoadingSettings] = useState(true); // Initialize loading state
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
   useEffect(() => {
     const loadUserSettings = async () => {
@@ -34,12 +38,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             // Use optional chaining and nullish coalescing for safer access
             setFontSizeClass(data.font_size || 'medium');
             setHideSafetyTips(data.hide_safety_tips || false);
+            setHideSellTips(data.hide_sell_tips || false);
+            setHideMessageTips(data.hide_message_tips || false);
           }
         }
       } catch (error) {
         console.error('Error loading user settings:', error);
       } finally {
-        setLoadingSettings(false); // Set loading to false after fetch attempt
+        setLoadingSettings(false);
       }
     };
 
@@ -67,9 +73,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         fontSizeClass, 
         updateFontSize,
         hideSafetyTips,
+        hideSellTips,
+        hideMessageTips,
         showSafetyTips,
         setShowSafetyTips,
-        loadingSettings // Provide loading state in context
+        loadingSettings
       }}
     >
       {children}
