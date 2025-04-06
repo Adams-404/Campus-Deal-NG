@@ -88,22 +88,30 @@ const AnimatedRoutes = () => {
     "/support"
   ].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
   
-  const { hideSafetyTips, showSafetyTips, setShowSafetyTips } = useSettings();
+  const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings } = useSettings(); // Add loadingSettings
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const checkUser = async () => {
+    const checkUserAndSettings = async () => {
+      // Wait for settings to load first
+      if (loadingSettings) {
+        return; 
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       
-      // Only show safety tips on app open if user is logged in and hasn't disabled them
+      // Now that settings are loaded, check if we should show the dialog
       if (user && !hideSafetyTips && location.pathname === '/home') {
-        setShowSafetyTips(true);
+        // Ensure we don't re-trigger if already showing (though open prop handles this)
+        if (!showSafetyTips) { 
+           setShowSafetyTips(true);
+        }
       }
     };
     
-    checkUser();
-  }, [location.pathname, hideSafetyTips, setShowSafetyTips]);
+    checkUserAndSettings();
+  }, [location.pathname, hideSafetyTips, setShowSafetyTips, loadingSettings, user, showSafetyTips]); // Add loadingSettings, user, showSafetyTips to dependencies
   
   useEffect(() => {
     if (location.pathname !== '/') {
