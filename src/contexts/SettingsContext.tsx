@@ -8,14 +8,16 @@ interface SettingsContextType {
   hideSafetyTips: boolean;
   showSafetyTips: boolean;
   setShowSafetyTips: (show: boolean) => void;
+  loadingSettings: boolean; // Add loading state
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [fontSizeClass, setFontSizeClass] = useState('medium');
-  const [hideSafetyTips, setHideSafetyTips] = useState(false);
+  const [hideSafetyTips, setHideSafetyTips] = useState(false); // Default to false initially
   const [showSafetyTips, setShowSafetyTips] = useState(false);
+  const [loadingSettings, setLoadingSettings] = useState(true); // Initialize loading state
 
   useEffect(() => {
     const loadUserSettings = async () => {
@@ -36,6 +38,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('Error loading user settings:', error);
+      } finally {
+        setLoadingSettings(false); // Set loading to false after fetch attempt
       }
     };
 
@@ -64,7 +68,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         updateFontSize,
         hideSafetyTips,
         showSafetyTips,
-        setShowSafetyTips
+        setShowSafetyTips,
+        loadingSettings // Provide loading state in context
       }}
     >
       {children}
