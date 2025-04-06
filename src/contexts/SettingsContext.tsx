@@ -11,6 +11,7 @@ interface SettingsContextType {
   showSafetyTips: boolean;
   setShowSafetyTips: (show: boolean) => void;
   loadingSettings: boolean;
+  updateSafetyTipPreferences: (type: 'app_open' | 'message_seller' | 'sell', value: boolean) => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -30,7 +31,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         if (user) {
           const { data, error } = await supabase
             .from('profiles')
-            .select('*')
+            .select('font_size, hide_safety_tips, hide_sell_tips, hide_message_tips')
             .eq('id', user.id)
             .single();
 
@@ -67,6 +68,36 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateSafetyTipPreferences = async (type: 'app_open' | 'message_seller' | 'sell', value: boolean) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const updateData = type === 'app_open' 
+        ? { hide_safety_tips: value }
+        : type === 'sell'
+          ? { hide_sell_tips: value }
+          : { hide_message_tips: value };
+      
+      // Update local state
+      if (type === 'app_open') setHideSafetyTips(value);
+      else if (type === 'sell') setHideSellTips(value);
+      else setHideMessageTips(value);
+      
+      // Update in database
+      const { error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .eq('id', user.id);
+      
+      if (error) {
+        console.error('Error updating safety tip preferences:', error);
+      }
+    } catch (error) {
+      console.error('Error updating safety tip preferences:', error);
+    }
+  };
+
   return (
     <SettingsContext.Provider 
       value={{ 
@@ -77,7 +108,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         hideMessageTips,
         showSafetyTips,
         setShowSafetyTips,
-        loadingSettings
+        loadingSettings,
+        updateSafetyTipPreferences
       }}
     >
       {children}

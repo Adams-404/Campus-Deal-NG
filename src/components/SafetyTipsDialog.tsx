@@ -3,9 +3,9 @@ import { useState, useEffect, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, ShieldCheck, UserCheck, MapPin, MessageCircle, FileText, CreditCard, Info } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import { Checkbox } from './ui/checkbox';
 import { Progress } from './ui/progress';
+import { useSettings } from '@/contexts/SettingsContext';
 
 interface SafetyTipsDialogProps {
   open: boolean;
@@ -16,6 +16,7 @@ interface SafetyTipsDialogProps {
 export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: SafetyTipsDialogProps) => {
   const [step, setStep] = useState(1);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const { updateSafetyTipPreferences } = useSettings();
 
   // Different sets of tips based on the trigger, with icons
   const tipsByTrigger = useMemo(() => ({
@@ -80,6 +81,7 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
   useEffect(() => {
     if (!open) {
       setStep(1);
+      setDontShowAgain(false);
     }
   }, [open]);
 
@@ -88,24 +90,8 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
       setStep(step + 1);
     } else {
       if (dontShowAgain) {
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            // Update the appropriate preference based on trigger
-            const updateData = trigger === 'app_open' 
-              ? { hide_safety_tips: true }
-              : trigger === 'sell'
-                ? { hide_sell_tips: true }
-                : { hide_message_tips: true };
-                
-            await supabase
-              .from('profiles')
-              .update(updateData)
-              .eq('id', user.id);
-          }
-        } catch (error) {
-          console.error('Error updating user preferences:', error);
-        }
+        // Update preferences in SettingsContext which handles the database update
+        await updateSafetyTipPreferences(trigger, true);
       }
       onClose();
     }
@@ -113,24 +99,8 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
 
   const handleSkip = async () => {
     if (dontShowAgain) {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          // Update the appropriate preference based on trigger
-          const updateData = trigger === 'app_open' 
-            ? { hide_safety_tips: true }
-            : trigger === 'sell'
-              ? { hide_sell_tips: true }
-              : { hide_message_tips: true };
-              
-          await supabase
-            .from('profiles')
-            .update(updateData)
-            .eq('id', user.id);
-        }
-      } catch (error) {
-        console.error('Error updating user preferences:', error);
-      }
+      // Update preferences in SettingsContext which handles the database update
+      await updateSafetyTipPreferences(trigger, true);
     }
     onClose();
   };
