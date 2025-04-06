@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -120,6 +121,8 @@ interface GroupedConversation {
     last_message?: string;
     last_message_at?: string;
     item_title?: string;
+    item_image?: string;
+    item_id?: string;
   }[];
 }
 
@@ -156,6 +159,7 @@ export default function Messages() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const [itemsByConversation, setItemsByConversation] = useState<Map<string, any>>(new Map());
 
   useEffect(() => {
     const setup = async () => {
@@ -257,7 +261,7 @@ export default function Messages() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [filteredMessages]);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -317,6 +321,9 @@ export default function Messages() {
 
       if (conversationsError) throw conversationsError;
 
+      // Create a map to store item details by conversation
+      const itemsMap = new Map<string, any>();
+
       // Transform the data into the expected format
       const formattedConversations = (conversationsData || []).map(conv => {
         const otherUser = userId === conv.seller_id ? conv.buyer_profile : conv.seller_profile;
@@ -324,6 +331,15 @@ export default function Messages() {
         // Get the first message that has an item (which should be the initial message)
         const messageWithItem = conv.messages?.find(msg => msg.items);
         const item = messageWithItem?.items;
+
+        // Store item details for this conversation
+        if (item) {
+          itemsMap.set(conv.id, {
+            id: item.id,
+            title: item.title,
+            image: item.item_images?.[0]?.image_url || null
+          });
+        }
 
         // Add conversation_id to each message and ensure all fields are properly typed
         const formattedMessages = (conv.messages as QueryMessage[] || []).map((msg) => ({
@@ -363,7 +379,8 @@ export default function Messages() {
         };
       });
 
-      console.log('Formatted conversations:', formattedConversations);
+      // Update the state with conversations and items
+      setItemsByConversation(itemsMap);
       setConversations(formattedConversations);
 
       if (conversationId) {
@@ -373,7 +390,6 @@ export default function Messages() {
     } catch (error: any) {
       console.error('Error fetching conversations:', error);
       toast.error(error.message);
-      setLoading(false);
     } finally {
       setLoading(false);
     }
@@ -434,7 +450,7 @@ export default function Messages() {
 
       // Check if message starts with item tag (e.g., #itemId)
       const itemTagMatch = messageContent.match(/^#(\w+)/);
-      const itemId = itemTagMatch?.[1];
+      const itemId = itemTagMatch?.[1] || selectedItemId;
       const cleanMessage = itemTagMatch ? messageContent.replace(/^#\w+\s*/, '').trim() : messageContent;
 
       if (cleanMessage.length === 0) {
@@ -481,7 +497,8 @@ export default function Messages() {
       if (conversationError) throw conversationError;
 
       // If this is a new item being discussed, fetch the updated messages to get item details
-      if (itemId) {
+      if (itemId && itemId !== selectedItemId) {
+        setSelectedItemId(itemId);
         fetchMessages(conversationId);
       }
     } catch (error: any) {
@@ -490,14 +507,6 @@ export default function Messages() {
     } finally {
       setSending(false);
     }
-  };
-
-  const markConversationAsRead = async (convId: string) => {
-    // Remove this function since we're removing unread functionality
-  };
-
-  const markConversationAsUnread = async (convId: string) => {
-    // Remove this function since we're removing unread functionality
   };
 
   // Filter conversations based on search query
@@ -516,6 +525,9 @@ export default function Messages() {
         });
       }
       
+      // Get item details from our map
+      const itemDetails = itemsByConversation.get(conv.id);
+      
       // Only add unique items
       const existingItem = acc.get(userId)!.items.find(item => item.id === conv.id);
       if (!existingItem) {
@@ -524,7 +536,9 @@ export default function Messages() {
           conversation_id: conv.id,
           last_message: conv.last_message,
           last_message_at: conv.last_message_at,
-          item_title: conv.item_title
+          item_title: conv.item_title,
+          item_image: itemDetails?.image || null,
+          item_id: itemDetails?.id || null
         });
       }
       
@@ -681,20 +695,31 @@ export default function Messages() {
                               }`}
                             >
                               <div className="flex items-center justify-between">
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-primary truncate">
-                                    {item.item_title || 'Unknown Item'}
-                                  </p>
-                                  {item.last_message && (
-                                    <p className="text-sm truncate mt-1 text-muted-foreground/60">
-                                      {item.last_message}
-                                    </p>
+                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                  {item.item_image && (
+                                    <div className="h-10 w-10 rounded-md overflow-hidden flex-shrink-0">
+                                      <img 
+                                        src={item.item_image} 
+                                        alt={item.item_title || 'Item'} 
+                                        className="h-full w-full object-cover"
+                                      />
+                                    </div>
                                   )}
-                                  {item.last_message_at && (
-                                    <p className="text-xs text-muted-foreground/60 mt-1">
-                                      {format(new Date(item.last_message_at), 'MMM d, HH:mm')}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-primary truncate">
+                                      {item.item_title || 'Unknown Item'}
                                     </p>
-                                  )}
+                                    {item.last_message && (
+                                      <p className="text-sm truncate mt-1 text-muted-foreground/60">
+                                        {item.last_message}
+                                      </p>
+                                    )}
+                                    {item.last_message_at && (
+                                      <p className="text-xs text-muted-foreground/60 mt-1">
+                                        {format(new Date(item.last_message_at), 'MMM d, HH:mm')}
+                                      </p>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -812,10 +837,45 @@ export default function Messages() {
               </div>
             </div>
 
+            {/* Items Selector */}
+            {messages.length > 0 && messages.some(msg => msg.item_id) && (
+              <div className="border-b border-white/10 flex overflow-x-auto p-2 gap-2 bg-secondary/10">
+                {Array.from(new Set(messages.filter(msg => msg.items).map(msg => msg.item_id)))
+                  .map(itemId => {
+                    const messageWithItem = messages.find(msg => msg.item_id === itemId && msg.items);
+                    if (!messageWithItem?.items) return null;
+                    
+                    const item = messageWithItem.items;
+                    return (
+                      <div 
+                        key={itemId} 
+                        onClick={() => setSelectedItemId(itemId)}
+                        className={`flex items-center gap-2 p-1.5 rounded-lg cursor-pointer flex-shrink-0 ${
+                          selectedItemId === itemId ? 'bg-primary/20 border border-primary/30' : 'hover:bg-white/5'
+                        }`}
+                      >
+                        {item.item_images?.[0]?.image_url && (
+                          <div className="h-8 w-8 rounded overflow-hidden flex-shrink-0">
+                            <img 
+                              src={item.item_images[0].image_url} 
+                              alt={item.title} 
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <span className="text-xs font-medium">
+                          {item.title}
+                        </span>
+                      </div>
+                    );
+                  }).filter(Boolean)}
+              </div>
+            )}
+
             {/* Messages */}
             <div className="flex-1 overflow-y-auto pb-safe" ref={messageContainerRef}>
               <div className="p-3 sm:p-6 space-y-3 sm:space-y-6">
-                {selectedConversation.item && (
+                {selectedConversation.item && !filteredMessages.length && (
                   <div className="flex flex-col items-center gap-2 sm:gap-3 mb-4 sm:mb-8">
                     <div className="relative w-24 sm:w-32 h-24 sm:h-32 rounded-lg overflow-hidden ring-2 ring-primary/20">
                       <img 
@@ -835,7 +895,7 @@ export default function Messages() {
                 )}
                 <AnimatePresence initial={false}>
                   {Object.entries(
-                    messages.reduce((groups, message) => {
+                    filteredMessages.reduce((groups, message) => {
                       const date = format(new Date(message.created_at), 'yyyy-MM-dd');
                       if (!groups[date]) {
                         groups[date] = [];
@@ -891,6 +951,23 @@ export default function Messages() {
                                   alt="Message attachment"
                                   className="rounded-lg mb-2 max-w-full"
                                 />
+                              )}
+                              {message.items && message.item_id === selectedItemId && (
+                                <div className="flex items-center gap-2 p-2 mb-2 rounded-lg bg-secondary/20">
+                                  {message.items.item_images?.[0]?.image_url && (
+                                    <div className="h-12 w-12 rounded overflow-hidden flex-shrink-0">
+                                      <img 
+                                        src={message.items.item_images[0].image_url} 
+                                        alt={message.items.title} 
+                                        className="h-full w-full object-cover"
+                                      />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <p className="text-xs font-medium">{message.items.title}</p>
+                                    <p className="text-xs text-primary">₦{message.items.price}</p>
+                                  </div>
+                                </div>
                               )}
                               <p className="break-words text-[13px] sm:text-[15px] leading-relaxed">{message.content}</p>
                               <p className="text-[10px] sm:text-xs text-muted-foreground text-right mt-1.5">
