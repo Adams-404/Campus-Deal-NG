@@ -1,11 +1,11 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(import.meta.env.GEMINI_API_KEY);
 
 // Validate API key
-if (!import.meta.env.VITE_GEMINI_API_KEY) {
-  console.error('Gemini API key is missing. Please add VITE_GEMINI_API_KEY to your .env file.');
+if (!import.meta.env.GEMINI_API_KEY) {
+  console.error('Gemini API key is missing. Please add GEMINI_API_KEY to your .env file.');
 }
 
 // App context that will be fed to the AI
