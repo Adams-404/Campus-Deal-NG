@@ -13,13 +13,16 @@ import {
   Star,
   Heart,
   Github,
-  Ghost
+  Ghost,
+  Smartphone,
+  Laptop,
+  Image,
+  ArrowDown
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, useAnimation } from "framer-motion";
 import { useEffect, useState } from "react";
 
-// Enhanced Typewriter animation component
 const TypewriterText = () => {
   const [displayText, setDisplayText] = useState("");
   const phrases = ["Connect & Exchange.", "Buy & Sell.", "Trade & Grow.", "Tradezy."];
@@ -68,7 +71,6 @@ const TypewriterText = () => {
   );
 };
 
-// Add new animated words component
 const AnimatedWords = () => {
   const words = [
     { text: "Buy", color: "text-blue-500" },
@@ -103,7 +105,7 @@ const AnimatedWords = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % words.length);
-    }, 2000); // Reduced delay to 2 seconds since we have more words
+    }, 2000);
 
     return () => clearInterval(interval);
   }, []);
@@ -129,6 +131,140 @@ const AnimatedWords = () => {
         </motion.span>
       ))}
     </div>
+  );
+};
+
+const DeviceMockup = ({ type }: { type: 'mobile' | 'laptop' }) => {
+  return (
+    <motion.div
+      className={`relative ${type === 'mobile' ? 'w-[280px]' : 'w-[600px]'} mx-auto my-8`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: 0.2 }}
+    >
+      {type === 'mobile' ? (
+        <div className="relative mx-auto">
+          <div className="relative w-[280px] h-[580px] bg-black rounded-[40px] p-4 shadow-xl border-[8px] border-gray-800">
+            <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-black rounded-b-3xl"></div>
+            <div className="w-full h-full bg-blue-950 rounded-3xl overflow-hidden relative">
+              <img 
+                src="/mobile-mockup.png" 
+                alt="Tradezy mobile interface" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://placehold.co/264x564/2563eb/FFFFFF?text=Tradezy+Mobile";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+              <div className="absolute bottom-6 left-0 right-0 text-center">
+                <span className="bg-blue-500 text-white px-4 py-1 rounded-full text-xs font-medium">
+                  Mobile Experience
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="relative mx-auto">
+          <div className="relative w-[600px] h-[400px] bg-gradient-to-b from-gray-800 to-black rounded-t-2xl p-4 pt-2 shadow-xl">
+            <div className="w-full h-full bg-blue-950 rounded-lg overflow-hidden relative">
+              <img 
+                src="/laptop-mockup.png" 
+                alt="Tradezy desktop interface" 
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = "https://placehold.co/584x376/2563eb/FFFFFF?text=Tradezy+Desktop";
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+            </div>
+            <div className="absolute -bottom-4 left-0 right-0 h-4 bg-gradient-to-b from-gray-800 to-gray-900"></div>
+          </div>
+          <div className="w-[660px] h-[20px] mx-auto bg-gradient-to-b from-gray-900 to-gray-800 rounded-b-xl"></div>
+          <div className="w-[550px] h-[5px] mx-auto bg-gradient-to-b from-gray-800 to-gray-700 rounded-b-xl"></div>
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+const AnimatedPattern = () => {
+  return (
+    <svg
+      className="absolute inset-0 h-full w-full opacity-20"
+      xmlns="http://www.w3.org/2000/svg"
+      width="100%"
+      height="100%"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+    >
+      <motion.path
+        d="M0,0 L100,0 L100,100 L0,100 Z"
+        fill="none"
+        stroke="rgba(59, 130, 246, 0.4)"
+        strokeWidth="0.5"
+        initial={{ pathLength: 0, opacity: 0 }}
+        animate={{ pathLength: 1, opacity: 1 }}
+        transition={{ duration: 2, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+      />
+      <motion.circle
+        cx="20"
+        cy="20"
+        r="5"
+        fill="none"
+        stroke="rgba(59, 130, 246, 0.4)"
+        strokeWidth="0.5"
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 3, repeat: Infinity, repeatType: "reverse", ease: "easeInOut", delay: 0.5 }}
+      />
+      <motion.rect
+        x="70"
+        y="70"
+        width="10"
+        height="10"
+        fill="none"
+        stroke="rgba(34, 197, 94, 0.4)"
+        strokeWidth="0.5"
+        initial={{ rotate: 0, opacity: 0 }}
+        animate={{ rotate: 180, opacity: 1 }}
+        transition={{ duration: 4, repeat: Infinity, repeatType: "reverse", ease: "easeInOut", delay: 1 }}
+      />
+    </svg>
+  );
+};
+
+const AnimatedIconGrid = () => {
+  const icons = [
+    { Icon: ShoppingBag, color: "text-blue-500", bgColor: "bg-blue-500/10" },
+    { Icon: MessageSquare, color: "text-green-500", bgColor: "bg-green-500/10" },
+    { Icon: Heart, color: "text-red-500", bgColor: "bg-red-500/10" },
+    { Icon: Search, color: "text-yellow-500", bgColor: "bg-yellow-500/10" },
+    { Icon: Star, color: "text-purple-500", bgColor: "bg-purple-500/10" },
+    { Icon: Zap, color: "text-orange-500", bgColor: "bg-orange-500/10" },
+  ];
+
+  return (
+    <motion.div 
+      className="grid grid-cols-3 sm:grid-cols-6 gap-4 my-12 max-w-3xl mx-auto px-4"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5, staggerChildren: 0.1 }}
+    >
+      {icons.map((item, index) => (
+        <motion.div
+          key={index}
+          className={`flex items-center justify-center p-4 rounded-xl ${item.bgColor} hover:scale-110 transition-all duration-300`}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: index * 0.1 }}
+        >
+          <item.Icon className={`w-8 h-8 ${item.color}`} />
+        </motion.div>
+      ))}
+    </motion.div>
   );
 };
 
@@ -205,7 +341,6 @@ const testimonials = [
 const Index = () => {
   const navigate = useNavigate();
 
-  // Add scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -213,36 +348,9 @@ const Index = () => {
   return (
     <PageTransition>
       <div className="min-h-screen bg-black text-foreground">
-        {/* Hero Section */}
         <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-black via-blue-950/80 to-blue-950/30" />
-          <div className="absolute inset-0">
-            <svg
-              className="absolute inset-0 h-full w-full opacity-30"
-              xmlns="http://www.w3.org/2000/svg"
-              width="100%"
-              height="100%"
-              viewBox="0 0 100 100"
-              preserveAspectRatio="xMidYMid slice"
-            >
-              {/* Small circles */}
-              <circle cx="20" cy="20" r="3" fill="none" stroke="rgba(59, 130, 246, 0.4)" strokeWidth="0.5" />
-              <circle cx="80" cy="30" r="2" fill="none" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="0.5" />
-              <circle cx="40" cy="80" r="2.5" fill="none" stroke="rgba(34, 197, 94, 0.4)" strokeWidth="0.5" />
-              
-              {/* Small diamonds */}
-              <path d="M 70 30 L 72 32 L 70 34 L 68 32 Z" fill="none" stroke="rgba(234, 179, 8, 0.4)" strokeWidth="0.5" />
-              <path d="M 25 60 L 27 62 L 25 64 L 23 62 Z" fill="none" stroke="rgba(249, 115, 22, 0.4)" strokeWidth="0.5" />
-              
-              {/* Small squares */}
-              <rect x="75" y="70" width="3" height="3" fill="none" stroke="rgba(255, 255, 255, 0.4)" strokeWidth="0.5" transform="rotate(45, 76.5, 71.5)" />
-              <rect x="15" y="40" width="2" height="2" fill="none" stroke="rgba(34, 197, 94, 0.4)" strokeWidth="0.5" transform="rotate(30, 16, 41)" />
-              
-              {/* Small triangles */}
-              <path d="M 85 45 L 87 48 L 83 48 Z" fill="none" stroke="rgba(234, 179, 8, 0.4)" strokeWidth="0.5" />
-              <path d="M 35 25 L 37 28 L 33 28 Z" fill="none" stroke="rgba(249, 115, 22, 0.4)" strokeWidth="0.5" />
-            </svg>
-          </div>
+          <AnimatedPattern />
           
           <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
             <div className="text-center flex flex-col items-center justify-center min-h-[80vh]">
@@ -293,11 +401,56 @@ const Index = () => {
                   </Link>
                 </div>
               </motion.div>
+              
+              <motion.div
+                className="absolute bottom-8 left-0 right-0 flex justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.5, duration: 1 }}
+              >
+                <ArrowDown className="w-6 h-6 text-blue-500 animate-bounce" />
+              </motion.div>
             </div>
           </div>
         </section>
 
-        {/* Features Section */}
+        <section className="py-16 bg-gradient-to-b from-blue-950/30 to-black relative overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4 text-white">
+                <span className="bg-blue-500 px-6 py-2 rounded-[15px] inline-block my-2">Cross-device Experience</span>
+              </h2>
+              <p className="text-white/80 max-w-2xl mx-auto">
+                Access Tradezy on any device. Our responsive design ensures a seamless experience whether you're on mobile or desktop.
+              </p>
+            </div>
+            
+            <div className="flex flex-col lg:flex-row items-center justify-center gap-8">
+              <div className="lg:w-1/2">
+                <DeviceMockup type="mobile" />
+              </div>
+              <div className="lg:w-1/2">
+                <DeviceMockup type="laptop" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="py-16 bg-black relative">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-4 text-white">
+                Everything You <span className="bg-green-500 px-6 py-2 rounded-[15px] inline-block my-2">Need</span>
+              </h2>
+              <p className="text-white/80 max-w-2xl mx-auto">
+                Powerful tools to help you buy, sell and connect with other students
+              </p>
+            </div>
+            
+            <AnimatedIconGrid />
+          </div>
+        </section>
+
         <section className="py-24 bg-blue-950/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
@@ -328,7 +481,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Stats Section */}
         <section className="py-24 relative overflow-hidden">
           <div className="absolute inset-0 bg-blue-950/30" />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
@@ -351,7 +503,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Testimonials Section */}
         <section className="py-24 bg-blue-950/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
@@ -387,7 +538,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* CTA Section */}
         <section className="py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="bg-blue-950/30 rounded-2xl p-12 text-center backdrop-blur-sm border border-blue-200/10 hover:border-blue-200/20 transition-all duration-300">
@@ -406,7 +556,6 @@ const Index = () => {
           </div>
         </section>
 
-        {/* Footer */}
         <footer className="py-12 bg-black mb-0">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
