@@ -6,8 +6,11 @@ interface SettingsContextType {
   fontSizeClass: string;
   updateFontSize: (size: string) => Promise<void>;
   hideSafetyTips: boolean;
+  setHideSafetyTips: (value: boolean) => Promise<void>;
   hideSellTips: boolean;
+  setHideSellTips: (value: boolean) => Promise<void>;
   hideMessageTips: boolean;
+  setHideMessageTips: (value: boolean) => Promise<void>;
   showSafetyTips: boolean;
   setShowSafetyTips: (show: boolean) => void;
   loadingSettings: boolean;
@@ -17,9 +20,9 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [fontSizeClass, setFontSizeClass] = useState('medium');
-  const [hideSafetyTips, setHideSafetyTips] = useState(false);
-  const [hideSellTips, setHideSellTips] = useState(false);
-  const [hideMessageTips, setHideMessageTips] = useState(false);
+  const [hideSafetyTips, setHideSafetyTipsState] = useState(false);
+  const [hideSellTips, setHideSellTipsState] = useState(false);
+  const [hideMessageTips, setHideMessageTipsState] = useState(false);
   const [showSafetyTips, setShowSafetyTips] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
 
@@ -30,16 +33,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         if (user) {
           const { data, error } = await supabase
             .from('profiles')
-            .select('*')
+            .select('font_size, hide_safety_tips, hide_sell_tips, hide_message_tips')
             .eq('id', user.id)
             .single();
 
           if (!error && data) {
-            // Use optional chaining and nullish coalescing for safer access
             setFontSizeClass(data.font_size || 'medium');
-            setHideSafetyTips(data.hide_safety_tips || false);
-            setHideSellTips(data.hide_sell_tips || false);
-            setHideMessageTips(data.hide_message_tips || false);
+            setHideSafetyTipsState(data.hide_safety_tips || false);
+            setHideSellTipsState(data.hide_sell_tips || false);
+            setHideMessageTipsState(data.hide_message_tips || false);
           }
         }
       } catch (error) {
@@ -67,14 +69,62 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setHideSafetyTips = async (value: boolean) => {
+    setHideSafetyTipsState(value);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({ hide_safety_tips: value })
+          .eq('id', user.id);
+      }
+    } catch (error) {
+      console.error('Error updating safety tips preference:', error);
+    }
+  };
+
+  const setHideSellTips = async (value: boolean) => {
+    setHideSellTipsState(value);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({ hide_sell_tips: value })
+          .eq('id', user.id);
+      }
+    } catch (error) {
+      console.error('Error updating sell tips preference:', error);
+    }
+  };
+
+  const setHideMessageTips = async (value: boolean) => {
+    setHideMessageTipsState(value);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('profiles')
+          .update({ hide_message_tips: value })
+          .eq('id', user.id);
+      }
+    } catch (error) {
+      console.error('Error updating message tips preference:', error);
+    }
+  };
+
   return (
     <SettingsContext.Provider 
       value={{ 
         fontSizeClass, 
         updateFontSize,
         hideSafetyTips,
+        setHideSafetyTips,
         hideSellTips,
+        setHideSellTips,
         hideMessageTips,
+        setHideMessageTips,
         showSafetyTips,
         setShowSafetyTips,
         loadingSettings

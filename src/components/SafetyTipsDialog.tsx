@@ -6,6 +6,7 @@ import { X, ShieldCheck, UserCheck, MapPin, MessageCircle, FileText, CreditCard,
 import { supabase } from '@/integrations/supabase/client';
 import { Checkbox } from './ui/checkbox';
 import { Progress } from './ui/progress';
+import { useSettings } from '@/contexts/SettingsContext';
 
 interface SafetyTipsDialogProps {
   open: boolean;
@@ -16,6 +17,11 @@ interface SafetyTipsDialogProps {
 export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: SafetyTipsDialogProps) => {
   const [step, setStep] = useState(1);
   const [dontShowAgain, setDontShowAgain] = useState(false);
+  const { 
+    setHideSafetyTips, 
+    setHideSellTips, 
+    setHideMessageTips 
+  } = useSettings();
 
   // Different sets of tips based on the trigger, with icons
   const tipsByTrigger = useMemo(() => ({
@@ -89,19 +95,17 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
     } else {
       if (dontShowAgain) {
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            // Update the appropriate preference based on trigger
-            const updateData = trigger === 'app_open' 
-              ? { hide_safety_tips: true }
-              : trigger === 'sell'
-                ? { hide_sell_tips: true }
-                : { hide_message_tips: true };
-                
-            await supabase
-              .from('profiles')
-              .update(updateData)
-              .eq('id', user.id);
+          // Update the appropriate preference based on trigger
+          switch(trigger) {
+            case 'app_open':
+              await setHideSafetyTips(true);
+              break;
+            case 'sell':
+              await setHideSellTips(true);
+              break;
+            case 'message_seller':
+              await setHideMessageTips(true);
+              break;
           }
         } catch (error) {
           console.error('Error updating user preferences:', error);
@@ -114,19 +118,17 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
   const handleSkip = async () => {
     if (dontShowAgain) {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          // Update the appropriate preference based on trigger
-          const updateData = trigger === 'app_open' 
-            ? { hide_safety_tips: true }
-            : trigger === 'sell'
-              ? { hide_sell_tips: true }
-              : { hide_message_tips: true };
-              
-          await supabase
-            .from('profiles')
-            .update(updateData)
-            .eq('id', user.id);
+        // Update the appropriate preference based on trigger
+        switch(trigger) {
+          case 'app_open':
+            await setHideSafetyTips(true);
+            break;
+          case 'sell':
+            await setHideSellTips(true);
+            break;
+          case 'message_seller':
+            await setHideMessageTips(true);
+            break;
         }
       } catch (error) {
         console.error('Error updating user preferences:', error);

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -111,7 +112,7 @@ const AnimatedRoutes = () => {
     };
     
     checkUserAndSettings();
-  }, [location.pathname, hideSafetyTips, setShowSafetyTips, loadingSettings, user, showSafetyTips]);
+  }, [location.pathname, hideSafetyTips, loadingSettings, showSafetyTips, setShowSafetyTips]);
   
   useEffect(() => {
     if (location.pathname !== '/') {
