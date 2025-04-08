@@ -1,23 +1,26 @@
 
 import { motion } from "framer-motion";
-import { Star } from "lucide-react";
+import { Star, Quote } from "lucide-react";
 
 export const TestimonialsSection = () => {
   const testimonials = [
     {
       quote: "Tradezy has made buying and selling textbooks so much easier! The verification process makes me feel safe.",
       author: "Aisha M.",
-      role: "Computer Science Student"
+      role: "Computer Science Student",
+      avatar: "/lovable-uploads/3fdfaed5-4b18-4048-93dd-bea2e609ff26.png"
     },
     {
       quote: "I love how easy it is to find what I need. The direct messaging feature is super convenient!",
       author: "Fatima B.",
-      role: "Business Major"
+      role: "Business Major",
+      avatar: "/lovable-uploads/3fdfaed5-4b18-4048-93dd-bea2e609ff26.png"
     },
     {
       quote: "Best platform for campus trading! The community is great and prices are reasonable.",
       author: "Mohammed S.",
-      role: "Graduate Student"
+      role: "Graduate Student",
+      avatar: "/lovable-uploads/3fdfaed5-4b18-4048-93dd-bea2e609ff26.png"
     }
   ];
   
@@ -36,21 +39,61 @@ export const TestimonialsSection = () => {
           {testimonials.map((testimonial, index) => (
             <motion.div
               key={testimonial.author}
-              className="bg-white/5 p-6 rounded-xl border border-blue-200/10 backdrop-blur-sm hover:border-blue-200/20 transition-all duration-300 group"
+              className="bg-white/5 p-8 rounded-xl border border-blue-200/10 backdrop-blur-sm hover:border-blue-200/20 transition-all duration-300 group relative overflow-hidden"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              transition={{ duration: 0.5, delay: index * 0.2 }}
+              whileHover={{ 
+                y: -5, 
+                boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.1)" 
+              }}
             >
+              {/* Decorative quote icon */}
+              <div className="absolute -top-4 -left-4 text-blue-500/10 opacity-20">
+                <Quote className="w-24 h-24" />
+              </div>
+              
+              <div className="flex items-center mb-6">
+                <div className="mr-4">
+                  <div className="w-16 h-16 rounded-full border-4 border-blue-500/20 overflow-hidden">
+                    <img 
+                      src={testimonial.avatar} 
+                      alt={testimonial.author} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://placehold.co/200x200/2563eb/FFFFFF?text=Student";
+                      }}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <div className="font-semibold text-blue-500">{testimonial.author}</div>
+                  <div className="text-sm text-white/60">{testimonial.role}</div>
+                </div>
+              </div>
+              
               <div className="mb-4">
                 {[...Array(5)].map((_, i) => (
                   <Star key={i} className="inline-block w-4 h-4 text-blue-500 fill-blue-500" />
                 ))}
               </div>
-              <p className="text-white/80 mb-4">{testimonial.quote}</p>
-              <div>
-                <div className="font-semibold text-blue-500">{testimonial.author}</div>
-                <div className="text-sm text-white/60">{testimonial.role}</div>
-              </div>
+              
+              <motion.p 
+                className="text-white/80 mb-4 relative z-10"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.3 }}
+              >
+                {testimonial.quote}
+              </motion.p>
+              
+              <motion.div
+                className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-green-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left"
+                initial={{ scaleX: 0 }}
+                whileInView={{ scaleX: 1 }}
+                transition={{ duration: 1.5, delay: 0.2 }}
+              />
             </motion.div>
           ))}
         </div>

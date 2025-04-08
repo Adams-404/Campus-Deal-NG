@@ -13,6 +13,7 @@ import { CtaSection } from "@/components/landing/CtaSection";
 import { FooterSection } from "@/components/landing/FooterSection";
 import { FeaturesShowcase } from "@/components/landing/FeaturesShowcase";
 import { AppFeaturesList } from "@/components/landing/AppFeaturesList";
+import { LandingNavbar } from "@/components/landing/LandingNavbar";
 
 const Index = () => {
   useEffect(() => {
@@ -22,9 +23,10 @@ const Index = () => {
   return (
     <PageTransition>
       <div className="min-h-screen bg-black text-foreground">
+        <LandingNavbar />
         <HeroSection />
         <AppMockupSection />
-        <section className="py-16 bg-black relative">
+        <section className="py-16 bg-black relative" id="features">
           <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold mb-4 text-white">
@@ -41,8 +43,12 @@ const Index = () => {
         <AppFeaturesList />
         <FeaturesSection />
         <StatsSection />
-        <TestimonialsSection />
-        <CtaSection />
+        <div id="testimonials">
+          <TestimonialsSection />
+        </div>
+        <div id="cta">
+          <CtaSection />
+        </div>
         <FooterSection />
       </div>
     </PageTransition>

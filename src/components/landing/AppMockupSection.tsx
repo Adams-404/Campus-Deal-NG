@@ -1,6 +1,5 @@
 
 import { motion } from "framer-motion";
-import { DeviceMockup } from "./DeviceMockup";
 import { ImageCarousel } from "@/components/ui/image-carousel";
 
 export const AppMockupSection = () => {
@@ -91,13 +90,6 @@ export const AppMockupSection = () => {
               <div className="w-[550px] h-[5px] mx-auto bg-gradient-to-b from-gray-800 to-gray-700 rounded-b-xl"></div>
             </div>
           </motion.div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
-          <DeviceMockup type="mobile" image="/mockups/mobile-listings.png" />
-          <DeviceMockup type="mobile" image="/mockups/mobile-saved.png" />
-          <DeviceMockup type="mobile" image="/mockups/mobile-categories.png" />
-          <DeviceMockup type="mobile" image="/mockups/mobile-sell.png" />
         </div>
       </div>
     </section>
