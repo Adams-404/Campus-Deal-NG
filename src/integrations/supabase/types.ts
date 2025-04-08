@@ -332,7 +332,9 @@ export type Database = {
           created_at: string | null
           first_name: string | null
           font_size: string | null
+          hide_message_tips: boolean | null
           hide_safety_tips: boolean | null
+          hide_sell_tips: boolean | null
           id: string
           kyc_status: Database["public"]["Enums"]["kyc_status"] | null
           last_name: string | null
@@ -346,7 +348,9 @@ export type Database = {
           created_at?: string | null
           first_name?: string | null
           font_size?: string | null
+          hide_message_tips?: boolean | null
           hide_safety_tips?: boolean | null
+          hide_sell_tips?: boolean | null
           id: string
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           last_name?: string | null
@@ -360,7 +364,9 @@ export type Database = {
           created_at?: string | null
           first_name?: string | null
           font_size?: string | null
+          hide_message_tips?: boolean | null
           hide_safety_tips?: boolean | null
+          hide_sell_tips?: boolean | null
           id?: string
           kyc_status?: Database["public"]["Enums"]["kyc_status"] | null
           last_name?: string | null
