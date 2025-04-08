@@ -40,6 +40,7 @@ import Support from "./pages/Support";
 
 const queryClient = new QueryClient();
 
+// New AuthGuard component to prevent authenticated users from accessing auth pages
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -89,7 +90,6 @@ const AnimatedRoutes = () => {
   
   const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings } = useSettings();
   const [user, setUser] = useState<any>(null);
-  const [checkedSettings, setCheckedSettings] = useState(false);
 
   useEffect(() => {
     const checkUserAndSettings = async () => {
@@ -97,24 +97,21 @@ const AnimatedRoutes = () => {
       if (loadingSettings) {
         return; 
       }
-      setCheckedSettings(true);
 
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       
-      // Only show safety tips if:
-      // 1. User is logged in
-      // 2. Settings have loaded
-      // 3. User has not opted out (hideSafetyTips is false)
-      // 4. User is on home page
-      // 5. We haven't already decided to show tips in this session
-      if (user && !hideSafetyTips && location.pathname === '/home' && !showSafetyTips) {
-        setShowSafetyTips(true);
+      // Now that settings are loaded, check if we should show the dialog
+      if (user && !hideSafetyTips && location.pathname === '/home') {
+        // Ensure we don't re-trigger if already showing (though open prop handles this)
+        if (!showSafetyTips) { 
+           setShowSafetyTips(true);
+        }
       }
     };
     
     checkUserAndSettings();
-  }, [location.pathname, hideSafetyTips, loadingSettings]);
+  }, [location.pathname, hideSafetyTips, setShowSafetyTips, loadingSettings, user, showSafetyTips]);
   
   useEffect(() => {
     if (location.pathname !== '/') {
@@ -128,6 +125,7 @@ const AnimatedRoutes = () => {
       <main className={cn("flex-1 pb-24", showNav && "pt-32")}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
+            {/* Public Routes with AuthGuard */}
             <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
             <Route path="/auth" element={<AuthGuard><AuthLayout /></AuthGuard>}>
               <Route index element={<SignIn />} />
@@ -135,11 +133,13 @@ const AnimatedRoutes = () => {
               <Route path="signup" element={<SignUp />} />
             </Route>
 
+            {/* Always Public Routes */}
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/about" element={<About />} />
             <Route path="/help" element={<Help />} />
             <Route path="/support" element={<Support />} />
 
+            {/* Protected Routes */}
             <Route path="/home" element={<ProtectedRoute allowGuest><Homepage /></ProtectedRoute>} />
             <Route path="/category/:category" element={<ProtectedRoute allowGuest><CategoryPage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
@@ -153,16 +153,19 @@ const AnimatedRoutes = () => {
             <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
+            {/* Admin Routes */}
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 
+            {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AnimatePresence>
       </main>
       {!hideBottomNav && <div className="fixed bottom-0 left-0 right-0 z-50"><BottomNav /></div>}
       
+      {/* Safety Tips Dialog */}
       <SafetyTipsDialog 
-        open={showSafetyTips && checkedSettings} 
+        open={showSafetyTips} 
         onClose={() => setShowSafetyTips(false)} 
         trigger="app_open"
       />
