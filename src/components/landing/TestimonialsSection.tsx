@@ -6,19 +6,19 @@ export const TestimonialsSection = () => {
   const testimonials = [
     {
       quote: "Tradezy has made buying and selling textbooks so much easier! The verification process makes me feel safe.",
-      author: "Aisha M.",
+      author: "Aisha Muhammad.",
       role: "Computer Science Student",
       avatar: "/lovable-uploads/3fdfaed5-4b18-4048-93dd-bea2e609ff26.png"
     },
     {
       quote: "I love how easy it is to find what I need. The direct messaging feature is super convenient!",
-      author: "Fatima B.",
+      author: "Fatima Buhari.",
       role: "Business Major",
       avatar: "/lovable-uploads/3fdfaed5-4b18-4048-93dd-bea2e609ff26.png"
     },
     {
       quote: "Best platform for campus trading! The community is great and prices are reasonable.",
-      author: "Mohammed S.",
+      author: "Mohammed Salihu.",
       role: "Graduate Student",
       avatar: "/lovable-uploads/3fdfaed5-4b18-4048-93dd-bea2e609ff26.png"
     }
