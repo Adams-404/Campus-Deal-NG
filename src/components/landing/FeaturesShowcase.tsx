@@ -52,7 +52,8 @@ const FeatureShowcaseItem = ({
             <img 
               src={mockupSrc} 
               alt={title} 
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-center"
+              loading="eager"
             />
           </div>
         </motion.div>
@@ -62,6 +63,12 @@ const FeatureShowcaseItem = ({
 };
 
 export const FeaturesShowcase = () => {
+  // Using Supabase storage URLs instead of local paths
+  const messagingMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/tradezy-mockups/messaging-mockup.png";
+  const listingMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/tradezy-mockups/listing-mockup.png";
+  const searchMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/tradezy-mockups/search-mockup.png";
+  const favoritesMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/tradezy-mockups/favorites-mockup.png";
+  
   return (
     <section className="py-16 bg-black">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -79,7 +86,7 @@ export const FeaturesShowcase = () => {
             icon={MessageSquare} 
             title="Seamless Messaging" 
             description="Connect directly with buyers and sellers through our secure in-app messaging system. Negotiate prices, ask questions, and arrange meetups all in one place."
-            mockupSrc="/lovable-uploads/3d09554e-1f44-4e05-9545-7e7a1d225bca.png"
+            mockupSrc={messagingMockup}
             color="bg-blue-500"
           />
           
@@ -87,7 +94,7 @@ export const FeaturesShowcase = () => {
             icon={ShoppingBag} 
             title="Easy Listing Management" 
             description="Create, edit, and manage your listings with just a few taps. Add multiple photos, detailed descriptions, and set your preferred price and location."
-            mockupSrc="/lovable-uploads/fa27c9e8-eb40-45a0-860c-afb4f30c6801.png"
+            mockupSrc={listingMockup}
             color="bg-green-500"
             reverse={true}
           />
@@ -96,7 +103,7 @@ export const FeaturesShowcase = () => {
             icon={Search} 
             title="Advanced Search & Filters" 
             description="Find exactly what you're looking for with our powerful search functionality. Filter by category, price range, condition, and location to narrow down your options."
-            mockupSrc="/lovable-uploads/84a45155-63a7-451e-b656-5d4600fe0673.png"
+            mockupSrc={searchMockup}
             color="bg-orange-500"
           />
           
@@ -104,7 +111,7 @@ export const FeaturesShowcase = () => {
             icon={Heart} 
             title="Save Your Favorites" 
             description="Keep track of items you're interested in by saving them to your favorites. Get notified about price changes and availability updates."
-            mockupSrc="/lovable-uploads/297c12be-24a7-418b-a660-db5801458751.png"
+            mockupSrc={favoritesMockup}
             color="bg-red-500"
             reverse={true}
           />

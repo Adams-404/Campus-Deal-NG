@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react"; // Changed from ChevronRight to ChevronLeft
+import { ChevronRight } from "lucide-react"; // Changed back to ChevronRight as the icon will face left with transform
 import { SideNav } from "./SideNav";
 
 export const LandingNavbar = () => {
@@ -48,7 +48,7 @@ export const LandingNavbar = () => {
         transition={{ duration: 0.3 }}
         aria-label="Open menu"
       >
-        <ChevronLeft className="h-6 w-6 text-white" />
+        <ChevronRight className="h-6 w-6 text-white transform rotate-180" /> {/* Using rotate-180 to make it face left */}
       </motion.button>
       
       {/* Side Nav */}
