@@ -10,22 +10,20 @@ export const AppMockupSection = () => {
     <section className="py-12 bg-gradient-to-b from-blue-950/30 to-black relative overflow-hidden"> {/* Reduced vertical padding */}
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-4 text-white">
-            <span className="bg-blue-500 px-6 py-2 rounded-[15px] inline-block my-2">Cross-device Experience </span>
-          </h2>
+        <h2 className="text-3xl font-bold text-white inline-flex items-center mb-6">
+         Device <span className="bg-blue-500 px-6 py-2 rounded-[15px] inline-block my-0 ml-2">Experience</span>
+        </h2>
+
+
           <p className="text-white/80 max-w-2xl mx-auto">
             Access Tradezy on any device. Our responsive design ensures a seamless experience whether you're on mobile or desktop.
           </p>
         </div>
         
-        {/* Modern overlapping device mockups layout - responsive for both mobile and desktop */}
+        {/* Overlapping device mockups layout - responsive for both mobile and desktop */}
         <div className="relative max-w-5xl mx-auto min-h-[500px] md:min-h-[450px]">
- {/* Adjusted mobile height, increased desktop height */}
-          {/* In mobile view, desktop mockup positioned at bottom and mobile at top */}
-          {/* In desktop view, they appear side by side with slight overlap */}
           
           {/* Desktop mockup */}
-          {/* Increased width and downward translation on desktop */}
           <motion.div 
   className="absolute right-0 md:right-0 top-[58%] md:top-[5%] w-[90%] md:w-[75%] z-10 md:translate-y-32"
 
