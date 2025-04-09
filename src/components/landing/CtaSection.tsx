@@ -43,11 +43,10 @@ export const CtaSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <Link to="/auth">
+              <Link to="/auth/SignUp">
                 <Button 
-                  style={{ width: '200px' }} 
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
-                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.3)" }}
+                  size="lg"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-8 py-6 text-lg rounded-full transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl w-[200px]"
                 >
                   Join Now <ArrowRight className="ml-2" />
                 </Button>

@@ -14,6 +14,7 @@ import { FooterSection } from "@/components/landing/FooterSection";
 import { FeaturesShowcase } from "@/components/landing/FeaturesShowcase";
 import { AppFeaturesList } from "@/components/landing/AppFeaturesList";
 import { LandingNavbar } from "@/components/landing/LandingNavbar";
+import { AiAssistantSection } from "@/components/landing/AiAssistantSection";
 
 const Index = () => {
   useEffect(() => {
@@ -22,7 +23,7 @@ const Index = () => {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-black text-foreground">
+      <div className="min-h-screen bg-black text-foreground" id="home">
         <LandingNavbar />
         <HeroSection />
         <AppMockupSection />
@@ -41,11 +42,10 @@ const Index = () => {
         </section>
         <FeaturesShowcase />
         <AppFeaturesList />
+        <AiAssistantSection />
         <FeaturesSection />
         <StatsSection />
-        <div id="testimonials">
-          <TestimonialsSection />
-        </div>
+        <TestimonialsSection />
         <div id="cta">
           <CtaSection />
         </div>

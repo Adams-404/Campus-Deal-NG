@@ -16,6 +16,7 @@ export const AppMockupSection = () => {
     "/mockups/desktop-messages.png",
     "/mockups/desktop-profile.png",
     "/mockups/desktop-listings.png",
+    "/lovable-uploads/0c7613ff-7d84-43c5-b64c-c82051ab6cfa.png",
   ];
   
   return (
@@ -68,26 +69,28 @@ export const AppMockupSection = () => {
           </motion.div>
           
           <motion.div 
-            className="lg:w-1/2"
+            className="lg:w-1/2 w-full px-4"
             initial={{ opacity: 0, x: 50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
           >
             <h3 className="text-xl font-semibold mb-4 text-center text-green-400">Desktop Experience</h3>
-            {/* Desktop Mockup */}
-            <div className="relative mx-auto">
-              <div className="relative w-[600px] h-[400px] bg-gradient-to-b from-gray-800 to-black rounded-t-2xl p-4 pt-2 shadow-xl">
-                <div className="w-full h-full bg-blue-950 rounded-lg overflow-hidden">
-                  <ImageCarousel 
-                    images={desktopScreens} 
-                    aspectRatio="video"
-                    showControls={true}
-                  />
+            {/* Desktop Mockup - Made responsive */}
+            <div className="relative mx-auto overflow-hidden max-w-full">
+              <div className="relative max-w-full w-full md:w-[500px] lg:w-[600px] mx-auto">
+                <div className="relative w-full aspect-video bg-gradient-to-b from-gray-800 to-black rounded-t-2xl p-2 shadow-xl">
+                  <div className="w-full h-full bg-blue-950 rounded-lg overflow-hidden">
+                    <ImageCarousel 
+                      images={desktopScreens} 
+                      aspectRatio="video"
+                      showControls={true}
+                    />
+                  </div>
+                  <div className="absolute -bottom-2 left-0 right-0 h-2 bg-gradient-to-b from-gray-800 to-gray-900"></div>
                 </div>
-                <div className="absolute -bottom-4 left-0 right-0 h-4 bg-gradient-to-b from-gray-800 to-gray-900"></div>
+                <div className="w-full h-[10px] mx-auto bg-gradient-to-b from-gray-900 to-gray-800 rounded-b-xl"></div>
+                <div className="w-[80%] h-[3px] mx-auto bg-gradient-to-b from-gray-800 to-gray-700 rounded-b-xl"></div>
               </div>
-              <div className="w-[660px] h-[20px] mx-auto bg-gradient-to-b from-gray-900 to-gray-800 rounded-b-xl"></div>
-              <div className="w-[550px] h-[5px] mx-auto bg-gradient-to-b from-gray-800 to-gray-700 rounded-b-xl"></div>
             </div>
           </motion.div>
         </div>
