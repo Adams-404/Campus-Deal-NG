@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Users, ShoppingBag, Star, Robot } from "lucide-react";
+import { Users, ShoppingBag, Star, Bot } from "lucide-react"; // Changed Robot to Bot
 import { useInView } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 
@@ -39,7 +39,7 @@ export const StatsSection = () => {
     { number: 1000, label: "Active Users", icon: Users, color: "bg-blue-500", textColor: "text-blue-400" },
     { number: 5000, label: "Items Listed", icon: ShoppingBag, color: "bg-green-500", textColor: "text-green-400" },
     { number: 98, label: "Satisfaction Rate", icon: Star, color: "bg-orange-500", textColor: "text-orange-400", suffix: "%" },
-    { label: "AI Assistant", icon: Robot, color: "bg-purple-500", textColor: "text-purple-400", specialText: "24/7" }
+    { label: "AI Assistant", icon: Bot, color: "bg-purple-500", textColor: "text-purple-400", specialText: "24/7" } // Changed Robot to Bot
   ];
   
   return (

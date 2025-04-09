@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Robot, MessageCircle, Clock, Zap, Check } from "lucide-react";
+import { Bot, MessageCircle, Clock, Zap, Check } from "lucide-react"; // Changed Robot to Bot
 import { useState } from "react";
 
 export const AiAssistantSection = () => {
@@ -71,7 +71,7 @@ export const AiAssistantSection = () => {
           >
             <div className="bg-purple-900/30 p-4 flex items-center gap-3 border-b border-purple-500/20">
               <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center">
-                <Robot className="w-6 h-6 text-white" />
+                <Bot className="w-6 h-6 text-white" /> {/* Changed Robot to Bot */}
               </div>
               <div>
                 <h3 className="font-medium text-white">Tradie</h3>
@@ -88,7 +88,7 @@ export const AiAssistantSection = () => {
                 {/* Welcome message */}
                 <div className="flex items-start gap-3 mb-6">
                   <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Robot className="w-4 h-4 text-white" />
+                    <Bot className="w-4 h-4 text-white" /> {/* Changed Robot to Bot */}
                   </div>
                   <div className="bg-purple-900/30 rounded-lg rounded-tl-none p-4 max-w-[85%]">
                     <p className="text-white">Hi there! I'm Tradie, your personal AI assistant for Tradezy. How can I help you today?</p>
@@ -121,7 +121,7 @@ export const AiAssistantSection = () => {
                       {/* AI response */}
                       <div className="flex items-start gap-3 mt-4">
                         <div className="w-8 h-8 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
-                          <Robot className="w-4 h-4 text-white" />
+                          <Bot className="w-4 h-4 text-white" /> {/* Changed Robot to Bot */}
                         </div>
                         <div className="bg-purple-900/30 rounded-lg rounded-tl-none p-3 max-w-[85%]">
                           <p className="text-white">{message.answer}</p>

@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { X, ChevronRight, Home, Users, MessageSquare, Robot, ShoppingBag, LogIn, UserPlus } from "lucide-react";
+import { X, ChevronRight, Home, Users, MessageSquare, Bot, ShoppingBag, LogIn, UserPlus } from "lucide-react"; // Changed Robot to Bot
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -13,7 +13,7 @@ export const SideNav = ({ onClose, onNavigate }: SideNavProps) => {
   const navItems = [
     { label: "Home", icon: Home, sectionId: "home" },
     { label: "Features", icon: ShoppingBag, sectionId: "features" },
-    { label: "AI Assistant", icon: Robot, sectionId: "ai-assistant" },
+    { label: "AI Assistant", icon: Bot, sectionId: "ai-assistant" }, // Changed Robot to Bot
     { label: "Testimonials", icon: Users, sectionId: "testimonials" },
   ];
 
