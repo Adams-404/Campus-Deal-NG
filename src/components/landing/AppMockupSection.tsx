@@ -1,6 +1,5 @@
 
 import { motion } from "framer-motion";
-import { DeviceMockup } from "./DeviceMockup";
 
 export const AppMockupSection = () => {
   // Single image for each mockup device
@@ -12,7 +11,7 @@ export const AppMockupSection = () => {
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold mb-4 text-white">
-            <span className="bg-blue-500 px-6 py-2 rounded-[15px] inline-block my-2">Cross-device Experience</span>
+            <span className="bg-blue-500 px-6 py-2 rounded-[15px] inline-block my-2">Cross-device <span className="text-purple-300">Experience</span></span>
           </h2>
           <p className="text-white/80 max-w-2xl mx-auto">
             Access Tradezy on any device. Our responsive design ensures a seamless experience whether you're on mobile or desktop.
@@ -20,11 +19,34 @@ export const AppMockupSection = () => {
         </div>
         
         <div className="relative">
-          {/* Modern device mockup layout with overlapping designs */}
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-12 relative max-w-5xl mx-auto">
-            {/* Mobile mockup */}
+          {/* Modern overlapping device mockup layout */}
+          <div className="relative max-w-3xl mx-auto h-[500px] md:h-[600px]">
+            {/* Desktop mockup - positioned in background */}
             <motion.div 
-              className="md:w-1/2 z-10 flex justify-center"
+              className="absolute top-0 right-0 w-[75%] z-10"
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              <div className="w-full aspect-video bg-gradient-to-b from-gray-800 to-black rounded-t-2xl p-2 shadow-2xl">
+                <div className="w-full h-full bg-blue-950 rounded-lg overflow-hidden">
+                  <img 
+                    src={desktopScreen} 
+                    alt="Tradezy desktop interface" 
+                    className="w-full h-full object-cover"
+                    loading="eager"
+                  />
+                </div>
+                <div className="absolute -bottom-2 left-0 right-0 h-2 bg-gradient-to-b from-gray-800 to-gray-900"></div>
+              </div>
+              <div className="w-full h-[10px] mx-auto bg-gradient-to-b from-gray-900 to-gray-800 rounded-b-xl"></div>
+              <div className="w-[80%] h-[3px] mx-auto bg-gradient-to-b from-gray-800 to-gray-700 rounded-b-xl"></div>
+            </motion.div>
+
+            {/* Mobile mockup - positioned in foreground */}
+            <motion.div 
+              className="absolute left-0 bottom-0 md:left-8 md:bottom-4 w-[240px] z-20"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -41,41 +63,18 @@ export const AppMockupSection = () => {
                   ease: "easeInOut"
                 }}
               >
-                <div className="relative w-[240px] h-[500px] bg-black rounded-[40px] p-4 shadow-xl border-[8px] border-gray-800 mx-auto">
+                <div className="relative w-full h-[500px] bg-black rounded-[40px] p-4 shadow-2xl border-[8px] border-gray-800">
                   <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-black rounded-b-3xl"></div>
                   <div className="w-full h-full bg-blue-950 rounded-3xl overflow-hidden">
                     <img 
                       src={mobileScreen} 
                       alt="Tradezy mobile interface" 
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover object-center"
+                      loading="eager"
                     />
                   </div>
                 </div>
               </motion.div>
-            </motion.div>
-            
-            {/* Desktop mockup - positioned beside mobile */}
-            <motion.div 
-              className="md:w-1/2 mt-8 md:mt-0 relative"
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-            >
-              <div className="w-full max-w-[420px] mx-auto overflow-visible">
-                <div className="relative w-full aspect-video bg-gradient-to-b from-gray-800 to-black rounded-t-2xl p-2 shadow-xl">
-                  <div className="w-full h-full bg-blue-950 rounded-lg overflow-hidden">
-                    <img 
-                      src={desktopScreen} 
-                      alt="Tradezy desktop interface" 
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <div className="absolute -bottom-2 left-0 right-0 h-2 bg-gradient-to-b from-gray-800 to-gray-900"></div>
-                </div>
-                <div className="w-full h-[10px] mx-auto bg-gradient-to-b from-gray-900 to-gray-800 rounded-b-xl"></div>
-                <div className="w-[80%] h-[3px] mx-auto bg-gradient-to-b from-gray-800 to-gray-700 rounded-b-xl"></div>
-              </div>
             </motion.div>
           </div>
           
