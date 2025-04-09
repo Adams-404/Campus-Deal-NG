@@ -21,10 +21,10 @@ export const AppMockupSection = () => {
         
         <div className="relative">
           {/* Modern device mockup layout with overlapping designs */}
-          <div className="flex flex-col md:flex-row items-center justify-center md:justify-start relative max-w-5xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 lg:gap-12 relative max-w-5xl mx-auto">
             {/* Mobile mockup */}
             <motion.div 
-              className="md:ml-6 z-10"
+              className="md:w-1/2 z-10 flex justify-center"
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -41,7 +41,7 @@ export const AppMockupSection = () => {
                   ease: "easeInOut"
                 }}
               >
-                <div className="relative w-[280px] h-[580px] bg-black rounded-[40px] p-4 shadow-xl border-[8px] border-gray-800 mx-auto">
+                <div className="relative w-[240px] h-[500px] bg-black rounded-[40px] p-4 shadow-xl border-[8px] border-gray-800 mx-auto">
                   <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-black rounded-b-3xl"></div>
                   <div className="w-full h-full bg-blue-950 rounded-3xl overflow-hidden">
                     <img 
@@ -54,15 +54,15 @@ export const AppMockupSection = () => {
               </motion.div>
             </motion.div>
             
-            {/* Desktop mockup - positioned to overlap slightly */}
+            {/* Desktop mockup - positioned beside mobile */}
             <motion.div 
-              className="md:ml-[-60px] md:mt-24 mt-[-80px] z-0 relative max-w-full"
+              className="md:w-1/2 mt-8 md:mt-0 relative"
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.3 }}
             >
-              <div className="w-full md:w-[500px] mx-auto overflow-visible">
+              <div className="w-full max-w-[420px] mx-auto overflow-visible">
                 <div className="relative w-full aspect-video bg-gradient-to-b from-gray-800 to-black rounded-t-2xl p-2 shadow-xl">
                   <div className="w-full h-full bg-blue-950 rounded-lg overflow-hidden">
                     <img 

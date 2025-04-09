@@ -53,10 +53,6 @@ const FeatureShowcaseItem = ({
               src={mockupSrc} 
               alt={title} 
               className="w-full h-full object-cover"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = "https://placehold.co/264x564/2563eb/FFFFFF?text=Feature+Preview";
-              }}
             />
           </div>
         </motion.div>
@@ -83,7 +79,7 @@ export const FeaturesShowcase = () => {
             icon={MessageSquare} 
             title="Seamless Messaging" 
             description="Connect directly with buyers and sellers through our secure in-app messaging system. Negotiate prices, ask questions, and arrange meetups all in one place."
-            mockupSrc="/mockups/feature-messaging.png"
+            mockupSrc="/lovable-uploads/3d09554e-1f44-4e05-9545-7e7a1d225bca.png"
             color="bg-blue-500"
           />
           
@@ -91,7 +87,7 @@ export const FeaturesShowcase = () => {
             icon={ShoppingBag} 
             title="Easy Listing Management" 
             description="Create, edit, and manage your listings with just a few taps. Add multiple photos, detailed descriptions, and set your preferred price and location."
-            mockupSrc="/mockups/feature-listings.png"
+            mockupSrc="/lovable-uploads/fa27c9e8-eb40-45a0-860c-afb4f30c6801.png"
             color="bg-green-500"
             reverse={true}
           />
@@ -100,7 +96,7 @@ export const FeaturesShowcase = () => {
             icon={Search} 
             title="Advanced Search & Filters" 
             description="Find exactly what you're looking for with our powerful search functionality. Filter by category, price range, condition, and location to narrow down your options."
-            mockupSrc="/mockups/feature-search.png"
+            mockupSrc="/lovable-uploads/84a45155-63a7-451e-b656-5d4600fe0673.png"
             color="bg-orange-500"
           />
           
@@ -108,7 +104,7 @@ export const FeaturesShowcase = () => {
             icon={Heart} 
             title="Save Your Favorites" 
             description="Keep track of items you're interested in by saving them to your favorites. Get notified about price changes and availability updates."
-            mockupSrc="/mockups/feature-saved.png"
+            mockupSrc="/lovable-uploads/297c12be-24a7-418b-a660-db5801458751.png"
             color="bg-red-500"
             reverse={true}
           />
