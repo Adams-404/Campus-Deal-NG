@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
+import { ChevronLeft } from "lucide-react"; // Changed from ChevronRight to ChevronLeft
 import { SideNav } from "./SideNav";
 
 export const LandingNavbar = () => {
@@ -48,7 +48,7 @@ export const LandingNavbar = () => {
         transition={{ duration: 0.3 }}
         aria-label="Open menu"
       >
-        <ChevronRight className="h-6 w-6 text-white" />
+        <ChevronLeft className="h-6 w-6 text-white" />
       </motion.button>
       
       {/* Side Nav */}
