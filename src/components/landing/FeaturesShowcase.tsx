@@ -41,22 +41,24 @@ const FeatureShowcaseItem = ({
         viewport={{ once: true }}
       >
         <motion.div
-          className="relative w-[280px] h-[580px] bg-black rounded-[40px] p-4 shadow-xl border-[8px] border-gray-800 mx-auto"
-          whileHover={{ 
-            y: -10,
-            transition: { duration: 0.3 }
-          }}
-        >
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-6 bg-black rounded-b-3xl"></div>
-          <div className="w-full h-full bg-blue-950 rounded-3xl overflow-hidden">
-            <img 
-              src={mockupSrc} 
-              alt={title} 
-              className="w-full h-full object-cover object-center"
-              loading="eager"
-            />
-          </div>
-        </motion.div>
+  className="relative w-[280px] h-[580px] bg-black rounded-[30px] p-1.5 shadow-2xl border-[4px] border-gray-800 mx-auto"
+  whileHover={{
+    y: -10,
+    transition: { duration: 0.3 }
+  }}
+>
+  <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-20 h-4 bg-black rounded-b-xl z-10"></div>
+  <div className="w-full h-full bg-blue-950 rounded-3xl overflow-hidden">
+    <img 
+      src={mockupSrc} 
+      alt={title} 
+      className="w-full h-full object-cover object-center"
+      fetchPriority="high"
+      decoding="async"
+    />
+  </div>
+</motion.div>
+
       </motion.div>
     </div>
   );
@@ -64,10 +66,10 @@ const FeatureShowcaseItem = ({
 
 export const FeaturesShowcase = () => {
   // Using Supabase storage URLs instead of local paths
-  const messagingMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/tradezy-mockups/messaging-mockup.png";
-  const listingMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/tradezy-mockups/listing-mockup.png";
-  const searchMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/tradezy-mockups/search-mockup.png";
-  const favoritesMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/tradezy-mockups/favorites-mockup.png";
+  const messagingMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/mockups//message.jpg";
+  const listingMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/mockups//list.jpg";
+  const searchMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/mockups//results.jpg";
+  const favoritesMockup = "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/mockups//favorites.jpg";
   
   return (
     <section className="py-16 bg-black">
