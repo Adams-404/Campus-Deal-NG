@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -38,10 +37,10 @@ import NotificationsPage from "./pages/NotificationsPage";
 import CategoryPage from "./pages/CategoryPage";
 import SafetyTipsDialog from "./components/SafetyTipsDialog";
 import Support from "./pages/Support";
+import { DesktopSideNav } from "@/components/DesktopSideNav";
 
 const queryClient = new QueryClient();
 
-// New AuthGuard component to prevent authenticated users from accessing auth pages
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -94,7 +93,6 @@ const AnimatedRoutes = () => {
 
   useEffect(() => {
     const checkUserAndSettings = async () => {
-      // Wait for settings to load first
       if (loadingSettings) {
         return; 
       }
@@ -102,9 +100,7 @@ const AnimatedRoutes = () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       
-      // Now that settings are loaded, check if we should show the dialog
       if (user && !hideSafetyTips && location.pathname === '/home') {
-        // Ensure we don't re-trigger if already showing (though open prop handles this)
         if (!showSafetyTips) { 
            setShowSafetyTips(true);
         }
@@ -123,10 +119,9 @@ const AnimatedRoutes = () => {
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       {showNav && <Navbar />}
-      <main className={cn("flex-1 pb-24", showNav && "pt-32")}>
+      <main className={cn("flex-1 pb-24 lg:pb-0 lg:pr-[80px]", showNav && "pt-32")}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
-            {/* Public Routes with AuthGuard */}
             <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
             <Route path="/auth" element={<AuthGuard><AuthLayout /></AuthGuard>}>
               <Route index element={<SignIn />} />
@@ -134,13 +129,11 @@ const AnimatedRoutes = () => {
               <Route path="signup" element={<SignUp />} />
             </Route>
 
-            {/* Always Public Routes */}
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/about" element={<About />} />
             <Route path="/help" element={<Help />} />
             <Route path="/support" element={<Support />} />
 
-            {/* Protected Routes */}
             <Route path="/home" element={<ProtectedRoute allowGuest><Homepage /></ProtectedRoute>} />
             <Route path="/category/:category" element={<ProtectedRoute allowGuest><CategoryPage /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
@@ -154,17 +147,19 @@ const AnimatedRoutes = () => {
             <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
-            {/* Admin Routes */}
             <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 
-            {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AnimatePresence>
       </main>
-      {!hideBottomNav && <div className="fixed bottom-0 left-0 right-0 z-50"><BottomNav /></div>}
+      {!hideBottomNav && (
+        <>
+          <DesktopSideNav />
+          <div className="fixed bottom-0 left-0 right-0 z-50"><BottomNav /></div>
+        </>
+      )}
       
-      {/* Safety Tips Dialog */}
       <SafetyTipsDialog 
         open={showSafetyTips} 
         onClose={() => setShowSafetyTips(false)} 

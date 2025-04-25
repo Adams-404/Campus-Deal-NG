@@ -11,7 +11,7 @@ import SafetyTipsDialog from "./SafetyTipsDialog";
 
 const lockedFeatures = ['/messages', '/saved', '#'];
 
-export const BottomNav = () => {
+export const DesktopSideNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
@@ -42,7 +42,6 @@ export const BottomNav = () => {
     if (isLocked('#')) {
       handleLockedFeature('#');
     } else {
-      // Show safety tips before opening sell modal, unless user has opted out
       if (!hideSellTips) {
         setShowSellSafetyTips(true);
       } else {
@@ -63,60 +62,61 @@ export const BottomNav = () => {
 
   return (
     <>
-      <nav data-bottom-nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-secondary border-t border-white/10 px-6 pb-6 pt-3">
-        <div className="flex justify-between items-center max-w-md mx-auto relative">
-          {navItems.map((item, index) => (
-            index === 2 ? (
-              <button
-                key={item.label}
-                onClick={handleSellClick}
-                className={cn(
-                  "flex flex-col items-center gap-1 relative",
-                  "-mt-8"
-                )}
-              >
-                <div className="bg-primary rounded-full p-4 shadow-lg shadow-primary/20 -mt-6 relative">
-                  <item.icon className="w-6 h-6 text-white" />
-                  {isLocked(item.href) && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                      <Lock className="w-4 h-4 text-white" />
-                    </div>
-                  )}
-                </div>
-                <span className="text-xs text-gray-400">{item.label}</span>
-              </button>
-            ) : (
-              <div
-                key={item.label}
-                onClick={() => isLocked(item.href) && handleLockedFeature(item.href)}
-                className="relative"
-              >
-                <Link
-                  to={isLocked(item.href) ? '#' : item.href}
+      <nav className="hidden lg:flex fixed right-0 top-[80px] h-[calc(100vh-80px)] w-[80px] flex-col bg-secondary/80 backdrop-blur-md border-l border-white/10">
+        <div className="flex flex-col items-center justify-between h-full py-6">
+          <div className="w-full space-y-6">
+            {navItems.map((item, index) => (
+              index === 2 ? (
+                <button
+                  key={item.label}
+                  onClick={handleSellClick}
                   className={cn(
-                    "flex flex-col items-center gap-1",
-                    location.pathname === item.href && "text-primary"
+                    "w-full flex flex-col items-center gap-1 p-3 relative group hover:bg-white/5 transition-colors"
                   )}
                 >
-                  <div className="relative">
-                    <item.icon className={cn(
-                      "w-6 h-6",
-                      location.pathname === item.href ? "text-primary" : "text-gray-400"
-                    )} />
+                  <div className="bg-primary rounded-full p-3 shadow-lg shadow-primary/20 relative">
+                    <item.icon className="w-5 h-5 text-white" />
                     {isLocked(item.href) && (
                       <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
                         <Lock className="w-4 h-4 text-white" />
                       </div>
                     )}
                   </div>
-                  <span className={cn(
-                    "text-xs",
-                    location.pathname === item.href ? "text-primary" : "text-gray-400"
-                  )}>{item.label}</span>
-                </Link>
-              </div>
-            )
-          ))}
+                  <span className="text-xs text-gray-400">{item.label}</span>
+                </button>
+              ) : (
+                <div
+                  key={item.label}
+                  onClick={() => isLocked(item.href) && handleLockedFeature(item.href)}
+                  className="relative"
+                >
+                  <Link
+                    to={isLocked(item.href) ? '#' : item.href}
+                    className={cn(
+                      "w-full flex flex-col items-center gap-1 p-3 group hover:bg-white/5 transition-colors",
+                      location.pathname === item.href && "bg-white/5"
+                    )}
+                  >
+                    <div className="relative">
+                      <item.icon className={cn(
+                        "w-5 h-5",
+                        location.pathname === item.href ? "text-primary" : "text-gray-400"
+                      )} />
+                      {isLocked(item.href) && (
+                        <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
+                          <Lock className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                    </div>
+                    <span className={cn(
+                      "text-xs",
+                      location.pathname === item.href ? "text-primary" : "text-gray-400"
+                    )}>{item.label}</span>
+                  </Link>
+                </div>
+              )
+            ))}
+          </div>
         </div>
       </nav>
       
@@ -135,3 +135,4 @@ export const BottomNav = () => {
     </>
   );
 };
+
