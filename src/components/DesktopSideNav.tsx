@@ -1,4 +1,3 @@
-
 import { Home, MessageSquare, Plus, Heart, Settings, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -62,7 +61,7 @@ export const DesktopSideNav = () => {
 
   return (
     <>
-      <nav className="hidden lg:flex fixed right-0 top-[80px] h-[calc(100vh-80px)] w-[80px] flex-col bg-secondary/80 backdrop-blur-md border-l border-white/10">
+      <nav className="hidden lg:flex fixed left-0 top-[80px] h-[calc(100vh-80px)] w-[80px] flex-col bg-secondary/80 backdrop-blur-md border-r border-white/10">
         <div className="flex flex-col items-center justify-between h-full py-6">
           <div className="w-full space-y-6">
             {navItems.map((item, index) => (
@@ -135,4 +134,3 @@ export const DesktopSideNav = () => {
     </>
   );
 };
-

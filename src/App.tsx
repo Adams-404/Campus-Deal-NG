@@ -119,7 +119,10 @@ const AnimatedRoutes = () => {
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       {showNav && <Navbar />}
-      <main className={cn("flex-1 pb-24 lg:pb-0 lg:pr-[80px]", showNav && "pt-32")}>
+      <main className={cn(
+        "flex-1 pb-24 md:pb-0 md:pl-[80px]",
+        showNav && "pt-32"
+      )}>
         <AnimatePresence mode="wait">
           <Routes location={location} key={location.pathname}>
             <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
@@ -156,7 +159,9 @@ const AnimatedRoutes = () => {
       {!hideBottomNav && (
         <>
           <DesktopSideNav />
-          <div className="fixed bottom-0 left-0 right-0 z-50"><BottomNav /></div>
+          <div className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
+            <BottomNav />
+          </div>
         </>
       )}
       
