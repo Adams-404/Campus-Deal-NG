@@ -9,8 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "../contexts/SettingsContext";
 import SafetyTipsDialog from "./SafetyTipsDialog";
 
-const lockedFeatures = ['/messages', '/saved', '#'];
-
 export const BottomNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
@@ -20,11 +18,20 @@ export const BottomNav = () => {
   const { hideSellTips } = useSettings();
 
   useEffect(() => {
+    // Check for existing user session
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
     };
+    
     checkUser();
+    
+    // Set up auth state listener for real-time updates
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   // If there's no user, don't render the navigation
