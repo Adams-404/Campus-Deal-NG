@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings, Lock } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { SellModal } from "./SellModal";
@@ -30,7 +30,7 @@ export const BottomNav = () => {
   const handleLockedFeature = (href: string) => {
     if (!user) {
       toast({
-        title: "Feature Locked",
+        title: "Authentication Required",
         description: "Please sign in to access this feature",
         variant: "destructive",
         className: "bg-black text-white border border-red-500",
@@ -42,7 +42,6 @@ export const BottomNav = () => {
     if (isLocked('#')) {
       handleLockedFeature('#');
     } else {
-      // Show safety tips before opening sell modal, unless user has opted out
       if (!hideSellTips) {
         setShowSellSafetyTips(true);
       } else {
@@ -75,13 +74,8 @@ export const BottomNav = () => {
                   "-mt-8"
                 )}
               >
-                <div className="bg-primary rounded-full p-4 shadow-lg shadow-primary/20 -mt-6 relative">
+                <div className="bg-primary rounded-full p-4 shadow-lg shadow-primary/20 -mt-6">
                   <item.icon className="w-6 h-6 text-white" />
-                  {isLocked(item.href) && (
-                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                      <Lock className="w-4 h-4 text-white" />
-                    </div>
-                  )}
                 </div>
                 <span className="text-xs text-gray-400">{item.label}</span>
               </button>
@@ -98,17 +92,10 @@ export const BottomNav = () => {
                     location.pathname === item.href && "text-primary"
                   )}
                 >
-                  <div className="relative">
-                    <item.icon className={cn(
-                      "w-6 h-6",
-                      location.pathname === item.href ? "text-primary" : "text-gray-400"
-                    )} />
-                    {isLocked(item.href) && (
-                      <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center">
-                        <Lock className="w-4 h-4 text-white" />
-                      </div>
-                    )}
-                  </div>
+                  <item.icon className={cn(
+                    "w-6 h-6",
+                    location.pathname === item.href ? "text-primary" : "text-gray-400"
+                  )} />
                   <span className={cn(
                     "text-xs",
                     location.pathname === item.href ? "text-primary" : "text-gray-400"
@@ -120,7 +107,6 @@ export const BottomNav = () => {
         </div>
       </nav>
       
-      {/* Safety Tips Dialog for Sell */}
       <SafetyTipsDialog 
         open={showSellSafetyTips} 
         onClose={() => {
@@ -130,8 +116,8 @@ export const BottomNav = () => {
         trigger="sell"
       />
       
-      {/* Sell Modal */}
       <SellModal isOpen={isSellModalOpen} onClose={() => setIsSellModalOpen(false)} />
     </>
   );
 };
+
