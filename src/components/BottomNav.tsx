@@ -27,30 +27,18 @@ export const BottomNav = () => {
     checkUser();
   }, []);
 
-  const handleLockedFeature = (href: string) => {
-    if (!user) {
-      toast({
-        title: "Authentication Required",
-        description: "Please sign in to access this feature",
-        variant: "destructive",
-        className: "bg-black text-white border border-red-500",
-      });
-    }
-  };
+  // If there's no user, don't render the navigation
+  if (!user) {
+    return null;
+  }
 
   const handleSellClick = () => {
-    if (isLocked('#')) {
-      handleLockedFeature('#');
+    if (!hideSellTips) {
+      setShowSellSafetyTips(true);
     } else {
-      if (!hideSellTips) {
-        setShowSellSafetyTips(true);
-      } else {
-        setIsSellModalOpen(true);
-      }
+      setIsSellModalOpen(true);
     }
   };
-
-  const isLocked = (href: string) => !user && lockedFeatures.includes(href);
 
   const navItems = [
     { icon: Home, label: "Home", href: "/home" },
@@ -80,28 +68,23 @@ export const BottomNav = () => {
                 <span className="text-xs text-gray-400">{item.label}</span>
               </button>
             ) : (
-              <div
+              <Link
                 key={item.label}
-                onClick={() => isLocked(item.href) && handleLockedFeature(item.href)}
-                className="relative"
+                to={item.href}
+                className={cn(
+                  "flex flex-col items-center gap-1",
+                  location.pathname === item.href && "text-primary"
+                )}
               >
-                <Link
-                  to={isLocked(item.href) ? '#' : item.href}
-                  className={cn(
-                    "flex flex-col items-center gap-1",
-                    location.pathname === item.href && "text-primary"
-                  )}
-                >
-                  <item.icon className={cn(
-                    "w-6 h-6",
-                    location.pathname === item.href ? "text-primary" : "text-gray-400"
-                  )} />
-                  <span className={cn(
-                    "text-xs",
-                    location.pathname === item.href ? "text-primary" : "text-gray-400"
-                  )}>{item.label}</span>
-                </Link>
-              </div>
+                <item.icon className={cn(
+                  "w-6 h-6",
+                  location.pathname === item.href ? "text-primary" : "text-gray-400"
+                )} />
+                <span className={cn(
+                  "text-xs",
+                  location.pathname === item.href ? "text-primary" : "text-gray-400"
+                )}>{item.label}</span>
+              </Link>
             )
           ))}
         </div>
@@ -120,4 +103,3 @@ export const BottomNav = () => {
     </>
   );
 };
-
