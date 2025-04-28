@@ -1,8 +1,7 @@
 
-import { Suspense, lazy } from 'react';
+import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-
-const ViewItemComponent = lazy(() => import('./ViewItem'));
+import ViewItem from './ViewItem';
 
 const LazyViewItem = () => {
   return (
@@ -11,7 +10,7 @@ const LazyViewItem = () => {
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     }>
-      <ViewItemComponent />
+      <ViewItem />
     </Suspense>
   );
 };

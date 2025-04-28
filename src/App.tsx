@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,7 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import { AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { BottomNav } from "@/components/BottomNav";
-import { useEffect, useState, lazy, Suspense } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import Index from "./pages/Index";
@@ -36,14 +35,11 @@ import NotificationsPage from "./pages/NotificationsPage";
 import CategoryPage from "./pages/CategoryPage";
 import SafetyTipsDialog from "./components/SafetyTipsDialog";
 import Support from "./pages/Support";
-
-// Lazy loaded components
-const LazyHomepage = lazy(() => import('./pages/LazyHomepage'));
-const LazyViewItem = lazy(() => import('./pages/LazyViewItem'));
+import LazyHomepage from "./pages/LazyHomepage";
+import LazyViewItem from "./pages/LazyViewItem";
 
 const queryClient = new QueryClient();
 
-// New AuthGuard component to prevent authenticated users from accessing auth pages
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
@@ -97,7 +93,6 @@ const AnimatedRoutes = () => {
 
   useEffect(() => {
     const checkUserAndSettings = async () => {
-      // Wait for settings to load first
       if (loadingSettings) {
         return; 
       }
@@ -106,9 +101,7 @@ const AnimatedRoutes = () => {
       setUser(user);
       setAuthLoaded(true);
       
-      // Now that settings are loaded, check if we should show the dialog
       if (user && !hideSafetyTips && location.pathname === '/home') {
-        // Ensure we don't re-trigger if already showing (though open prop handles this)
         if (!showSafetyTips) { 
            setShowSafetyTips(true);
         }
@@ -117,7 +110,6 @@ const AnimatedRoutes = () => {
     
     checkUserAndSettings();
     
-    // Set up auth state listener for real-time updates
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setAuthLoaded(true);
@@ -132,7 +124,6 @@ const AnimatedRoutes = () => {
     }
   }, [location.pathname]);
   
-  // Default loader for lazy components
   const fallbackLoader = (
     <div className="flex items-center justify-center min-h-screen">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -146,7 +137,6 @@ const AnimatedRoutes = () => {
         <AnimatePresence mode="wait">
           <Suspense fallback={fallbackLoader}>
             <Routes location={location} key={location.pathname}>
-              {/* Public Routes with AuthGuard */}
               <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
               <Route path="/auth" element={<AuthGuard><AuthLayout /></AuthGuard>}>
                 <Route index element={<SignIn />} />
@@ -154,13 +144,11 @@ const AnimatedRoutes = () => {
                 <Route path="signup" element={<SignUp />} />
               </Route>
 
-              {/* Always Public Routes */}
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/about" element={<About />} />
               <Route path="/help" element={<Help />} />
               <Route path="/support" element={<Support />} />
 
-              {/* Protected Routes */}
               <Route path="/home" element={<ProtectedRoute allowGuest><LazyHomepage /></ProtectedRoute>} />
               <Route path="/category/:category" element={<ProtectedRoute allowGuest><CategoryPage /></ProtectedRoute>} />
               <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
@@ -174,10 +162,8 @@ const AnimatedRoutes = () => {
               <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
-              {/* Admin Routes */}
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 
-              {/* 404 Route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
@@ -185,7 +171,6 @@ const AnimatedRoutes = () => {
       </main>
       {!hideBottomNav && authLoaded && <div className="fixed bottom-0 left-0 right-0 z-50"><BottomNav /></div>}
       
-      {/* Safety Tips Dialog */}
       <SafetyTipsDialog 
         open={showSafetyTips} 
         onClose={() => setShowSafetyTips(false)} 

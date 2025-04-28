@@ -1,8 +1,7 @@
 
-import { Suspense, lazy } from 'react';
+import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-
-const HomepageComponent = lazy(() => import('./Homepage'));
+import Homepage from './Homepage';
 
 const LazyHomepage = () => {
   return (
@@ -11,7 +10,7 @@ const LazyHomepage = () => {
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     }>
-      <HomepageComponent />
+      <Homepage />
     </Suspense>
   );
 };
