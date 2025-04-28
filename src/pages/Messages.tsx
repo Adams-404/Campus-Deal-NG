@@ -156,6 +156,7 @@ export default function Messages() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     const setup = async () => {
@@ -177,13 +178,40 @@ export default function Messages() {
       fetchConversations(user.id);
     };
     setup();
+    
+    // Set up auth state listener for real-time updates
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        setCurrentUser(session.user);
+        
+        // Get the user's profile on auth change
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+        
+        setCurrentUserProfile(profileData);
+        fetchConversations(session.user.id);
+      } else {
+        setCurrentUser(null);
+        setCurrentUserProfile(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
+    // Cleanup previous subscription if it exists
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+    }
+    
     if (conversationId && currentUser?.id) {
       fetchMessages(conversationId);
       
-      // Subscribe to both conversations and messages
+      // Create and subscribe to the channel
       const channel = supabase.channel(`room:${conversationId}`);
       
       channel
@@ -193,6 +221,7 @@ export default function Messages() {
           table: 'conversations',
           filter: `id=eq.${conversationId}`
         }, () => {
+          console.log('Conversation updated');
           if (currentUser?.id) {
             fetchConversations(currentUser.id);
           }
@@ -203,8 +232,17 @@ export default function Messages() {
           table: 'messages',
           filter: `conversation_id=eq.${conversationId}`
         }, payload => {
+          console.log('New message received:', payload);
           const newMessage = payload.new as Message;
-          setMessages(current => [...current, newMessage]);
+          
+          // Add message to state if it's not already there
+          setMessages(current => {
+            const messageExists = current.some(msg => msg.id === newMessage.id);
+            if (messageExists) {
+              return current;
+            }
+            return [...current, newMessage];
+          });
           
           // Automatically switch to the item being discussed
           if (newMessage.item_id && (!selectedItemId || selectedItemId !== newMessage.item_id)) {
@@ -213,13 +251,22 @@ export default function Messages() {
           
           scrollToBottom();
         })
-        .subscribe();
+        .subscribe(status => {
+          console.log(`Subscription status for room:${conversationId}:`, status);
+          if (status === 'SUBSCRIBED') {
+            console.log('Successfully subscribed to real-time updates');
+          }
+        });
 
+      // Store channel reference for cleanup
+      channelRef.current = channel;
+      
       // Scroll to bottom when entering chat
       setTimeout(scrollToBottom, 300);
 
       return () => {
-        channel.unsubscribe();
+        console.log('Cleaning up Supabase channel');
+        supabase.removeChannel(channel);
       };
     }
   }, [conversationId, currentUser?.id]);
@@ -257,7 +304,7 @@ export default function Messages() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [filteredMessages]);
 
   const scrollToBottom = () => {
     if (messagesEndRef.current) {
@@ -442,22 +489,11 @@ export default function Messages() {
         return;
       }
 
-      // Clear input and add optimistic message immediately
+      // Clear input
       setNewMessage('');
-      const optimisticMessage: Message = {
-        id: `temp-${Date.now()}`,
-        content: cleanMessage,
-        sender_id: currentUser.id,
-        conversation_id: conversationId,
-        created_at: timestamp,
-        item_id: itemId || null,
-        image_url: null
-      };
-      setMessages(current => [...current, optimisticMessage]);
-      scrollToBottom();
-
+      
       // Send message to server
-      const { error: messageError } = await supabase
+      const { data, error: messageError } = await supabase
         .from('messages')
         .insert({
           conversation_id: conversationId,
@@ -465,7 +501,8 @@ export default function Messages() {
           sender_id: currentUser.id,
           created_at: timestamp,
           item_id: itemId || null
-        });
+        })
+        .select();
 
       if (messageError) throw messageError;
 
@@ -479,11 +516,6 @@ export default function Messages() {
         .eq('id', conversationId);
 
       if (conversationError) throw conversationError;
-
-      // If this is a new item being discussed, fetch the updated messages to get item details
-      if (itemId) {
-        fetchMessages(conversationId);
-      }
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast.error(error.message);
