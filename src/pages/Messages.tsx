@@ -824,7 +824,9 @@ export default function Messages() {
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end justify-center p-2">
-                        <span className="text-xs font-medium text-white">₦{selectedConversation.item.price}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ₦{selectedConversation.item.price}
+                        </span>
                       </div>
                     </div>
                     <div className="text-center">
