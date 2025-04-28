@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Send } from "lucide-react";
-import { CircleDot } from "lucide-react"; // Added for unread message indicator
-import { useNotifications } from "@/contexts/NotificationContext"; // Import to use for marking messages as read
+import { CircleDot } from "lucide-react";
+import { useNotifications } from "@/contexts/NotificationContext";
 import { useToast } from "@/components/ui/use-toast";
 import { format } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -24,7 +25,7 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const { unreadMessagesByUser, markConversationAsRead } = useNotifications();
-  const { theme } = useSettings();
+  const { hideSafetyTips } = useSettings();
 
   useEffect(() => {
     // Check for existing user session
@@ -166,7 +167,12 @@ const Messages = () => {
     }
   }, [conversationId, conversations, user, markConversationAsRead]);
 
-  const createMessage = async (message: { content: string; conversation_id: string; sender_id: string; receiver_id: string }) => {
+  const createMessage = async (message: { 
+    content: string; 
+    conversation_id: string; 
+    sender_id: string; 
+    receiver_id: string;
+  }) => {
     const { data, error } = await supabase
       .from('messages')
       .insert([message])
@@ -186,10 +192,13 @@ const Messages = () => {
   };
 
   const queryClient = useQueryClient();
-  const mutation = useMutation(createMessage, {
+  
+  // Fixed useMutation implementation
+  const mutation = useMutation({
+    mutationFn: createMessage,
     onSuccess: () => {
-      queryClient.invalidateQueries(['messages', conversationId]);
-      queryClient.invalidateQueries(['conversations', user?.id]);
+      queryClient.invalidateQueries({ queryKey: ['messages', conversationId] });
+      queryClient.invalidateQueries({ queryKey: ['conversations', user?.id] });
       setNewMessage("");
     },
     onError: () => {
@@ -198,7 +207,7 @@ const Messages = () => {
         description: "Failed to send message. Please try again.",
         variant: "destructive",
       });
-    },
+    }
   });
 
   const handleSendMessage = async () => {
@@ -279,6 +288,7 @@ const Messages = () => {
       const isCurrentUser = msg.sender_id === user?.id;
       const messageDate = new Date(msg.created_at);
       const formattedTime = format(messageDate, 'h:mm a');
+      const isDarkMode = document.documentElement.classList.contains('dark');
 
       return (
         <div
@@ -288,7 +298,7 @@ const Messages = () => {
           <div
             className={`rounded-xl px-4 py-2 my-1 text-sm ${isCurrentUser
               ? 'bg-primary text-secondary'
-              : theme === 'dark'
+              : isDarkMode
                 ? 'bg-gray-700 text-white'
                 : 'bg-gray-200 text-gray-800'
             }`}
@@ -358,8 +368,8 @@ const Messages = () => {
                       }
                     }}
                   />
-                  <Button onClick={handleSendMessage} disabled={mutation.isLoading}>
-                    {mutation.isLoading ? "Sending..." : <Send className="h-4 w-4" />}
+                  <Button onClick={handleSendMessage} disabled={mutation.isPending}>
+                    {mutation.isPending ? "Sending..." : <Send className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>

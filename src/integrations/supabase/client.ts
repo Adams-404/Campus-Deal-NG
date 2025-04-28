@@ -41,3 +41,46 @@ supabase.channel('custom-all-channel')
   .subscribe((status) => {
     console.log('Realtime subscription status:', status);
   });
+
+// Add a helper function for marking messages as read
+export const markMessagesAsRead = async (conversationId: string, userId: string) => {
+  if (!conversationId || !userId) return { error: 'Missing required parameters' };
+  
+  return await supabase
+    .from('messages')
+    .update({ is_read: true })
+    .eq('conversation_id', conversationId)
+    .eq('receiver_id', userId);
+};
+
+// Add a helper function for sending messages
+export const sendMessage = async (message: {
+  content: string;
+  conversation_id: string;
+  sender_id: string;
+  receiver_id: string;
+}) => {
+  return await supabase
+    .from('messages')
+    .insert([message])
+    .select('*');
+};
+
+// Add a helper function for fetching conversations
+export const fetchUserConversations = async (userId: string) => {
+  if (!userId) return { data: null, error: 'No user ID provided' };
+  
+  return await supabase
+    .from('conversations')
+    .select(`
+      *,
+      participants:conversations_participants (
+        user_id,
+        user:profiles (*)
+      ),
+      last_message:messages (*)
+    `)
+    .contains('participants', [{ user_id: userId }])
+    .order('updated_at', { ascending: false });
+};
+

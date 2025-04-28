@@ -8,26 +8,22 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "../contexts/SettingsContext";
 import SafetyTipsDialog from "./SafetyTipsDialog";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 export const BottomNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
-  const [hasNewMessages, setHasNewMessages] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
   const { hideSellTips } = useSettings();
+  const { unreadMessagesByUser } = useNotifications();
   
   useEffect(() => {
     // Check for existing user session
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      
-      if (user) {
-        // Check for unread messages when component mounts
-        checkUnreadMessages(user.id);
-      }
     };
     
     checkUser();
@@ -36,61 +32,20 @@ export const BottomNav = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      
-      if (currentUser) {
-        checkUnreadMessages(currentUser.id);
-      }
     });
-
-    // Listen for new messages
-    const handleNewMessage = (event: any) => {
-      const payload = event.detail;
-      if (payload.new && user && payload.new.receiver_id === user.id) {
-        console.log('New message received for current user!', payload);
-        setHasNewMessages(true);
-      }
-    };
-
-    window.addEventListener('new-message', handleNewMessage);
 
     return () => {
       subscription.unsubscribe();
-      window.removeEventListener('new-message', handleNewMessage);
     };
-  }, [user]);
-
-  // Check for unread messages in the database
-  const checkUnreadMessages = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('receiver_id', userId)
-        .eq('is_read', false);
-        
-      if (error) {
-        console.error('Error fetching unread messages:', error);
-        return;
-      }
-      
-      setHasNewMessages(data && data.length > 0);
-      console.log(`User has ${data?.length || 0} unread messages`);
-    } catch (error) {
-      console.error('Error checking unread messages:', error);
-    }
-  };
-
-  // Reset the new messages indicator when navigating to messages
-  useEffect(() => {
-    if (location.pathname.startsWith('/messages')) {
-      setHasNewMessages(false);
-    }
-  }, [location.pathname]);
+  }, []);
 
   // If there's no user, don't render the navigation
   if (!user) {
     return null;
   }
+
+  // Calculate if there are any new messages
+  const hasNewMessages = Object.keys(unreadMessagesByUser).length > 0;
 
   const handleSellClick = () => {
     if (!hideSellTips) {

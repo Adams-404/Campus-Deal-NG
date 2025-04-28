@@ -52,9 +52,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
     const fetchUnreadCount = async () => {
       try {
-        const { count, error } = await supabase
+        // Get count using select and filter
+        const { data, error } = await supabase
           .from('notifications')
-          .select('*', { count: 'exact', head: true })
+          .select('*')
           .eq('user_id', userId)
           .eq('is_read', false);
 
@@ -63,7 +64,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           return;
         }
 
-        setUnreadCount(count || 0);
+        setUnreadCount(data?.length || 0);
       } catch (error) {
         console.error('Error fetching unread count:', error);
       }
@@ -96,22 +97,24 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     
     const fetchUnreadMessages = async () => {
       try {
+        // First get all unread messages
         const { data, error } = await supabase
           .from('messages')
-          .select('sender_id, conversation_id, count')
+          .select('*')
           .eq('receiver_id', userId)
-          .eq('is_read', false)
-          .count(null, { groupBy: ['sender_id'] });
+          .eq('is_read', false);
           
         if (error) {
           console.error('Error fetching unread messages:', error);
           return;
         }
         
+        // Count messages by sender
         const messagesByUser: Record<string, number> = {};
         if (data) {
-          data.forEach((result: any) => {
-            messagesByUser[result.sender_id] = parseInt(result.count);
+          data.forEach(message => {
+            const senderId = message.sender_id;
+            messagesByUser[senderId] = (messagesByUser[senderId] || 0) + 1;
           });
         }
         
