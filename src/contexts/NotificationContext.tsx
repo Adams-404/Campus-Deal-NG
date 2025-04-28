@@ -8,7 +8,9 @@ interface NotificationContextType {
   isPushSupported: boolean;
   isSubscribed: boolean;
   unreadCount: number;
+  unreadMessagesByUser: Record<string, number>;
   toggleNotifications: () => Promise<void>;
+  markConversationAsRead: (conversationId: string) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -19,6 +21,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
+  const [unreadMessagesByUser, setUnreadMessagesByUser] = useState<Record<string, number>>({});
 
   useEffect(() => {
     // Check if push notifications are supported
@@ -86,6 +89,96 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       supabase.removeChannel(channel);
     };
   }, [userId]);
+  
+  // Fetch unread messages by sender
+  useEffect(() => {
+    if (!userId) return;
+    
+    const fetchUnreadMessages = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('sender_id, conversation_id, count')
+          .eq('receiver_id', userId)
+          .eq('is_read', false)
+          .count(null, { groupBy: ['sender_id'] });
+          
+        if (error) {
+          console.error('Error fetching unread messages:', error);
+          return;
+        }
+        
+        const messagesByUser: Record<string, number> = {};
+        if (data) {
+          data.forEach((result: any) => {
+            messagesByUser[result.sender_id] = parseInt(result.count);
+          });
+        }
+        
+        setUnreadMessagesByUser(messagesByUser);
+        console.log('Unread messages by sender:', messagesByUser);
+      } catch (error) {
+        console.error('Error fetching unread messages count:', error);
+      }
+    };
+    
+    fetchUnreadMessages();
+    
+    // Listen for new messages
+    const handleNewMessage = (event: any) => {
+      const payload = event.detail;
+      if (payload.new && payload.new.receiver_id === userId && !payload.new.is_read) {
+        const senderId = payload.new.sender_id;
+        setUnreadMessagesByUser(prev => ({
+          ...prev,
+          [senderId]: (prev[senderId] || 0) + 1
+        }));
+      }
+    };
+    
+    window.addEventListener('new-message', handleNewMessage);
+    
+    return () => {
+      window.removeEventListener('new-message', handleNewMessage);
+    };
+  }, [userId]);
+
+  const markConversationAsRead = async (conversationId: string) => {
+    if (!userId) return;
+    
+    try {
+      // Update all messages in the conversation to be read
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('conversation_id', conversationId)
+        .eq('receiver_id', userId);
+        
+      if (error) {
+        console.error('Error marking conversation as read:', error);
+        return;
+      }
+      
+      // Update the local state
+      const { data } = await supabase
+        .from('messages')
+        .select('sender_id')
+        .eq('conversation_id', conversationId)
+        .eq('receiver_id', userId)
+        .limit(1);
+        
+      if (data && data.length > 0) {
+        const senderId = data[0].sender_id;
+        setUnreadMessagesByUser(prev => {
+          const updated = { ...prev };
+          delete updated[senderId];
+          return updated;
+        });
+      }
+    } catch (error) {
+      console.error('Error marking conversation as read:', error);
+    }
+  };
 
   const toggleNotifications = async () => {
     if (!isPushSupported) {
@@ -157,7 +250,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         isPushSupported, 
         isSubscribed, 
         unreadCount,
-        toggleNotifications 
+        unreadMessagesByUser,
+        toggleNotifications,
+        markConversationAsRead
       }}
     >
       {children}

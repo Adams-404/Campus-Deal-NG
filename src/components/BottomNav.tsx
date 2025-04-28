@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, CircleDot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { SellModal } from "./SellModal";
@@ -13,26 +13,79 @@ export const BottomNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
   const { hideSellTips } = useSettings();
-
+  
   useEffect(() => {
     // Check for existing user session
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+      
+      if (user) {
+        // Check for unread messages when component mounts
+        checkUnreadMessages(user.id);
+      }
     };
     
     checkUser();
     
     // Set up auth state listener for real-time updates
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      
+      if (currentUser) {
+        checkUnreadMessages(currentUser.id);
+      }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // Listen for new messages
+    const handleNewMessage = (event: any) => {
+      const payload = event.detail;
+      if (payload.new && user && payload.new.receiver_id === user.id) {
+        console.log('New message received for current user!', payload);
+        setHasNewMessages(true);
+      }
+    };
+
+    window.addEventListener('new-message', handleNewMessage);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('new-message', handleNewMessage);
+    };
+  }, [user]);
+
+  // Check for unread messages in the database
+  const checkUnreadMessages = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('receiver_id', userId)
+        .eq('is_read', false);
+        
+      if (error) {
+        console.error('Error fetching unread messages:', error);
+        return;
+      }
+      
+      setHasNewMessages(data && data.length > 0);
+      console.log(`User has ${data?.length || 0} unread messages`);
+    } catch (error) {
+      console.error('Error checking unread messages:', error);
+    }
+  };
+
+  // Reset the new messages indicator when navigating to messages
+  useEffect(() => {
+    if (location.pathname.startsWith('/messages')) {
+      setHasNewMessages(false);
+    }
+  }, [location.pathname]);
 
   // If there's no user, don't render the navigation
   if (!user) {
@@ -49,7 +102,7 @@ export const BottomNav = () => {
 
   const navItems = [
     { icon: Home, label: "Home", href: "/home" },
-    { icon: MessageSquare, label: "Messages", href: "/messages" },
+    { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages },
     { icon: Plus, label: "Sell", href: "#" },
     { icon: Heart, label: "Saved", href: "/saved" },
     { icon: Settings, label: "Settings", href: "/settings" },
@@ -79,10 +132,13 @@ export const BottomNav = () => {
                 key={item.label}
                 to={item.href}
                 className={cn(
-                  "flex flex-col items-center gap-1",
+                  "flex flex-col items-center gap-1 relative",
                   location.pathname === item.href && "text-primary"
                 )}
               >
+                {item.hasNotification && (
+                  <CircleDot className="absolute -right-1 -top-1 h-3 w-3 text-green-500" />
+                )}
                 <item.icon className={cn(
                   "w-6 h-6",
                   location.pathname === item.href ? "text-primary" : "text-gray-400"
