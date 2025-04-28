@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -157,25 +158,31 @@ export default function Messages() {
   const messageContainerRef = useRef<HTMLDivElement>(null);
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const channelRef = useRef<any>(null);
+  const realtimeInitialized = useRef(false);
 
   useEffect(() => {
     const setup = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate('/auth/signin');
-        return;
-      }
-      setCurrentUser(user);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          navigate('/auth/signin');
+          return;
+        }
+        console.log('Current user:', user.id);
+        setCurrentUser(user);
 
-      // Get the user's profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      setCurrentUserProfile(profileData);
-      fetchConversations(user.id);
+        // Get the user's profile
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+        
+        setCurrentUserProfile(profileData);
+        fetchConversations(user.id);
+      } catch (error) {
+        console.error('Error in setup:', error);
+      }
     };
     setup();
     
@@ -203,72 +210,77 @@ export default function Messages() {
   }, []);
 
   useEffect(() => {
-    // Cleanup previous subscription if it exists
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
+    // Function to set up real-time subscriptions
+    const setupRealtimeSubscription = async () => {
+      if (!conversationId || !currentUser?.id || realtimeInitialized.current) {
+        return;
+      }
+      
+      console.log('Setting up real-time subscription for conversation:', conversationId);
+      
+      // Cleanup previous subscription if it exists
+      if (channelRef.current) {
+        console.log('Removing previous channel subscription');
+        supabase.removeChannel(channelRef.current);
+      }
+      
+      try {
+        // Create a new channel for this conversation
+        const channel = supabase.channel(`conversation:${conversationId}`);
+        
+        console.log('Subscribing to conversation changes');
+        
+        channel
+          .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `conversation_id=eq.${conversationId}`
+          }, (payload) => {
+            console.log('New message received via realtime:', payload);
+            const newMessage = payload.new as Message;
+            
+            // Add message to state if it's not already there
+            setMessages(current => {
+              // Check if message already exists to prevent duplication
+              const messageExists = current.some(msg => msg.id === newMessage.id);
+              if (messageExists) {
+                console.log('Message already exists, not adding:', newMessage.id);
+                return current;
+              }
+              
+              console.log('Adding new message to state:', newMessage);
+              return [...current, newMessage];
+            });
+          })
+          .subscribe(status => {
+            console.log(`Subscription status for conversation:${conversationId}:`, status);
+          });
+        
+        // Store channel reference for cleanup and mark as initialized
+        channelRef.current = channel;
+        realtimeInitialized.current = true;
+        
+        console.log('Real-time subscription successfully set up');
+      } catch (error) {
+        console.error('Error setting up real-time subscription:', error);
+        toast.error('Failed to set up real-time messaging');
+      }
+    };
+    
+    // Fetch messages and set up real-time subscription
+    if (conversationId) {
+      fetchMessages(conversationId);
+      setupRealtimeSubscription();
     }
     
-    if (conversationId && currentUser?.id) {
-      fetchMessages(conversationId);
-      
-      // Create and subscribe to the channel
-      const channel = supabase.channel(`room:${conversationId}`);
-      
-      channel
-        .on('postgres_changes', {
-          event: '*',
-          schema: 'public',
-          table: 'conversations',
-          filter: `id=eq.${conversationId}`
-        }, () => {
-          console.log('Conversation updated');
-          if (currentUser?.id) {
-            fetchConversations(currentUser.id);
-          }
-        })
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `conversation_id=eq.${conversationId}`
-        }, payload => {
-          console.log('New message received:', payload);
-          const newMessage = payload.new as Message;
-          
-          // Add message to state if it's not already there
-          setMessages(current => {
-            const messageExists = current.some(msg => msg.id === newMessage.id);
-            if (messageExists) {
-              return current;
-            }
-            return [...current, newMessage];
-          });
-          
-          // Automatically switch to the item being discussed
-          if (newMessage.item_id && (!selectedItemId || selectedItemId !== newMessage.item_id)) {
-            setSelectedItemId(newMessage.item_id);
-          }
-          
-          scrollToBottom();
-        })
-        .subscribe(status => {
-          console.log(`Subscription status for room:${conversationId}:`, status);
-          if (status === 'SUBSCRIBED') {
-            console.log('Successfully subscribed to real-time updates');
-          }
-        });
-
-      // Store channel reference for cleanup
-      channelRef.current = channel;
-      
-      // Scroll to bottom when entering chat
-      setTimeout(scrollToBottom, 300);
-
-      return () => {
-        console.log('Cleaning up Supabase channel');
-        supabase.removeChannel(channel);
-      };
-    }
+    return () => {
+      if (channelRef.current) {
+        console.log('Cleaning up Supabase channel on unmount');
+        supabase.removeChannel(channelRef.current);
+        realtimeInitialized.current = false;
+      }
+    };
   }, [conversationId, currentUser?.id]);
 
   useEffect(() => {
@@ -295,6 +307,7 @@ export default function Messages() {
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
       
+      console.log('Filtered and sorted messages:', sortedMessages.length);
       setFilteredMessages(sortedMessages);
       
       // Scroll to bottom after a short delay to ensure content is rendered
@@ -428,6 +441,8 @@ export default function Messages() {
 
   const fetchMessages = async (convId: string) => {
     try {
+      console.log('Fetching messages for conversation:', convId);
+      
       const { data, error } = await supabase
         .from('messages')
         .select(`
@@ -463,6 +478,7 @@ export default function Messages() {
         items: msg.items
       }));
       
+      console.log(`Fetched ${formattedMessages.length} messages for conversation ${convId}`);
       setMessages(formattedMessages);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
@@ -489,22 +505,53 @@ export default function Messages() {
         return;
       }
 
-      // Clear input
+      // Clear input immediately for better UX
       setNewMessage('');
+      
+      // Prepare the message object
+      const newMessageObj = {
+        conversation_id: conversationId,
+        content: cleanMessage,
+        sender_id: currentUser.id,
+        created_at: timestamp,
+        item_id: itemId || selectedItemId || null
+      };
+      
+      console.log('Sending new message:', newMessageObj);
+      
+      // Add message optimistically to the UI
+      const tempId = `temp-${Date.now()}`;
+      const optimisticMessage = {
+        id: tempId,
+        ...newMessageObj,
+        image_url: null
+      };
+      
+      // Add optimistic message to state
+      setMessages(prevMessages => [...prevMessages, optimisticMessage]);
       
       // Send message to server
       const { data, error: messageError } = await supabase
         .from('messages')
-        .insert({
-          conversation_id: conversationId,
-          content: cleanMessage,
-          sender_id: currentUser.id,
-          created_at: timestamp,
-          item_id: itemId || null
-        })
+        .insert(newMessageObj)
         .select();
 
-      if (messageError) throw messageError;
+      if (messageError) {
+        // Remove optimistic message if there was an error
+        setMessages(prevMessages => 
+          prevMessages.filter(msg => msg.id !== tempId)
+        );
+        throw messageError;
+      }
+      
+      // Replace optimistic message with the real one from the server
+      if (data && data[0]) {
+        setMessages(prevMessages => 
+          prevMessages.map(msg => 
+            msg.id === tempId ? { ...data[0], conversation_id: conversationId } : msg
+          )
+        );
+      }
 
       // Update conversation last message
       const { error: conversationError } = await supabase
@@ -516,6 +563,9 @@ export default function Messages() {
         .eq('id', conversationId);
 
       if (conversationError) throw conversationError;
+      
+      // Scroll to bottom after sending
+      setTimeout(scrollToBottom, 100);
     } catch (error: any) {
       console.error('Error sending message:', error);
       toast.error(error.message);

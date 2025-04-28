@@ -25,3 +25,14 @@ export const supabase = createClient<Database>(
     }
   }
 );
+
+// Enable realtime messages on the `messages` table
+supabase.channel('custom-all-channel')
+  .on(
+    'postgres_changes',
+    { event: '*', schema: 'public', table: 'messages' },
+    (payload) => {
+      console.log('Change received!', payload);
+    }
+  )
+  .subscribe();
