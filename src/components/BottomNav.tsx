@@ -92,7 +92,15 @@ export const BottomNav = () => {
                 )}
               >
                 {item.hasNotification && (
-                  <CircleDot className="absolute -right-1 -top-1 h-3 w-3 text-green-500" />
+                  <>
+                    {Object.values(unreadMessagesByUser).reduce((a, b) => a + b, 0) > 0 && (
+                      <div className="absolute -right-2 -top-2">
+                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full min-w-[18px] min-h-[18px]">
+                          {Object.values(unreadMessagesByUser).reduce((a, b) => a + b, 0)}
+                        </span>
+                      </div>
+                    )}
+                  </>
                 )}
                 <item.icon className={cn(
                   "w-6 h-6",
