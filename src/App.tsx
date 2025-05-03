@@ -1,20 +1,18 @@
+
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { Auth } from '@supabase/auth-ui-react'
-import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { supabase } from './integrations/supabase/client';
 import Index from './pages/Index';
-import Homepage from './pages/Homepage';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import CategoryPage from './pages/CategoryPage';
-import AuthWrapper from './pages/AuthWrapper';
 import Messages from './pages/Messages';
-import Saved from './pages/Saved';
 import UserProfile from './pages/UserProfile';
+import LazyHomepage from './pages/LazyHomepage';
+import AuthWrapper from './pages/AuthWrapper';
+import Saved from './pages/Saved';
 import ItemDetails from './pages/ItemDetails';
 import AdminPanel from './pages/AdminPanel';
-import LazyHomepage from './pages/LazyHomepage';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -48,12 +46,35 @@ function App() {
           path="/auth/*"
           element={
             <AuthWrapper>
-              <Auth
-                supabaseClient={supabase}
-                appearance={{ theme: ThemeSupa }}
-                providers={['google', 'github']}
-                redirectTo={`${window.location.origin}/home`}
-              />
+              <div className="w-full">
+                <h2 className="text-xl font-bold mb-4 text-center">Sign in with your email</h2>
+                <p className="text-center text-muted-foreground mb-6">
+                  Enter your email below to receive a magic link for passwordless sign in
+                </p>
+                <form className="space-y-4">
+                  <div>
+                    <input
+                      type="email"
+                      placeholder="Your email"
+                      className="w-full p-2 border rounded"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="w-full bg-primary text-white p-2 rounded"
+                  >
+                    Send Magic Link
+                  </button>
+                </form>
+                <div className="mt-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Don't have an account?{" "}
+                    <a href="/auth/sign-up" className="text-primary font-medium">
+                      Sign up
+                    </a>
+                  </p>
+                </div>
+              </div>
             </AuthWrapper>
           }
         />
