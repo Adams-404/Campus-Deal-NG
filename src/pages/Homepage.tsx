@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { useSearch } from "@/contexts/SearchContext";
 import { Link } from 'react-router-dom';
 import { Heart, ArrowRight, Loader2 } from 'lucide-react';
+import { DesktopSideNav } from "@/components/DesktopSideNav";
 
 interface Item {
   id: string;
@@ -79,6 +80,7 @@ const Homepage = () => {
         const images = item.item_images || [];
         const allImages = images.map(img => img.image_url);
         const seller = item.profiles;
+        const featured = item.featured || false;
 
         return {
           id: item.id,
@@ -97,7 +99,7 @@ const Homepage = () => {
             last_name: seller.last_name,
             avatar_url: seller.avatar_url
           } : undefined,
-          featured: item.featured,
+          featured: featured,
           description: item.description
         };
       }).filter(item => item.images.length > 0);
@@ -179,88 +181,109 @@ const Homepage = () => {
   }, [items, searchQuery]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className="max-w-3xl mx-auto px-4 sm:px-6">
-        <PullToRefresh onRefresh={handleRefresh}>
-          <PageTransition>
-            {loading ? (
-              <div className="flex justify-center items-center h-[calc(100vh-200px)] hidden md:flex">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : (
-              <> 
-                {searchQuery && filteredItems.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
-                    <h2 className="text-2xl font-bold mb-4">No results found</h2>
-                    <p className="text-gray-500">
-                      No items match your search for "{searchQuery}".
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    {searchQuery ? (
-                      <section className="py-6">
-                        <h2 className="text-2xl font-bold mb-6">Search Results</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {filteredItems.map(item => (
-                            <ProductCard key={item.id} item={item} />
-                          ))}
-                        </div>
-                      </section>
-                    ) : (
-                      <>
-                        {/* Global Featured Item */}
-                        {featuredItems.length > 0 && (
-                          <section className="py-6">
-                            <h2 className="text-2xl font-bold mb-6">Featured Item</h2>
-                            <ProductCard
-                              item={featuredItems[0]}
-                              className="w-full"
-                            />
-                          </section>
-                        )}
-
-                        {/* Category Sections */}
-                        {Object.entries(groupedItems).map(([category, categoryItems]) => (
-                          <section key={category} className="py-6">
-                            <div className="flex justify-between items-center mb-6">
-                              <h2 className="text-2xl font-bold capitalize">{category}</h2>
-                              <Link
-                                to={`/category/${category.toLowerCase()}`}
-                                className="block text-sm text-white hover:underline border border-primary rounded-lg px-3 py-1 flex items-center gap-1"
-                              >
-                                See All <ArrowRight className="h-4 w-4 text-primary" />
-                              </Link>
-                            </div>
-
-                            {/* Featured Item for Category */}
-                            <div className="mb-6">
-                              <ProductCard
-                                item={categoryItems[0]}
-                                className="w-full"
-                              />
-                            </div>
-
-                            {/* Horizontal Scroll for Other Items */}
-                            <div className="overflow-x-auto pb-4">
-                              <div className="flex gap-4 w-max">
-                                {categoryItems.slice(1, 5).map(item => (
-                                  <div key={item.id} className="w-48 md:w-64 flex-shrink-0">
-                                    <ProductCard item={item} hideSellerName={true} />
-                                  </div>
+    <div className="min-h-screen bg-background text-foreground flex">
+      <DesktopSideNav />
+      
+      <main className="flex-1">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-20 md:pb-8">
+          <PullToRefresh onRefresh={handleRefresh}>
+            <PageTransition>
+              {loading ? (
+                <div className="flex justify-center items-center h-[calc(100vh-200px)]">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <> 
+                  {searchQuery && filteredItems.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+                      <h2 className="text-2xl font-bold mb-4">No results found</h2>
+                      <p className="text-gray-500">
+                        No items match your search for "{searchQuery}".
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {searchQuery ? (
+                        <section className="py-6">
+                          <h2 className="text-2xl font-bold mb-6">Search Results</h2>
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                            {filteredItems.map(item => (
+                              <ProductCard key={item.id} item={item} />
+                            ))}
+                          </div>
+                        </section>
+                      ) : (
+                        <>
+                          {/* Featured Items Section */}
+                          {featuredItems.length > 0 && (
+                            <section className="py-6">
+                              <h2 className="text-2xl font-bold mb-6">Featured Items</h2>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {featuredItems.slice(0, 3).map(item => (
+                                  <ProductCard
+                                    key={item.id}
+                                    item={item}
+                                    className="w-full"
+                                  />
                                 ))}
                               </div>
-                            </div>
-                          </section>
-                        ))}
-                      </>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </PageTransition>
-        </PullToRefresh>
+                            </section>
+                          )}
+
+                          {/* Category Sections */}
+                          {Object.entries(groupedItems).map(([category, categoryItems]) => (
+                            <section key={category} className="py-6">
+                              <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-2xl font-bold capitalize">{category}</h2>
+                                <Link
+                                  to={`/category/${category.toLowerCase()}`}
+                                  className="block text-sm text-white hover:underline border border-primary rounded-lg px-3 py-1 flex items-center gap-1"
+                                >
+                                  See All <ArrowRight className="h-4 w-4 text-primary" />
+                                </Link>
+                              </div>
+
+                              {/* Desktop Layout */}
+                              <div className="hidden md:block">
+                                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                  {categoryItems.slice(0, 8).map(item => (
+                                    <ProductCard key={item.id} item={item} hideSellerName={false} />
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Mobile Layout */}
+                              <div className="md:hidden">
+                                {/* Featured Item for Category */}
+                                <div className="mb-6">
+                                  <ProductCard
+                                    item={categoryItems[0]}
+                                    className="w-full"
+                                  />
+                                </div>
+
+                                {/* Horizontal Scroll for Other Items */}
+                                <div className="overflow-x-auto pb-4">
+                                  <div className="flex gap-4 w-max">
+                                    {categoryItems.slice(1, 5).map(item => (
+                                      <div key={item.id} className="w-48 flex-shrink-0">
+                                        <ProductCard item={item} hideSellerName={true} />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            </section>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+            </PageTransition>
+          </PullToRefresh>
+        </div>
       </main>
     </div>
   );

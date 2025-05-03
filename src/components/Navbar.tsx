@@ -146,7 +146,7 @@ export const Navbar = () => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       // Trigger search
-      e.currentTarget.blur()
+      (e.currentTarget as HTMLElement).blur?.()
     }
   }
 
@@ -267,7 +267,6 @@ export const Navbar = () => {
               <Select
                 value={selectedCategories.length > 0 ? selectedCategories[0] : undefined}
                 onValueChange={(value) => handleCategoryChange([value])}
-                placeholder="Select category..."
                 className="w-full"
               >
                 <SelectTrigger className="bg-background border-white/10 hover:bg-primary/10">
