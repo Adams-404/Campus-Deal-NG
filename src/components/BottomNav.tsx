@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings, CircleDot } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { SellModal } from "./SellModal";
@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "../contexts/SettingsContext";
 import SafetyTipsDialog from "./SafetyTipsDialog";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useIsMobile } from "../hooks/use-mobile";
 
 export const BottomNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
@@ -18,6 +19,7 @@ export const BottomNav = () => {
   const { toast } = useToast();
   const { hideSellTips } = useSettings();
   const { unreadMessagesByUser } = useNotifications();
+  const isMobile = useIsMobile();
   
   useEffect(() => {
     // Check for existing user session
@@ -39,8 +41,8 @@ export const BottomNav = () => {
     };
   }, []);
 
-  // If there's no user, don't render the navigation
-  if (!user) {
+  // If there's no user or not on mobile, don't render the navigation
+  if (!user || !isMobile) {
     return null;
   }
 

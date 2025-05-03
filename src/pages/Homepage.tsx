@@ -1,3 +1,4 @@
+
 import { ProductGrid } from "@/components/ProductGrid";
 import { PageTransition } from "@/components/PageTransition";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
@@ -9,6 +10,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { useSearch } from "@/contexts/SearchContext";
 import { Link } from 'react-router-dom';
 import { Heart, ArrowRight, Loader2 } from 'lucide-react';
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Item {
   id: string;
@@ -40,6 +42,7 @@ const Homepage = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const { searchQuery, selectedCategories, sortBy } = useSearch();
+  const isMobile = useIsMobile();
 
   const fetchItems = async () => {
     try {
@@ -180,11 +183,11 @@ const Homepage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className="max-w-3xl mx-auto px-4 sm:px-6">
+      <main className={`mx-auto px-4 sm:px-6 ${isMobile ? 'max-w-3xl' : 'max-w-6xl'}`}>
         <PullToRefresh onRefresh={handleRefresh}>
           <PageTransition>
             {loading ? (
-              <div className="flex justify-center items-center h-[calc(100vh-200px)] hidden md:flex">
+              <div className="flex justify-center items-center h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : (
@@ -201,7 +204,7 @@ const Homepage = () => {
                     {searchQuery ? (
                       <section className="py-6">
                         <h2 className="text-2xl font-bold mb-6">Search Results</h2>
-                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-3 md:grid-cols-4 lg:grid-cols-5'} gap-4`}>
                           {filteredItems.map(item => (
                             <ProductCard key={item.id} item={item} />
                           ))}
@@ -213,10 +216,25 @@ const Homepage = () => {
                         {featuredItems.length > 0 && (
                           <section className="py-6">
                             <h2 className="text-2xl font-bold mb-6">Featured Item</h2>
-                            <ProductCard
-                              item={featuredItems[0]}
-                              className="w-full"
-                            />
+                            {isMobile ? (
+                              <ProductCard
+                                item={featuredItems[0]}
+                                className="w-full"
+                              />
+                            ) : (
+                              <div className="grid grid-cols-2 gap-6">
+                                <ProductCard
+                                  item={featuredItems[0]}
+                                  className="w-full"
+                                />
+                                {featuredItems.length > 1 && (
+                                  <ProductCard
+                                    item={featuredItems[1]}
+                                    className="w-full"
+                                  />
+                                )}
+                              </div>
+                            )}
                           </section>
                         )}
 
@@ -233,24 +251,35 @@ const Homepage = () => {
                               </Link>
                             </div>
 
-                            {/* Featured Item for Category */}
-                            <div className="mb-6">
-                              <ProductCard
-                                item={categoryItems[0]}
-                                className="w-full"
-                              />
-                            </div>
+                            {isMobile ? (
+                              <>
+                                {/* Featured Item for Category on Mobile */}
+                                <div className="mb-6">
+                                  <ProductCard
+                                    item={categoryItems[0]}
+                                    className="w-full"
+                                  />
+                                </div>
 
-                            {/* Horizontal Scroll for Other Items */}
-                            <div className="overflow-x-auto pb-4">
-                              <div className="flex gap-4 w-max">
-                                {categoryItems.slice(1, 5).map(item => (
-                                  <div key={item.id} className="w-48 md:w-64 flex-shrink-0">
-                                    <ProductCard item={item} hideSellerName={true} />
+                                {/* Horizontal Scroll for Other Items on Mobile */}
+                                <div className="overflow-x-auto pb-4">
+                                  <div className="flex gap-4 w-max">
+                                    {categoryItems.slice(1, 5).map(item => (
+                                      <div key={item.id} className="w-48 md:w-64 flex-shrink-0">
+                                        <ProductCard item={item} hideSellerName={true} />
+                                      </div>
+                                    ))}
                                   </div>
+                                </div>
+                              </>
+                            ) : (
+                              /* Grid view for desktop */
+                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                {categoryItems.slice(0, 10).map(item => (
+                                  <ProductCard key={item.id} item={item} />
                                 ))}
                               </div>
-                            </div>
+                            )}
                           </section>
                         ))}
                       </>

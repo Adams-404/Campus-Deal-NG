@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,6 +7,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import { AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { BottomNav } from "@/components/BottomNav";
+import { DesktopSideNav } from "@/components/DesktopSideNav";
 import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -37,6 +39,7 @@ import SafetyTipsDialog from "./components/SafetyTipsDialog";
 import Support from "./pages/Support";
 import LazyHomepage from "./pages/LazyHomepage";
 import LazyViewItem from "./pages/LazyViewItem";
+import { useIsMobile } from "./hooks/use-mobile";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +93,7 @@ const AnimatedRoutes = () => {
   const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings } = useSettings();
   const [user, setUser] = useState<any>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkUserAndSettings = async () => {
@@ -129,11 +133,15 @@ const AnimatedRoutes = () => {
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
     </div>
   );
+
+  // Determine the content padding based on device type
+  const contentPadding = !isMobile && user ? "pl-[240px]" : "";
   
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       {showNav && <Navbar />}
-      <main className={cn("flex-1 pb-24", showNav && "pt-32")}>
+      {!isMobile && user && !hideBottomNav && <DesktopSideNav />}
+      <main className={cn("flex-1 pb-24", showNav && "pt-32", contentPadding)}>
         <AnimatePresence mode="wait">
           <Suspense fallback={fallbackLoader}>
             <Routes location={location} key={location.pathname}>
