@@ -1,3 +1,4 @@
+
 import { ProductGrid } from "@/components/ProductGrid";
 import { PageTransition } from "@/components/PageTransition";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
@@ -80,7 +81,9 @@ const Homepage = () => {
         const images = item.item_images || [];
         const allImages = images.map(img => img.image_url);
         const seller = item.profiles;
-        const featured = item.featured || false;
+        
+        // Check if featured exists in the item, defaulting to false if not
+        const isFeatured = 'featured' in item ? !!item.featured : false;
 
         return {
           id: item.id,
@@ -99,7 +102,7 @@ const Homepage = () => {
             last_name: seller.last_name,
             avatar_url: seller.avatar_url
           } : undefined,
-          featured: featured,
+          featured: isFeatured,
           description: item.description
         };
       }).filter(item => item.images.length > 0);

@@ -15,6 +15,7 @@ import { KYCTab } from "@/components/admin/KYCTab";
 import { KYCDocumentsTab } from "@/components/admin/KYCDocumentsTab";
 import { AdminsTab } from "@/components/admin/AdminsTab";
 import { AdminGuide } from "@/components/admin/AdminGuide";
+import { UserProfile } from '@/integrations/supabase/types';
 
 // Basic dashboard component since AdminDashboard is unavailable
 const AdminDashboard = () => (
@@ -42,7 +43,7 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [items, setItems] = useState([]);
   const [documents, setDocuments] = useState([]);
   const { toast } = useToast();
@@ -69,8 +70,9 @@ const AdminPanel = () => {
       
       if (error) throw error;
       
-      // Check if is_admin field exists, if not you may need to add it
-      if (profile && profile.is_admin === true) {
+      // Since is_admin might not exist in the profile type yet, check using a more flexible approach
+      const isUserAdmin = profile && (profile as any).is_admin === true;
+      if (isUserAdmin) {
         setIsAdmin(true);
         // Load admin data
         fetchUsers();
@@ -146,9 +148,9 @@ const AdminPanel = () => {
     console.log("Delete item:", itemId);
   };
   
-  const handleAdminAction = async (userId: string, action: string) => {
-    // Implement admin actions
-    console.log("Admin action:", action, "for user:", userId);
+  // Fixed type signature to match the expected type in UsersTab and AdminsTab components
+  const handleAdminAction = (user: UserProfile, action: "add" | "remove") => {
+    console.log("Admin action:", action, "for user:", user.id);
   };
   
   const handleStatusChange = async (documentId: string, status: string) => {
