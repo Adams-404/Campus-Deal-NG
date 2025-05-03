@@ -82,8 +82,8 @@ export const DesktopSideNav = () => {
     <>
       <motion.aside 
         className={cn(
-          "fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r border-white/10 bg-secondary transition-all",
-          expanded ? "w-[240px]" : "w-[70px]"
+          "fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r border-white/10 bg-secondary transition-all pt-24",
+          expanded ? "w-[280px]" : "w-[80px]"
         )}
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
@@ -105,7 +105,7 @@ export const DesktopSideNav = () => {
 
         <div className="flex-1 overflow-y-auto py-6 px-3">
           <TooltipProvider delayDuration={300}>
-            <nav className="flex flex-col gap-2">
+            <nav className="flex flex-col gap-3">
               {navItems.map((item) => (
                 item.onClick ? (
                   <Tooltip key={item.label}>
@@ -113,7 +113,7 @@ export const DesktopSideNav = () => {
                       <Button
                         variant="ghost"
                         className={cn(
-                          "flex items-center justify-start gap-3 w-full",
+                          "flex items-center justify-start gap-4 w-full py-3",
                           location.pathname === item.href && "bg-primary/10 text-primary",
                           !expanded && "justify-center px-2"
                         )}
@@ -125,7 +125,7 @@ export const DesktopSideNav = () => {
                             location.pathname === item.href ? "text-primary" : "text-gray-400"
                           )} />
                         </div>
-                        {expanded && <span>{item.label}</span>}
+                        {expanded && <span className="text-base">{item.label}</span>}
                       </Button>
                     </TooltipTrigger>
                     {!expanded && <TooltipContent side="right">{item.label}</TooltipContent>}
@@ -136,7 +136,7 @@ export const DesktopSideNav = () => {
                       <Link
                         to={item.href}
                         className={cn(
-                          "flex items-center justify-start gap-3 px-3 py-2 rounded-lg text-gray-400 hover:bg-white/5 transition-colors",
+                          "flex items-center justify-start gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition-colors",
                           location.pathname === item.href && "bg-primary/10 text-primary",
                           !expanded && "justify-center px-2"
                         )}
@@ -152,7 +152,7 @@ export const DesktopSideNav = () => {
                             </span>
                           )}
                         </div>
-                        {expanded && <span>{item.label}</span>}
+                        {expanded && <span className="text-base">{item.label}</span>}
                       </Link>
                     </TooltipTrigger>
                     {!expanded && <TooltipContent side="right">{item.label}</TooltipContent>}
@@ -171,7 +171,7 @@ export const DesktopSideNav = () => {
                 <div className="text-xs text-gray-400">{user?.email}</div>
               </div>
             )}
-            <Avatar className="h-8 w-8">
+            <Avatar className="h-9 w-9">
               <AvatarImage src={userProfile?.avatar_url} />
               <AvatarFallback className="bg-primary/20 text-primary">
                 {userProfile?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}

@@ -1,3 +1,4 @@
+
 "use client"
 
 import type React from "react"
@@ -28,8 +29,15 @@ import { Link } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { useSearch } from "@/contexts/SearchContext"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "./ui/select"
 import { Skeleton } from './ui/skeleton'
+import { useIsMobile } from "../hooks/use-mobile"
 
 const NavbarSkeleton = () => {
   return (
@@ -67,6 +75,7 @@ export const Navbar = () => {
   const notificationRef = useRef<HTMLDivElement>(null)
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const isMobile = useIsMobile()
 
   // Sample notifications - in a real app, you would fetch these from your backend
   const notifications = [
@@ -143,7 +152,7 @@ export const Navbar = () => {
     setSearchQuery(e.target.value)
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       // Trigger search
       e.currentTarget.blur()
@@ -154,12 +163,12 @@ export const Navbar = () => {
     setSearchQuery("")
   }
 
-  const handleCategoryChange = (values: string[]) => {
-    if (values.includes("all")) {
+  const handleCategoryChange = (value: string) => {
+    if (value === "all") {
       setSelectedCategories([])
       setSortBy("random")
     } else {
-      setSelectedCategories(values)
+      setSelectedCategories([value])
       setSortBy("created_at")
     }
   }
@@ -189,38 +198,46 @@ export const Navbar = () => {
     { value: "Others", label: "Others", icon: MoreHorizontal },
   ]
 
+  const navbarHeight = isMobile ? "h-16" : "h-14";
+
   return (
     isLoading ? <NavbarSkeleton /> : (
-      <nav className="fixed top-0 w-full bg-secondary/80 backdrop-blur-md z-50 border-b border-white/10">
+      <nav className={`fixed top-0 right-0 bg-secondary/80 backdrop-blur-md z-50 border-b border-white/10 ${isMobile ? 'w-full' : 'ml-[280px] w-[calc(100%-280px)]'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* First Row */}
-          <div className="flex justify-between items-center h-16">
-            <Link to="/home" className="text-xl font-semibold text-white">
-              Tradezy
-            </Link>
+          <div className={`flex justify-between items-center ${navbarHeight}`}>
+            {isMobile && (
+              <Link to="/home" className="text-xl font-semibold text-white">
+                Tradezy
+              </Link>
+            )}
 
             {/* Search and User Icons */}
-            <div className="flex items-center gap-4">
+            <div className={`flex items-center gap-4 ${isMobile ? '' : 'w-full justify-between'}`}>
               {/* Search Input */}
               <div
-                className={cn("transition-all duration-300 ease-in-out", isSearchFocused ? "flex-1 max-w-2xl" : "w-48")}
+                className={cn("transition-all duration-300 ease-in-out", 
+                  isSearchFocused 
+                  ? "flex-1 max-w-2xl" 
+                  : isMobile ? "w-48" : "w-96"
+                )}
               >
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="Search for anything..."
-                    className="w-full py-2 pl-10 pr-10 text-white bg-background rounded-full border border-white/10 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-gray-500"
+                    className="w-full py-1.5 pl-9 pr-9 text-white bg-background rounded-full border border-white/10 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors placeholder:text-gray-500"
                     value={searchQuery}
                     onChange={handleSearch}
                     onKeyDown={handleKeyDown}
                     onFocus={() => setIsSearchFocused(true)}
                     onBlur={() => setIsSearchFocused(false)}
                   />
-                  <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-500" />
+                  <Search className="absolute left-3 top-2 h-4 w-4 text-gray-500" />
                   {searchQuery && (
                     <button
                       onClick={clearSearch}
-                      className="absolute right-3 top-2.5 h-5 w-5 text-gray-500 hover:text-primary transition-colors"
+                      className="absolute right-3 top-2 h-4 w-4 text-gray-500 hover:text-primary transition-colors"
                     >
                       ✕
                     </button>
@@ -228,98 +245,128 @@ export const Navbar = () => {
                 </div>
               </div>
 
+              {/* Category Selector for desktop */}
+              {!isMobile && (
+                <div className="flex-1 max-w-xs">
+                  <Select
+                    value={selectedCategories.length > 0 ? selectedCategories[0] : "all"}
+                    onValueChange={handleCategoryChange}
+                  >
+                    <SelectTrigger className="bg-background border-white/10 hover:bg-primary/10 h-8">
+                      <SelectValue placeholder="Categories" />
+                    </SelectTrigger>
+                    <SelectContent
+                      className="bg-background border-white/10"
+                      onPointerDown={(e) => e.stopPropagation()}
+                    >
+                      <div className="grid grid-cols-2 gap-1 p-1">
+                        <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
+                          All Categories
+                        </SelectItem>
+                        {categories.map((category) => (
+                          <SelectItem key={category.value} value={category.value} className="hover:bg-primary/10">
+                            <div className="flex items-center gap-2">
+                              <category.icon className="h-4 w-4 text-primary" />
+                              <span className="truncate">{category.label}</span>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </div>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
               {/* User Icon or Auth Buttons */}
               <div className="flex items-center gap-2">
                 {user ? (
-                  <Link to="/profile">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
-                    >
-                      {profile?.avatar_url ? (
-                        <Avatar>
-                          <AvatarImage src={profile.avatar_url} alt="Profile" />
-                          <AvatarFallback>
-                            <User className="h-5 w-5 text-primary" />
-                          </AvatarFallback>
-                        </Avatar>
-                      ) : (
-                        <User className="h-5 w-5 text-primary" />
-                      )}
-                    </Button>
-                  </Link>
+                  <>
+                    {/* Notification Icon */}
+                    <Link to="/notifications">
+                      <div className="relative">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
+                        >
+                          <Bell className="h-4 w-4 text-primary" />
+                        </Button>
+                        {unreadNotificationsCount > 0 && (
+                          <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+                        )}
+                      </div>
+                    </Link>
+
+                    {/* Profile Link */}
+                    <Link to="/profile">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
+                      >
+                        {profile?.avatar_url ? (
+                          <Avatar className="h-7 w-7">
+                            <AvatarImage src={profile.avatar_url} alt="Profile" />
+                            <AvatarFallback>
+                              <User className="h-4 w-4 text-primary" />
+                            </AvatarFallback>
+                          </Avatar>
+                        ) : (
+                          <User className="h-4 w-4 text-primary" />
+                        )}
+                      </Button>
+                    </Link>
+                  </>
                 ) : (
-                  <Link to="/auth/SignIn">
-                    <Button variant="ghost" className="text-primary hover:bg-primary/10 text-sm md:text-base">
-                      Login
-                    </Button>
-                  </Link>
+                  <>
+                    <Link to="/auth/SignIn">
+                      <Button variant="ghost" className="text-primary hover:bg-primary/10 text-sm">
+                        Login
+                      </Button>
+                    </Link>
+                    <Link to="/auth/SignUp">
+                      <Button className="bg-primary hover:bg-primary/90 text-sm">Sign Up</Button>
+                    </Link>
+                  </>
                 )}
               </div>
             </div>
           </div>
 
-          {/* Second Row - Compact Controls */}
-          <div className="flex items-center justify-between pb-2 gap-2">
-            {/* Category Selector */}
-            <div className="flex-1">
-              <Select
-                value={selectedCategories.length > 0 ? selectedCategories[0] : undefined}
-                onValueChange={(value) => handleCategoryChange([value])}
-                placeholder="Select category..."
-                className="w-full"
-              >
-                <SelectTrigger className="bg-background border-white/10 hover:bg-primary/10">
-                  <SelectValue placeholder="Categories" />
-                </SelectTrigger>
-                <SelectContent
-                  className="bg-background border-white/10 w-[400px]"
-                  onPointerDown={(e) => e.stopPropagation()}
-                  onWheel={(e) => e.stopPropagation()}
+          {/* Second Row - Mobile Only */}
+          {isMobile && (
+            <div className="flex items-center justify-between pb-2 gap-2">
+              {/* Category Selector */}
+              <div className="flex-1">
+                <Select
+                  value={selectedCategories.length > 0 ? selectedCategories[0] : "all"}
+                  onValueChange={handleCategoryChange}
                 >
-                  <div className="grid grid-cols-2 gap-2 p-2">
-                    <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
-                      All Categories
-                    </SelectItem>
-                    {categories.map((category, index) => (
-                      <SelectItem key={category.value} value={category.value} className="hover:bg-primary/10">
-                        <div className="flex items-center gap-2">
-                          <category.icon className="h-4 w-4 text-primary" />
-                          <span className="truncate">{category.label}</span>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </div>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Signup Button */}
-            {!user && (
-              <Link to="/auth/SignUp">
-                <Button className="bg-primary hover:bg-primary/90 text-sm md:text-base">Sign Up</Button>
-              </Link>
-            )}
-
-            {/* Notification Icon */}
-            {user && (
-              <Link to="/notifications">
-                <div className="relative">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
+                  <SelectTrigger className="bg-background border-white/10 hover:bg-primary/10">
+                    <SelectValue placeholder="Categories" />
+                  </SelectTrigger>
+                  <SelectContent
+                    className="bg-background border-white/10 w-[300px]"
+                    onPointerDown={(e) => e.stopPropagation()}
                   >
-                    <Bell className="h-5 w-5 text-primary" />
-                  </Button>
-                  {unreadNotificationsCount > 0 && (
-                    <span className="absolute top-0.5 right-0.5 h-2.5 w-2.5 bg-red-500 rounded-full"></span>
-                  )}
-                </div>
-              </Link>
-            )}
-          </div>
+                    <div className="grid grid-cols-2 gap-1 p-1">
+                      <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
+                        All Categories
+                      </SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.value} value={category.value} className="hover:bg-primary/10">
+                          <div className="flex items-center gap-2">
+                            <category.icon className="h-4 w-4 text-primary" />
+                            <span className="truncate">{category.label}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </div>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
         </div>
       </nav>
     )

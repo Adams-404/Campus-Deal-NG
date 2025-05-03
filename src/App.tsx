@@ -135,13 +135,17 @@ const AnimatedRoutes = () => {
   );
 
   // Determine the content padding based on device type
-  const contentPadding = !isMobile && user ? "pl-[240px]" : "";
+  const contentPadding = !isMobile && user ? "pl-[280px]" : "";
   
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       {showNav && <Navbar />}
       {!isMobile && user && !hideBottomNav && <DesktopSideNav />}
-      <main className={cn("flex-1 pb-24", showNav && "pt-32", contentPadding)}>
+      <main className={cn(
+        "flex-1 pb-24", 
+        showNav && isMobile ? "pt-32" : "pt-16", 
+        contentPadding
+      )}>
         <AnimatePresence mode="wait">
           <Suspense fallback={fallbackLoader}>
             <Routes location={location} key={location.pathname}>
