@@ -28,13 +28,7 @@ import { Link } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { useSearch } from "@/contexts/SearchContext"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "./ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
 import { Skeleton } from './ui/skeleton'
 
 const NavbarSkeleton = () => {
@@ -152,7 +146,7 @@ export const Navbar = () => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       // Trigger search
-      (e.currentTarget as HTMLElement).blur?.()
+      e.currentTarget.blur()
     }
   }
 
@@ -160,12 +154,12 @@ export const Navbar = () => {
     setSearchQuery("")
   }
 
-  const handleCategoryChange = (value: string) => {
-    if (value === "all") {
+  const handleCategoryChange = (values: string[]) => {
+    if (values.includes("all")) {
       setSelectedCategories([])
       setSortBy("random")
     } else {
-      setSelectedCategories([value])
+      setSelectedCategories(values)
       setSortBy("created_at")
     }
   }
@@ -271,8 +265,10 @@ export const Navbar = () => {
             {/* Category Selector */}
             <div className="flex-1">
               <Select
-                value={selectedCategories.length > 0 ? selectedCategories[0] : "all"}
-                onValueChange={handleCategoryChange}
+                value={selectedCategories.length > 0 ? selectedCategories[0] : undefined}
+                onValueChange={(value) => handleCategoryChange([value])}
+                placeholder="Select category..."
+                className="w-full"
               >
                 <SelectTrigger className="bg-background border-white/10 hover:bg-primary/10">
                   <SelectValue placeholder="Categories" />
@@ -280,12 +276,13 @@ export const Navbar = () => {
                 <SelectContent
                   className="bg-background border-white/10 w-[400px]"
                   onPointerDown={(e) => e.stopPropagation()}
+                  onWheel={(e) => e.stopPropagation()}
                 >
                   <div className="grid grid-cols-2 gap-2 p-2">
                     <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
                       All Categories
                     </SelectItem>
-                    {categories.map((category) => (
+                    {categories.map((category, index) => (
                       <SelectItem key={category.value} value={category.value} className="hover:bg-primary/10">
                         <div className="flex items-center gap-2">
                           <category.icon className="h-4 w-4 text-primary" />

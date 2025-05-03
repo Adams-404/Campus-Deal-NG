@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, CircleDot } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { SellModal } from "./SellModal";
@@ -66,7 +66,7 @@ export const BottomNav = () => {
 
   return (
     <>
-      <nav data-bottom-nav className="md:hidden fixed bottom-0 left-0 right-0 bg-secondary border-t border-white/10 px-6 pb-6 pt-3">
+      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 bg-secondary border-t border-white/10 px-6 pb-6 pt-3">
         <div className="flex justify-between items-center max-w-md mx-auto relative">
           {navItems.map((item, index) => (
             index === 2 ? (

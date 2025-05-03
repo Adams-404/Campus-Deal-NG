@@ -157,10 +157,7 @@ export function KYCTab() {
           documentId: selectedDocument.id,
           newStatus: status
         });
-        toast({
-          title: "Success",
-          description: `KYC document ${status === 'verified' ? 'approved' : 'rejected'} successfully`
-        });
+        toast.success(`KYC document ${status === 'verified' ? 'approved' : 'rejected'} successfully`);
         
         // Force refresh documents after successful update
         await fetchKYCDocuments();
@@ -219,10 +216,7 @@ export function KYCTab() {
       }
 
       console.log('User verification successful:', data);
-      toast({
-        title: "Success",
-        description: 'User verified successfully'
-      });
+      toast.success('User verified successfully');
       await fetchKYCDocuments();
     } catch (error) {
       console.error('Error in handleVerifyUser:', error);
