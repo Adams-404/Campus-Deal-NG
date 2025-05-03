@@ -46,6 +46,7 @@ export const BottomNav = () => {
 
   // Calculate if there are any new messages
   const hasNewMessages = Object.keys(unreadMessagesByUser).length > 0;
+  const totalUnreadMessages = Object.values(unreadMessagesByUser).reduce((a, b) => a + b, 0);
 
   const handleSellClick = () => {
     if (!hideSellTips) {
@@ -93,10 +94,10 @@ export const BottomNav = () => {
               >
                 {item.hasNotification && (
                   <>
-                    {Object.values(unreadMessagesByUser).reduce((a, b) => a + b, 0) > 0 && (
+                    {totalUnreadMessages > 0 && (
                       <div className="absolute -right-2 -top-2">
                         <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full min-w-[18px] min-h-[18px]">
-                          {Object.values(unreadMessagesByUser).reduce((a, b) => a + b, 0)}
+                          {totalUnreadMessages}
                         </span>
                       </div>
                     )}

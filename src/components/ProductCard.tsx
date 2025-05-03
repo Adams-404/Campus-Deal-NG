@@ -1,3 +1,4 @@
+
 import { Heart, Eye, User } from "lucide-react";
 import { Button } from "./ui/button";
 import { ImageCarousel } from "./ui/image-carousel";
@@ -23,11 +24,14 @@ interface ProductCardProps {
       last_name?: string;
       avatar_url?: string;
     };
+    featured?: boolean;
+    description?: string;
   };
   hideSellerName?: boolean;
+  className?: string;
 }
 
-export const ProductCard = ({ item, hideSellerName }: ProductCardProps) => {
+export const ProductCard = ({ item, hideSellerName, className }: ProductCardProps) => {
   const { fontSizeClass } = useSettings();
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
@@ -62,7 +66,9 @@ export const ProductCard = ({ item, hideSellerName }: ProductCardProps) => {
 
   const handleViewProfile = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    const { id } = item.seller;
+    const { id } = item.seller || {};
+    
+    if (!id) return;
     
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id;
@@ -122,7 +128,10 @@ export const ProductCard = ({ item, hideSellerName }: ProductCardProps) => {
   };
 
   return (
-    <div className="bg-secondary rounded-lg border border-white/10 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group">
+    <div className={cn(
+      "bg-secondary rounded-lg border border-white/10 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group",
+      className
+    )}>
       <div className="relative aspect-[16/9]">
         <ImageCarousel 
           images={item.images} 
