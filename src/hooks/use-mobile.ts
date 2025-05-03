@@ -21,9 +21,9 @@ export function useMobile() {
 }
 
 export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const mql = window.matchMedia(`(max-width: 767px)`)
     const onChange = () => {
       setIsMobile(window.innerWidth < 768)
@@ -35,4 +35,3 @@ export function useIsMobile() {
 
   return !!isMobile
 }
-
