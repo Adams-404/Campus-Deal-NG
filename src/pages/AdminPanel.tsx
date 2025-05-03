@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,17 @@ import { KYCTab } from "@/components/admin/KYCTab";
 import { KYCDocumentsTab } from "@/components/admin/KYCDocumentsTab";
 import { AdminsTab } from "@/components/admin/AdminsTab";
 import { AdminGuide } from "@/components/admin/AdminGuide";
-import { UserProfile } from '@/integrations/supabase/types';
+
+// Define a UserProfile type directly here since we can't import from types
+interface UserProfile {
+  id: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  avatar_url?: string;
+  created_at?: string;
+  is_admin?: boolean;
+}
 
 // Basic dashboard component since AdminDashboard is unavailable
 const AdminDashboard = () => (
