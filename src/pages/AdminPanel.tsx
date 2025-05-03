@@ -24,6 +24,11 @@ interface UserProfile {
   avatar_url?: string;
   created_at?: string;
   is_admin?: boolean;
+  roles?: string[];
+  address?: string;
+  phone?: string;
+  kyc_status?: string;
+  updated_at?: string;
 }
 
 // Basic dashboard component since AdminDashboard is unavailable
@@ -157,9 +162,10 @@ const AdminPanel = () => {
     console.log("Delete item:", itemId);
   };
   
-  // Fixed type signature to match the expected type in UsersTab and AdminsTab components
-  const handleAdminAction = (user: UserProfile, action: "add" | "remove") => {
+  // Update the type signature to match what's expected in the components
+  const handleAdminAction = async (user: UserProfile, action: "add" | "remove") => {
     console.log("Admin action:", action, "for user:", user.id);
+    // Implement admin action logic
   };
   
   const handleStatusChange = async (documentId: string, status: string) => {
@@ -188,79 +194,83 @@ const AdminPanel = () => {
   }
   
   return (
-    <div className="min-h-screen bg-background">
-      <div className="flex">
-        <DesktopSideNav />
-        <div className="flex-1">
-          <div className="container max-w-7xl mx-auto px-4 pb-24 pt-6">
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-2xl font-bold">Admin Panel</h1>
-              <Button variant="outline" onClick={() => window.location.href = '/home'}>
-                Back to App
-              </Button>
+    <SettingsProvider>
+      <NotificationProvider>
+        <div className="min-h-screen bg-background">
+          <div className="flex">
+            <DesktopSideNav />
+            <div className="flex-1">
+              <div className="container max-w-7xl mx-auto px-4 pb-24 pt-6">
+                <div className="flex justify-between items-center mb-8">
+                  <h1 className="text-2xl font-bold">Admin Panel</h1>
+                  <Button variant="outline" onClick={() => window.location.href = '/home'}>
+                    Back to App
+                  </Button>
+                </div>
+                
+                <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+                  <TabsList className="grid grid-cols-3 md:grid-cols-7 w-full h-auto">
+                    <TabsTrigger value="dashboard" className="text-xs md:text-sm">Dashboard</TabsTrigger>
+                    <TabsTrigger value="users" className="text-xs md:text-sm">Users</TabsTrigger>
+                    <TabsTrigger value="posts" className="text-xs md:text-sm">Posts</TabsTrigger>
+                    <TabsTrigger value="kyc" className="text-xs md:text-sm">KYC</TabsTrigger>
+                    <TabsTrigger value="documents" className="text-xs md:text-sm hidden md:block">Documents</TabsTrigger>
+                    <TabsTrigger value="admins" className="text-xs md:text-sm hidden md:block">Admins</TabsTrigger>
+                    <TabsTrigger value="guide" className="text-xs md:text-sm hidden md:block">Guide</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="dashboard">
+                    <AdminDashboard />
+                  </TabsContent>
+                  
+                  <TabsContent value="users">
+                    <UsersTab 
+                      users={users} 
+                      onViewUserProfile={handleViewUserProfile}
+                      onAdminAction={handleAdminAction}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="posts">
+                    <PostsTab 
+                      items={items}
+                      onViewUserProfile={handleViewUserProfile}
+                      onDeleteItem={handleDeleteItem}
+                      onRefresh={fetchItems}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="kyc">
+                    <KYCTab />
+                  </TabsContent>
+                  
+                  <TabsContent value="documents">
+                    <KYCDocumentsTab 
+                      documents={documents}
+                      onViewDocument={() => {}}
+                      onStatusChange={handleStatusChange}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="admins">
+                    <AdminsTab 
+                      users={users}
+                      onViewUserProfile={handleViewUserProfile}
+                      onAdminAction={handleAdminAction}
+                    />
+                  </TabsContent>
+                  
+                  <TabsContent value="guide">
+                    <AdminGuide />
+                  </TabsContent>
+                </Tabs>
+              </div>
             </div>
-            
-            <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-              <TabsList className="grid grid-cols-3 md:grid-cols-7 w-full h-auto">
-                <TabsTrigger value="dashboard" className="text-xs md:text-sm">Dashboard</TabsTrigger>
-                <TabsTrigger value="users" className="text-xs md:text-sm">Users</TabsTrigger>
-                <TabsTrigger value="posts" className="text-xs md:text-sm">Posts</TabsTrigger>
-                <TabsTrigger value="kyc" className="text-xs md:text-sm">KYC</TabsTrigger>
-                <TabsTrigger value="documents" className="text-xs md:text-sm hidden md:block">Documents</TabsTrigger>
-                <TabsTrigger value="admins" className="text-xs md:text-sm hidden md:block">Admins</TabsTrigger>
-                <TabsTrigger value="guide" className="text-xs md:text-sm hidden md:block">Guide</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="dashboard">
-                <AdminDashboard />
-              </TabsContent>
-              
-              <TabsContent value="users">
-                <UsersTab 
-                  users={users} 
-                  onViewUserProfile={handleViewUserProfile}
-                  onAdminAction={handleAdminAction}
-                />
-              </TabsContent>
-              
-              <TabsContent value="posts">
-                <PostsTab 
-                  items={items}
-                  onViewUserProfile={handleViewUserProfile}
-                  onDeleteItem={handleDeleteItem}
-                  onRefresh={fetchItems}
-                />
-              </TabsContent>
-              
-              <TabsContent value="kyc">
-                <KYCTab />
-              </TabsContent>
-              
-              <TabsContent value="documents">
-                <KYCDocumentsTab 
-                  documents={documents}
-                  onViewDocument={() => {}}
-                  onStatusChange={handleStatusChange}
-                />
-              </TabsContent>
-              
-              <TabsContent value="admins">
-                <AdminsTab 
-                  users={users}
-                  onViewUserProfile={handleViewUserProfile}
-                  onAdminAction={handleAdminAction}
-                />
-              </TabsContent>
-              
-              <TabsContent value="guide">
-                <AdminGuide />
-              </TabsContent>
-            </Tabs>
           </div>
+          {isMobile && <BottomNav />}
         </div>
-      </div>
-      {isMobile && <BottomNav />}
-    </div>
+      </NotificationProvider>
+    </SettingsProvider>
   );
 };
 

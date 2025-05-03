@@ -13,6 +13,9 @@ import AuthWrapper from './pages/AuthWrapper';
 import Saved from './pages/Saved';
 import ItemDetails from './pages/ItemDetails';
 import AdminPanel from './pages/AdminPanel';
+import NotificationsPage from './pages/NotificationsPage';
+import { NotificationProvider } from './contexts/NotificationContext';
+import { SettingsProvider } from './contexts/SettingsContext';
 
 function App() {
   const [session, setSession] = useState(null);
