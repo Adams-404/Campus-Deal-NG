@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
@@ -6,13 +5,13 @@ import { BottomNav } from '@/components/BottomNav';
 import { DesktopSideNav } from '@/components/DesktopSideNav';
 import { ProductGrid } from '@/components/ProductGrid';
 import { ProductCardSkeleton } from '@/components/ProductCardSkeleton';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useMobile } from '@/hooks/use-mobile';
 
 const Saved = () => {
   const [loading, setLoading] = useState(true);
   const [savedItems, setSavedItems] = useState<any[]>([]);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
 
   useEffect(() => {
     fetchSavedItems();

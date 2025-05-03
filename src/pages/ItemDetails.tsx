@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Heart, MessageSquare, Share, ChevronLeft } from 'lucide-react';
 import { BottomNav } from '@/components/BottomNav';
 import { DesktopSideNav } from '@/components/DesktopSideNav';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { useMobile } from '@/hooks/use-mobile';
 
 const ItemDetails = () => {
   const { itemId } = useParams<{ itemId: string }>();
@@ -21,7 +20,7 @@ const ItemDetails = () => {
   const [savingState, setSavingState] = useState(false);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
 
   useEffect(() => {
     fetchItemDetails();
@@ -165,11 +164,9 @@ const ItemDetails = () => {
       const { data: existingConvo, error: searchError } = await supabase
         .from('conversations')
         .select('id')
-        .contains('participants', [
-          { user_id: currentUser.id },
-          { user_id: item.seller_id }
-        ])
         .eq('item_id', item.id)
+        .or(`seller_id.eq.${item.seller_id},buyer_id.eq.${item.seller_id}`)
+        .or(`seller_id.eq.${currentUser.id},buyer_id.eq.${currentUser.id}`)
         .maybeSingle();
       
       if (searchError) throw searchError;
@@ -184,6 +181,8 @@ const ItemDetails = () => {
         const { data: newConvo, error: insertError } = await supabase
           .from('conversations')
           .insert({
+            buyer_id: currentUser.id,
+            seller_id: item.seller_id,
             item_id: item.id,
             last_message: `Inquiry about: ${item.title}`
           })
@@ -192,12 +191,6 @@ const ItemDetails = () => {
         
         if (insertError) throw insertError;
         conversationId = newConvo.id;
-        
-        // Add participants
-        await supabase.from('conversations_participants').insert([
-          { conversation_id: conversationId, user_id: currentUser.id },
-          { conversation_id: conversationId, user_id: item.seller_id }
-        ]);
       }
       
       // Navigate to the conversation

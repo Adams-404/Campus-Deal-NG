@@ -1,28 +1,54 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
-import { AdminDashboard } from "@/components/admin/AdminDashboard";
+import { BottomNav } from '@/components/BottomNav';
+import { DesktopSideNav } from '@/components/DesktopSideNav';
+import { useMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
+
+// Import admin components with proper naming
 import { UsersTab } from "@/components/admin/UsersTab";
 import { PostsTab } from "@/components/admin/PostsTab";
 import { KYCTab } from "@/components/admin/KYCTab";
 import { KYCDocumentsTab } from "@/components/admin/KYCDocumentsTab";
 import { AdminsTab } from "@/components/admin/AdminsTab";
 import { AdminGuide } from "@/components/admin/AdminGuide";
-import { BottomNav } from '@/components/BottomNav';
-import { DesktopSideNav } from '@/components/DesktopSideNav';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { supabase } from '@/integrations/supabase/client';
+
+// Basic dashboard component since AdminDashboard is unavailable
+const AdminDashboard = () => (
+  <div className="p-6 bg-card rounded-lg shadow border border-border">
+    <h2 className="text-xl font-semibold mb-4">Admin Dashboard</h2>
+    <p>Welcome to the admin dashboard. Select a tab to manage your application.</p>
+    <div className="grid md:grid-cols-3 gap-4 mt-4">
+      <div className="p-4 bg-background rounded-lg border border-border">
+        <h3 className="font-medium">Users</h3>
+        <p className="text-sm text-muted-foreground">Manage user accounts</p>
+      </div>
+      <div className="p-4 bg-background rounded-lg border border-border">
+        <h3 className="font-medium">Content</h3>
+        <p className="text-sm text-muted-foreground">Manage listings and posts</p>
+      </div>
+      <div className="p-4 bg-background rounded-lg border border-border">
+        <h3 className="font-medium">KYC</h3>
+        <p className="text-sm text-muted-foreground">Verify user identities</p>
+      </div>
+    </div>
+  </div>
+);
 
 const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [items, setItems] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const { toast } = useToast();
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   
-  React.useEffect(() => {
+  useEffect(() => {
     checkAdminStatus();
   }, []);
   
@@ -37,14 +63,19 @@ const AdminPanel = () => {
       
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('is_admin')
+        .select('*')
         .eq('id', user.id)
         .single();
       
       if (error) throw error;
       
-      if (profile?.is_admin) {
+      // Check if is_admin field exists, if not you may need to add it
+      if (profile && profile.is_admin === true) {
         setIsAdmin(true);
+        // Load admin data
+        fetchUsers();
+        fetchItems();
+        fetchDocuments();
       } else {
         toast({
           title: "Unauthorized",
@@ -62,6 +93,67 @@ const AdminPanel = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      setUsers(data || []);
+    } catch (error: any) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchItems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('items')
+        .select('*, profiles:seller_id(*)')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      setItems(data || []);
+    } catch (error: any) {
+      console.error('Error fetching items:', error);
+    }
+  };
+
+  const fetchDocuments = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('kyc_documents')
+        .select('*, profiles:user_id(*)')
+        .order('created_at', { ascending: false });
+        
+      if (error) throw error;
+      setDocuments(data || []);
+    } catch (error: any) {
+      console.error('Error fetching documents:', error);
+    }
+  };
+
+  const handleViewUserProfile = (userId: string) => {
+    window.open(`/user/${userId}`, '_blank');
+  };
+
+  const handleDeleteItem = async (itemId: string) => {
+    // Implement delete functionality
+    console.log("Delete item:", itemId);
+  };
+  
+  const handleAdminAction = async (userId: string, action: string) => {
+    // Implement admin actions
+    console.log("Admin action:", action, "for user:", userId);
+  };
+  
+  const handleStatusChange = async (documentId: string, status: string) => {
+    // Implement status change
+    console.log("Status change for document:", documentId, "to:", status);
   };
   
   if (loading) {
@@ -113,11 +205,20 @@ const AdminPanel = () => {
               </TabsContent>
               
               <TabsContent value="users">
-                <UsersTab />
+                <UsersTab 
+                  users={users} 
+                  onViewUserProfile={handleViewUserProfile}
+                  onAdminAction={handleAdminAction}
+                />
               </TabsContent>
               
               <TabsContent value="posts">
-                <PostsTab />
+                <PostsTab 
+                  items={items}
+                  onViewUserProfile={handleViewUserProfile}
+                  onDeleteItem={handleDeleteItem}
+                  onRefresh={fetchItems}
+                />
               </TabsContent>
               
               <TabsContent value="kyc">
@@ -125,11 +226,19 @@ const AdminPanel = () => {
               </TabsContent>
               
               <TabsContent value="documents">
-                <KYCDocumentsTab />
+                <KYCDocumentsTab 
+                  documents={documents}
+                  onViewDocument={() => {}}
+                  onStatusChange={handleStatusChange}
+                />
               </TabsContent>
               
               <TabsContent value="admins">
-                <AdminsTab />
+                <AdminsTab 
+                  users={users}
+                  onViewUserProfile={handleViewUserProfile}
+                  onAdminAction={handleAdminAction}
+                />
               </TabsContent>
               
               <TabsContent value="guide">
