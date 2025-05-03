@@ -31,64 +31,69 @@ function App() {
   }, [])
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/home" element={<LazyHomepage />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="/category/:categoryName" element={<CategoryPage />} />
-        <Route path="/user/:userId" element={<UserProfile />} />
-        <Route path="/item/:itemId" element={<ItemDetails />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/saved" element={<Saved />} />
-        <Route path="/admin" element={<AdminPanel />} />
+    <NotificationProvider>
+      <SettingsProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/home" element={<LazyHomepage />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/category/:categoryName" element={<CategoryPage />} />
+            <Route path="/user/:userId" element={<UserProfile />} />
+            <Route path="/item/:itemId" element={<ItemDetails />} />
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/saved" element={<Saved />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
 
-        {/* Auth Routes */}
-        <Route
-          path="/auth/*"
-          element={
-            <AuthWrapper>
-              <div className="w-full">
-                <h2 className="text-xl font-bold mb-4 text-center">Sign in with your email</h2>
-                <p className="text-center text-muted-foreground mb-6">
-                  Enter your email below to receive a magic link for passwordless sign in
-                </p>
-                <form className="space-y-4">
-                  <div>
-                    <input
-                      type="email"
-                      placeholder="Your email"
-                      className="w-full p-2 border rounded"
-                    />
+            {/* Auth Routes */}
+            <Route
+              path="/auth/*"
+              element={
+                <AuthWrapper>
+                  <div className="w-full">
+                    <h2 className="text-xl font-bold mb-4 text-center">Sign in with your email</h2>
+                    <p className="text-center text-muted-foreground mb-6">
+                      Enter your email below to receive a magic link for passwordless sign in
+                    </p>
+                    <form className="space-y-4">
+                      <div>
+                        <input
+                          type="email"
+                          placeholder="Your email"
+                          className="w-full p-2 border rounded"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="w-full bg-primary text-white p-2 rounded"
+                      >
+                        Send Magic Link
+                      </button>
+                    </form>
+                    <div className="mt-6 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Don't have an account?{" "}
+                        <a href="/auth/sign-up" className="text-primary font-medium">
+                          Sign up
+                        </a>
+                      </p>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    className="w-full bg-primary text-white p-2 rounded"
-                  >
-                    Send Magic Link
-                  </button>
-                </form>
-                <div className="mt-6 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    Don't have an account?{" "}
-                    <a href="/auth/sign-up" className="text-primary font-medium">
-                      Sign up
-                    </a>
-                  </p>
-                </div>
-              </div>
-            </AuthWrapper>
-          }
-        />
+                </AuthWrapper>
+              }
+            />
 
-        {/* Redirect unauthenticated users to /auth */}
-        <Route
-          path="*"
-          element={<Navigate to="/auth/sign-in" replace />}
-        />
-      </Routes>
-    </Router>
+            {/* Redirect unauthenticated users to /auth */}
+            <Route
+              path="*"
+              element={<Navigate to="/auth/sign-in" replace />}
+            />
+          </Routes>
+        </Router>
+      </SettingsProvider>
+    </NotificationProvider>
   );
 }
 
