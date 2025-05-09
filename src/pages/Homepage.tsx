@@ -198,17 +198,17 @@ const Homepage = () => {
   // Determine appropriate container padding based on device
   const getContainerPadding = () => {
     if (deviceType === 'mobile') {
-      return 'px-4 pb-24'; // No top padding for mobile since it's handled by App.tsx
+      return 'px-4 pt-32 pb-24'; // More top padding for mobile header
     } else if (deviceType === 'tablet') {
-      return 'px-6 py-8'; 
+      return 'px-6 pt-20 pb-8'; 
     } else {
-      return 'px-8 py-8';
+      return 'px-8 pt-20 pb-8';
     }
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground w-full">
-      <main className={`mx-auto ${getContainerPadding()}`}>
+    <div className="min-h-screen bg-background text-foreground">
+      <main className={`mx-auto ${getContainerPadding()} ${deviceType !== 'mobile' ? 'ml-[300px]' : ''}`}>
         <PullToRefresh onRefresh={handleRefresh}>
           <PageTransition>
             {loading ? (

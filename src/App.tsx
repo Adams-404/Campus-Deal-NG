@@ -142,8 +142,7 @@ const AnimatedRoutes = () => {
     const isHomePage = location.pathname === '/home';
     
     if (deviceType === 'mobile') {
-      // No additional top padding for mobile since we fixed header spacing
-      return hideBottomNav ? "" : "pb-20"; 
+      return showNav ? "pt-24 pb-24" : "pb-24"; // Mobile with nav needs top padding
     } else if (shouldShowSideNav) {
       return "pl-[300px]"; // Add left padding for desktop/tablet with sidenav
     } else {
@@ -151,19 +150,12 @@ const AnimatedRoutes = () => {
     }
   };
 
-  const getNavbarPadding = () => {
-    if (location.pathname === '/home' && deviceType === 'mobile') {
-      return "pt-24"; // Extra padding only for homepage on mobile
-    }
-    return "";
-  };
-
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden bg-background">
-      <Navbar />
+      {showNav && <Navbar />}
       {shouldShowSideNav && <DesktopSideNav />}
       
-      <main className={cn("flex-1", getContentClass(), getNavbarPadding())}>
+      <main className={cn("flex-1", getContentClass())}>
         <AnimatePresence mode="wait">
           <Suspense fallback={fallbackLoader}>
             <Routes location={location} key={location.pathname}>

@@ -105,9 +105,6 @@ export const DesktopSideNav = () => {
   if (!isVisible) {
     return null;
   }
-  
-  // Calculate different spacing for evenly distributing nav items
-  const navItemsClass = "flex flex-col justify-between h-[calc(100vh-180px)]";
 
   return (
     <>
@@ -134,11 +131,11 @@ export const DesktopSideNav = () => {
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-6">
+        <div className="flex-1 overflow-y-auto py-4">
           <TooltipProvider delayDuration={300}>
-            <nav className={navItemsClass}>
-              <div className="space-y-6 px-3">
-                {navItems.slice(0, 3).map((item) => (
+            <nav className="flex flex-col h-full justify-between">
+              <div className="space-y-1 px-3">
+                {navItems.map((item) => (
                   item.onClick ? (
                     <Tooltip key={item.label}>
                       <TooltipTrigger asChild>
@@ -193,34 +190,8 @@ export const DesktopSideNav = () => {
                 ))}
               </div>
               
-              <div className="space-y-6 px-3">
-                {navItems.slice(3).map((item) => (
-                  <Tooltip key={item.label}>
-                    <TooltipTrigger asChild>
-                      <Link
-                        to={item.href}
-                        className={cn(
-                          "flex items-center justify-start gap-4 px-4 py-4 rounded-lg text-gray-400 hover:bg-white/5 transition-colors",
-                          location.pathname === item.href && "bg-primary/10 text-primary",
-                          !expanded && "justify-center px-2"
-                        )}
-                      >
-                        <div className="relative">
-                          <item.icon className={cn(
-                            "h-6 w-6", 
-                            location.pathname === item.href ? "text-primary" : "text-gray-400"
-                          )} />
-                        </div>
-                        {expanded && <span className="text-base">{item.label}</span>}
-                      </Link>
-                    </TooltipTrigger>
-                    {!expanded && <TooltipContent side="right">{item.label}</TooltipContent>}
-                  </Tooltip>
-                ))}
-              </div>
-              
               {/* Logout button at the bottom */}
-              <div className="px-3">
+              <div className="mt-auto px-3 mb-4">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
