@@ -189,7 +189,9 @@ export default function Settings() {
 
   return (
     <div className="bg-background">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10
+  ml-0 lg:ml-[300px] transition-all duration-300">
+
         <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
           <div className="h-16 flex items-center justify-center relative">
             <h1 className="text-lg font-semibold">Settings</h1>
@@ -206,7 +208,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <main className="max-w-2xl mx-auto px-4 sm:px-6">
+      <main className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
         <PageTransition>
           {isLoading ? (
             <div className="pt-24 pb-32 space-y-8 animate-pulse">

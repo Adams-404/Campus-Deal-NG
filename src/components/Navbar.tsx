@@ -238,23 +238,19 @@ export const Navbar = () => {
           mainContentClass
         )}>
           {/* First Row */}
-          <div className={`flex justify-between items-center ${navbarHeight}`}>
+          <div className={`flex justify-between items-center ${navbarHeight} ${!isMobile ? 'py-4 lg:px-2 gap-8' : ''}`}>
             {/* Only show GSU Market text on desktop, not on mobile */}
-            {!isMobile && (
-              <Link to="/home" className="text-xl font-semibold text-white">
-                GSU Market
-              </Link>
-            )}
+            
 
             {/* Search and User Icons */}
-            <div className={`flex items-center gap-4 ${isMobile ? 'w-full justify-between' : ''}`}>
+            <div className={`flex items-center ${isMobile ? 'w-full justify-between gap-4' : 'gap-8 w-full'}`}>
               {/* Search Input */}
               <div
                 className={cn("transition-all duration-300 ease-in-out relative", 
                   isSearchFocused 
                   ? "flex-1 max-w-2xl" 
-                  : isMobile ? "w-48 flex-1" : "w-96"
-                )}
+                  : isMobile ? "w-48 flex-1" : "w-[400px] lg:w-[480px]"
+                ) + (!isMobile ? ' mr-8' : '')}
               >
                 <div className="relative flex items-center">
                   <input
@@ -312,7 +308,7 @@ export const Navbar = () => {
 
               {/* Category Selector for desktop */}
               {!isMobile && (
-                <div className="flex-1 max-w-xs">
+                <div className="flex-1 max-w-xs min-w-[180px]">
                   <Select
                     value={selectedCategories.length > 0 ? selectedCategories[0] : "all"}
                     onValueChange={handleCategoryChange}
@@ -339,6 +335,8 @@ export const Navbar = () => {
                 </div>
               )}
 
+              {/* Spacer to push notification icon to right on desktop */}
+              {!isMobile && <div className="flex-1" />}
               {/* User Icon or Auth Buttons */}
               <div className="flex items-center gap-2">
                 {user ? (

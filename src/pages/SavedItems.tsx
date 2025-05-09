@@ -174,7 +174,7 @@ export default function SavedItems() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -192,7 +192,7 @@ export default function SavedItems() {
         </div>
       </div>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6">
+      <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
         <PageTransition>
           <div className="pt-24 pb-32">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
