@@ -41,7 +41,7 @@ export const BottomNav = () => {
     };
   }, []);
 
-  // If there's no user or not on mobile, don't render the navigation
+  // Only show on mobile devices
   if (!user || deviceType !== 'mobile') {
     return null;
   }
@@ -68,7 +68,7 @@ export const BottomNav = () => {
 
   return (
     <>
-      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 bg-secondary border-t border-white/10 px-6 pb-6 pt-3">
+      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 bg-secondary border-t border-white/10 px-6 pb-6 pt-3 z-40">
         <div className="flex justify-between items-center max-w-md mx-auto relative">
           {navItems.map((item, index) => (
             index === 2 ? (

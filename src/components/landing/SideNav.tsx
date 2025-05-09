@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { X, ChevronRight, Home, Users, MessageSquare, Bot, ShoppingBag, LogIn, UserPlus } from "lucide-react"; // Changed ChevronLeft to ChevronRight
+import { X, ChevronRight, Home, Users, MessageSquare, Bot, ShoppingBag, LogIn, UserPlus } from "lucide-react"; 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -48,7 +48,7 @@ export const SideNav = ({ onClose, onNavigate }: SideNavProps) => {
           <div className="flex items-center justify-between mb-8">
             <Link to="/" className="flex items-center">
               <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
-                Tradezy
+                GSU Market
               </span>
             </Link>
             <button
@@ -74,7 +74,7 @@ export const SideNav = ({ onClose, onNavigate }: SideNavProps) => {
                   >
                     <item.icon className="w-5 h-5 text-blue-400" />
                     <span>{item.label}</span>
-                    <ChevronRight className="w-4 h-4 ml-auto text-white/60 transform rotate-180" /> {/* Using rotate-180 to make it face left */}
+                    <ChevronRight className="w-4 h-4 ml-auto text-white/60 transform rotate-180" />
                   </button>
                 </motion.li>
               ))}
@@ -107,7 +107,7 @@ export const SideNav = ({ onClose, onNavigate }: SideNavProps) => {
           </div>
           
           <div className="text-xs text-white/40 text-center pt-8">
-            © 2025 Tradezy. All rights reserved.
+            © 2025 GSU Market. All rights reserved.
           </div>
         </div>
       </motion.div>

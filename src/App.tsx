@@ -79,7 +79,7 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const showNav = location.pathname === '/home';
+  const showNav = location.pathname === '/home'; 
   const hideBottomNav = [
     "/", 
     "/auth", 
@@ -134,19 +134,28 @@ const AnimatedRoutes = () => {
     </div>
   );
 
-  // Determine the content padding based on device type
-  const shouldShowSideNav = user && deviceType !== 'mobile' && !hideBottomNav;
-  const contentClass = shouldShowSideNav ? "pl-[280px]" : "";
+  // Determine if we should show the desktop sidenav
+  const shouldShowSideNav = user && deviceType !== 'mobile';
   
+  // Apply main content padding based on device and sidenav visibility
+  const getContentClass = () => {
+    const isHomePage = location.pathname === '/home';
+    
+    if (deviceType === 'mobile') {
+      return showNav ? "pt-24 pb-24" : "pb-24"; // Mobile with nav needs top padding
+    } else if (shouldShowSideNav) {
+      return "pl-[300px]"; // Add left padding for desktop/tablet with sidenav
+    } else {
+      return ""; // Default case
+    }
+  };
+
   return (
-    <div className="flex flex-col min-h-screen overflow-x-hidden">
+    <div className="flex flex-col min-h-screen overflow-x-hidden bg-background">
       {showNav && <Navbar />}
-      {user && !hideBottomNav && <DesktopSideNav />}
-      <main className={cn(
-        "flex-1 pb-24", 
-        showNav && deviceType === 'mobile' ? "pt-32" : "pt-16", 
-        contentClass
-      )}>
+      {shouldShowSideNav && <DesktopSideNav />}
+      
+      <main className={cn("flex-1", getContentClass())}>
         <AnimatePresence mode="wait">
           <Suspense fallback={fallbackLoader}>
             <Routes location={location} key={location.pathname}>
@@ -182,7 +191,8 @@ const AnimatedRoutes = () => {
           </Suspense>
         </AnimatePresence>
       </main>
-      {!hideBottomNav && authLoaded && <div className="fixed bottom-0 left-0 right-0 z-50"><BottomNav /></div>}
+      
+      {!hideBottomNav && deviceType === 'mobile' && authLoaded && <BottomNav />}
       
       <SafetyTipsDialog 
         open={showSafetyTips} 

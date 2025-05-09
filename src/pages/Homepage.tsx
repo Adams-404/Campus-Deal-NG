@@ -100,7 +100,6 @@ const Homepage = () => {
             last_name: seller.last_name,
             avatar_url: seller.avatar_url
           } : undefined,
-          featured: item.featured || false,
           description: item.description
         };
       }).filter(item => item.images.length > 0);
@@ -148,7 +147,7 @@ const Homepage = () => {
   const groupedItems = useMemo(() => {
     const groups: Record<string, Item[]> = {};
     // Shuffle the order of items before grouping
-    const shuffledItems = shuffleArray(items);
+    const shuffledItems = shuffleArray([...items]);
     shuffledItems.forEach(item => {
       if (!groups[item.category]) {
         groups[item.category] = [];
@@ -166,7 +165,8 @@ const Homepage = () => {
 
   // Find featured items
   const featuredItems = useMemo(() => {
-    return items.filter(item => item.featured);
+    // For demo purposes, just consider the first few items as featured
+    return items.slice(0, 3);
   }, [items]);
 
   const filteredItems = useMemo(() => {
@@ -195,9 +195,20 @@ const Homepage = () => {
     }
   };
 
+  // Determine appropriate container padding based on device
+  const getContainerPadding = () => {
+    if (deviceType === 'mobile') {
+      return 'px-4 pt-32 pb-24'; // More top padding for mobile header
+    } else if (deviceType === 'tablet') {
+      return 'px-6 pt-20 pb-8'; 
+    } else {
+      return 'px-8 pt-20 pb-8';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className={`mx-auto px-4 sm:px-6 ${deviceType === 'mobile' ? 'max-w-3xl' : 'max-w-full'}`}>
+      <main className={`mx-auto ${getContainerPadding()} ${deviceType !== 'mobile' ? 'ml-[300px]' : ''}`}>
         <PullToRefresh onRefresh={handleRefresh}>
           <PageTransition>
             {loading ? (

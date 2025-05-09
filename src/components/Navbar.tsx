@@ -1,3 +1,4 @@
+
 import type React from "react"
 import {
   Search,
@@ -21,7 +22,7 @@ import {
 import { Button } from "./ui/button"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { useSearch } from "@/contexts/SearchContext"
@@ -37,18 +38,18 @@ import { useDeviceType } from "../hooks/use-mobile"
 
 const NavbarSkeleton = () => {
   const deviceType = useDeviceType();
-  const isDesktopOrTablet = deviceType !== 'mobile';
+  const isMobile = deviceType === 'mobile';
   
   return (
     <nav className={cn(
       "fixed top-0 z-50 bg-secondary/80 backdrop-blur-md border-b border-white/10",
-      isDesktopOrTablet ? "right-0 left-0" : "w-full"
+      isMobile ? "w-full" : "left-[300px] right-0"
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {deviceType === 'mobile' && (
+          {isMobile && (
             <Link to="/home" className="text-xl font-semibold text-white">
-              Tradezy
+              GSU Market
             </Link>
           )}
 
@@ -81,6 +82,10 @@ export const Navbar = () => {
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const deviceType = useDeviceType();
+  const location = useLocation();
+  
+  // Only show navbar on home page for desktop view
+  const shouldShowOnDesktop = location.pathname === '/home';
 
   // Sample notifications - in a real app, you would fetch these from your backend
   const notifications = [
@@ -195,12 +200,21 @@ export const Navbar = () => {
     { value: "Others", label: "Others", icon: MoreHorizontal },
   ]
 
-  const isDesktopOrTablet = deviceType !== 'mobile';
-  const navbarHeight = deviceType === 'mobile' ? "h-16" : "h-14";
-  const navbarClass = isDesktopOrTablet 
-    ? "left-0 right-0 w-full" 
-    : "w-full";
+  // Hide navbar on desktop view for non-home pages
+  if (deviceType !== 'mobile' && !shouldShowOnDesktop) {
+    return null;
+  }
+  
+  const isMobile = deviceType === 'mobile';
+  const navbarHeight = isMobile ? "h-16" : "h-14";
+  const navbarClass = isMobile 
+    ? "w-full" 
+    : "left-[300px] right-0";
 
+  const mainContentClass = deviceType === 'desktop' 
+    ? "pl-4" 
+    : "";
+  
   return (
     isLoading ? <NavbarSkeleton /> : (
       <nav className={cn(
@@ -208,25 +222,25 @@ export const Navbar = () => {
         navbarClass
       )}>
         <div className={cn(
-          "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
-          isDesktopOrTablet && "pl-[280px] transition-all duration-300"
+          "mx-auto px-4 sm:px-6 lg:px-8",
+          mainContentClass
         )}>
           {/* First Row */}
           <div className={`flex justify-between items-center ${navbarHeight}`}>
-            {deviceType === 'mobile' && (
+            {isMobile && (
               <Link to="/home" className="text-xl font-semibold text-white">
-                Tradezy
+                GSU Market
               </Link>
             )}
 
             {/* Search and User Icons */}
-            <div className={`flex items-center gap-4 ${isDesktopOrTablet ? 'w-full justify-between' : ''}`}>
+            <div className={`flex items-center gap-4 ${!isMobile ? 'w-full justify-between' : ''}`}>
               {/* Search Input */}
               <div
                 className={cn("transition-all duration-300 ease-in-out", 
                   isSearchFocused 
                   ? "flex-1 max-w-2xl" 
-                  : deviceType === 'mobile' ? "w-48" : "w-96"
+                  : isMobile ? "w-48" : "w-96"
                 )}
               >
                 <div className="relative">
@@ -253,7 +267,7 @@ export const Navbar = () => {
               </div>
 
               {/* Category Selector for desktop */}
-              {isDesktopOrTablet && (
+              {!isMobile && (
                 <div className="flex-1 max-w-xs">
                   <Select
                     value={selectedCategories.length > 0 ? selectedCategories[0] : "all"}
@@ -302,7 +316,7 @@ export const Navbar = () => {
                     </Link>
 
                     {/* Profile Link - only show on mobile, as desktop has this in sidenav */}
-                    {deviceType === 'mobile' && (
+                    {isMobile && (
                       <Link to="/profile">
                         <Button
                           variant="ghost"
@@ -340,7 +354,7 @@ export const Navbar = () => {
           </div>
 
           {/* Second Row - Mobile Only */}
-          {deviceType === 'mobile' && (
+          {isMobile && (
             <div className="flex items-center justify-between pb-2 gap-2">
               {/* Category Selector */}
               <div className="flex-1">
