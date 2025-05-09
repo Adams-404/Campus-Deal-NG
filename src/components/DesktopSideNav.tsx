@@ -100,9 +100,8 @@ export const DesktopSideNav = () => {
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
   
-  const isVisible = deviceType !== 'mobile';
-  
-  if (!isVisible) {
+  // Don't show on mobile, show on tablet and desktop
+  if (deviceType === 'mobile') {
     return null;
   }
 
@@ -131,10 +130,10 @@ export const DesktopSideNav = () => {
           </Button>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto py-4 flex flex-col justify-between">
           <TooltipProvider delayDuration={300}>
-            <nav className="flex flex-col h-full justify-between">
-              <div className="space-y-1 px-3">
+            <nav className="flex flex-col h-full">
+              <div className="space-y-4 px-3">
                 {navItems.map((item) => (
                   item.onClick ? (
                     <Tooltip key={item.label}>
@@ -142,7 +141,7 @@ export const DesktopSideNav = () => {
                         <Button
                           variant="ghost"
                           className={cn(
-                            "flex items-center justify-start gap-4 w-full py-4 h-auto",
+                            "flex items-center justify-start gap-4 w-full py-3 h-auto",
                             location.pathname === item.href && "bg-primary/10 text-primary",
                             !expanded && "justify-center px-2"
                           )}
@@ -150,11 +149,11 @@ export const DesktopSideNav = () => {
                         >
                           <div className="relative">
                             <item.icon className={cn(
-                              "h-6 w-6", 
+                              "h-5 w-5", 
                               location.pathname === item.href ? "text-primary" : "text-gray-400"
                             )} />
                           </div>
-                          {expanded && <span className="text-base">{item.label}</span>}
+                          {expanded && <span className="text-sm">{item.label}</span>}
                         </Button>
                       </TooltipTrigger>
                       {!expanded && <TooltipContent side="right">{item.label}</TooltipContent>}
@@ -165,14 +164,14 @@ export const DesktopSideNav = () => {
                         <Link
                           to={item.href}
                           className={cn(
-                            "flex items-center justify-start gap-4 px-4 py-4 rounded-lg text-gray-400 hover:bg-white/5 transition-colors",
+                            "flex items-center justify-start gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition-colors",
                             location.pathname === item.href && "bg-primary/10 text-primary",
                             !expanded && "justify-center px-2"
                           )}
                         >
                           <div className="relative">
                             <item.icon className={cn(
-                              "h-6 w-6", 
+                              "h-5 w-5", 
                               location.pathname === item.href ? "text-primary" : "text-gray-400"
                             )} />
                             {item.hasNotification && totalUnreadMessages > 0 && (
@@ -181,7 +180,7 @@ export const DesktopSideNav = () => {
                               </span>
                             )}
                           </div>
-                          {expanded && <span className="text-base">{item.label}</span>}
+                          {expanded && <span className="text-sm">{item.label}</span>}
                         </Link>
                       </TooltipTrigger>
                       {!expanded && <TooltipContent side="right">{item.label}</TooltipContent>}
@@ -190,20 +189,20 @@ export const DesktopSideNav = () => {
                 ))}
               </div>
               
-              {/* Logout button at the bottom */}
+              {/* Logout button */}
               <div className="mt-auto px-3 mb-4">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       className={cn(
-                        "flex items-center justify-start gap-4 w-full py-4 h-auto text-red-400 hover:bg-red-500/10",
+                        "flex items-center justify-start gap-4 w-full py-3 h-auto text-red-400 hover:bg-red-500/10",
                         !expanded && "justify-center px-2"
                       )}
                       onClick={handleLogout}
                     >
-                      <LogOut className="h-6 w-6" />
-                      {expanded && <span className="text-base">Logout</span>}
+                      <LogOut className="h-5 w-5" />
+                      {expanded && <span className="text-sm">Logout</span>}
                     </Button>
                   </TooltipTrigger>
                   {!expanded && <TooltipContent side="right">Logout</TooltipContent>}

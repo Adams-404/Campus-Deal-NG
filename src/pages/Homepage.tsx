@@ -198,17 +198,17 @@ const Homepage = () => {
   // Determine appropriate container padding based on device
   const getContainerPadding = () => {
     if (deviceType === 'mobile') {
-      return 'px-4 pt-32 pb-24'; // More top padding for mobile header
+      return 'px-4 pb-24'; // Remove top padding for mobile to fix the spacing issue
     } else if (deviceType === 'tablet') {
-      return 'px-6 pt-20 pb-8'; 
+      return 'px-6 pt-8 pb-8'; 
     } else {
-      return 'px-8 pt-20 pb-8';
+      return 'px-8 pt-8 pb-8';
     }
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <main className={`mx-auto ${getContainerPadding()} ${deviceType !== 'mobile' ? 'ml-[300px]' : ''}`}>
+    <div className="min-h-screen bg-background text-foreground w-full">
+      <main className={`mx-auto ${getContainerPadding()} ${deviceType !== 'mobile' ? 'w-full' : ''}`}>
         <PullToRefresh onRefresh={handleRefresh}>
           <PageTransition>
             {loading ? (
@@ -227,9 +227,9 @@ const Homepage = () => {
                 ) : (
                   <>
                     {searchQuery ? (
-                      <section className="py-6">
+                      <section className="py-6 w-full">
                         <h2 className="text-2xl font-bold mb-6">Search Results</h2>
-                        <div className={`grid ${getGridCols()} gap-4`}>
+                        <div className={`grid ${getGridCols()} gap-4 w-full`}>
                           {filteredItems.map(item => (
                             <ProductCard key={item.id} item={item} />
                           ))}
@@ -239,7 +239,7 @@ const Homepage = () => {
                       <>
                         {/* Global Featured Item */}
                         {featuredItems.length > 0 && (
-                          <section className="py-6">
+                          <section className="py-6 w-full">
                             <h2 className="text-2xl font-bold mb-6">Featured Item</h2>
                             {deviceType === 'mobile' ? (
                               <ProductCard
@@ -271,7 +271,7 @@ const Homepage = () => {
 
                         {/* Category Sections */}
                         {Object.entries(groupedItems).map(([category, categoryItems]) => (
-                          <section key={category} className="py-6">
+                          <section key={category} className="py-6 w-full">
                             <div className="flex justify-between items-center mb-6">
                               <h2 className="text-2xl font-bold capitalize">{category}</h2>
                               <Link
@@ -305,7 +305,7 @@ const Homepage = () => {
                               </>
                             ) : (
                               /* Grid view for desktop and tablet */
-                              <div className={`grid ${getGridCols()} gap-4`}>
+                              <div className={`grid ${getGridCols()} gap-4 w-full`}>
                                 {categoryItems.slice(0, deviceType === 'desktop' ? 15 : 9).map(item => (
                                   <ProductCard key={item.id} item={item} />
                                 ))}

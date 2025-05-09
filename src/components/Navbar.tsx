@@ -18,6 +18,7 @@ import {
   Monitor,
   Pen,
   MoreHorizontal,
+  Filter,
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { useState, useEffect, useRef } from "react"
@@ -33,6 +34,11 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "./ui/select"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./ui/popover"
 import { Skeleton } from './ui/skeleton'
 import { useDeviceType } from "../hooks/use-mobile"
 
@@ -48,9 +54,9 @@ const NavbarSkeleton = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {isMobile && (
-            <Link to="/home" className="text-xl font-semibold text-white">
-              GSU Market
-            </Link>
+            <div className="w-32">
+              <Skeleton className="h-6 w-full" />
+            </div>
           )}
 
           <div className="flex items-center gap-4">
@@ -81,6 +87,7 @@ export const Navbar = () => {
   const notificationRef = useRef<HTMLDivElement>(null)
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false)
   const deviceType = useDeviceType();
   const location = useLocation();
   
@@ -181,6 +188,7 @@ export const Navbar = () => {
       setSelectedCategories([value])
       setSortBy("created_at")
     }
+    setIsCategoryOpen(false)
   }
 
   const categories = [
@@ -205,8 +213,13 @@ export const Navbar = () => {
     return null;
   }
   
+  // Don't show navbar on saved page for desktop
+  if (location.pathname === '/saved' && deviceType !== 'mobile') {
+    return null;
+  }
+  
   const isMobile = deviceType === 'mobile';
-  const navbarHeight = isMobile ? "h-16" : "h-14";
+  const navbarHeight = isMobile ? "h-14" : "h-14";
   const navbarClass = isMobile 
     ? "w-full" 
     : "left-[300px] right-0";
@@ -227,23 +240,24 @@ export const Navbar = () => {
         )}>
           {/* First Row */}
           <div className={`flex justify-between items-center ${navbarHeight}`}>
-            {isMobile && (
+            {/* Only show GSU Market text on desktop, not on mobile */}
+            {!isMobile && (
               <Link to="/home" className="text-xl font-semibold text-white">
                 GSU Market
               </Link>
             )}
 
             {/* Search and User Icons */}
-            <div className={`flex items-center gap-4 ${!isMobile ? 'w-full justify-between' : ''}`}>
+            <div className={`flex items-center gap-4 ${isMobile ? 'w-full justify-between' : ''}`}>
               {/* Search Input */}
               <div
-                className={cn("transition-all duration-300 ease-in-out", 
+                className={cn("transition-all duration-300 ease-in-out relative", 
                   isSearchFocused 
                   ? "flex-1 max-w-2xl" 
-                  : isMobile ? "w-48" : "w-96"
+                  : isMobile ? "w-48 flex-1" : "w-96"
                 )}
               >
-                <div className="relative">
+                <div className="relative flex items-center">
                   <input
                     type="text"
                     placeholder="Search for anything..."
@@ -262,6 +276,37 @@ export const Navbar = () => {
                     >
                       ✕
                     </button>
+                  )}
+                  
+                  {/* Filter button for mobile - inside search bar */}
+                  {isMobile && (
+                    <Popover open={isCategoryOpen} onOpenChange={setIsCategoryOpen}>
+                      <PopoverTrigger asChild>
+                        <Button variant="ghost" size="icon" className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7">
+                          <Filter className="h-4 w-4 text-gray-400" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0 bg-background border-white/10" align="end">
+                        <div className="grid grid-cols-1 gap-1 p-2">
+                          <button 
+                            onClick={() => handleCategoryChange("all")}
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-primary/10 rounded-md text-white"
+                          >
+                            All Categories
+                          </button>
+                          {categories.map((category) => (
+                            <button
+                              key={category.value}
+                              onClick={() => handleCategoryChange(category.value)}
+                              className="flex items-center gap-2 px-3 py-2 hover:bg-primary/10 rounded-md"
+                            >
+                              <category.icon className="h-4 w-4 text-primary" />
+                              <span className="text-sm">{category.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   )}
                 </div>
               </div>
@@ -352,40 +397,6 @@ export const Navbar = () => {
               </div>
             </div>
           </div>
-
-          {/* Second Row - Mobile Only */}
-          {isMobile && (
-            <div className="flex items-center justify-between pb-2 gap-2">
-              {/* Category Selector */}
-              <div className="flex-1">
-                <Select
-                  value={selectedCategories.length > 0 ? selectedCategories[0] : "all"}
-                  onValueChange={handleCategoryChange}
-                >
-                  <SelectTrigger className="bg-background border-white/10 hover:bg-primary/10">
-                    <SelectValue placeholder="Categories" />
-                  </SelectTrigger>
-                  <SelectContent
-                    className="bg-background border-white/10 w-[300px]"
-                  >
-                    <div className="grid grid-cols-2 gap-1 p-1">
-                      <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
-                        All Categories
-                      </SelectItem>
-                      {categories.map((category) => (
-                        <SelectItem key={category.value} value={category.value} className="hover:bg-primary/10">
-                          <div className="flex items-center gap-2">
-                            <category.icon className="h-4 w-4 text-primary" />
-                            <span className="truncate">{category.label}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </div>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          )}
         </div>
       </nav>
     )

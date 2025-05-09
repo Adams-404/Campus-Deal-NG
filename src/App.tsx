@@ -137,12 +137,33 @@ const AnimatedRoutes = () => {
   // Determine if we should show the desktop sidenav
   const shouldShowSideNav = user && deviceType !== 'mobile';
   
+  // Determine if we should show the header
+  const shouldShowNavbar = (path: string) => {
+    // For mobile, always show navbar on home
+    if (deviceType === 'mobile' && path === '/home') return true;
+    
+    // For desktop, only show navbar on home
+    if (deviceType !== 'mobile') {
+      if (path === '/home') return true;
+      
+      // Don't show navbar on saved page for desktop specifically
+      if (path === '/saved') return false;
+      
+      // In other cases, no navbar for desktop
+      return false;
+    }
+    
+    // Default case for mobile
+    return path === '/home';
+  };
+  
   // Apply main content padding based on device and sidenav visibility
   const getContentClass = () => {
     const isHomePage = location.pathname === '/home';
     
     if (deviceType === 'mobile') {
-      return showNav ? "pt-24 pb-24" : "pb-24"; // Mobile with nav needs top padding
+      // No top padding for mobile to fix the spacing issue
+      return isHomePage ? "pb-24" : "pb-24"; 
     } else if (shouldShowSideNav) {
       return "pl-[300px]"; // Add left padding for desktop/tablet with sidenav
     } else {
@@ -152,7 +173,7 @@ const AnimatedRoutes = () => {
 
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden bg-background">
-      {showNav && <Navbar />}
+      {shouldShowNavbar(location.pathname) && <Navbar />}
       {shouldShowSideNav && <DesktopSideNav />}
       
       <main className={cn("flex-1", getContentClass())}>
