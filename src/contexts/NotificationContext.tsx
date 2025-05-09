@@ -127,22 +127,34 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     
     fetchUnreadMessages();
     
-    // Listen for new messages
-    const handleNewMessage = (event: any) => {
-      const payload = event.detail;
-      if (payload.new && payload.new.receiver_id === userId && !payload.new.is_read) {
-        const senderId = payload.new.sender_id;
-        setUnreadMessagesByUser(prev => ({
-          ...prev,
-          [senderId]: (prev[senderId] || 0) + 1
-        }));
-      }
-    };
-    
-    window.addEventListener('new-message', handleNewMessage);
-    
+    // Supabase native realtime subscription for messages
+    const channel = supabase
+      .channel('messages-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${userId}`
+        },
+        (payload) => {
+          // Only update if the message is unread and for this user
+          if (payload.new && payload.new.receiver_id === userId && !payload.new.is_read) {
+            const senderId = payload.new.sender_id;
+            setUnreadMessagesByUser(prev => ({
+              ...prev,
+              [senderId]: (prev[senderId] || 0) + 1
+            }));
+          }
+          // Optionally, refetch all unread messages for full sync:
+          // fetchUnreadMessages();
+        }
+      )
+      .subscribe();
+
     return () => {
-      window.removeEventListener('new-message', handleNewMessage);
+      supabase.removeChannel(channel);
     };
   }, [userId]);
 
