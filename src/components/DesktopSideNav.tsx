@@ -3,7 +3,7 @@ import { Home, MessageSquare, Plus, Heart, Settings, LogOut, Menu, User } from "
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useIsMobile } from "../hooks/use-mobile";
+import { useDeviceType } from "../hooks/use-mobile";
 import { useSettings } from "../contexts/SettingsContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,7 @@ export const DesktopSideNav = () => {
   const location = useLocation();
   const { hideSellTips } = useSettings();
   const { unreadMessagesByUser } = useNotifications();
+  const deviceType = useDeviceType();
   
   useEffect(() => {
     const checkUser = async () => {
@@ -52,6 +53,15 @@ export const DesktopSideNav = () => {
     };
   }, []);
 
+  // Set expanded state based on device type
+  useEffect(() => {
+    if (deviceType === 'tablet') {
+      setExpanded(false);
+    } else {
+      setExpanded(true);
+    }
+  }, [deviceType]);
+
   // If there's no user, don't render the navigation
   if (!user) {
     return null;
@@ -77,12 +87,18 @@ export const DesktopSideNav = () => {
     { icon: User, label: "Profile", href: "/profile" },
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
+  
+  const isVisible = deviceType !== 'mobile';
+  
+  if (!isVisible) {
+    return null;
+  }
 
   return (
     <>
       <motion.aside 
         className={cn(
-          "fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r border-white/10 bg-secondary transition-all pt-24",
+          "fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r border-white/10 bg-secondary/95 pt-20",
           expanded ? "w-[280px]" : "w-[80px]"
         )}
         initial={{ x: -20, opacity: 0 }}
@@ -105,7 +121,7 @@ export const DesktopSideNav = () => {
 
         <div className="flex-1 overflow-y-auto py-6 px-3">
           <TooltipProvider delayDuration={300}>
-            <nav className="flex flex-col gap-3">
+            <nav className="flex flex-col gap-4">
               {navItems.map((item) => (
                 item.onClick ? (
                   <Tooltip key={item.label}>
@@ -113,7 +129,7 @@ export const DesktopSideNav = () => {
                       <Button
                         variant="ghost"
                         className={cn(
-                          "flex items-center justify-start gap-4 w-full py-3",
+                          "flex items-center justify-start gap-4 w-full py-3 h-auto",
                           location.pathname === item.href && "bg-primary/10 text-primary",
                           !expanded && "justify-center px-2"
                         )}
@@ -121,7 +137,7 @@ export const DesktopSideNav = () => {
                       >
                         <div className="relative">
                           <item.icon className={cn(
-                            "h-5 w-5", 
+                            "h-6 w-6", 
                             location.pathname === item.href ? "text-primary" : "text-gray-400"
                           )} />
                         </div>
@@ -143,11 +159,11 @@ export const DesktopSideNav = () => {
                       >
                         <div className="relative">
                           <item.icon className={cn(
-                            "h-5 w-5", 
+                            "h-6 w-6", 
                             location.pathname === item.href ? "text-primary" : "text-gray-400"
                           )} />
                           {item.hasNotification && totalUnreadMessages > 0 && (
-                            <span className="absolute -top-1 -right-1 flex h-4 w-4 min-w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 min-w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
                               {totalUnreadMessages}
                             </span>
                           )}
@@ -171,7 +187,7 @@ export const DesktopSideNav = () => {
                 <div className="text-xs text-gray-400">{user?.email}</div>
               </div>
             )}
-            <Avatar className="h-9 w-9">
+            <Avatar className="h-10 w-10">
               <AvatarImage src={userProfile?.avatar_url} />
               <AvatarFallback className="bg-primary/20 text-primary">
                 {userProfile?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}

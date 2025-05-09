@@ -10,7 +10,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { useSearch } from "@/contexts/SearchContext";
 import { Link } from 'react-router-dom';
 import { Heart, ArrowRight, Loader2 } from 'lucide-react';
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useDeviceType } from "@/hooks/use-mobile";
 
 interface Item {
   id: string;
@@ -42,7 +42,7 @@ const Homepage = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const { searchQuery, selectedCategories, sortBy } = useSearch();
-  const isMobile = useIsMobile();
+  const deviceType = useDeviceType();
 
   const fetchItems = async () => {
     try {
@@ -100,7 +100,7 @@ const Homepage = () => {
             last_name: seller.last_name,
             avatar_url: seller.avatar_url
           } : undefined,
-          featured: item.featured,
+          featured: item.featured || false,
           description: item.description
         };
       }).filter(item => item.images.length > 0);
@@ -181,9 +181,23 @@ const Homepage = () => {
     return results;
   }, [items, searchQuery]);
 
+  // Determine grid columns based on device type
+  const getGridCols = () => {
+    switch(deviceType) {
+      case 'mobile':
+        return 'grid-cols-2';
+      case 'tablet':
+        return 'grid-cols-3';
+      case 'desktop':
+        return 'grid-cols-4 xl:grid-cols-5';
+      default:
+        return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <main className={`mx-auto px-4 sm:px-6 ${isMobile ? 'max-w-3xl' : 'max-w-6xl'}`}>
+      <main className={`mx-auto px-4 sm:px-6 ${deviceType === 'mobile' ? 'max-w-3xl' : 'max-w-full'}`}>
         <PullToRefresh onRefresh={handleRefresh}>
           <PageTransition>
             {loading ? (
@@ -204,7 +218,7 @@ const Homepage = () => {
                     {searchQuery ? (
                       <section className="py-6">
                         <h2 className="text-2xl font-bold mb-6">Search Results</h2>
-                        <div className={`grid ${isMobile ? 'grid-cols-2' : 'grid-cols-3 md:grid-cols-4 lg:grid-cols-5'} gap-4`}>
+                        <div className={`grid ${getGridCols()} gap-4`}>
                           {filteredItems.map(item => (
                             <ProductCard key={item.id} item={item} />
                           ))}
@@ -216,13 +230,13 @@ const Homepage = () => {
                         {featuredItems.length > 0 && (
                           <section className="py-6">
                             <h2 className="text-2xl font-bold mb-6">Featured Item</h2>
-                            {isMobile ? (
+                            {deviceType === 'mobile' ? (
                               <ProductCard
                                 item={featuredItems[0]}
                                 className="w-full"
                               />
                             ) : (
-                              <div className="grid grid-cols-2 gap-6">
+                              <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                                 <ProductCard
                                   item={featuredItems[0]}
                                   className="w-full"
@@ -230,6 +244,12 @@ const Homepage = () => {
                                 {featuredItems.length > 1 && (
                                   <ProductCard
                                     item={featuredItems[1]}
+                                    className="w-full"
+                                  />
+                                )}
+                                {featuredItems.length > 2 && deviceType === 'desktop' && (
+                                  <ProductCard
+                                    item={featuredItems[2]}
                                     className="w-full"
                                   />
                                 )}
@@ -251,7 +271,7 @@ const Homepage = () => {
                               </Link>
                             </div>
 
-                            {isMobile ? (
+                            {deviceType === 'mobile' ? (
                               <>
                                 {/* Featured Item for Category on Mobile */}
                                 <div className="mb-6">
@@ -273,9 +293,9 @@ const Homepage = () => {
                                 </div>
                               </>
                             ) : (
-                              /* Grid view for desktop */
-                              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                {categoryItems.slice(0, 10).map(item => (
+                              /* Grid view for desktop and tablet */
+                              <div className={`grid ${getGridCols()} gap-4`}>
+                                {categoryItems.slice(0, deviceType === 'desktop' ? 15 : 9).map(item => (
                                   <ProductCard key={item.id} item={item} />
                                 ))}
                               </div>

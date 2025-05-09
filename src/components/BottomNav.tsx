@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "../contexts/SettingsContext";
 import SafetyTipsDialog from "./SafetyTipsDialog";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { useIsMobile } from "../hooks/use-mobile";
+import { useDeviceType } from "../hooks/use-mobile";
 
 export const BottomNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
@@ -19,7 +19,7 @@ export const BottomNav = () => {
   const { toast } = useToast();
   const { hideSellTips } = useSettings();
   const { unreadMessagesByUser } = useNotifications();
-  const isMobile = useIsMobile();
+  const deviceType = useDeviceType();
   
   useEffect(() => {
     // Check for existing user session
@@ -42,7 +42,7 @@ export const BottomNav = () => {
   }, []);
 
   // If there's no user or not on mobile, don't render the navigation
-  if (!user || !isMobile) {
+  if (!user || deviceType !== 'mobile') {
     return null;
   }
 

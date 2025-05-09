@@ -1,8 +1,4 @@
-
-"use client"
-
 import type React from "react"
-
 import {
   Search,
   User,
@@ -37,16 +33,25 @@ import {
   SelectValue 
 } from "./ui/select"
 import { Skeleton } from './ui/skeleton'
-import { useIsMobile } from "../hooks/use-mobile"
+import { useDeviceType } from "../hooks/use-mobile"
 
 const NavbarSkeleton = () => {
+  const deviceType = useDeviceType();
+  const isDesktopOrTablet = deviceType !== 'mobile';
+  
   return (
-    <nav className="fixed top-0 w-full bg-secondary/80 backdrop-blur-md z-50 border-b border-white/10">
+    <nav className={cn(
+      "fixed top-0 z-50 bg-secondary/80 backdrop-blur-md border-b border-white/10",
+      isDesktopOrTablet ? "right-0 left-0" : "w-full"
+    )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/home" className="text-xl font-semibold text-white">
-            Tradezy
-          </Link>
+          {deviceType === 'mobile' && (
+            <Link to="/home" className="text-xl font-semibold text-white">
+              Tradezy
+            </Link>
+          )}
+
           <div className="flex items-center gap-4">
             <div className="w-48">
               <input
@@ -75,7 +80,7 @@ export const Navbar = () => {
   const notificationRef = useRef<HTMLDivElement>(null)
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
-  const isMobile = useIsMobile()
+  const deviceType = useDeviceType();
 
   // Sample notifications - in a real app, you would fetch these from your backend
   const notifications = [
@@ -173,14 +178,6 @@ export const Navbar = () => {
     }
   }
 
-  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSortBy(e.target.value)
-  }
-
-  const toggleNotification = () => {
-    setIsNotificationOpen(!isNotificationOpen)
-  }
-
   const categories = [
     { value: "Food", label: "Food", icon: Utensils },
     { value: "Clothing", label: "Clothing", icon: Shirt },
@@ -198,28 +195,38 @@ export const Navbar = () => {
     { value: "Others", label: "Others", icon: MoreHorizontal },
   ]
 
-  const navbarHeight = isMobile ? "h-16" : "h-14";
+  const isDesktopOrTablet = deviceType !== 'mobile';
+  const navbarHeight = deviceType === 'mobile' ? "h-16" : "h-14";
+  const navbarClass = isDesktopOrTablet 
+    ? "left-0 right-0 w-full" 
+    : "w-full";
 
   return (
     isLoading ? <NavbarSkeleton /> : (
-      <nav className={`fixed top-0 right-0 bg-secondary/80 backdrop-blur-md z-50 border-b border-white/10 ${isMobile ? 'w-full' : 'ml-[280px] w-[calc(100%-280px)]'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav className={cn(
+        "fixed top-0 bg-secondary/80 backdrop-blur-md z-50 border-b border-white/10",
+        navbarClass
+      )}>
+        <div className={cn(
+          "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+          isDesktopOrTablet && "pl-[280px] transition-all duration-300"
+        )}>
           {/* First Row */}
           <div className={`flex justify-between items-center ${navbarHeight}`}>
-            {isMobile && (
+            {deviceType === 'mobile' && (
               <Link to="/home" className="text-xl font-semibold text-white">
                 Tradezy
               </Link>
             )}
 
             {/* Search and User Icons */}
-            <div className={`flex items-center gap-4 ${isMobile ? '' : 'w-full justify-between'}`}>
+            <div className={`flex items-center gap-4 ${isDesktopOrTablet ? 'w-full justify-between' : ''}`}>
               {/* Search Input */}
               <div
                 className={cn("transition-all duration-300 ease-in-out", 
                   isSearchFocused 
                   ? "flex-1 max-w-2xl" 
-                  : isMobile ? "w-48" : "w-96"
+                  : deviceType === 'mobile' ? "w-48" : "w-96"
                 )}
               >
                 <div className="relative">
@@ -246,7 +253,7 @@ export const Navbar = () => {
               </div>
 
               {/* Category Selector for desktop */}
-              {!isMobile && (
+              {isDesktopOrTablet && (
                 <div className="flex-1 max-w-xs">
                   <Select
                     value={selectedCategories.length > 0 ? selectedCategories[0] : "all"}
@@ -257,21 +264,18 @@ export const Navbar = () => {
                     </SelectTrigger>
                     <SelectContent
                       className="bg-background border-white/10"
-                      onPointerDown={(e) => e.stopPropagation()}
                     >
-                      <div className="grid grid-cols-2 gap-1 p-1">
-                        <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
-                          All Categories
+                      <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
+                        All Categories
+                      </SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.value} value={category.value} className="hover:bg-primary/10">
+                          <div className="flex items-center gap-2">
+                            <category.icon className="h-4 w-4 text-primary" />
+                            <span className="truncate">{category.label}</span>
+                          </div>
                         </SelectItem>
-                        {categories.map((category) => (
-                          <SelectItem key={category.value} value={category.value} className="hover:bg-primary/10">
-                            <div className="flex items-center gap-2">
-                              <category.icon className="h-4 w-4 text-primary" />
-                              <span className="truncate">{category.label}</span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </div>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -297,25 +301,27 @@ export const Navbar = () => {
                       </div>
                     </Link>
 
-                    {/* Profile Link */}
-                    <Link to="/profile">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
-                      >
-                        {profile?.avatar_url ? (
-                          <Avatar className="h-7 w-7">
-                            <AvatarImage src={profile.avatar_url} alt="Profile" />
-                            <AvatarFallback>
-                              <User className="h-4 w-4 text-primary" />
-                            </AvatarFallback>
-                          </Avatar>
-                        ) : (
-                          <User className="h-4 w-4 text-primary" />
-                        )}
-                      </Button>
-                    </Link>
+                    {/* Profile Link - only show on mobile, as desktop has this in sidenav */}
+                    {deviceType === 'mobile' && (
+                      <Link to="/profile">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
+                        >
+                          {profile?.avatar_url ? (
+                            <Avatar className="h-7 w-7">
+                              <AvatarImage src={profile.avatar_url} alt="Profile" />
+                              <AvatarFallback>
+                                <User className="h-4 w-4 text-primary" />
+                              </AvatarFallback>
+                            </Avatar>
+                          ) : (
+                            <User className="h-4 w-4 text-primary" />
+                          )}
+                        </Button>
+                      </Link>
+                    )}
                   </>
                 ) : (
                   <>
@@ -334,7 +340,7 @@ export const Navbar = () => {
           </div>
 
           {/* Second Row - Mobile Only */}
-          {isMobile && (
+          {deviceType === 'mobile' && (
             <div className="flex items-center justify-between pb-2 gap-2">
               {/* Category Selector */}
               <div className="flex-1">
@@ -347,7 +353,6 @@ export const Navbar = () => {
                   </SelectTrigger>
                   <SelectContent
                     className="bg-background border-white/10 w-[300px]"
-                    onPointerDown={(e) => e.stopPropagation()}
                   >
                     <div className="grid grid-cols-2 gap-1 p-1">
                       <SelectItem value="all" className="hover:bg-primary/10 col-span-2">

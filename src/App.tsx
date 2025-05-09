@@ -39,7 +39,7 @@ import SafetyTipsDialog from "./components/SafetyTipsDialog";
 import Support from "./pages/Support";
 import LazyHomepage from "./pages/LazyHomepage";
 import LazyViewItem from "./pages/LazyViewItem";
-import { useIsMobile } from "./hooks/use-mobile";
+import { useDeviceType } from "./hooks/use-mobile";
 
 const queryClient = new QueryClient();
 
@@ -93,8 +93,8 @@ const AnimatedRoutes = () => {
   const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings } = useSettings();
   const [user, setUser] = useState<any>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
-  const isMobile = useIsMobile();
-
+  const deviceType = useDeviceType();
+  
   useEffect(() => {
     const checkUserAndSettings = async () => {
       if (loadingSettings) {
@@ -135,16 +135,17 @@ const AnimatedRoutes = () => {
   );
 
   // Determine the content padding based on device type
-  const contentPadding = !isMobile && user ? "pl-[280px]" : "";
+  const shouldShowSideNav = user && deviceType !== 'mobile' && !hideBottomNav;
+  const contentClass = shouldShowSideNav ? "pl-[280px]" : "";
   
   return (
     <div className="flex flex-col min-h-screen overflow-x-hidden">
       {showNav && <Navbar />}
-      {!isMobile && user && !hideBottomNav && <DesktopSideNav />}
+      {user && !hideBottomNav && <DesktopSideNav />}
       <main className={cn(
         "flex-1 pb-24", 
-        showNav && isMobile ? "pt-32" : "pt-16", 
-        contentPadding
+        showNav && deviceType === 'mobile' ? "pt-32" : "pt-16", 
+        contentClass
       )}>
         <AnimatePresence mode="wait">
           <Suspense fallback={fallbackLoader}>
