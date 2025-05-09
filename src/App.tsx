@@ -165,7 +165,7 @@ const AnimatedRoutes = () => {
       // No top padding for mobile to fix the spacing issue
       return isHomePage ? "pb-24" : "pb-24"; 
     } else if (shouldShowSideNav) {
-      return "pl-[300px]"; // Add left padding for desktop/tablet with sidenav
+      return "ml-[300px]"; // Add left margin for desktop/tablet with sidenav
     } else {
       return ""; // Default case
     }

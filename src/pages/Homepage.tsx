@@ -1,4 +1,3 @@
-
 import { ProductGrid } from "@/components/ProductGrid";
 import { PageTransition } from "@/components/PageTransition";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
@@ -198,7 +197,7 @@ const Homepage = () => {
   // Determine appropriate container padding based on device
   const getContainerPadding = () => {
     if (deviceType === 'mobile') {
-      return 'px-4 pb-24'; // Remove top padding for mobile to fix the spacing issue
+      return 'px-4 pb-24 mt-14'; // Add margin top for mobile to fix spacing issue
     } else if (deviceType === 'tablet') {
       return 'px-6 pt-8 pb-8'; 
     } else {

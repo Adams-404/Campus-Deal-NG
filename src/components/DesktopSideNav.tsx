@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings, User, Menu, LogOut } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -19,7 +19,6 @@ export const DesktopSideNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [expanded, setExpanded] = useState(true);
   const [userProfile, setUserProfile] = useState<any>(null);
   const location = useLocation();
   const navigate = useNavigate();
@@ -54,15 +53,6 @@ export const DesktopSideNav = () => {
       subscription.unsubscribe();
     };
   }, []);
-
-  // Set expanded state based on device type
-  useEffect(() => {
-    if (deviceType === 'tablet') {
-      setExpanded(false);
-    } else if (deviceType === 'desktop') {
-      setExpanded(true);
-    }
-  }, [deviceType]);
 
   // If there's no user, don't render the navigation
   if (!user) {
@@ -108,26 +98,13 @@ export const DesktopSideNav = () => {
   return (
     <>
       <motion.aside 
-        className={cn(
-          "fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r border-white/10 bg-secondary/95",
-          expanded ? "w-[300px]" : "w-[80px]"
-        )}
+        className="fixed left-0 top-0 bottom-0 z-40 flex flex-col border-r border-white/10 bg-secondary/95 w-[300px]"
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="flex items-center justify-between p-4 h-16 border-b border-white/10">
-          {expanded && (
-            <Link to="/home" className="text-xl font-bold text-primary">GSU Market</Link>
-          )}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => setExpanded(!expanded)} 
-            className={cn("text-gray-400", expanded ? "ml-auto" : "mx-auto")}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
+        <div className="flex items-center p-4 h-16">
+          <Link to="/home" className="text-xl font-bold text-primary">GSU Market</Link>
         </div>
 
         <div className="flex-1 overflow-y-auto py-4 flex flex-col justify-between">
@@ -142,8 +119,7 @@ export const DesktopSideNav = () => {
                           variant="ghost"
                           className={cn(
                             "flex items-center justify-start gap-4 w-full py-3 h-auto",
-                            location.pathname === item.href && "bg-primary/10 text-primary",
-                            !expanded && "justify-center px-2"
+                            location.pathname === item.href && "bg-primary/10 text-primary"
                           )}
                           onClick={item.onClick}
                         >
@@ -153,10 +129,9 @@ export const DesktopSideNav = () => {
                               location.pathname === item.href ? "text-primary" : "text-gray-400"
                             )} />
                           </div>
-                          {expanded && <span className="text-sm">{item.label}</span>}
+                          <span className="text-sm">{item.label}</span>
                         </Button>
                       </TooltipTrigger>
-                      {!expanded && <TooltipContent side="right">{item.label}</TooltipContent>}
                     </Tooltip>
                   ) : (
                     <Tooltip key={item.label}>
@@ -165,8 +140,7 @@ export const DesktopSideNav = () => {
                           to={item.href}
                           className={cn(
                             "flex items-center justify-start gap-4 px-4 py-3 rounded-lg text-gray-400 hover:bg-white/5 transition-colors",
-                            location.pathname === item.href && "bg-primary/10 text-primary",
-                            !expanded && "justify-center px-2"
+                            location.pathname === item.href && "bg-primary/10 text-primary"
                           )}
                         >
                           <div className="relative">
@@ -180,10 +154,9 @@ export const DesktopSideNav = () => {
                               </span>
                             )}
                           </div>
-                          {expanded && <span className="text-sm">{item.label}</span>}
+                          <span className="text-sm">{item.label}</span>
                         </Link>
                       </TooltipTrigger>
-                      {!expanded && <TooltipContent side="right">{item.label}</TooltipContent>}
                     </Tooltip>
                   )
                 ))}
@@ -195,17 +168,13 @@ export const DesktopSideNav = () => {
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
-                      className={cn(
-                        "flex items-center justify-start gap-4 w-full py-3 h-auto text-red-400 hover:bg-red-500/10",
-                        !expanded && "justify-center px-2"
-                      )}
+                      className="flex items-center justify-start gap-4 w-full py-3 h-auto text-red-400 hover:bg-red-500/10"
                       onClick={handleLogout}
                     >
                       <LogOut className="h-5 w-5" />
-                      {expanded && <span className="text-sm">Logout</span>}
+                      <span className="text-sm">Logout</span>
                     </Button>
                   </TooltipTrigger>
-                  {!expanded && <TooltipContent side="right">Logout</TooltipContent>}
                 </Tooltip>
               </div>
             </nav>
@@ -220,12 +189,10 @@ export const DesktopSideNav = () => {
                 {userProfile?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
-            {expanded && (
-              <div className="flex-1">
-                <div className="font-medium text-sm">{userProfile?.first_name || 'User'}</div>
-                <div className="text-xs text-gray-400 truncate max-w-[180px]">{user?.email}</div>
-              </div>
-            )}
+            <div className="flex-1">
+              <div className="font-medium text-sm">{userProfile?.first_name || 'User'}</div>
+              <div className="text-xs text-gray-400 truncate max-w-[180px]">{user?.email}</div>
+            </div>
           </div>
         </div>
       </motion.aside>
