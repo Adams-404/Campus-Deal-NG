@@ -84,9 +84,20 @@ export const Navbar = () => {
   const deviceType = useDeviceType();
   const location = useLocation();
   
-  // Only show navbar on home page for desktop view
-  const shouldShowOnDesktop = location.pathname === '/home';
-
+  // Only show navbar on specific pages for desktop view
+  const pagesWithHeaderOnDesktop = ['/home'];
+  const shouldShowOnDesktop = pagesWithHeaderOnDesktop.includes(location.pathname);
+  const pagesWithHeaderOnTablet = ['/home', '/settings', '/profile'];
+  const shouldShowOnTablet = pagesWithHeaderOnTablet.includes(location.pathname);
+  
+  // Hide on certain pages
+  const hiddenPages = ['/saved'];
+  const shouldHide = hiddenPages.includes(location.pathname) && deviceType !== 'mobile';
+  
+  if (shouldHide) {
+    return null;
+  }
+  
   // Sample notifications - in a real app, you would fetch these from your backend
   const notifications = [
     { id: 1, message: "Your item has been sold!", time: "5 min ago", read: false },
@@ -200,8 +211,9 @@ export const Navbar = () => {
     { value: "Others", label: "Others", icon: MoreHorizontal },
   ]
 
-  // Hide navbar on desktop view for non-home pages
-  if (deviceType !== 'mobile' && !shouldShowOnDesktop) {
+  // Hide navbar based on device and page
+  if ((deviceType === 'desktop' && !shouldShowOnDesktop) || 
+      (deviceType === 'tablet' && !shouldShowOnTablet)) {
     return null;
   }
   
@@ -227,8 +239,9 @@ export const Navbar = () => {
         )}>
           {/* First Row */}
           <div className={`flex justify-between items-center ${navbarHeight}`}>
-            {isMobile && (
-              <Link to="/home" className="text-xl font-semibold text-white">
+            {/* Only show on desktop */}
+            {!isMobile && (
+              <Link to="/home" className="text-xl font-semibold text-primary">
                 GSU Market
               </Link>
             )}
@@ -277,7 +290,7 @@ export const Navbar = () => {
                       <SelectValue placeholder="Categories" />
                     </SelectTrigger>
                     <SelectContent
-                      className="bg-background border-white/10"
+                      className="bg-background border-white/10 max-h-[300px] overflow-y-auto"
                     >
                       <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
                         All Categories
@@ -366,10 +379,13 @@ export const Navbar = () => {
                     <SelectValue placeholder="Categories" />
                   </SelectTrigger>
                   <SelectContent
-                    className="bg-background border-white/10 w-[300px]"
+                    className="bg-background border-white/10 w-[300px] max-h-[300px] overflow-y-auto z-50"
+                    position="popper"
+                    sideOffset={8}
+                    align="start"
                   >
-                    <div className="grid grid-cols-2 gap-1 p-1">
-                      <SelectItem value="all" className="hover:bg-primary/10 col-span-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 p-1">
+                      <SelectItem value="all" className="hover:bg-primary/10 col-span-1 sm:col-span-2">
                         All Categories
                       </SelectItem>
                       {categories.map((category) => (
