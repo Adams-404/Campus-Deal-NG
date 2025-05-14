@@ -3,6 +3,7 @@ import { useSettings } from "@/contexts/SettingsContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { ExpandableSection } from "@/components/ui/expandable-section";
+import { Switch } from "@/components/ui/switch";
 import { 
   ChevronRight, 
   Type, 
@@ -250,28 +251,42 @@ export default function Settings() {
                   <h2 className="text-sm font-medium text-gray-400 mb-4">Preferences</h2>
                   <div className="space-y-4">
                     <ExpandableSection
-                      icon={theme === 'dark' ? Moon : Sun}
+                      icon={theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor}
                       label="Theme"
                       iconColor="text-purple-500"
                       bgColor="bg-purple-500/10"
                     >
-                      <div className="flex gap-2">
-                        <Button
-                          variant={theme === 'dark' ? 'default' : 'ghost'}
-                          size="sm"
-                          onClick={() => setTheme('dark')}
-                          className="flex-1"
-                        >
-                          Dark
-                        </Button>
-                        <Button
-                          variant={theme === 'light' ? 'default' : 'ghost'}
-                          size="sm"
-                          onClick={() => setTheme('light')}
-                          className="flex-1"
-                        >
-                          Light
-                        </Button>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Moon className="h-4 w-4" />
+                            <span>Dark</span>
+                          </div>
+                          <Switch 
+                            checked={theme === 'dark'} 
+                            onCheckedChange={() => setTheme('dark')}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sun className="h-4 w-4" />
+                            <span>Light</span>
+                          </div>
+                          <Switch 
+                            checked={theme === 'light'} 
+                            onCheckedChange={() => setTheme('light')}
+                          />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Monitor className="h-4 w-4" />
+                            <span>System</span>
+                          </div>
+                          <Switch 
+                            checked={theme === 'system'} 
+                            onCheckedChange={() => setTheme('system')}
+                          />
+                        </div>
                       </div>
                     </ExpandableSection>
 
@@ -294,15 +309,11 @@ export default function Settings() {
                               </div>
                               <p className="text-sm text-gray-400 mt-2">{type.description}</p>
                             </div>
-                            <Button
-                              variant={type.enabled ? 'default' : 'ghost'}
-                              size="sm"
-                              onClick={type.onToggle}
-                              className="h-8"
+                            <Switch
+                              checked={type.enabled}
+                              onCheckedChange={type.onToggle}
                               disabled={!type.supported}
-                            >
-                              {type.enabled ? 'On' : 'Off'}
-                            </Button>
+                            />
                           </div>
                         ))}
                       </div>

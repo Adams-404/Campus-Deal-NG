@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type Theme = 'light' | 'dark' | 'system';
@@ -17,19 +18,33 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     localStorage.setItem('gsu-theme', theme);
-    console.log('Setting theme to:', theme);
     
     const root = window.document.documentElement;
-    console.log('Current root classes:', root.classList);
     root.classList.remove('light', 'dark');
+    
     if (theme === 'system') {
       const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      console.log('System theme detected:', systemTheme);
       root.classList.add(systemTheme);
     } else {
       root.classList.add(theme);
     }
-    console.log('New root classes:', root.classList);
+    
+    // Update CSS variables based on theme
+    if (theme === 'light' || (theme === 'system' && !window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.style.setProperty('--background', '#FFFFFF');
+      root.style.setProperty('--foreground', '#000000');
+      root.style.setProperty('--card', '#FFFFFF');
+      root.style.setProperty('--card-foreground', '#000000');
+      root.style.setProperty('--secondary', '#F1F1F1');
+      root.style.setProperty('--secondary-foreground', '#111111');
+    } else {
+      root.style.setProperty('--background', '#0A0A0A');
+      root.style.setProperty('--foreground', '#FFFFFF');
+      root.style.setProperty('--card', '#111111');
+      root.style.setProperty('--card-foreground', '#FFFFFF');
+      root.style.setProperty('--secondary', '#111111');
+      root.style.setProperty('--secondary-foreground', '#FFFFFF');
+    }
   }, [theme]);
 
   // Listen for system theme changes
@@ -40,6 +55,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         const systemTheme = mediaQuery.matches ? 'dark' : 'light';
         document.documentElement.classList.remove('light', 'dark');
         document.documentElement.classList.add(systemTheme);
+        
+        // Update CSS variables based on system theme change
+        if (systemTheme === 'light') {
+          document.documentElement.style.setProperty('--background', '#FFFFFF');
+          document.documentElement.style.setProperty('--foreground', '#000000');
+          document.documentElement.style.setProperty('--card', '#FFFFFF');
+          document.documentElement.style.setProperty('--card-foreground', '#000000');
+          document.documentElement.style.setProperty('--secondary', '#F1F1F1');
+          document.documentElement.style.setProperty('--secondary-foreground', '#111111');
+        } else {
+          document.documentElement.style.setProperty('--background', '#0A0A0A');
+          document.documentElement.style.setProperty('--foreground', '#FFFFFF');
+          document.documentElement.style.setProperty('--card', '#111111');
+          document.documentElement.style.setProperty('--card-foreground', '#FFFFFF');
+          document.documentElement.style.setProperty('--secondary', '#111111');
+          document.documentElement.style.setProperty('--secondary-foreground', '#FFFFFF');
+        }
       }
     };
 
