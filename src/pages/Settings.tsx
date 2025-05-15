@@ -1,3 +1,4 @@
+
 import { PageTransition } from "@/components/PageTransition";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -41,6 +42,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -53,10 +55,12 @@ export default function Settings() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Faster loading by doing both requests in parallel
     const fetchData = async () => {
-      await checkAuthStatus();
-      await checkAdminStatus();
-      setIsLoading(false);
+      Promise.all([checkAuthStatus(), checkAdminStatus()]).then(() => {
+        // Use a short timeout to prevent skeleton flash
+        setTimeout(() => setIsLoading(false), 100);
+      });
     };
     fetchData();
   }, []);
@@ -64,6 +68,7 @@ export default function Settings() {
   const checkAuthStatus = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     setUser(user);
+    return user;
   };
 
   const checkAdminStatus = async () => {
@@ -74,7 +79,9 @@ export default function Settings() {
         .select('role')
         .eq('user_id', user.id);
       setIsAdmin(roles?.some(r => r.role === 'admin') ?? false);
+      return roles;
     }
+    return null;
   };
 
   const notificationTypes = [
@@ -188,6 +195,41 @@ export default function Settings() {
     }
   };
 
+  // Render skeleton with enhanced loading
+  const renderSkeleton = () => (
+    <div className="pt-24 pb-32 space-y-8">
+      <div className="space-y-8">
+        <div>
+          <div className="h-4 bg-secondary rounded w-1/4 mb-4" />
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-4">
+                <div className="h-10 w-10 bg-secondary rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-secondary rounded w-3/4" />
+                  <div className="h-4 bg-secondary rounded w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div>
+        <div className="h-4 bg-secondary rounded w-1/4 mb-4" />
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center space-x-4">
+              <div className="h-10 w-10 bg-secondary rounded-full" />
+              <div className="flex-1">
+                <div className="h-4 bg-secondary rounded w-3/4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="bg-background">
       <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10
@@ -212,37 +254,7 @@ export default function Settings() {
       <main className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
         <PageTransition>
           {isLoading ? (
-            <div className="pt-24 pb-32 space-y-8 animate-pulse">
-              <div className="space-y-8">
-                <div>
-                  <div className="h-4 bg-gray-200 rounded w-1/4 mb-4" />
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="flex items-center space-x-4">
-                        <div className="h-10 w-10 bg-gray-200 rounded-full" />
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 bg-gray-200 rounded w-3/4" />
-                          <div className="h-4 bg-gray-200 rounded w-1/2" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <div className="h-4 bg-gray-200 rounded w-1/4 mb-4" />
-                <div className="space-y-4">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="flex items-center space-x-4">
-                      <div className="h-10 w-10 bg-gray-200 rounded-full" />
-                      <div className="flex-1">
-                        <div className="h-4 bg-gray-200 rounded w-3/4" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            renderSkeleton()
           ) : (
             <div className="pt-24 pb-32 space-y-8">
               <div className="space-y-8">
