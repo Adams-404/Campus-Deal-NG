@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,6 +21,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [unreadCount, setUnreadCount] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const [unreadMessagesByUser, setUnreadMessagesByUser] = useState<Record<string, number>>({});
+  const [notifications, setNotifications] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     // Check if push notifications are supported
@@ -258,6 +259,59 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("receiver_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching notifications:", error);
+        return;
+      }
+
+      // Properly type check notification objects
+      const typedNotifications = data.map(notification => {
+        // Ensure all required properties are present with defaults if needed
+        return {
+          id: notification.id || '',
+          type: notification.type || '',
+          title: notification.title || '',
+          message: notification.message || '',
+          receiver_id: notification.receiver_id || '',
+          sender_id: notification.sender_id || '',
+          item_id: notification.item_id || null,
+          conversation_id: notification.conversation_id || null,
+          created_at: notification.created_at || new Date().toISOString(),
+          is_read: notification.is_read || false,
+          action_url: notification.action_url || null
+        };
+      });
+
+      setNotifications(typedNotifications);
+      
+      // Count unread notifications
+      const unreadCount = typedNotifications.filter(item => {
+        return item && typeof item === 'object' && 
+               'receiver_id' in item && item.receiver_id === user.id && 
+               'is_read' in item && item.is_read === false &&
+               'sender_id' in item && item.sender_id !== user.id;
+      }).length;
+      
+      setUnreadCount(unreadCount);
+    } catch (error) {
+      console.error("Error in notification fetch:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <NotificationContext.Provider 
       value={{ 
@@ -267,7 +321,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         unreadCount,
         unreadMessagesByUser,
         toggleNotifications,
-        markConversationAsRead
+        markConversationAsRead,
+        notifications,
+        loading,
+        fetchNotifications
       }}
     >
       {children}

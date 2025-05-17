@@ -9,7 +9,7 @@ function Skeleton({
     <div
       className={cn("animate-pulse rounded-md bg-secondary/60", className)}
       {...props}
-      style={{animationDuration: '1s'}} // Faster animation
+      style={{animationDuration: '0.8s'}} // Even faster animation for better performance
     />
   )
 }

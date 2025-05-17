@@ -224,6 +224,42 @@ export function KYCTab() {
     }
   };
 
+  const handleApprove = async (userId: string) => {
+    try {
+      toast.promise(
+        approveKYC(userId),
+        {
+          loading: 'Approving KYC...',
+          success: 'KYC approved successfully',
+          error: (err) => `Error: ${err?.message || "Unknown error"}`
+        }
+      );
+      
+      // Refresh data after approval
+      fetchKYCData();
+    } catch (error: any) {
+      console.error('Error approving KYC:', error);
+    }
+  };
+
+  const handleReject = async (userId: string) => {
+    try {
+      toast.promise(
+        rejectKYC(userId),
+        {
+          loading: 'Rejecting KYC...',
+          success: 'KYC rejected successfully',
+          error: (err) => `Error: ${err?.message || "Unknown error"}`
+        }
+      );
+      
+      // Refresh data after rejection
+      fetchKYCData();
+    } catch (error: any) {
+      console.error('Error rejecting KYC:', error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
