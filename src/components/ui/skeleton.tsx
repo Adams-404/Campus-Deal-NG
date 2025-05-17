@@ -7,7 +7,7 @@ function Skeleton({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-secondary/60", className)}
+      className={cn("animate-pulse rounded-md bg-secondary/80", className)}
       {...props}
       style={{animationDuration: '1s'}} // Faster animation
     />
