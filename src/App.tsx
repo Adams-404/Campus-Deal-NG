@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +10,7 @@ import { DesktopSideNav } from "@/components/DesktopSideNav";
 import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { trackPageView } from "@/utils/analytics"; // Import analytics tracking
 import Index from "./pages/Index";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
@@ -94,6 +94,12 @@ const AnimatedRoutes = () => {
   const [user, setUser] = useState<any>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
   const deviceType = useDeviceType();
+  
+  // Track page views when route changes
+  useEffect(() => {
+    // Track page view with Google Analytics
+    trackPageView(location.pathname);
+  }, [location.pathname]);
   
   useEffect(() => {
     const checkUserAndSettings = async () => {
