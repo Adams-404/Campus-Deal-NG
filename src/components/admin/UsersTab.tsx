@@ -45,8 +45,18 @@ const UsersTab = () => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const users = await fetchUsersData();
-      setUsers(users);
+      const userData = await fetchUsersData();
+      // Convert the fetched data to match our User interface
+      const formattedUsers = userData.map((user: any) => ({
+        id: user.id,
+        email: user.email || "",
+        created_at: user.created_at,
+        user_metadata: {
+          full_name: user.user_metadata?.full_name || "",
+          avatar_url: user.user_metadata?.avatar_url || ""
+        }
+      }));
+      setUsers(formattedUsers);
       
       // Track analytics event
       trackEvent('admin_view_users');
