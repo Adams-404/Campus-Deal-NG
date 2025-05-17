@@ -1,18 +1,27 @@
-
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState, useEffect } from "react";
+import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { MoreVertical, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,166 +31,226 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Copy, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-import { deleteUser, fetchUsers as fetchUsersData } from "@/integrations/supabase/admin";
-import { trackEvent } from "@/lib/analytics";
+import { Input } from "@/components/ui/input";
+import { UserProfile } from "./types";
+import { getKycStatusBadgeProps } from "@/utils/kycUtils";
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
-interface User {
-  id: string;
-  email: string;
-  created_at: string;
-  user_metadata: {
-    full_name: string;
-    avatar_url: string;
-  };
+export interface UsersTabProps {
+  users: UserProfile[];
+  onViewUserProfile: (userId: string) => void;
+  onAdminAction: (user: UserProfile | null, action: 'add' | 'remove') => void;
 }
 
-const UsersTab = () => {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+const isAdmin = (user: UserProfile) => {
+  return user.roles?.some(role => role.role === 'admin') || false;
+};
 
-  const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      const userData = await fetchUsersData();
-      // Convert the fetched data to match our User interface
-      const formattedUsers = userData.map((user: any) => ({
-        id: user.id,
-        email: user.email || "",
-        created_at: user.created_at,
-        user_metadata: {
-          full_name: user.user_metadata?.full_name || "",
-          avatar_url: user.user_metadata?.avatar_url || ""
-        }
-      }));
-      setUsers(formattedUsers);
-      
-      // Track analytics event
-      trackEvent('admin_view_users');
-    } catch (error: any) {
-      toast.error(error.message || "Failed to fetch users");
-    } finally {
-      setLoading(false);
-    }
-  };
+export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabProps) {
+  const [sorting, setSorting] = useState([]);
+  const [columnFilters, setColumnFilters] = useState([]);
+  const [globalFilter, setGlobalFilter] = useState("");
+  const [usersData, setUsersData] = useState(users);
 
+  // Listen for profile updates
   useEffect(() => {
-    fetchUsers();
+    const profilesChannel = supabase
+      .channel('users-tab-profiles-changes')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: 'kyc_status=eq.processing,kyc_status=eq.verified,kyc_status=eq.rejected,kyc_status=eq.pending'
+      }, (payload) => {
+        console.log('Profile update detected:', payload);
+        setUsersData(prevUsers => 
+          prevUsers.map(user => 
+            user.id === payload.new.id 
+              ? { ...user, kyc_status: payload.new.kyc_status } 
+              : user
+          )
+        );
+      })
+      .on('error', (error) => {
+        console.error('Profiles channel error:', error);
+        toast.error('Connection to profile updates lost. Please refresh the page.');
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(profilesChannel);
+    };
   }, []);
 
-  const filteredUsers = users.filter((user) => {
-    const fullName = user.user_metadata?.full_name || "";
-    return (
-      user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      fullName.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+  // Update usersData when users prop changes
+  useEffect(() => {
+    setUsersData(users);
+  }, [users]);
+
+  const columns: ColumnDef<UserProfile>[] = [
+    {
+      accessorKey: "first_name",
+      header: "First Name",
+    },
+    {
+      accessorKey: "last_name",
+      header: "Last Name",
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      cell: ({ row }) => {
+        return row.original.email || "N/A";
+      },
+    },
+    {
+      accessorKey: "kyc_status",
+      header: "KYC Status",
+      cell: ({ row }) => {
+        const status = row.getValue("kyc_status");
+        // Use getKycStatusBadgeProps to get consistent styling
+        const badgeProps = getKycStatusBadgeProps(status as any);
+        return (
+          <Badge 
+            variant="outline" 
+            className={badgeProps.className}
+          >
+            {badgeProps.icon}
+            {badgeProps.label}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: "role",
+      header: "Role",
+      cell: ({ row }) => {
+        const user = row.original;
+        const userRoleLabel = isAdmin(user) ? (
+          <Badge variant="outline" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
+            Admin
+          </Badge>
+        ) : (
+          <Badge variant="outline" className="bg-slate-500/10 text-slate-500 border-slate-500/20">
+            User
+          </Badge>
+        );
+        return userRoleLabel;
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => {
+        const user = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Open menu</span>
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleViewUserProfile(user.id)}>
+                <Edit className="h-4 w-4 mr-2" />
+                View Profile
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onAdminAction(user, isAdmin(user) ? 'remove' : 'add')}>
+                {isAdmin(user) ? 'Remove Admin' : 'Make Admin'}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
+  const table = useReactTable({
+    data: usersData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    onSortingChange: setSorting,
+    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
+    getPaginationRowModel: getCoreRowModel(),
+    state: {
+      sorting,
+      columnFilters,
+      globalFilter,
+    },
   });
 
-  const copyUserId = (userId: string) => {
-    navigator.clipboard.writeText(userId);
-    toast.success("User ID copied to clipboard");
-    // Track analytics event
-    trackEvent('admin_copy_user_id');
-  };
-
-  const handleDeleteUser = async (userId: string) => {
-    if (window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
-      toast.promise(
-        deleteUser(userId),
-        {
-          loading: 'Deleting user...',
-          success: 'User deleted successfully',
-          error: (err) => `Error: ${err?.message || "Unknown error"}`
-        }
-      );
-      
-      // Refresh users after deletion
-      fetchUsers();
-    }
+  const handleViewUserProfile = (userId: string) => {
+    console.log('User ID to view profile:', userId);
+    onViewUserProfile(userId);
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold">Users</h2>
-        <div className="flex items-center space-x-2">
-          <Label htmlFor="search">Search:</Label>
+    <Card>
+      <CardHeader>
+        <CardTitle>Users</CardTitle>
+        <CardDescription>Manage users and their roles.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center py-4">
           <Input
-            id="search"
             type="text"
-            placeholder="Search by email or name"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Filter users..."
+            value={globalFilter ?? ""}
+            onChange={(e) => setGlobalFilter(e.target.value)}
           />
         </div>
-      </div>
-      <Table>
-        <TableCaption>A list of all registered users.</TableCaption>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]">Avatar</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Created At</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {loading ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center">
-                Loading users...
-              </TableCell>
-            </TableRow>
-          ) : filteredUsers.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center">
-                No users found.
-              </TableCell>
-            </TableRow>
-          ) : (
-            filteredUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell>
-                  <Avatar>
-                    <AvatarImage src={user.user_metadata?.avatar_url} />
-                    <AvatarFallback>{user.user_metadata?.full_name?.[0]}</AvatarFallback>
-                  </Avatar>
-                </TableCell>
-                <TableCell>{user.user_metadata?.full_name}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>
-                  {format(new Date(user.created_at), "PPP")}
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => copyUserId(user.id)}>
-                        <Copy className="h-4 w-4 mr-2" /> Copy User ID
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={() => handleDeleteUser(user.id)}>
-                        <Trash2 className="h-4 w-4 mr-2" /> Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.map((row) => (
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+              {usersData.length === 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center"
+                  >
+                    No results.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
-};
-
-export default UsersTab;
+}

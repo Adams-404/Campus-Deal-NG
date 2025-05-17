@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,7 +40,6 @@ import Support from "./pages/Support";
 import LazyHomepage from "./pages/LazyHomepage";
 import LazyViewItem from "./pages/LazyViewItem";
 import { useDeviceType } from "./hooks/use-mobile";
-import { trackPageView } from "@/lib/analytics";
 
 const queryClient = new QueryClient();
 
@@ -125,8 +125,6 @@ const AnimatedRoutes = () => {
   useEffect(() => {
     if (location.pathname !== '/') {
       window.scrollTo(0, 0);
-      // Track page view on route change
-      trackPageView();
     }
   }, [location.pathname]);
   
