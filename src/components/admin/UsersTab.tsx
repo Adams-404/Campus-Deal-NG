@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -24,6 +25,7 @@ import {
 import { MoreVertical, Copy, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { deleteUser, fetchUsers as fetchUsersData } from "@/integrations/supabase/admin";
+import { trackEvent } from "@/lib/analytics";
 
 interface User {
   id: string;
@@ -45,6 +47,9 @@ const UsersTab = () => {
       setLoading(true);
       const users = await fetchUsersData();
       setUsers(users);
+      
+      // Track analytics event
+      trackEvent('admin_view_users');
     } catch (error: any) {
       toast.error(error.message || "Failed to fetch users");
     } finally {
@@ -67,9 +72,10 @@ const UsersTab = () => {
   const copyUserId = (userId: string) => {
     navigator.clipboard.writeText(userId);
     toast.success("User ID copied to clipboard");
+    // Track analytics event
+    trackEvent('admin_copy_user_id');
   };
 
-  // Fix the toast.promise call to include the correct number of arguments
   const handleDeleteUser = async (userId: string) => {
     if (window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) {
       toast.promise(
