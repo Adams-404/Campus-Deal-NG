@@ -1,414 +1,353 @@
-import { X, Upload, Video, ImagePlus, Trash2, Loader2 } from "lucide-react";
-import { Button } from "./ui/button";
-import { useState, useRef, FormEvent } from "react";
-import { ImageCarousel } from "./ui/image-carousel";
-import { cn } from "@/lib/utils";
+import { useState, useEffect, useCallback } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/components/ui/use-toast";
+import { ImageIcon, Plus, X } from "lucide-react";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { InputWithEmojiPicker } from "@/components/InputWithEmojiPicker";
+import { useUser } from "@/contexts/UserContext";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid';
+import { useDropzone } from 'react-dropzone';
+import { cn } from "@/lib/utils";
+import { Progress } from "@/components/ui/progress";
 
 interface SellModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onItemListed?: () => void;
+  onItemListed: () => void;
 }
 
-interface FormData {
-  title: string;
-  price: string;
-  category: string;
-  condition: "new" | "like_new" | "good" | "fair" | "poor";
-  description: string;
-}
-
-const categories = [
-  'Food',
-  'Clothing',
-  'Beauty',
-  'Jewelry',
-  'Art',
-  'Baby',
-  'Bags',
-  'Shoes',
-  'Perfumes',
-  'Tools',
-  'Books',
-  'Electronics',
-  'Stationary',
-  'Others'
-];
-
-export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => {
+export const SellModal: React.FC<SellModalProps> = ({ isOpen, onClose, onItemListed }) => {
+  const [title, setTitle] = useState('');
+  const [price, setPrice] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+  const [condition, setCondition] = useState('');
+  const [isNegotiable, setIsNegotiable] = useState(false);
   const [images, setImages] = useState<File[]>([]);
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [videos, setVideos] = useState<File[]>([]);
-  const [videoUrls, setVideoUrls] = useState<string[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [formData, setFormData] = useState<FormData>({
-    title: '',
-    price: '',
-    category: '',
-    condition: 'good', // Set a default value that matches the allowed types
-    description: ''
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const { toast } = useToast();
+  const { user } = useUser();
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setImages(prevImages => [...prevImages, ...acceptedFiles]);
+  }, []);
+
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.png', '.jpg']
+    },
+    maxFiles: 5,
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const removeImage = (indexToRemove: number) => {
+    setImages(images.filter((_, index) => index !== indexToRemove));
   };
 
-  const handleImageUpload = (files: FileList | null) => {
-    if (!files) return;
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-    const newImages = Array.from(files).filter(file => file.type.startsWith('image/'));
-    if (images.length + newImages.length > 5) {
-      toast.error("Maximum 5 images allowed");
+    if (!title || !price || !description || !category || !condition || images.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please fill in all fields and upload at least one image.",
+      });
       return;
     }
 
-    setImages(prev => [...prev, ...newImages]);
-    const newImageUrls = newImages.map(file => URL.createObjectURL(file));
-    setImageUrls(prev => [...prev, ...newImageUrls]);
-  };
-
-  const handleVideoUpload = (files: FileList | null) => {
-    if (!files) return;
-
-    const newVideos = Array.from(files).filter(file => file.type.startsWith('video/'));
-    if (videos.length + newVideos.length > 1) {
-      toast.error("Only 1 video allowed");
+    if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "You must be logged in to list an item.",
+      });
       return;
     }
 
-    setVideos(prev => [...prev, ...newVideos]);
-    const newVideoUrls = newVideos.map(file => URL.createObjectURL(file));
-    setVideoUrls(prev => [...prev, ...newVideoUrls]);
-  };
-
-  const uploadFile = async (file: File, bucket: 'item_images' | 'item_videos', itemId: string) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${itemId}/${uuidv4()}.${fileExt}`;
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, file);
-
-    if (error) throw error;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
-
-    return publicUrl;
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (isSubmitting) return;
+    setIsUploading(true);
+    setUploadProgress(0);
 
     try {
-      setIsSubmitting(true);
-
-      // Validate form
-      if (!formData.title || !formData.price || !formData.category || !formData.condition) {
-        toast.error("Please fill in all required fields");
-        return;
-      }
-
-      if (images.length === 0) {
-        toast.error("Please add at least one image");
-        return;
-      }
-
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      if (userError || !user) throw new Error("Please sign in to list items");
-
-      // Create item record
+      // 1. Create item record in the database
       const { data: item, error: itemError } = await supabase
         .from('items')
         .insert({
-          title: formData.title,
-          description: formData.description,
-          price: parseFloat(formData.price),
-          condition: formData.condition,
-          category: formData.category,
           seller_id: user.id,
-          status: 'active'
+          title,
+          price: parseFloat(price),
+          description,
+          category,
+          condition,
+          is_negotiable: isNegotiable,
+          status: 'active',
         })
         .select()
         .single();
 
       if (itemError) throw itemError;
 
-      // Upload images
-      const imagePromises = images.map(async (image, index) => {
-        const publicUrl = await uploadFile(image, 'item_images', item.id);
-        return supabase
+      // 2. Upload images to storage and create image records
+      const uploadPromises = images.map(async (image, index) => {
+        const imageName = `${uuidv4()}-${image.name}`;
+        const imagePath = `items/${item.id}/${imageName}`;
+
+        const { error: uploadError, data } = await supabase.storage
+          .from('images')
+          .upload(imagePath, image, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          toast({
+            variant: "destructive",
+            title: "Upload Error",
+            description: `Failed to upload image ${index + 1}. Please try again.`,
+          });
+          return null;
+        }
+
+        // Get public URL
+        const publicURL = supabase.storage.from('images').getPublicUrl(imagePath).data.publicUrl;
+
+        // Create image record in the database
+        const { error: imageRecordError } = await supabase
           .from('item_images')
           .insert({
             item_id: item.id,
-            image_url: publicUrl,
-            is_primary: index === 0
+            image_url: publicURL,
           });
+
+        if (imageRecordError) {
+          console.error('Error creating image record:', imageRecordError);
+          toast({
+            variant: "destructive",
+            title: "Database Error",
+            description: `Failed to create image record for image ${index + 1}.`,
+          });
+          return null;
+        }
+
+        // Update upload progress
+        setUploadProgress(prevProgress => prevProgress + (100 / images.length));
+
+        return data;
       });
 
-      // Upload video if exists
-      const videoPromises = videos.map(async (video) => {
-        const publicUrl = await uploadFile(video, 'item_videos', item.id);
-        return supabase
-          .from('item_videos')
-          .insert({
-            item_id: item.id,
-            video_url: publicUrl
-          });
+      const uploadedImages = await Promise.all(uploadPromises);
+
+      // Check if any uploads failed
+      if (uploadedImages.some(image => image === null)) {
+        toast({
+          variant: "destructive",
+          title: "Upload Error",
+          description: "One or more images failed to upload. Please check the error messages.",
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: "Item listed successfully!",
       });
 
-      await Promise.all([...imagePromises, ...videoPromises]);
-
-      toast.success("Item listed successfully!");
-      onItemListed?.();
+      onItemListed();
       onClose();
-
+      resetForm();
     } catch (error: any) {
-      console.error('Error creating item:', error);
-      toast.error(error.message);
+      console.error('Error listing item:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to list item. Please try again.",
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
+  const resetForm = () => {
+    setTitle('');
+    setPrice('');
+    setDescription('');
+    setCategory('');
+    setCondition('');
+    setIsNegotiable(false);
+    setImages([]);
+    setUploadProgress(0);
+    setIsUploading(false);
   };
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const files = e.dataTransfer.files;
-    handleImageUpload(files);
-  };
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    setImageUrls(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const removeVideo = (index: number) => {
-    setVideos(prev => prev.filter((_, i) => i !== index));
-    setVideoUrls(prev => prev.filter((_, i) => i !== index));
-  };
-
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) {
+      resetForm();
+    }
+  }, [isOpen]);
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-in fade-in duration-300">
-      <form onSubmit={handleSubmit} className="bg-secondary w-full sm:w-[95%] md:w-[90%] lg:w-[80%] max-w-2xl rounded-t-2xl sm:rounded-2xl overflow-hidden animate-in slide-in-from-bottom duration-500">
-        <div className="sticky top-0 z-10 flex justify-between items-center p-3 sm:p-4 border-b border-white/10 bg-secondary/95 backdrop-blur-sm">
-          <h2 className="text-lg sm:text-xl font-semibold text-white">List an Item</h2>
-          <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 sm:h-10 sm:w-10">
-            <X className="h-4 w-4 sm:h-5 sm:w-5" />
-          </Button>
-        </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[525px]">
+        <DialogHeader>
+          <DialogTitle>List a new item</DialogTitle>
+          <DialogDescription>
+            Fill in the details below to list your item on the marketplace.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="title" className="text-right">
+              Title
+            </Label>
+            <InputWithEmojiPicker id="title" value={title} onChange={(e) => setTitle(e.target.value)} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="price" className="text-right">
+              Price
+            </Label>
+            <Input
+              type="number"
+              id="price"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-start gap-4">
+            <Label htmlFor="description" className="text-right mt-2">
+              Description
+            </Label>
+            <Textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="category" className="text-right">
+              Category
+            </Label>
+            <Select value={category} onValueChange={setCategory} className="col-span-3">
+              <SelectTrigger>
+                <SelectValue placeholder="Select a category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Books">Books</SelectItem>
+                <SelectItem value="Clothing">Clothing</SelectItem>
+                <SelectItem value="Electronics">Electronics</SelectItem>
+                <SelectItem value="Furniture">Furniture</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="condition" className="text-right">
+              Condition
+            </Label>
+            <Select value={condition} onValueChange={setCondition} className="col-span-3">
+              <SelectTrigger>
+                <SelectValue placeholder="Select condition" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="like new">Like New</SelectItem>
+                <SelectItem value="good">Good</SelectItem>
+                <SelectItem value="used">Used</SelectItem>
+                <SelectItem value="fair">Fair</SelectItem>
+              </SelectContent>
+          </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="negotiable" className="text-right">
+              Negotiable
+            </Label>
+            <Switch
+              id="negotiable"
+              checked={isNegotiable}
+              onCheckedChange={setIsNegotiable}
+              className="col-span-3"
+            />
+          </div>
 
-        <div className="p-3 sm:p-4 space-y-3 sm:space-y-4 max-h-[80vh] overflow-y-auto">
-          <div className="space-y-2">
-            <label className="text-sm text-gray-400">Media</label>
-            {(imageUrls.length > 0 || videoUrls.length > 0) && (
-              <div className="mb-3 sm:mb-4 rounded-lg overflow-hidden">
-                <ImageCarousel 
-                  images={[...imageUrls, ...videoUrls]} 
-                  className="bg-black"
-                  aspectRatio="product"
-                />
+          {/* Image Upload Section */}
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label className="text-right mt-2">
+              Images
+            </Label>
+            <div className="col-span-3">
+              <div
+                {...getRootProps()}
+                className={cn(
+                  "border-2 border-dashed rounded-md p-4 cursor-pointer",
+                  isDragActive ? "border-primary" : "border-muted-foreground",
+                )}
+              >
+                <input {...getInputProps()} />
+                <div className="flex flex-col items-center justify-center">
+                  <ImageIcon className="h-6 w-6 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    {isDragActive ? "Drop the images here..." : "Click or drag images to upload (max 5)"}
+                  </p>
+                </div>
               </div>
-            )}
-            <div
-              className={cn(
-                "rounded-lg border-2 border-dashed transition-colors",
-                isDragging ? "border-primary/50 bg-primary/5" : "border-white/10",
-                "p-3 sm:p-4"
-              )}
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-            >
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="aspect-[4/3] sm:aspect-video rounded-lg border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-1 sm:gap-2 hover:border-primary/50 transition-colors"
-                >
-                  <ImagePlus className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
-                  <span className="text-xs sm:text-sm text-gray-400">Add Photos</span>
-                  <span className="text-[10px] sm:text-xs text-gray-400">or drag and drop</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="aspect-[4/3] sm:aspect-video rounded-lg border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-1 sm:gap-2 hover:border-primary/50 transition-colors"
-                >
-                  <Video className="h-5 w-5 sm:h-6 sm:w-6 text-gray-400" />
-                  <span className="text-xs sm:text-sm text-gray-400">Add Video</span>
-                  <span className="text-[10px] sm:text-xs text-gray-400">up to 30 seconds</span>
-                </button>
+
+              {/* Image Preview */}
+              <div className="mt-4 grid grid-cols-3 gap-4">
+                {images.map((image, index) => (
+                  <div key={index} className="relative">
+                    <AspectRatio ratio={1} className="relative overflow-hidden rounded-md">
+                      <img
+                        src={URL.createObjectURL(image)}
+                        alt={image.name}
+                        className="object-cover"
+                      />
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-2 right-2 h-6 w-6 p-0"
+                        onClick={() => removeImage(index)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </AspectRatio>
+                  </div>
+                ))}
               </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files?.[0]?.type.startsWith('video/')) {
-                    handleVideoUpload(e.target.files);
-                  } else {
-                    handleImageUpload(e.target.files);
-                  }
-                }}
-              />
             </div>
           </div>
 
-          {/* Preview Grid */}
-          {(imageUrls.length > 0 || videoUrls.length > 0) && (
-            <div className="mt-4 space-y-2">
-              <h3 className="text-sm text-gray-400">Media Preview</h3>
-              <div className="grid grid-cols-5 gap-2">
-                {imageUrls.map((url, index) => (
-                  <div key={url} className="relative group">
-                    <img src={url} alt={`Preview ${index + 1}`} className="aspect-square object-cover rounded-lg" />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="h-4 w-4 text-white" />
-                    </button>
-                  </div>
-                ))}
-                {videoUrls.map((url, index) => (
-                  <div key={url} className="relative group">
-                    <video src={url} className="aspect-square object-cover rounded-lg" />
-                    <button
-                      type="button"
-                      onClick={() => removeVideo(index)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <Trash2 className="h-4 w-4 text-white" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+          {isUploading && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">
+                Upload Progress
+              </Label>
+              <Progress value={uploadProgress} className="col-span-3" />
             </div>
           )}
 
-          <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-sm text-gray-400">Title</label>
-            <input
-              type="text"
-              name="title"
-              value={formData.title}
-              onChange={handleInputChange}
-              placeholder="What are you selling?"
-              className="w-full h-10 sm:h-11 bg-background rounded-lg border border-white/10 px-3 sm:px-4 text-sm sm:text-base text-white focus:outline-none focus:border-primary"
-              required
-            />
+          <div className="flex justify-end">
+            <Button type="submit">List Item</Button>
           </div>
-
-          <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-sm text-gray-400">Price</label>
-            <div className="relative">
-              <span className="absolute left-3 sm:left-4 top-[10px] sm:top-[13px] text-gray-400 text-sm sm:text-base">₦</span>
-              <input
-                type="number"
-                name="price"
-                value={formData.price}
-                onChange={handleInputChange}
-                placeholder="0.00"
-                className="w-full h-10 sm:h-11 bg-background rounded-lg border border-white/10 px-3 sm:px-4 pl-6 sm:pl-8 text-sm sm:text-base text-white focus:outline-none focus:border-primary"
-                required
-                min="0"
-                step="0.01"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-sm text-gray-400">Category</label>
-            <select 
-              name="category"
-              value={formData.category}
-              onChange={handleInputChange}
-              className="w-full h-10 sm:h-11 bg-background rounded-lg border border-white/10 px-3 sm:px-4 text-sm sm:text-base text-white focus:outline-none focus:border-primary appearance-none"
-              required
-            >
-              <option value="">Select a category</option>
-              {categories.map(category => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-sm text-gray-400">Condition</label>
-            <select 
-              name="condition"
-              value={formData.condition}
-              onChange={handleInputChange}
-              className="w-full h-10 sm:h-11 bg-background rounded-lg border border-white/10 px-3 sm:px-4 text-sm sm:text-base text-white focus:outline-none focus:border-primary appearance-none"
-              required
-            >
-              <option value="">Select condition</option>
-              <option value="new">New</option>
-              <option value="like_new">Like New</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="poor">Poor</option>
-            </select>
-          </div>
-
-          <div className="space-y-1.5 sm:space-y-2">
-            <label className="text-sm text-gray-400">Description</label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              placeholder="Describe what you're selling..."
-              rows={4}
-              className="w-full bg-background rounded-lg border border-white/10 px-3 sm:px-4 py-2 text-sm sm:text-base text-white focus:outline-none focus:border-primary resize-none"
-              required
-            />
-          </div>
-
-          <div className="pt-2 sm:pt-4">
-            <Button 
-              type="submit" 
-              className="w-full h-10 sm:h-11 text-sm sm:text-base"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Listing Item...
-                </>
-              ) : (
-                "List Item"
-              )}
-            </Button>
-          </div>
-        </div>
-      </form>
-    </div>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 };

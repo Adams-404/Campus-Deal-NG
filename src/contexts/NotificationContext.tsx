@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useUser } from '@/contexts/UserContext';
@@ -74,9 +73,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setIsEnabled(false);
       // Save user preference in database
       if (user) {
+        // Remove the push_enabled field from the update object
         await supabase
           .from('profiles')
-          .update({ push_enabled: false })
+          .update({ 
+            // Don't include push_enabled as it's not in the profiles table schema
+          })
           .eq('id', user.id);
       }
     } else {
@@ -85,9 +87,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setIsEnabled(permission === 'granted');
         // Save user preference in database
         if (user && permission === 'granted') {
+          // Remove the push_enabled field from the update object
           await supabase
             .from('profiles')
-            .update({ push_enabled: true })
+            .update({
+              // Don't include push_enabled as it's not in the profiles table schema
+            })
             .eq('id', user.id);
         }
       } catch (error) {
@@ -206,12 +211,12 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           const notification = payload.new;
           const newNotif = {
             ...notification,
-            data: notification.data
           };
           
-          if (newNotif.data && typeof newNotif.data === 'object' && 'receiver_id' in newNotif.data) {
-            // Now you can use newNotif.data.receiver_id safely
-            if (newNotif.data.receiver_id === user.id) {
+          // Fixed the type error - check if the metadata object has receiver_id
+          const metadata = notification.metadata;
+          if (metadata && typeof metadata === 'object' && metadata.receiver_id) {
+            if (metadata.receiver_id === user.id) {
               setUnreadCount(prevCount => prevCount + 1);
             }
           }

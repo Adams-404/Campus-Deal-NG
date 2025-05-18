@@ -1,359 +1,274 @@
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { KYCDocumentsTab } from "./KYCDocumentsTab";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Check, X, FileText, Calendar, User as UserIcon } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { KYCDocument } from "./types";
-import { cn } from "@/lib/utils";
-import { KycStatus, updateKYCStatus, getKycStatusBadgeProps } from "@/utils/kycUtils";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Button } from "@/components/ui/button";
+import { CheckCircle, XCircle, Eye } from "lucide-react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-export function KYCTab() {
-  const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
-  const [selectedDocument, setSelectedDocument] = useState<KYCDocument | null>(null);
-  const [isViewerOpen, setIsViewerOpen] = useState(false);
-  const [adminNotes, setAdminNotes] = useState("");
-  const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [activeTab, setActiveTab] = useState<KycStatus | 'all'>('all');
-
-  const fetchKYCDocuments = async () => {
-    try {
-      console.log("Fetching KYC documents with activeTab:", activeTab);
-      
-      // Query kyc_documents with proper join to profiles
-      let query = supabase
-        .from('kyc_documents')
-        .select(`
-          id,
-          user_id,
-          document_type,
-          document_url,
-          status,
-          created_at,
-          admin_notes,
-          updated_at,
-          profile:profiles(
-            first_name,
-            last_name,
-            avatar_url,
-            kyc_status
-          )
-        `);
-
-      if (activeTab !== 'all') {
-        query = query.eq('status', activeTab);
-      }
-
-      query = query.order('created_at', { ascending: false });
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error("Error fetching KYC documents:", error);
-        throw error;
-      }
-
-      console.log("Fetched KYC documents:", data?.length);
-      setKycDocuments(data || []);
-    } catch (error) {
-      console.error('Error fetching KYC documents:', error);
-      toast.error('Failed to fetch KYC documents');
-    }
+interface KYCData {
+  id: string;
+  user_id: string;
+  full_name: string;
+  dob: string;
+  address: string;
+  document_type: string;
+  document_front_url: string;
+  document_back_url: string;
+  status: 'pending' | 'approved' | 'rejected';
+  reason_for_rejection: string | null;
+  created_at: string;
+  profiles?: {
+    email: string;
   };
+}
+
+export default function KYCTab() {
+  const [kycData, setKycData] = useState<KYCData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedDocument, setSelectedDocument] = useState<KYCData | null>(null);
 
   useEffect(() => {
-    fetchKYCDocuments();
-    
-    // Listen for changes in KYC documents and profiles
-    const channel = supabase
-      .channel('kyc-documents-changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'kyc_documents'
-      }, (payload) => {
-        console.log("KYC document change detected:", payload);
-        fetchKYCDocuments();
-      })
-      .on('error', (error) => {
-        console.error('KYC documents channel error:', error);
-        toast.error('Connection to KYC updates lost. Please refresh the page.');
-      })
-      .subscribe();
+    fetchKYCData();
+  }, []);
 
-    // Listen for changes in profiles to catch KYC status updates
-    const profilesChannel = supabase
-      .channel('profiles-changes')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'profiles',
-        filter: 'kyc_status=eq.processing,kyc_status=eq.verified,kyc_status=eq.rejected,kyc_status=eq.pending'
-      }, (payload) => {
-        console.log("Profile KYC status change detected:", payload);
-        // Update specific user's status in the local state
-        setKycDocuments(prevDocs => 
-          prevDocs.map(doc => 
-            doc.user_id === payload.new.id 
-              ? { ...doc, profile: { ...doc.profile, kyc_status: payload.new.kyc_status } } 
-              : doc
-          )
-        );
-      })
-      .on('error', (error) => {
-        console.error('Profiles channel error:', error);
-        toast.error('Connection to profile updates lost. Please refresh the page.');
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-      supabase.removeChannel(profilesChannel);
-    };
-  }, [activeTab]);
-
-  const handleViewDocument = (document: KYCDocument) => {
-    setSelectedDocument(document);
-    setAdminNotes(document.admin_notes || "");
-    setIsViewerOpen(true);
-  };
-
-  const handleStatusUpdate = async (status: KycStatus) => {
-    if (!selectedDocument) return;
-    
-    setUpdatingStatus(true);
-    
+  const fetchKYCData = async () => {
     try {
-      console.log(`Updating KYC status for document ${selectedDocument.id} to ${status}...`, {
-        userId: selectedDocument.user_id,
-        adminNotes
-      });
-      
-      // Optimistically update local state
-      setSelectedDocument(prev => prev ? {...prev, status} : null);
-      setKycDocuments(prev => 
-        prev.map(doc => 
-          doc.id === selectedDocument.id 
-            ? { ...doc, status } 
-            : doc
-        )
-      );
-      
-      const result = await updateKYCStatus(
-        selectedDocument.id,
-        selectedDocument.user_id,
-        status,
-        adminNotes
-      );
-      
-      if (result.success) {
-        console.log('KYC status update successful:', {
-          documentId: selectedDocument.id,
-          newStatus: status
-        });
-        toast.success(`KYC document ${status === 'verified' ? 'approved' : 'rejected'} successfully`);
-        
-        // Force refresh documents after successful update
-        await fetchKYCDocuments();
-        
-        // Close the viewer after a short delay
-        setTimeout(() => {
-          setIsViewerOpen(false);
-        }, 500);
-      } else {
-        console.error('KYC status update failed:', result.error);
-        // Revert optimistic update if failed
-        setSelectedDocument(prev => prev ? {...prev, status: selectedDocument.status} : null);
-        setKycDocuments(prev => 
-          prev.map(doc => 
-            doc.id === selectedDocument.id 
-              ? { ...doc, status: selectedDocument.status } 
-              : doc
+      const { data, error } = await supabase
+        .from('kyc_data')
+        .select(`
+          *,
+          profiles (
+            email
           )
-        );
-        
-        toast.error(
-          result.error?.message || 'Failed to update KYC status',
-          {
-            description: 'Please check the logs for more details'
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Error in handleStatusUpdate:', error);
-      // Revert optimistic update if error
-      setSelectedDocument(prev => prev ? {...prev, status: selectedDocument.status} : null);
-      setKycDocuments(prev => 
-        prev.map(doc => 
-          doc.id === selectedDocument.id 
-            ? { ...doc, status: selectedDocument.status } 
-            : doc
-        )
-      );
-      
-      toast.error('An unexpected error occurred while updating KYC status');
-    } finally {
-      setUpdatingStatus(false);
-    }
-  };
-
-  const handleVerifyUser = async (userId: string) => {
-    try {
-      console.log('Attempting to verify user:', userId);
-      const { data, error } = await supabase.rpc('verify_user', {
-        user_id: userId
-      });
+        `)
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error verifying user:', error);
-        throw error;
+        console.error('Error fetching KYC data:', error);
+        toast({
+          variant: "destructive",
+          title: "Error fetching KYC data",
+          description: "Please try again later."
+        });
+        return;
       }
 
-      console.log('User verification successful:', data);
-      toast.success('User verified successfully');
-      await fetchKYCDocuments();
+      setKycData(data);
     } catch (error) {
-      console.error('Error in handleVerifyUser:', error);
-      toast.error('Failed to verify user');
+      console.error('Unexpected error fetching KYC data:', error);
+      toast({
+        variant: "destructive",
+        title: "Unexpected error",
+        description: "Please try again later."
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
+  const updateKYCStatus = async (id: string, status: 'approved' | 'rejected', reason: string | null = null) => {
+    try {
+      const { error } = await supabase
+        .from('kyc_data')
+        .update({ status, reason_for_rejection: reason })
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error updating KYC status:', error);
+        toast({
+          variant: "destructive",
+          title: "Error updating status",
+          description: "Please try again later."
+        });
+        return;
+      }
+
+      // Optimistically update the KYC data
+      setKycData(prevData =>
+        prevData.map(item =>
+          item.id === id ? { ...item, status, reason_for_rejection: reason } : item
+        )
+      );
+
+      toast({
+        title: "KYC status updated",
+        description: `KYC status updated to ${status}`,
+      });
+    } catch (error) {
+      console.error('Unexpected error updating KYC status:', error);
+      toast({
+        variant: "destructive",
+        title: "Error updating status",
+        description: "Please try again later."
+      });
+    }
+  };
+
+  const handleApprove = (id: string) => {
+    updateKYCStatus(id, 'approved');
+  };
+
+  const handleReject = (id: string) => {
+    // Open a prompt to ask for the reason for rejection
+    const reason = prompt("Please enter the reason for rejection:");
+    if (reason === null) {
+      // If the user cancels the prompt, do nothing
+      return;
+    }
+    if (reason === "") {
+      alert("Reason cannot be empty");
+      return;
+    }
+    updateKYCStatus(id, 'rejected', reason);
+  };
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  if (loading) {
+    return <div className="text-center">Loading KYC Data...</div>;
+  }
+
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-        <h2 className="text-lg font-semibold">KYC Verification Documents</h2>
-        <Button size="sm" onClick={fetchKYCDocuments} variant="outline">
-          Refresh
-        </Button>
-      </div>
+    <div>
+      <h2 className="text-2xl font-bold mb-4">KYC Verification</h2>
+      <p className="text-muted-foreground mb-4">Review and verify user identity documents.</p>
 
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as KycStatus | 'all')}>
-        <div className="overflow-x-auto pb-2">
-          <TabsList className="mb-4">
-            <TabsTrigger value="all">All Documents</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="processing">Processing</TabsTrigger>
-            <TabsTrigger value="verified">Verified</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected</TabsTrigger>
-          </TabsList>
-        </div>
-        
-        <TabsContent value={activeTab}>
-          <KYCDocumentsTab 
-            documents={kycDocuments} 
-            onViewDocument={handleViewDocument}
-            onStatusChange={(documentId, newStatus) => {
-              const document = kycDocuments.find(doc => doc.id === documentId);
-              if (document) {
-                setSelectedDocument(document);
-                handleStatusUpdate(newStatus);
-              }
-            }}
-          />
-        </TabsContent>
-      </Tabs>
-
-      <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>KYC Document Review</DialogTitle>
-          </DialogHeader>
-
-          {selectedDocument && (
-            <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={selectedDocument.profile.avatar_url || undefined} />
-                    <AvatarFallback>
-                      {selectedDocument.profile.first_name?.[0]}
-                      {selectedDocument.profile.last_name?.[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-medium">
-                      {selectedDocument.profile.first_name} {selectedDocument.profile.last_name}
-                    </p>
-                    <div className="text-sm text-muted-foreground flex items-center gap-2">
-                      <FileText className="h-3.5 w-3.5" />
-                      {selectedDocument.document_type}
-                    </div>
-                  </div>
-                </div>
-                
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    selectedDocument.status === 'verified' && "bg-green-500/10 text-green-500 border-green-500/20",
-                    selectedDocument.status === 'rejected' && "bg-red-500/10 text-red-500 border-red-500/20",
-                    selectedDocument.status === 'processing' && "bg-orange-500/10 text-orange-500 border-orange-500/20",
-                    selectedDocument.status === 'pending' && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+      <div className="overflow-x-auto">
+        <Table>
+          <TableCaption>A list of users KYC applications.</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[150px]">Full Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Submission Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {kycData.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell className="font-medium">{item.full_name}</TableCell>
+                <TableCell>{item.profiles?.email}</TableCell>
+                <TableCell>{formatDate(item.created_at)}</TableCell>
+                <TableCell>
+                  {item.status === 'pending' && (
+                    <Badge variant="secondary">Pending</Badge>
                   )}
-                >
-                  {selectedDocument.status}
-                </Badge>
-                <Button 
-                  size="sm" 
-                  onClick={() => handleVerifyUser(selectedDocument.user_id)}
-                  variant="outline"
-                  className="ml-2"
-                >
-                  Verify User
-                </Button>
-              </div>
-              
-              <Card>
-                <CardContent className="p-4 flex justify-center">
-                  <img 
-                    src={selectedDocument.document_url} 
-                    alt="KYC Document" 
-                    className="max-w-full rounded-md shadow-md" 
-                  />
-                </CardContent>
-              </Card>
-
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Admin Notes</h3>
-                <Textarea
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  placeholder="Add notes about this document (will be visible to the user)"
-                  rows={3}
-                />
-              </div>
-
-              {(selectedDocument.status === 'pending' || selectedDocument.status === 'processing') && (
-                <div className="flex justify-end gap-3">
-                  <Button
-                    variant="outline"
-                    className="bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20"
-                    onClick={() => handleStatusUpdate('rejected')}
-                    disabled={updatingStatus}
-                  >
-                    <X className="h-4 w-4 mr-1" />
-                    Reject
-                  </Button>
-                  
-                  <Button
-                    className="bg-green-500 hover:bg-green-600 text-white"
-                    onClick={() => handleStatusUpdate('verified')}
-                    disabled={updatingStatus}
-                  >
-                    <Check className="h-4 w-4 mr-1" />
-                    Approve
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+                  {item.status === 'approved' && (
+                    <Badge variant="outline">Approved</Badge>
+                  )}
+                  {item.status === 'rejected' && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Badge variant="destructive" className="cursor-help">Rejected</Badge>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p>Reason: {item.reason_for_rejection}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </TableCell>
+                <TableCell className="text-center">
+                  <div className="flex items-center justify-center gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="icon" onClick={() => setSelectedDocument(item)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[625px]">
+                        <DialogHeader>
+                          <DialogTitle>KYC Document</DialogTitle>
+                          <DialogDescription>
+                            Review the user's submitted documents.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <h3 className="text-sm font-medium leading-none">Front Document</h3>
+                              <img src={selectedDocument?.document_front_url} alt="Front Document" className="w-full aspect-video rounded-md border" />
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium leading-none">Back Document</h3>
+                              <img src={selectedDocument?.document_back_url} alt="Back Document" className="w-full aspect-video rounded-md border" />
+                            </div>
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-medium leading-none">Full Name</h3>
+                            <p className="text-sm text-muted-foreground">{selectedDocument?.full_name}</p>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <h3 className="text-sm font-medium leading-none">Date of Birth</h3>
+                              <p className="text-sm text-muted-foreground">{selectedDocument?.dob}</p>
+                            </div>
+                            <div>
+                              <h3 className="text-sm font-medium leading-none">Address</h3>
+                              <p className="text-sm text-muted-foreground">{selectedDocument?.address}</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <Button type="button" variant="secondary" onClick={() => handleReject(selectedDocument!.id)}>
+                            Reject <XCircle className="ml-2 h-4 w-4" />
+                          </Button>
+                          <Button type="button" onClick={() => handleApprove(selectedDocument!.id)}>
+                            Approve <CheckCircle className="ml-2 h-4 w-4" />
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    {item.status === 'pending' && (
+                      <>
+                        <Button variant="ghost" size="icon" onClick={() => handleApprove(item.id)}>
+                          <CheckCircle className="h-4 w-4 text-green-500" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleReject(item.id)}>
+                          <XCircle className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
