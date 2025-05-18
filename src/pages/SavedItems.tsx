@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +6,8 @@ import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import { useSettings } from "@/contexts/SettingsContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +42,7 @@ export default function SavedItems() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { fontSizeClass } = useSettings();
 
   useEffect(() => {
     fetchSavedItems();
@@ -220,11 +224,14 @@ export default function SavedItems() {
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <h3 className={cn(
-                          "font-medium line-clamp-2 flex-1",
-                          "dark:text-white light:text-gray-800", // Use dark text on light mode
-                          fontSizeClass
+                          "font-medium line-clamp-2 flex-1 text-white",
+                          {
+                            'text-xl': fontSizeClass === 'large',
+                            'text-lg': fontSizeClass === 'medium',
+                            'text-base': fontSizeClass === 'small',
+                          }
                         )}>
-                          {item.title}
+                          {savedItem.item.title}
                         </h3>
                         <Button
                           variant="ghost"

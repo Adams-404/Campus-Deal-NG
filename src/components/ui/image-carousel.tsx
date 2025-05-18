@@ -9,7 +9,7 @@ interface ImageCarouselProps {
   showArrows?: boolean;
   showImageCount?: boolean;
   className?: string;
-  aspectRatio?: "square" | "video" | "wide" | "vertical";
+  aspectRatio?: "square" | "video" | "wide" | "vertical" | "full";
   navClassName?: string;
   imageCountClassName?: string;
   showZoom?: boolean;
@@ -59,7 +59,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
   return (
     <div className={cn(
       "relative w-full overflow-hidden bg-secondary/10", 
-      aspectRatioClasses[aspectRatio as keyof typeof aspectRatioClasses],
+      aspectRatioClasses[aspectRatio],
       className
     )}>
       {images.map((image, index) => (

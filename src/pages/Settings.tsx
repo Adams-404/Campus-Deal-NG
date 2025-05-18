@@ -1,4 +1,3 @@
-
 import { PageTransition } from "@/components/PageTransition";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -28,7 +27,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useNotifications } from "@/contexts/NotificationContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -46,7 +45,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
-  const { isEnabled, isPushSupported, toggleNotifications } = useNotifications();
+  const { isEnabled, isPushSupported, toggleNotifications } = useNotification();
   const navigate = useNavigate();
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);

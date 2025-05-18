@@ -1,3 +1,4 @@
+
 import React, {
   createContext,
   useContext,
@@ -11,9 +12,12 @@ import { useUser } from './UserContext';
 interface Notification {
   id: string;
   created_at: string;
+  title: string;
+  content: string;
   type: string;
-  data: any;
+  is_read: boolean;
   user_id: string;
+  metadata?: any;
 }
 
 interface NotificationContextType {
@@ -170,25 +174,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({
           await fetchNotifications();
 
           if (payload.new) {
-            // Add this near line 143 to fix the type errors
-            interface NotificationData {
-              receiver_id?: string;
-              is_read?: boolean;
-              sender_id?: string;
-              [key: string]: any;
-            }
-
-            const notification = payload.new;
-            const newNotif = {
-              ...notification,
-              data: notification.data as NotificationData
-            };
-
-            if (newNotif.data && typeof newNotif.data === 'object' && 'receiver_id' in newNotif.data) {
-              // Now you can use newNotif.data.receiver_id safely
-              if (newNotif.data.receiver_id === user.id) {
-                setUnreadCount((prevCount) => prevCount + 1);
-              }
+            const notification = payload.new as any;
+            
+            // Check if the new notification is for this user and not read
+            if (notification.user_id === user.id && !notification.is_read) {
+              setUnreadCount((prevCount) => prevCount + 1);
             }
           }
         }

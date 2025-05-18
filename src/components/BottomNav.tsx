@@ -1,134 +1,148 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
-import { SellModal } from "./SellModal";
-import { Link, useLocation } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { NavLink, useLocation } from "react-router-dom";
+import { Home, User, Bell, Search, Heart } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Badge } from "@/components/ui/badge";
+import { useSettings } from "@/contexts/SettingsContext";
+import { useNotification } from "@/contexts/NotificationContext";
 import { supabase } from "@/integrations/supabase/client";
-import { useSettings } from "../contexts/SettingsContext";
-import SafetyTipsDialog from "./SafetyTipsDialog";
-import { useNotifications } from "@/contexts/NotificationContext";
-import { useDeviceType } from "../hooks/use-mobile";
+import { AnimatePresence, motion } from "framer-motion";
+
+interface NavItemProps {
+  to: string;
+  icon: JSX.Element;
+  label: string;
+  badge?: number;
+}
 
 export const BottomNav = () => {
-  const [isSellModalOpen, setIsSellModalOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
   const location = useLocation();
-  const { toast } = useToast();
-  const { hideSellTips } = useSettings();
-  const { unreadMessagesByUser } = useNotifications();
-  const deviceType = useDeviceType();
-  
+  const [userLoggedIn, setUserLoggedIn] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+  const { theme } = useTheme();
+  const { fontSizeClass } = useSettings();
+  const { unreadCount } = useNotification();
+
   useEffect(() => {
-    // Check for existing user session
+    // Check if user is logged in
     const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        setUserLoggedIn(true);
+        fetchSavedCount(data.user.id);
+      } else {
+        setUserLoggedIn(false);
+        setSavedCount(0);
+      }
     };
-    
+
     checkUser();
-    
-    // Set up auth state listener for real-time updates
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-    });
+  }, [location.pathname]);
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  const fetchSavedCount = async (userId: string) => {
+    try {
+      const { count, error } = await supabase
+        .from('saved_items')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
 
-  // Only show on mobile devices
-  if (!user || deviceType !== 'mobile') {
-    return null;
-  }
-
-  // Calculate if there are any new messages
-  const hasNewMessages = Object.keys(unreadMessagesByUser).length > 0;
-  const totalUnreadMessages = Object.values(unreadMessagesByUser).reduce((a, b) => a + b, 0);
-
-  const handleSellClick = () => {
-    if (!hideSellTips) {
-      setShowSellSafetyTips(true);
-    } else {
-      setIsSellModalOpen(true);
+      if (error) {
+        console.error('Error fetching saved count:', error);
+      } else if (count !== null) {
+        setSavedCount(count);
+      }
+    } catch (error) {
+      console.error('Error fetching saved count:', error);
     }
   };
 
-  const navItems = [
-    { icon: Home, label: "Home", href: "/home" },
-    { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages },
-    { icon: Plus, label: "Sell", href: "#" },
-    { icon: Heart, label: "Saved", href: "/saved" },
-    { icon: Settings, label: "Settings", href: "/settings" },
+  const fontSize = {
+    small: 'text-[10px]',
+    medium: 'text-xs',
+    large: 'text-sm',
+  }[fontSizeClass] || 'text-xs';
+
+  // Hide BottomNav on specific routes
+  const hiddenPaths = [
+    '/auth',
+    '/admin',
+    '/',
   ];
 
+  const shouldHide = hiddenPaths.some((path) => location.pathname.startsWith(path));
+  if (shouldHide) return null;
+
   return (
-    <>
-      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 bg-secondary border-t border-white/10 px-6 pb-6 pt-3 z-40">
-        <div className="flex justify-between items-center max-w-md mx-auto relative">
-          {navItems.map((item, index) => (
-            index === 2 ? (
-              <button
-                key={item.label}
-                onClick={handleSellClick}
-                className={cn(
-                  "flex flex-col items-center gap-1 relative",
-                  "-mt-8"
-                )}
-              >
-                <div className="bg-primary rounded-full p-4 shadow-lg shadow-primary/20 -mt-6">
-                  <item.icon className="w-6 h-6 text-white" />
-                </div>
-                <span className="text-xs text-gray-400">{item.label}</span>
-              </button>
-            ) : (
-              <Link
-                key={item.label}
-                to={item.href}
-                className={cn(
-                  "flex flex-col items-center gap-1 relative",
-                  location.pathname === item.href && "text-primary"
-                )}
-              >
-                {item.hasNotification && (
-                  <>
-                    {totalUnreadMessages > 0 && (
-                      <div className="absolute -right-2 -top-2">
-                        <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-500 rounded-full min-w-[18px] min-h-[18px]">
-                          {totalUnreadMessages}
-                        </span>
-                      </div>
-                    )}
-                  </>
-                )}
-                <item.icon className={cn(
-                  "w-6 h-6",
-                  location.pathname === item.href ? "text-primary" : "text-gray-400"
-                )} />
-                <span className={cn(
-                  "text-xs",
-                  location.pathname === item.href ? "text-primary" : "text-gray-400"
-                )}>{item.label}</span>
-              </Link>
-            )
-          ))}
+    <div className={cn(
+      "fixed bottom-0 left-0 right-0 border-t z-30 bg-background/80 backdrop-blur-lg",
+      "dark:border-white/10 dark:bg-black/80",
+      "light:border-gray-200 light:bg-white/90",
+      "transition-all duration-300"
+    )}>
+      <AnimatePresence>
+        <div className="flex items-center justify-around px-2 py-1 max-w-lg mx-auto">
+          <NavItem to="/home" icon={<Home className="h-5 w-5" />} label="Home" />
+          <NavItem 
+            to="/saved" 
+            icon={<Heart className="h-5 w-5" />} 
+            label="Saved" 
+            badge={savedCount > 0 ? savedCount : undefined} 
+          />
+          <NavItem to="/search" icon={<Search className="h-5 w-5" />} label="Search" />
+          <NavItem 
+            to="/notifications" 
+            icon={<Bell className="h-5 w-5" />} 
+            label="Alerts"
+            badge={unreadCount > 0 ? unreadCount : undefined} 
+          />
+          <NavItem to="/profile" icon={<User className="h-5 w-5" />} label="Profile" />
         </div>
-      </nav>
-      
-      <SafetyTipsDialog 
-        open={showSellSafetyTips} 
-        onClose={() => {
-          setShowSellSafetyTips(false);
-          setIsSellModalOpen(true);
-        }} 
-        trigger="sell"
-      />
-      
-      <SellModal isOpen={isSellModalOpen} onClose={() => setIsSellModalOpen(false)} />
-    </>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+const NavItem = ({ to, icon, label, badge }: NavItemProps) => {
+  return (
+    <NavLink 
+      to={to} 
+      className={({ isActive }) => cn(
+        "flex flex-col items-center justify-center py-2 px-4 w-1/5 relative",
+        isActive 
+          ? "text-primary" 
+          : "text-muted-foreground hover:text-foreground"
+      )}
+    >
+      {({ isActive }) => (
+        <>
+          <div className="relative">
+            {icon}
+            {typeof badge === 'number' && badge > 0 && (
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className={cn(
+                  "absolute -top-1.5 -right-1.5 rounded-full bg-primary flex items-center justify-center",
+                  badge >= 10 ? "min-w-5 h-5 text-[10px]" : "min-w-4 h-4 text-[9px]"
+                )}
+              >
+                <span className="text-primary-foreground">{badge}</span>
+              </motion.div>
+            )}
+          </div>
+          <span className="text-xs mt-1">{label}</span>
+          {isActive && (
+            <motion.div 
+              layoutId="bottomNavIndicator"
+              className="absolute bottom-0 w-12 h-0.5 bg-primary rounded-full"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            />
+          )}
+        </>
+      )}
+    </NavLink>
   );
 };
