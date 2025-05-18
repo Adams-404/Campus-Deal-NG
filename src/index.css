@@ -128,9 +128,19 @@
   --epr-search-input-border-color: rgba(0, 0, 0, 0.1) !important;
 }
 
-/* Light mode green accents */
+/* Light mode brand colors */
 .light .product-action-button {
-  @apply bg-green-500/10 text-green-700 hover:bg-green-500/20 border-green-500/30;
+  @apply bg-[#1EAEDB]/10 text-[#1EAEDB] hover:bg-[#1EAEDB]/20 border-[#1EAEDB]/30;
+}
+
+/* Heart icon in liked state */
+.light .liked-icon {
+  @apply text-[#ea384c] fill-[#ea384c];
+}
+
+/* Light mode navigation for image carousel */
+.light .carousel-nav {
+  @apply bg-white/80 text-[#1EAEDB] hover:bg-white/90 border border-[#1EAEDB]/30;
 }
 
 @keyframes fadeIn {

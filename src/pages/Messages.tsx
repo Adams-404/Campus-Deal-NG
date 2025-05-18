@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -590,14 +591,6 @@ export default function Messages() {
     }
   };
 
-  const markConversationAsRead = async (convId: string) => {
-    // Remove this function since we're removing unread functionality
-  };
-
-  const markConversationAsUnread = async (convId: string) => {
-    // Remove this function since we're removing unread functionality
-  };
-
   // Filter conversations based on search query
   const filteredConversations = conversations.filter(conv => 
     conv.other_user.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -660,6 +653,36 @@ export default function Messages() {
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
     setNewMessage(prev => prev + emojiData.emoji);
+  };
+
+  const renderEmojiPicker = () => {
+    if (!showEmojiPicker) return null;
+    
+    return (
+      <div 
+        ref={emojiPickerRef}
+        className="absolute bottom-16 sm:bottom-20 left-0 sm:left-4 z-50 shadow-xl border border-white/10 rounded-xl overflow-hidden"
+      >
+        <div className="bg-secondary/90 backdrop-blur-md p-2 relative">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowEmojiPicker(false)}
+            className="absolute right-1 top-1 h-6 w-6 rounded-full bg-white/10 hover:bg-white/20 z-10"
+          >
+            <X className="h-3 w-3" />
+          </Button>
+          <EmojiPicker
+            onEmojiClick={onEmojiClick}
+            theme={document.documentElement.classList.contains('dark') ? Theme.DARK : Theme.LIGHT}
+            skinTonesDisabled
+            searchDisabled={false}
+            width={300}
+            height={340}
+          />
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -1070,35 +1093,5 @@ export default function Messages() {
         )}
       </div>
     </PageTransition>
-  );
-}
-
-const renderEmojiPicker = () => {
-  if (!showEmojiPicker) return null;
-  
-  return (
-    <div 
-      ref={emojiPickerRef}
-      className="absolute bottom-16 sm:bottom-20 left-0 sm:left-4 z-50 shadow-xl border border-white/10 rounded-xl overflow-hidden"
-    >
-      <div className="bg-secondary/90 backdrop-blur-md p-2 relative">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowEmojiPicker(false)}
-          className="absolute right-1 top-1 h-6 w-6 rounded-full bg-white/10 hover:bg-white/20 z-10"
-        >
-          <X className="h-3 w-3" />
-        </Button>
-        <EmojiPicker
-          onEmojiClick={onEmojiClick}
-          theme={document.documentElement.classList.contains('dark') ? Theme.DARK : Theme.LIGHT}
-          skinTonesDisabled
-          searchDisabled={false}
-          width={300}
-          height={340}
-        />
-      </div>
-    </div>
   );
 }

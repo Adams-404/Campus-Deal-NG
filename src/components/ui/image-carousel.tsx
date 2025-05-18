@@ -83,29 +83,29 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
             size="icon"
             onClick={handlePrevious}
             className={cn(
-              "absolute left-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70",
+              "absolute left-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 dark:bg-black/50 dark:hover:bg-black/70 light:bg-white/70 light:text-[#1EAEDB] light:hover:bg-white/80 light:border light:border-[#1EAEDB]/30",
               navClassName
             )}
           >
-            <ChevronLeft className="h-4 w-4 text-white" />
+            <ChevronLeft className="h-4 w-4 dark:text-white light:text-[#1EAEDB]" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleNext}
             className={cn(
-              "absolute right-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70",
+              "absolute right-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 dark:bg-black/50 dark:hover:bg-black/70 light:bg-white/70 light:text-[#1EAEDB] light:hover:bg-white/80 light:border light:border-[#1EAEDB]/30",
               navClassName
             )}
           >
-            <ChevronRight className="h-4 w-4 text-white" />
+            <ChevronRight className="h-4 w-4 dark:text-white light:text-[#1EAEDB]" />
           </Button>
         </>
       )}
       
       {showImageCount && images.length > 1 && (
         <div className={cn(
-          "absolute bottom-2 right-2 z-10 px-2 py-1 rounded-md bg-black/50 backdrop-blur-sm text-white text-xs",
+          "absolute bottom-2 right-2 z-10 px-2 py-1 rounded-md bg-black/50 backdrop-blur-sm text-white text-xs dark:bg-black/50 dark:text-white light:bg-white/70 light:text-[#1EAEDB] light:border light:border-[#1EAEDB]/30",
           imageCountClassName
         )}>
           {activeIndex + 1} / {images.length}
