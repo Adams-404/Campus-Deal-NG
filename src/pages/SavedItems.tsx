@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +15,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { ItemBadge } from "@/components/ui/ItemBadge";
 
 interface SavedItem {
   id: string;
@@ -219,7 +219,13 @@ export default function SavedItems() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 flex flex-col justify-end">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-white dark:text-white light:text-white line-clamp-2">{savedItem.item.title}</p>
+                        <h3 className={cn(
+                          "font-medium line-clamp-2 flex-1",
+                          "dark:text-white light:text-gray-800", // Use dark text on light mode
+                          fontSizeClass
+                        )}>
+                          {item.title}
+                        </h3>
                         <Button
                           variant="ghost"
                           size="icon"
