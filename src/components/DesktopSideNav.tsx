@@ -1,171 +1,191 @@
-import { useState, useEffect } from "react";
-import { NavLink, useLocation } from "react-router-dom";
-import { Home, User, Bell, Search, Heart, Settings, LogOut } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { useTheme } from "@/contexts/ThemeContext";
-import { Badge } from "@/components/ui/badge";
-import { useSettings } from "@/contexts/SettingsContext";
-import { useNotification } from "@/contexts/NotificationContext";
-import { supabase } from "@/integrations/supabase/client";
-import { AnimatePresence, motion } from "framer-motion";
-import { useUser } from "@/contexts/UserContext";
 
-interface SideNavItemProps {
-  to: string;
-  icon: JSX.Element;
-  label: string;
-  badge?: number;
-  onClick?: () => void;
-}
+import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useDeviceType } from "../hooks/use-mobile";
+import { useSettings } from "../contexts/SettingsContext";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { supabase } from "@/integrations/supabase/client";
+import { SellModal } from "./SellModal";
+import SafetyTipsDialog from "./SafetyTipsDialog";
+import { motion } from "framer-motion";
+import { Button } from "./ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { toast } from "sonner";
 
 export const DesktopSideNav = () => {
+  const [isSellModalOpen, setIsSellModalOpen] = useState(false);
+  const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const location = useLocation();
-  const [savedCount, setSavedCount] = useState(0);
-  const { theme } = useTheme();
-  const { fontSizeClass } = useSettings();
-  const { unreadCount } = useNotification();
-  const { user } = useUser();
-
+  const navigate = useNavigate();
+  const { hideSellTips } = useSettings();
+  const { unreadMessagesByUser } = useNotifications();
+  const deviceType = useDeviceType();
+  
   useEffect(() => {
-    // Fetch saved count if user is logged in
-    const fetchSavedCount = async () => {
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      
       if (user) {
-        try {
-          const { count, error } = await supabase
-            .from('saved_items')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', user.id);
-
-          if (error) {
-            console.error('Error fetching saved count:', error);
-          } else if (count !== null) {
-            setSavedCount(count);
-          }
-        } catch (error) {
-          console.error('Error fetching saved count:', error);
-        }
-      } else {
-        setSavedCount(0);
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+          
+        setUserProfile(profile);
       }
     };
+    
+    checkUser();
+    
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+    });
 
-    fetchSavedCount();
-  }, [user, location.pathname]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
-  // Hide SideNav on specific routes
-  const hiddenPaths = [
-    '/auth',
-    '/admin',
-    '/',
-  ];
+  // If there's no user, don't render the navigation
+  if (!user) {
+    return null;
+  }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/auth/signin';
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      toast.error("Error signing out");
+    } else {
+      toast.success("Successfully signed out");
+      navigate("/");
+    }
   };
 
-  const shouldHide = hiddenPaths.some((path) => location.pathname.startsWith(path));
-  if (shouldHide) return null;
+  const handleSellClick = () => {
+    if (!hideSellTips) {
+      setShowSellSafetyTips(true);
+    } else {
+      setIsSellModalOpen(true);
+    }
+  };
 
-  return (
-    <div className={cn(
-      "fixed left-0 top-0 bottom-0 w-[300px] hidden lg:flex flex-col z-40 px-6 py-8 border-r",
-      "dark:border-white/10 dark:bg-black/80 backdrop-blur-lg",
-      "light:border-gray-200 light:bg-white/90",
-      "transition-all duration-300"
-    )}>
-      <div className="mb-10 px-4">
-        <h1 className="text-2xl font-bold">GSU Market</h1>
-        <p className="text-sm text-muted-foreground">Buy & sell with ease</p>
-      </div>
+  // Calculate if there are any new messages
+  const hasNewMessages = Object.keys(unreadMessagesByUser).length > 0;
+  const totalUnreadMessages = Object.values(unreadMessagesByUser).reduce((a, b) => a + b, 0);
 
-      <div className="flex-1 space-y-1.5">
-        <SideNavItem to="/home" icon={<Home className="h-5 w-5" />} label="Home" />
-        <SideNavItem 
-          to="/saved" 
-          icon={<Heart className="h-5 w-5" />} 
-          label="Saved Items" 
-          badge={savedCount > 0 ? savedCount : undefined} 
-        />
-        <SideNavItem to="/search" icon={<Search className="h-5 w-5" />} label="Search" />
-        <SideNavItem 
-          to="/notifications" 
-          icon={<Bell className="h-5 w-5" />} 
-          label="Notifications"
-          badge={unreadCount > 0 ? unreadCount : undefined} 
-        />
-        <SideNavItem to="/profile" icon={<User className="h-5 w-5" />} label="Profile" />
-        <SideNavItem to="/settings" icon={<Settings className="h-5 w-5" />} label="Settings" />
-      </div>
-
-      <div className="px-4 mt-auto">
-        <Button 
-          variant="ghost" 
-          className="w-full justify-start pl-3 text-red-500 hover:text-red-600 hover:bg-red-500/10"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4 mr-3" />
-          Logout
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-const SideNavItem = ({ to, icon, label, badge, onClick }: SideNavItemProps) => {
-  if (onClick) {
-    return (
-      <Button
-        variant="ghost"
-        className="w-full justify-start pl-3 hover:bg-accent"
-        onClick={onClick}
-      >
-        <div className="flex items-center w-full">
-          <span className="mr-3">{icon}</span>
-          <span className="flex-1">{label}</span>
-          {typeof badge === 'number' && badge > 0 && (
-            <Badge className="ml-auto">
-              {badge}
-            </Badge>
-          )}
-        </div>
-      </Button>
-    );
+  const navItems = [
+    { icon: Home, label: "Home", href: "/home" },
+    { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
+    { icon: Plus, label: "Sell", href: "#", onClick: handleSellClick },
+    { icon: Heart, label: "Saved", href: "/saved" },
+    { icon: User, label: "Profile", href: "/profile" },
+    { icon: Settings, label: "Settings", href: "/settings" },
+  ];
+  
+  // Don't show on mobile, show on tablet and desktop
+  if (deviceType === 'mobile') {
+    return null;
   }
 
   return (
-    <NavLink
-      to={to}
-      className={({ isActive }) => cn(
-        "flex items-center px-3 py-2.5 rounded-lg transition-colors relative",
-        isActive
-          ? "bg-primary/10 text-primary"
-          : "text-muted-foreground hover:text-foreground hover:bg-accent"
-      )}
-    >
-      {({ isActive }) => (
-        <>
-          <div className="mr-3 relative">
-            {icon}
-            {typeof badge === 'number' && badge > 0 && (
-              <Badge 
-                className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center p-0"
-              >
-                {badge}
-              </Badge>
-            )}
-          </div>
-          <span className="flex-1">{label}</span>
-          {isActive && (
-            <motion.div
-              layoutId="sideNavIndicator"
-              className="absolute left-0 w-1 h-full bg-primary rounded-r-full"
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            />
+    <>
+      <motion.aside 
+        className="fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col border-r border-white/10 bg-secondary/95 w-[300px] h-screen min-h-0 p-0 m-0"
+        style={{height: '100vh', top: 0, bottom: 0}}
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="flex items-center p-4 h-16">
+          <Link to="/home" className="text-2xl font-bold text-primary">GSU Market</Link>
+        </div>
+        <div className="flex-1 flex flex-col justify-between min-h-0">
+          <nav className="flex-1 flex flex-col justify-between">
+            <div className="flex-1 flex flex-col gap-2 py-6">
+              {navItems.map((item) => (
+  <Tooltip key={item.label}>
+    <TooltipTrigger asChild>
+      {item.onClick ? (
+        <Button
+          variant="ghost"
+          className={cn(
+            "flex items-center gap-4 w-full py-3 px-4 rounded-lg text-lg transition-all",
+            location.pathname === item.href
+              ? "bg-primary/15 text-primary shadow-md border-l-4 border-primary"
+              : "text-gray-300 hover:bg-white/10 hover:text-primary/90"
           )}
-        </>
+          onClick={item.onClick}
+        >
+          <item.icon className="h-7 w-7" />
+          <span className="text-lg font-medium">{item.label}</span>
+        </Button>
+      ) : (
+        <Link
+          to={item.href}
+          className={cn(
+            "flex items-center gap-4 w-full py-3 px-4 rounded-lg text-lg transition-all",
+            location.pathname === item.href
+              ? "bg-primary/15 text-primary shadow-md border-l-4 border-primary"
+              : "text-gray-300 hover:bg-white/10 hover:text-primary/90"
+          )}
+        >
+          <item.icon className="h-7 w-7" />
+          <span className="text-lg font-medium">{item.label}</span>
+        </Link>
       )}
-    </NavLink>
+    </TooltipTrigger>
+    <TooltipContent>{item.label}</TooltipContent>
+  </Tooltip>
+))}
+            </div>
+          </nav>
+          <div className="w-full max-w-[240px] mx-auto mt-6 border-t border-white/10 pt-4 flex flex-col items-center gap-3">
+            {userProfile && (
+              <div className="flex items-center gap-3 w-full px-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={userProfile?.avatar_url} />
+                  <AvatarFallback className="bg-primary/20 text-primary">
+                    {userProfile?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{userProfile?.first_name || 'User'}</div>
+                  <div className="text-xs text-gray-400 truncate">{user?.email}</div>
+                </div>
+              </div>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center gap-4 w-full py-3 px-4 h-auto text-red-400 hover:bg-red-500/10 rounded-lg"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="text-sm">Logout</span>
+                </Button>
+              </TooltipTrigger>
+            </Tooltip>
+          </div>
+        </div>
+      </motion.aside>
+      <SafetyTipsDialog 
+        open={showSellSafetyTips} 
+        onClose={() => {
+          setShowSellSafetyTips(false);
+          setIsSellModalOpen(true);
+        }} 
+        trigger="sell"
+      />
+      <SellModal isOpen={isSellModalOpen} onClose={() => setIsSellModalOpen(false)} />
+    </>
   );
 };

@@ -6,8 +6,6 @@ import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { useSettings } from "@/contexts/SettingsContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,7 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { ItemBadge } from "@/components/ui/ItemBadge";
 
 interface SavedItem {
   id: string;
@@ -42,7 +39,6 @@ export default function SavedItems() {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const navigate = useNavigate();
-  const { fontSizeClass } = useSettings();
 
   useEffect(() => {
     fetchSavedItems();
@@ -223,16 +219,7 @@ export default function SavedItems() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 flex flex-col justify-end">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <h3 className={cn(
-                          "font-medium line-clamp-2 flex-1 text-white",
-                          {
-                            'text-xl': fontSizeClass === 'large',
-                            'text-lg': fontSizeClass === 'medium',
-                            'text-base': fontSizeClass === 'small',
-                          }
-                        )}>
-                          {savedItem.item.title}
-                        </h3>
+                        <p className="text-sm font-medium text-white dark:text-white light:text-white line-clamp-2">{savedItem.item.title}</p>
                         <Button
                           variant="ghost"
                           size="icon"

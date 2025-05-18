@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { BottomNav } from "@/components/BottomNav";
@@ -238,9 +238,11 @@ const App = () => {
           <NotificationProvider>
             <SearchProvider>
               <TooltipProvider>
-                <AnimatedRoutes />
-                <Toaster />
-                <Sonner />
+                <BrowserRouter>
+                  <AnimatedRoutes />
+                  <Toaster />
+                  <Sonner />
+                </BrowserRouter>
               </TooltipProvider>
             </SearchProvider>
           </NotificationProvider>

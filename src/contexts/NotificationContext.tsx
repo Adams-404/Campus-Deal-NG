@@ -1,257 +1,284 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { useUser } from '@/contexts/UserContext';
 
 interface NotificationContextType {
-  notifications: any[];
-  fetchNotifications: () => Promise<void>;
-  markAsRead: (notificationId: string) => Promise<void>;
-  markAllAsRead: () => Promise<void>;
-  deleteNotification: (notificationId: string) => Promise<void>;
-  deleteAllNotifications: () => Promise<void>;
-  realtimeNotifications: () => void;
+  isEnabled: boolean;
+  isPushSupported: boolean;
+  isSubscribed: boolean;
   unreadCount: number;
-  isEnabled?: boolean;
-  isPushSupported?: boolean;
-  toggleNotifications?: () => Promise<void>;
+  unreadMessagesByUser: Record<string, number>;
+  toggleNotifications: () => Promise<void>;
+  markConversationAsRead: (conversationId: string) => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [notifications, setNotifications] = useState<any[]>([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [isEnabled, setIsEnabled] = useState(false);
   const [isPushSupported, setIsPushSupported] = useState(false);
-  const { user } = useUser();
-
-  const fetchNotifications = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching notifications:', error);
-      }
-
-      setNotifications(data || []);
-      setUnreadCount(data?.filter(notif => !notif.is_read).length || 0);
-    } catch (error) {
-      console.error('Unexpected error fetching notifications:', error);
-    }
-  }, [user]);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [unreadMessagesByUser, setUnreadMessagesByUser] = useState<Record<string, number>>({});
 
   useEffect(() => {
-    if (user) {
-      fetchNotifications();
+    // Check if push notifications are supported
+    if ('Notification' in window && 'serviceWorker' in navigator) {
+      setIsPushSupported(true);
       
-      // Check if push notifications are supported and enabled
-      const checkPushSupport = async () => {
-        const supported = 'Notification' in window;
-        setIsPushSupported(supported);
-        
-        if (supported) {
-          const permission = Notification.permission;
-          setIsEnabled(permission === 'granted');
-        }
-      };
-      
-      checkPushSupport();
+      // Check if already subscribed
+      if (Notification.permission === 'granted') {
+        setIsEnabled(true);
+        setIsSubscribed(true);
+      }
     }
-  }, [user, fetchNotifications]);
 
-  const toggleNotifications = async () => {
-    if (!isPushSupported) return;
-    
-    if (Notification.permission === 'granted') {
-      // We can't revoke permissions once granted, so just update UI state
-      setIsEnabled(false);
-      // Save user preference in database
+    // Get the current user 
+    const getUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        // Remove the push_enabled field from the update object
-        await supabase
-          .from('profiles')
-          .update({ 
-            // Don't include push_enabled as it's not in the profiles table schema
-          })
-          .eq('id', user.id);
+        setUserId(user.id);
       }
-    } else {
+    };
+
+    getUserId();
+  }, []);
+
+  // Fetch unread notification count
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchUnreadCount = async () => {
       try {
-        const permission = await Notification.requestPermission();
-        setIsEnabled(permission === 'granted');
-        // Save user preference in database
-        if (user && permission === 'granted') {
-          // Remove the push_enabled field from the update object
-          await supabase
-            .from('profiles')
-            .update({
-              // Don't include push_enabled as it's not in the profiles table schema
-            })
-            .eq('id', user.id);
+        // Get count using select and filter
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_read', false);
+
+        if (error) {
+          console.error('Error fetching unread count:', error);
+          return;
         }
+
+        setUnreadCount(data?.length || 0);
       } catch (error) {
-        console.error('Error requesting notification permission:', error);
+        console.error('Error fetching unread count:', error);
       }
-    }
-  };
+    };
 
-  const markAsRead = async (notificationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', notificationId);
+    fetchUnreadCount();
 
-      if (error) {
-        console.error('Error marking notification as read:', error);
-      } else {
-        setNotifications(prevNotifications =>
-          prevNotifications.map(notif =>
-            notif.id === notificationId ? { ...notif, is_read: true } : notif
-          )
-        );
-        setUnreadCount(prevCount => Math.max(0, prevCount - 1));
+    // Set up realtime subscription for notifications
+    const channel = supabase
+      .channel('unread-count')
+      .on('postgres_changes', {
+        event: '*', // Listen for all changes (INSERT, UPDATE, DELETE)
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`
+      }, () => {
+        // Refetch the count when notifications change
+        fetchUnreadCount();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+  
+  // Fetch unread messages by sender
+  useEffect(() => {
+    if (!userId) return;
+    
+    const fetchUnreadMessages = async () => {
+      try {
+        // First get all unread messages
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('receiver_id', userId)
+          .eq('is_read', false);
+          
+        if (error) {
+          console.error('Error fetching unread messages:', error);
+          return;
+        }
+        
+        // Count messages by sender
+        const messagesByUser: Record<string, number> = {};
+        if (data) {
+          data.forEach(message => {
+            const senderId = message.sender_id;
+            messagesByUser[senderId] = (messagesByUser[senderId] || 0) + 1;
+          });
+        }
+        
+        setUnreadMessagesByUser(messagesByUser);
+        console.log('Unread messages by sender:', messagesByUser);
+      } catch (error) {
+        console.error('Error fetching unread messages count:', error);
       }
-    } catch (error) {
-      console.error('Unexpected error marking notification as read:', error);
-    }
-  };
-
-  const markAllAsRead = async () => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error marking all notifications as read:', error);
-      } else {
-        setNotifications(prevNotifications =>
-          prevNotifications.map(notif => ({
-            ...notif,
-            is_read: true
-          }))
-        );
-        setUnreadCount(0);
-      }
-    } catch (error) {
-      console.error('Unexpected error marking all notifications as read:', error);
-    }
-  };
-
-  const deleteNotification = async (notificationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', notificationId);
-
-      if (error) {
-        console.error('Error deleting notification:', error);
-      } else {
-        setNotifications(prevNotifications =>
-          prevNotifications.filter(notif => notif.id !== notificationId)
-        );
-        setUnreadCount(prevCount => {
-          const deletedNotification = notifications.find(notif => notif.id === notificationId);
-          if (deletedNotification && !deletedNotification.is_read) {
-            return Math.max(0, prevCount - 1);
+    };
+    
+    fetchUnreadMessages();
+    
+    // Supabase native realtime subscription for messages
+    const channel = supabase
+      .channel('messages-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `receiver_id=eq.${userId}`
+        },
+        (payload) => {
+          // Only update if the message is unread and for this user
+          if (payload.new && payload.new.receiver_id === userId && !payload.new.is_read) {
+            const senderId = payload.new.sender_id;
+            setUnreadMessagesByUser(prev => ({
+              ...prev,
+              [senderId]: (prev[senderId] || 0) + 1
+            }));
           }
-          return prevCount;
+          // Optionally, refetch all unread messages for full sync:
+          // fetchUnreadMessages();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId]);
+
+  const markConversationAsRead = async (conversationId: string) => {
+    if (!userId) return;
+    
+    try {
+      // Update all messages in the conversation to be read
+      const { error } = await supabase
+        .from('messages')
+        .update({ is_read: true })
+        .eq('conversation_id', conversationId)
+        .eq('receiver_id', userId);
+        
+      if (error) {
+        console.error('Error marking conversation as read:', error);
+        return;
+      }
+      
+      // Update the local state
+      const { data } = await supabase
+        .from('messages')
+        .select('sender_id')
+        .eq('conversation_id', conversationId)
+        .eq('receiver_id', userId)
+        .limit(1);
+        
+      if (data && data.length > 0) {
+        const senderId = data[0].sender_id;
+        setUnreadMessagesByUser(prev => {
+          const updated = { ...prev };
+          delete updated[senderId];
+          return updated;
         });
       }
     } catch (error) {
-      console.error('Unexpected error deleting notification:', error);
+      console.error('Error marking conversation as read:', error);
     }
   };
 
-  const deleteAllNotifications = async () => {
-    if (!user) return;
+  const toggleNotifications = async () => {
+    if (!isPushSupported) {
+      toast.error("Push notifications are not supported in your browser");
+      return;
+    }
 
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('user_id', user.id);
+      if (!isEnabled) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+          // Register service worker
+          const registration = await navigator.serviceWorker.register('/service-worker.js');
+          
+          // Subscribe to push notifications
+          const applicationServerKey = process.env.REACT_APP_VAPID_PUBLIC_KEY;
+          
+          if (!applicationServerKey) {
+            console.error('VAPID public key is not defined');
+            toast.error("Push notification setup is incomplete");
+            return;
+          }
+          
+          const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey
+          });
 
-      if (error) {
-        console.error('Error deleting all notifications:', error);
+          // Send subscription to backend
+          // await fetch('/api/notifications/subscribe', {
+          //   method: 'POST',
+          //   body: JSON.stringify(subscription),
+          // });
+
+          setIsEnabled(true);
+          setIsSubscribed(true);
+          toast.success("Push notifications enabled");
+        } else {
+          toast.error("Permission denied for push notifications");
+        }
       } else {
-        setNotifications([]);
-        setUnreadCount(0);
+        // Unsubscribe from push notifications
+        const registration = await navigator.serviceWorker.ready;
+        const subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          await subscription.unsubscribe();
+          
+          // Notify backend
+          // await fetch('/api/notifications/unsubscribe', {
+          //   method: 'POST',
+          //   body: JSON.stringify(subscription),
+          // });
+        }
+
+        setIsEnabled(false);
+        setIsSubscribed(false);
+        toast.success("Push notifications disabled");
       }
     } catch (error) {
-      console.error('Unexpected error deleting all notifications:', error);
+      console.error('Error toggling notifications:', error);
+      toast.error("Failed to toggle notifications");
     }
   };
 
-  const realtimeNotifications = () => {
-    if (!user) return;
+  return (
+    <NotificationContext.Provider 
+      value={{ 
+        isEnabled, 
+        isPushSupported, 
+        isSubscribed, 
+        unreadCount,
+        unreadMessagesByUser,
+        toggleNotifications,
+        markConversationAsRead
+      }}
+    >
+      {children}
+    </NotificationContext.Provider>
+  );
+}
 
-    supabase
-      .channel('public:notifications:user_id=eq.' + user.id)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'notifications'
-      }, async (payload) => {
-        console.log('Change received!', payload);
-        await fetchNotifications();
-        
-        if (payload.new) {
-          const notification = payload.new;
-          const newNotif = {
-            ...notification,
-          };
-          
-          // Fixed the type error - check if the metadata object has receiver_id
-          const metadata = notification.metadata;
-          if (metadata && typeof metadata === 'object' && metadata.receiver_id) {
-            if (metadata.receiver_id === user.id) {
-              setUnreadCount(prevCount => prevCount + 1);
-            }
-          }
-        }
-      })
-      .subscribe();
-  };
-
-  useEffect(() => {
-    if (user) {
-      realtimeNotifications();
-    }
-  }, [user]);
-
-  const value = {
-    notifications,
-    fetchNotifications,
-    markAsRead,
-    markAllAsRead,
-    deleteNotification,
-    deleteAllNotifications,
-    realtimeNotifications,
-    unreadCount,
-    isEnabled,
-    isPushSupported,
-    toggleNotifications
-  };
-
-  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
-};
-
-export const useNotification = (): NotificationContextType => {
+export function useNotifications() {
   const context = useContext(NotificationContext);
-  if (!context) {
-    throw new Error('useNotification must be used within a NotificationProvider');
+  if (context === undefined) {
+    throw new Error('useNotifications must be used within a NotificationProvider');
   }
   return context;
-};
+}

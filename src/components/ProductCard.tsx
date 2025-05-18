@@ -129,16 +129,14 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
 
   return (
     <div className={cn(
-      "bg-secondary rounded-lg overflow-hidden transition-all animate-fadeIn group",
-      "dark:border-white/10",
-      "light:border-gray-300 light:shadow-lg light:bg-white",
+      "bg-secondary rounded-lg border border-white/10 dark:border-white/10 light:border-gray-200 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group",
       className
     )}>
       <div className="relative aspect-[16/9]">
         <ImageCarousel 
           images={item.images} 
-          navClassName="light:bg-white/90 light:text-[#1EAEDB] light:hover:bg-white light:border light:border-[#1EAEDB]/30 dark:bg-black/50 dark:hover:bg-black/70"
-          imageCountClassName="light:bg-white/90 light:text-[#1EAEDB] light:border light:border-[#1EAEDB]/30 dark:bg-black/50"
+          navClassName="light:bg-white/80 light:text-[#1EAEDB] light:hover:bg-white/90 light:border light:border-[#1EAEDB]/30 dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70"
+          imageCountClassName="light:bg-white/80 light:text-[#1EAEDB] light:border light:border-[#1EAEDB]/30 dark:bg-black/50 dark:backdrop-blur-sm"
         />
         <div className="absolute top-2 right-2 z-10 flex gap-2">
           <Button
@@ -147,10 +145,8 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
             onClick={handleLike}
             disabled={isLoading}
             className={cn(
-              "dark:bg-black/50 dark:hover:bg-black/70 light:bg-white/90 light:hover:bg-white light:border light:shadow-md",
-              isSaved 
-                ? "dark:text-red-500 light:text-[#ea384c] light:border-[#ea384c]/30" 
-                : "dark:text-white light:text-gray-700 light:border-gray-300"
+              "dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70 light:bg-white/70 light:backdrop-blur-sm light:hover:bg-white/90 light:border",
+              isSaved ? "light:text-[#ea384c] dark:text-red-500 light:border-[#ea384c]/30" : "light:text-gray-700 dark:text-white light:border-gray-300"
             )}
           >
             <Heart className={cn(
@@ -163,27 +159,21 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
       <div className="p-4">
         <div className="flex justify-between items-start gap-4 mb-3">
           <h3 className={cn(
-            "font-medium line-clamp-2 flex-1",
-            "dark:text-white light:text-gray-800",
+            "font-medium dark:text-white light:text-gray-800 line-clamp-2 flex-1",
             fontSizeClass
           )}>{item.title}</h3>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleViewItem}
-            className={cn(
-              "h-8 w-8 rounded-full flex-shrink-0",
-              "dark:bg-primary/10 dark:text-primary dark:hover:bg-primary/20",
-              "light:bg-[#1EAEDB]/10 light:text-[#1EAEDB] light:hover:bg-[#1EAEDB]/20 light:border light:border-[#1EAEDB]/30"
-            )}
+            className="h-8 w-8 rounded-full bg-primary/10 text-primary hover:bg-primary/20 light:bg-[#1EAEDB]/10 light:text-[#1EAEDB] light:hover:bg-[#1EAEDB]/20 flex-shrink-0"
           >
             <Eye className="h-4 w-4" />
           </Button>
         </div>
         <div className="flex items-center justify-between">
           <p className={cn(
-            "font-semibold",
-            "dark:text-primary light:text-[#1EAEDB]",
+            "font-semibold text-primary dark:text-primary light:text-[#1EAEDB]",
             {
               'text-xl': fontSizeClass === 'large',
               'text-lg': fontSizeClass === 'medium',
@@ -194,22 +184,14 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity group/profile"
             onClick={handleViewProfile}
           >
-            <Avatar className={cn(
-              "h-6 w-6 ring-2 ring-offset-2 ring-offset-background transition-all",
-              "dark:ring-primary/20 dark:group-hover/profile:ring-primary/40",
-              "light:ring-[#1EAEDB]/30 light:group-hover/profile:ring-[#1EAEDB]/60"
-            )}>
+            <Avatar className="h-6 w-6 ring-2 ring-offset-2 ring-offset-background ring-primary/20 group-hover/profile:ring-primary/40 transition-all light:ring-[#1EAEDB]/30 light:group-hover/profile:ring-[#1EAEDB]/60">
               <AvatarImage src={item.seller?.avatar_url} />
               <AvatarFallback>
                 <User className="h-3 w-3 text-primary light:text-[#1EAEDB]" />
               </AvatarFallback>
             </Avatar>
             {!hideSellerName && (
-              <span className={cn(
-                "text-sm truncate transition-colors",
-                "dark:text-gray-400 dark:group-hover/profile:text-primary",
-                "light:text-gray-600 light:group-hover/profile:text-[#1EAEDB]"
-              )}>
+              <span className="text-sm text-gray-400 dark:text-gray-400 light:text-gray-600 truncate group-hover/profile:text-primary light:group-hover/profile:text-[#1EAEDB] transition-colors">
                 {item.seller?.first_name || 'Anonymous'}
               </span>
             )}

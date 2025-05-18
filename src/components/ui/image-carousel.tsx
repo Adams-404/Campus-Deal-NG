@@ -9,10 +9,9 @@ interface ImageCarouselProps {
   showArrows?: boolean;
   showImageCount?: boolean;
   className?: string;
-  aspectRatio?: "square" | "video" | "wide" | "vertical" | "full";
+  aspectRatio?: "square" | "video" | "wide" | "vertical";
   navClassName?: string;
   imageCountClassName?: string;
-  showZoom?: boolean;
 }
 
 export const ImageCarousel: React.FC<ImageCarouselProps> = ({
@@ -22,8 +21,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
   className,
   aspectRatio = "video",
   navClassName,
-  imageCountClassName,
-  showZoom = false
+  imageCountClassName
 }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   
@@ -42,8 +40,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
     square: "aspect-square",
     video: "aspect-[16/9]",
     wide: "aspect-[2/1]",
-    vertical: "aspect-[9/16]",
-    full: "aspect-[16/9]" // Added support for "full" type
+    vertical: "aspect-[9/16]"
   };
 
   const handlePrevious = (e: React.MouseEvent) => {
@@ -86,8 +83,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
             size="icon"
             onClick={handlePrevious}
             className={cn(
-              "absolute left-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full",
-              "light:bg-white/90 light:text-[#1EAEDB] light:hover:bg-white light:border light:border-[#1EAEDB]/30 dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70",
+              "absolute left-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 dark:bg-black/50 dark:hover:bg-black/70 light:bg-white/70 light:text-[#1EAEDB] light:hover:bg-white/80 light:border light:border-[#1EAEDB]/30",
               navClassName
             )}
           >
@@ -98,8 +94,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
             size="icon"
             onClick={handleNext}
             className={cn(
-              "absolute right-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full",
-              "light:bg-white/90 light:text-[#1EAEDB] light:hover:bg-white light:border light:border-[#1EAEDB]/30 dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70",
+              "absolute right-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 dark:bg-black/50 dark:hover:bg-black/70 light:bg-white/70 light:text-[#1EAEDB] light:hover:bg-white/80 light:border light:border-[#1EAEDB]/30",
               navClassName
             )}
           >
@@ -110,8 +105,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
       
       {showImageCount && images.length > 1 && (
         <div className={cn(
-          "absolute bottom-2 right-2 z-10 px-2 py-1 rounded-md",
-          "light:bg-white/90 light:text-[#1EAEDB] light:border light:border-[#1EAEDB]/30 dark:bg-black/50 dark:backdrop-blur-sm dark:text-white text-xs",
+          "absolute bottom-2 right-2 z-10 px-2 py-1 rounded-md bg-black/50 backdrop-blur-sm text-white text-xs dark:bg-black/50 dark:text-white light:bg-white/70 light:text-[#1EAEDB] light:border light:border-[#1EAEDB]/30",
           imageCountClassName
         )}>
           {activeIndex + 1} / {images.length}
