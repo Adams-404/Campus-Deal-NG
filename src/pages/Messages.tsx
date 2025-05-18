@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
@@ -18,12 +17,14 @@ import {
   Phone, 
   MessageCircle, 
   ChevronDown, 
-  ChevronUp
+  ChevronUp,
+  X
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 
 interface Message {
   id: string;
@@ -159,6 +160,7 @@ export default function Messages() {
   const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
   const channelRef = useRef<any>(null);
   const realtimeInitialized = useRef(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const setup = async () => {
@@ -207,6 +209,19 @@ export default function Messages() {
     });
 
     return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
   useEffect(() => {
@@ -507,6 +522,7 @@ export default function Messages() {
 
       // Clear input immediately for better UX
       setNewMessage('');
+      setShowEmojiPicker(false);
       
       // Prepare the message object
       const newMessageObj = {
@@ -640,6 +656,10 @@ export default function Messages() {
     } else {
       navigate(`/user-profile/${profileId}`);
     }
+  };
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setNewMessage(prev => prev + emojiData.emoji);
   };
 
   if (loading) {
@@ -995,13 +1015,16 @@ export default function Messages() {
             <div className="flex-shrink-0 border-t border-white/10 bg-secondary/20 backdrop-blur-sm p-3 sm:p-6">
               <form
                 onSubmit={handleSendMessage}
-                className="flex items-center gap-2 sm:gap-3"
+                className="flex items-center gap-2 sm:gap-3 relative"
               >
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl hover:bg-white/10"
+                  className={cn(
+                    "h-8 w-8 sm:h-10 sm:w-10 rounded-xl hover:bg-white/10",
+                    showEmojiPicker && "bg-white/20 text-primary"
+                  )}
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 >
                   <Smile className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -1028,6 +1051,9 @@ export default function Messages() {
                 >
                   <Send className="h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
+                
+                {/* Emoji Picker */}
+                {renderEmojiPicker()}
               </form>
             </div>
           </div>
@@ -1044,5 +1070,35 @@ export default function Messages() {
         )}
       </div>
     </PageTransition>
+  );
+}
+
+const renderEmojiPicker = () => {
+  if (!showEmojiPicker) return null;
+  
+  return (
+    <div 
+      ref={emojiPickerRef}
+      className="absolute bottom-16 sm:bottom-20 left-0 sm:left-4 z-50 shadow-xl border border-white/10 rounded-xl overflow-hidden"
+    >
+      <div className="bg-secondary/90 backdrop-blur-md p-2 relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setShowEmojiPicker(false)}
+          className="absolute right-1 top-1 h-6 w-6 rounded-full bg-white/10 hover:bg-white/20 z-10"
+        >
+          <X className="h-3 w-3" />
+        </Button>
+        <EmojiPicker
+          onEmojiClick={onEmojiClick}
+          theme={document.documentElement.classList.contains('dark') ? Theme.DARK : Theme.LIGHT}
+          skinTonesDisabled
+          searchDisabled={false}
+          width={300}
+          height={340}
+        />
+      </div>
+    </div>
   );
 }

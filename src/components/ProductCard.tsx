@@ -135,6 +135,8 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
       <div className="relative aspect-[16/9]">
         <ImageCarousel 
           images={item.images} 
+          navClassName="light:bg-green-500/20 light:text-green-700 light:hover:bg-green-500/30 dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70"
+          imageCountClassName="light:bg-green-500/20 light:text-green-700 light:border-green-500/30 dark:bg-black/50 dark:backdrop-blur-sm"
         />
         <div className="absolute top-2 right-2 z-10 flex gap-2">
           <Button
@@ -143,13 +145,13 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
             onClick={handleLike}
             disabled={isLoading}
             className={cn(
-              "bg-black/50 backdrop-blur-sm hover:bg-black/70",
-              isSaved && "text-red-500"
+              "dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70 light:bg-white/70 light:backdrop-blur-sm light:hover:bg-white/90 light:border light:border-green-500/30",
+              isSaved ? "light:text-green-600 dark:text-red-500" : "light:text-green-700 dark:text-white"
             )}
           >
             <Heart className={cn(
               "h-5 w-5",
-              isSaved ? "fill-current" : "text-white"
+              isSaved ? "fill-current" : ""
             )} />
           </Button>
         </div>
@@ -157,21 +159,21 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
       <div className="p-4">
         <div className="flex justify-between items-start gap-4 mb-3">
           <h3 className={cn(
-            "font-medium dark:text-white light:text-foreground line-clamp-2 flex-1",
+            "font-medium dark:text-white light:text-gray-800 line-clamp-2 flex-1",
             fontSizeClass
           )}>{item.title}</h3>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleViewItem}
-            className="h-8 w-8 rounded-full bg-primary/10 text-primary hover:bg-primary/20 flex-shrink-0"
+            className="h-8 w-8 rounded-full bg-primary/10 text-primary hover:bg-primary/20 light:bg-green-500/10 light:text-green-700 light:hover:bg-green-500/20 flex-shrink-0"
           >
             <Eye className="h-4 w-4" />
           </Button>
         </div>
         <div className="flex items-center justify-between">
           <p className={cn(
-            "font-semibold text-primary",
+            "font-semibold text-primary dark:text-primary light:text-green-700",
             {
               'text-xl': fontSizeClass === 'large',
               'text-lg': fontSizeClass === 'medium',
@@ -182,14 +184,14 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
             className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity group/profile"
             onClick={handleViewProfile}
           >
-            <Avatar className="h-6 w-6 ring-2 ring-offset-2 ring-offset-background ring-primary/20 group-hover/profile:ring-primary/40 transition-all">
+            <Avatar className="h-6 w-6 ring-2 ring-offset-2 ring-offset-background ring-primary/20 group-hover/profile:ring-primary/40 transition-all light:ring-green-500/30 light:group-hover/profile:ring-green-500/60">
               <AvatarImage src={item.seller?.avatar_url} />
               <AvatarFallback>
-                <User className="h-3 w-3 text-primary" />
+                <User className="h-3 w-3 text-primary light:text-green-700" />
               </AvatarFallback>
             </Avatar>
             {!hideSellerName && (
-              <span className="text-sm text-gray-400 dark:text-gray-400 light:text-gray-600 truncate group-hover/profile:text-primary transition-colors">
+              <span className="text-sm text-gray-400 dark:text-gray-400 light:text-gray-600 truncate group-hover/profile:text-primary light:group-hover/profile:text-green-700 transition-colors">
                 {item.seller?.first_name || 'Anonymous'}
               </span>
             )}

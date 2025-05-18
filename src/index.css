@@ -93,10 +93,55 @@
 
 /* Ensure text visibility in light mode */
 .light .text-white {
-  @apply text-foreground;
+  @apply text-gray-800;
 }
 
 /* Add subtle hover effects */
 .interactive-item {
   @apply transition-all hover:bg-accent/50;
+}
+
+/* Emoji picker customizations */
+.EmojiPickerReact {
+  --epr-hover-bg-color: rgba(0, 0, 0, 0.1) !important;
+  --epr-focus-bg-color: rgba(0, 0, 0, 0.15) !important;
+  --epr-category-label-bg-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark .EmojiPickerReact {
+  --epr-bg-color: hsl(240 10% 7%) !important;
+  --epr-text-color: hsl(0 0% 98%) !important;
+  --epr-hover-bg-color: rgba(255, 255, 255, 0.1) !important;
+  --epr-focus-bg-color: rgba(255, 255, 255, 0.15) !important;
+  --epr-category-label-bg-color: rgba(255, 255, 255, 0.1) !important;
+  --epr-search-input-bg-color: rgba(255, 255, 255, 0.05) !important;
+  --epr-search-input-border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.light .EmojiPickerReact {
+  --epr-bg-color: hsl(0 0% 100%) !important;
+  --epr-text-color: hsl(240 10% 3.9%) !important;
+  --epr-hover-bg-color: rgba(0, 0, 0, 0.05) !important;
+  --epr-focus-bg-color: rgba(0, 0, 0, 0.1) !important;
+  --epr-category-label-bg-color: rgba(0, 0, 0, 0.05) !important;
+  --epr-search-input-bg-color: rgba(0, 0, 0, 0.05) !important;
+  --epr-search-input-border-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Light mode green accents */
+.light .product-action-button {
+  @apply bg-green-500/10 text-green-700 hover:bg-green-500/20 border-green-500/30;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-out forwards;
 }
