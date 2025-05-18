@@ -31,24 +31,24 @@
   }
 
   .dark {
-    --background: 240 10% 2.9%;
+    --background: 240 10% 2%;
     --foreground: 0 0% 98%;
-    --card: 240 10% 3.5%;
+    --card: 240 10% 3%;
     --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.5%;
+    --popover: 240 10% 3%;
     --popover-foreground: 0 0% 98%;
     --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 210 40% 98%;
-    --secondary: 240 3.7% 12%;
+    --secondary: 240 3.7% 10%;
     --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 12%;
+    --muted: 240 3.7% 10%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 12%;
+    --accent: 240 3.7% 10%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 12%;
-    --input: 240 3.7% 12%;
+    --border: 240 3.7% 10%;
+    --input: 240 3.7% 10%;
     --ring: 240 4.9% 83.9%;
   }
 }
@@ -80,6 +80,20 @@
 /* Improved card styling */
 .card-enhanced {
   @apply rounded-lg border border-border bg-card p-4 shadow-sm;
+}
+
+.light .card-enhanced {
+  @apply border-gray-200 shadow-md;
+}
+
+/* Light mode specific card styles */
+.light .bg-secondary {
+  @apply border border-gray-200 shadow-sm;
+}
+
+/* Ensure text visibility in light mode */
+.light .text-white {
+  @apply text-foreground;
 }
 
 /* Add subtle hover effects */

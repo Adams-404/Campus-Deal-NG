@@ -129,7 +129,7 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
 
   return (
     <div className={cn(
-      "bg-secondary rounded-lg border border-white/10 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group",
+      "bg-secondary rounded-lg border border-white/10 dark:border-white/10 light:border-gray-200 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group",
       className
     )}>
       <div className="relative aspect-[16/9]">
@@ -157,7 +157,7 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
       <div className="p-4">
         <div className="flex justify-between items-start gap-4 mb-3">
           <h3 className={cn(
-            "font-medium text-white line-clamp-2 flex-1",
+            "font-medium dark:text-white light:text-foreground line-clamp-2 flex-1",
             fontSizeClass
           )}>{item.title}</h3>
           <Button
@@ -189,7 +189,7 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
               </AvatarFallback>
             </Avatar>
             {!hideSellerName && (
-              <span className="text-sm text-gray-400 truncate group-hover/profile:text-primary transition-colors">
+              <span className="text-sm text-gray-400 dark:text-gray-400 light:text-gray-600 truncate group-hover/profile:text-primary transition-colors">
                 {item.seller?.first_name || 'Anonymous'}
               </span>
             )}
