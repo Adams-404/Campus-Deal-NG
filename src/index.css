@@ -77,11 +77,6 @@
   @apply text-gray-800;
 }
 
-/* Fix for white text in light mode - avoiding circular dependency */
-.light-mode-text {
-  @apply text-gray-800;
-}
-
 /* Improved card styling */
 .card-enhanced {
   @apply rounded-lg border border-gray-200 bg-white p-4 shadow-md;
@@ -90,6 +85,11 @@
 /* Light mode specific card styles */
 .light .bg-secondary {
   @apply border border-gray-300 shadow-sm;
+}
+
+/* Ensure text visibility in light mode - fixed circular dependency */
+.light .light-text {
+  color: #1f2937; /* text-gray-800 equivalent */
 }
 
 /* Add subtle hover effects */

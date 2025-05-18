@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { Home, User, Bell, Search, Heart, Settings, LogOut } from "lucide-react";
@@ -126,7 +125,7 @@ const SideNavItem = ({ to, icon, label, badge, onClick }: SideNavItemProps) => {
           <span className="mr-3">{icon}</span>
           <span className="flex-1">{label}</span>
           {typeof badge === 'number' && badge > 0 && (
-            <Badge variant="primary" className="ml-auto">
+            <Badge variant="default" className="ml-auto">
               {badge}
             </Badge>
           )}
@@ -151,7 +150,7 @@ const SideNavItem = ({ to, icon, label, badge, onClick }: SideNavItemProps) => {
             {icon}
             {typeof badge === 'number' && badge > 0 && (
               <Badge 
-                variant="primary" 
+                variant="default" 
                 className="absolute -top-2 -right-2 min-w-5 h-5 flex items-center justify-center p-0"
               >
                 {badge}
