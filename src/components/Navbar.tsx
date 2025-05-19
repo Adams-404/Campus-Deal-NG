@@ -47,7 +47,7 @@ const NavbarSkeleton = () => {
   
   return (
     <nav className={cn(
-      "fixed top-0 z-50 bg-secondary/80 backdrop-blur-md border-b border-white/10",
+      "fixed top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10",
       isMobile ? "w-full" : "left-[300px] right-0"
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -230,8 +230,9 @@ export const Navbar = () => {
   return (
     isLoading ? <NavbarSkeleton /> : (
       <nav className={cn(
-        "fixed top-0 bg-secondary/80 backdrop-blur-md z-50 border-b border-white/10",
-        navbarClass
+        "fixed top-0 z-50 border-b border-white/10",
+        navbarClass,
+        "bg-black/80 backdrop-blur-md"
       )}>
         <div className={cn(
           "mx-auto px-4 sm:px-6 lg:px-8",
