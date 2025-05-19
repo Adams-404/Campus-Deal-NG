@@ -219,7 +219,7 @@ export default function SavedItems() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 flex flex-col justify-end">
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-white dark:text-white light:text-white line-clamp-2">{savedItem.item.title}</p>
+                        <p className="text-sm font-medium saved-item-title line-clamp-2">{savedItem.item.title}</p>
                         <Button
                           variant="ghost"
                           size="icon"

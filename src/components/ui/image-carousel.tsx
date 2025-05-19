@@ -83,29 +83,29 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
             size="icon"
             onClick={handlePrevious}
             className={cn(
-              "absolute left-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 dark:bg-black/50 dark:hover:bg-black/70 light:bg-white/70 light:text-[#1EAEDB] light:hover:bg-white/80 light:border light:border-[#1EAEDB]/30",
+              "absolute left-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70 light:bg-white/90 light:hover:bg-black/40 light:hover:backdrop-blur-sm light:border-2 light:border-[#1078a7] light:shadow-sm",
               navClassName
             )}
           >
-            <ChevronLeft className="h-4 w-4 dark:text-white light:text-[#1EAEDB]" />
+            <ChevronLeft className="h-4 w-4 dark:text-white light:text-[#1078a7] light:hover:text-white" />
           </Button>
           <Button
             variant="ghost"
             size="icon"
             onClick={handleNext}
             className={cn(
-              "absolute right-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70 dark:bg-black/50 dark:hover:bg-black/70 light:bg-white/70 light:text-[#1EAEDB] light:hover:bg-white/80 light:border light:border-[#1EAEDB]/30",
+              "absolute right-1 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70 light:bg-white/90 light:hover:bg-black/40 light:hover:backdrop-blur-sm light:border-2 light:border-[#1078a7] light:shadow-sm",
               navClassName
             )}
           >
-            <ChevronRight className="h-4 w-4 dark:text-white light:text-[#1EAEDB]" />
+            <ChevronRight className="h-4 w-4 dark:text-white light:text-[#1078a7] light:hover:text-white" />
           </Button>
         </>
       )}
       
       {showImageCount && images.length > 1 && (
         <div className={cn(
-          "absolute bottom-2 right-2 z-10 px-2 py-1 rounded-md bg-black/50 backdrop-blur-sm text-white text-xs dark:bg-black/50 dark:text-white light:bg-white/70 light:text-[#1EAEDB] light:border light:border-[#1EAEDB]/30",
+          "absolute top-2 left-2 z-10 px-2 py-1 rounded-md dark:bg-black/50 dark:backdrop-blur-sm dark:text-white light:bg-white/90 light:text-[#1078a7] light:hover:bg-black/40 light:hover:backdrop-blur-sm light:hover:text-white light:border-2 light:border-[#1078a7] light:shadow-sm text-xs font-medium transition-colors",
           imageCountClassName
         )}>
           {activeIndex + 1} / {images.length}

@@ -85,39 +85,38 @@ const getColorByIndex = (index: number) => {
   return colors[index % colors.length]
 }
 
-// Update the ProfileHeader component to make it fixed so that the content of the page can scroll over it
+// Header component that respects theme colors
 const ProfileHeader = ({ onBack }: { onBack: () => void }) => {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 py-2 px-4 transition-all duration-200">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 dark:border-white/10 light:border-gray-200 py-2 px-4 transition-all duration-200">
       <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
         <div className="h-12 flex items-center">
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
             onClick={onBack}
-            className="border-green-500 text-green-400 hover:bg-green-500/10 hover:text-green-300 transition-colors mr-4"
+            className="h-8 w-8 rounded-full dark:bg-primary/10 dark:text-primary dark:hover:bg-primary/20 light:bg-white/90 light:text-[#1078a7] light:hover:bg-black/40 light:hover:backdrop-blur-sm light:border-2 light:border-[#1078a7] light:shadow-sm transition-colors mr-4"
           >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Back
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-semibold text-center flex-1">User Profile</h1>
+          <h1 className="text-lg font-semibold text-center flex-1 dark:text-white light:text-gray-800">User Profile</h1>
         </div>
       </div>
     </div>
   )
 }
 
-// Update the ProductGrid component to add thin borders and black background
+// Responsive ProductGrid component with proper theme support
 const ProductGrid: React.FC<ProductGridProps> = ({ items, title, isLoading = false, navigate }) => {
   if (isLoading) {
     return (
       <div>
-        {title && <h2 className="text-xl font-medium mb-4">{title}</h2>}
+        {title && <h2 className="text-xl font-medium mb-4 dark:text-white light:text-gray-800">{title}</h2>}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
           {Array(8)
             .fill(0)
             .map((_, index) => (
-              <div key={index} className="rounded-lg overflow-hidden bg-black border border-blue-500/50">
+              <div key={index} className="rounded-lg overflow-hidden dark:bg-gray-900 light:bg-gray-100 dark:border-white/10 light:border-gray-200 border shadow-sm">
                 <Skeleton className="aspect-square w-full" />
                 <div className="p-3">
                   <Skeleton className="h-5 w-full mb-2" />
@@ -134,22 +133,22 @@ const ProductGrid: React.FC<ProductGridProps> = ({ items, title, isLoading = fal
     <div>
       {title && (
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-medium flex items-center">
-            <Package className="h-5 w-5 mr-2 text-blue-500" />
+          <h2 className="text-xl font-medium flex items-center dark:text-white light:text-gray-800">
+            <Package className="h-5 w-5 mr-2 dark:text-primary light:text-[#1078a7]" />
             {title}
           </h2>
-          <Badge variant="outline" className="bg-black text-green-400 border-green-500/50">
-            <Tag className="h-3.5 w-3.5 mr-1 text-yellow-400" />
+          <Badge variant="outline" className="dark:bg-gray-900 light:bg-white dark:text-primary light:text-[#1078a7] dark:border-primary/50 light:border-[#1078a7]">
+            <Tag className="h-3.5 w-3.5 mr-1 dark:text-primary light:text-[#1078a7]" />
             {items.length} Items
           </Badge>
         </div>
       )}
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {items.map((item, index) => (
-          <a
+          <div
             key={item.id}
-            href={`/item/${item.id}`}
-            className="group block rounded-lg overflow-hidden hover:shadow-md transition-all duration-300 bg-black border border-blue-500/50"
+            onClick={() => navigate(`/item/${item.id}`)}
+            className="group cursor-pointer rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 dark:bg-gray-900 light:bg-white dark:border-white/10 light:border-gray-200 border"
           >
             <div className="aspect-square relative bg-muted overflow-hidden">
               {item.images && item.images.length > 0 ? (
@@ -159,32 +158,32 @@ const ProductGrid: React.FC<ProductGridProps> = ({ items, title, isLoading = fal
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-black/50">
-                  <Package className="h-10 w-10 text-blue-400 opacity-50" />
+                <div className="w-full h-full flex items-center justify-center dark:bg-gray-800 light:bg-gray-100">
+                  <Package className="h-10 w-10 dark:text-gray-600 light:text-gray-400 opacity-50" />
                 </div>
               )}
               <div className="absolute top-2 right-2">
                 <Badge
                   variant="secondary"
-                  className="bg-black/80 backdrop-blur-sm border border-green-500/50 text-white"
+                  className="dark:bg-black/50 light:bg-white/90 backdrop-blur-sm dark:border-primary/30 light:border-[#1078a7] dark:text-white light:text-[#1078a7] light:shadow-sm"
                 >
                   {item.condition}
                 </Badge>
               </div>
               <div className="absolute bottom-2 left-2">
-                <Badge variant="secondary" className="bg-black border border-red-500/50 text-white">
-                  <Clock className="h-3 w-3 mr-1 text-red-400" />
+                <Badge variant="secondary" className="dark:bg-black/50 light:bg-white/90 backdrop-blur-sm dark:border-primary/30 light:border-[#1078a7] dark:text-white light:text-[#1078a7] light:shadow-sm">
+                  <Clock className="h-3 w-3 mr-1 dark:text-primary light:text-[#1078a7]" />
                   {new Date(item.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                 </Badge>
               </div>
             </div>
             <div className="p-4">
-              <h3 className="font-medium truncate group-hover:text-green-400 transition-colors">{item.title}</h3>
-              <div className="flex justify-between items-center mt-1">
-                <p className="font-semibold text-green-400">₦{item.price.toLocaleString()}</p>
+              <h3 className="font-medium truncate saved-item-title dark:group-hover:text-primary light:group-hover:text-[#1078a7] transition-colors">{item.title}</h3>
+              <div className="flex justify-between items-center mt-2">
+                <p className="font-semibold dark:text-primary light:text-[#1078a7]">₦{item.price.toLocaleString()}</p>
               </div>
             </div>
-          </a>
+          </div>
         ))}
       </div>
     </div>
@@ -396,13 +395,13 @@ const UserProfile = () => {
   return (
     <PageTransition>
       <ProfileHeader onBack={() => navigate(-1)} />
-      <div className="container max-w-4xl mx-auto px-4 pb-32 mt-20 bg-black text-white flex flex-col items-center">
-        <Card className="mb-8 overflow-hidden border border-green-500/50 shadow-sm rounded-xl bg-black">
+      <div className="container max-w-4xl mx-auto px-4 pb-32 mt-20 dark:text-white light:text-gray-800 flex flex-col items-center">
+        <Card className="mb-8 overflow-hidden border dark:border-primary/30 light:border-[#1078a7]/30 shadow-sm rounded-xl dark:bg-gray-900 light:bg-white">
           <CardHeader className="p-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <Avatar className="h-24 w-24 ring-1 ring-green-500/50 ring-offset-1 ring-offset-black">
+              <Avatar className="h-24 w-24 ring-2 dark:ring-primary/50 light:ring-[#1078a7] dark:ring-offset-gray-950 light:ring-offset-white ring-offset-2">
                 <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback className="text-2xl bg-green-500/10 text-green-400">
+                <AvatarFallback className="text-2xl dark:bg-primary/10 light:bg-[#1078a7]/10 dark:text-primary light:text-[#1078a7]">
                   {profile.first_name?.[0] || ""}
                   {profile.last_name?.[0] || ""}
                 </AvatarFallback>
@@ -410,7 +409,7 @@ const UserProfile = () => {
 
               <div className="flex-1 text-center sm:text-left">
                 <div className="flex flex-col items-center sm:items-start gap-2 mb-2">
-                  <CardTitle className="text-2xl font-medium">{fullName || "Anonymous User"}</CardTitle>
+                  <CardTitle className="text-2xl font-medium dark:text-white light:text-gray-800">{fullName || "Anonymous User"}</CardTitle>
 
                   <Badge
                     variant={statusBadgeProps.variant}
@@ -421,9 +420,9 @@ const UserProfile = () => {
                   </Badge>
                 </div>
 
-                <CardDescription className="text-gray-400">
+                <CardDescription className="dark:text-gray-400 light:text-gray-600">
                   <div className="flex items-center justify-center sm:justify-start gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 text-yellow-400" />
+                    <Calendar className="h-3.5 w-3.5 dark:text-primary light:text-[#1078a7]" />
                     <span>
                       Joined{" "}
                       {new Date(profile.created_at).toLocaleDateString(undefined, {
@@ -436,15 +435,15 @@ const UserProfile = () => {
 
                 <div className="mt-4 flex flex-wrap gap-4 justify-center sm:justify-start">
                   {profile.address && (
-                    <div className="flex items-center gap-1.5 text-sm text-gray-400">
-                      <MapPin className="h-3.5 w-3.5 flex-shrink-0 text-red-400" />
+                    <div className="flex items-center gap-1.5 text-sm dark:text-gray-400 light:text-gray-600">
+                      <MapPin className="h-3.5 w-3.5 flex-shrink-0 dark:text-primary light:text-[#1078a7]" />
                       <span className="truncate">{profile.address}</span>
                     </div>
                   )}
 
                   {profile.phone && (
-                    <div className="flex items-center gap-1.5 text-sm text-gray-400">
-                      <Phone className="h-3.5 w-3.5 flex-shrink-0 text-blue-400" />
+                    <div className="flex items-center gap-1.5 text-sm dark:text-gray-400 light:text-gray-600">
+                      <Phone className="h-3.5 w-3.5 flex-shrink-0 dark:text-primary light:text-[#1078a7]" />
                       <span>{profile.phone}</span>
                     </div>
                   )}
@@ -456,14 +455,14 @@ const UserProfile = () => {
                   <Button
                     variant="outline"
                     onClick={() => navigate("/profile")}
-                    className="border-blue-500 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300"
+                    className="dark:border-primary/50 dark:text-primary dark:hover:bg-primary/10 light:border-[#1078a7] light:text-[#1078a7] light:hover:bg-[#1078a7]/10"
                   >
-                    <User className="h-4 w-4 mr-2 text-yellow-400" />
+                    <User className="h-4 w-4 mr-2 dark:text-primary light:text-[#1078a7]" />
                     Edit Profile
                   </Button>
                 ) : (
                   <Button
-                    className="bg-green-500 hover:bg-green-600 text-white"
+                    className="dark:bg-primary dark:hover:bg-primary/90 light:bg-[#1078a7] light:hover:bg-[#1078a7]/90 text-white"
                     onClick={() => window.open(`https://wa.me/${profile.phone?.replace(/\D/g, "")}`, "_blank")}
                   >
                     <WhatsApp className="h-4 w-4 mr-2" />
@@ -476,23 +475,23 @@ const UserProfile = () => {
         </Card>
 
         <Tabs defaultValue="listings" className="space-y-6">
-          <TabsList className="w-full sm:w-auto border-b border-blue-500/30 rounded-none p-0 h-auto bg-transparent space-x-8">
+          <TabsList className="w-full sm:w-auto border-b dark:border-primary/30 light:border-[#1078a7]/30 rounded-none p-0 h-auto bg-transparent space-x-8">
             <TabsTrigger
               value="listings"
-              className="rounded-none border-b-2 border-transparent data-[state=active]:border-green-500 data-[state=active]:text-green-400 data-[state=active]:bg-transparent py-2 px-1"
+              className="rounded-none border-b-2 border-transparent dark:text-gray-400 light:text-gray-600 data-[state=active]:border-primary data-[state=active]:dark:text-primary data-[state=active]:light:text-[#1078a7] data-[state=active]:bg-transparent py-2 px-1"
             >
-              <Package className="h-4 w-4 mr-2 text-blue-400" />
+              <Package className="h-4 w-4 mr-2 dark:text-primary light:text-[#1078a7]" />
               Listings
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="listings" className="mt-6">
             {userItems.length === 0 ? (
-              <Card className="border border-yellow-500/50 bg-black rounded-xl">
+              <Card className="border dark:border-primary/30 light:border-[#1078a7]/30 dark:bg-gray-900 light:bg-white rounded-xl">
                 <CardContent className="pt-12 pb-12 text-center">
-                  <Package className="h-16 w-16 mx-auto text-yellow-400/50 mb-4" />
-                  <h3 className="text-xl font-medium mb-2 text-white">No Listings Yet</h3>
-                  <p className="text-gray-400 max-w-md mx-auto">
+                  <Package className="h-16 w-16 mx-auto dark:text-primary/50 light:text-[#1078a7]/50 mb-4" />
+                  <h3 className="text-xl font-medium mb-2 dark:text-white light:text-gray-800">No Listings Yet</h3>
+                  <p className="dark:text-gray-400 light:text-gray-600 max-w-md mx-auto">
                     {isCurrentUser
                       ? "You haven't listed any items for sale yet. Create your first listing to start selling!"
                       : `${profile.first_name || "This user"} hasn't listed any items for sale yet.`}
@@ -501,7 +500,7 @@ const UserProfile = () => {
                   {isCurrentUser && (
                     <Button
                       variant="default"
-                      className="mt-6 bg-green-500 hover:bg-green-600 text-white"
+                      className="mt-6 dark:bg-primary dark:hover:bg-primary/90 light:bg-[#1078a7] light:hover:bg-[#1078a7]/90 text-white"
                       onClick={() => document.getElementById("sell-button")?.click()}
                     >
                       <Tag className="h-4 w-4 mr-2 text-white" />

@@ -14,6 +14,7 @@ import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { toast } from "sonner";
+import { useTheme } from "../contexts/ThemeContext";
 
 export const DesktopSideNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
@@ -25,6 +26,7 @@ export const DesktopSideNav = () => {
   const { hideSellTips } = useSettings();
   const { unreadMessagesByUser } = useNotifications();
   const deviceType = useDeviceType();
+  const { theme } = useTheme();
   
   useEffect(() => {
     const checkUser = async () => {
@@ -98,14 +100,24 @@ export const DesktopSideNav = () => {
   return (
     <>
       <motion.aside 
-        className="fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col border-r border-white/10 bg-secondary/95 w-[300px] h-screen min-h-0 p-0 m-0"
+        className={cn(
+          "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col w-[300px] h-screen min-h-0 p-0 m-0",
+          theme === 'light' 
+            ? "border-r border-gray-200 bg-white shadow-sm" 
+            : "border-r border-white/10 bg-secondary/95"
+        )}
         style={{height: '100vh', top: 0, bottom: 0}}
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.3 }}
       >
-        <div className="flex items-center p-4 h-16">
-          <Link to="/home" className="text-2xl font-bold text-primary">GSU Market</Link>
+        <div className={cn(
+          "flex items-center p-4 h-16",
+          theme === 'light' ? "border-b border-gray-100" : undefined
+        )}>
+          <Link to="/home" className="text-2xl font-bold">
+            <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">GSU Market</span>
+          </Link>
         </div>
         <div className="flex-1 flex flex-col justify-between min-h-0">
           <nav className="flex-1 flex flex-col justify-between">
@@ -120,11 +132,13 @@ export const DesktopSideNav = () => {
             "flex items-center gap-4 w-full py-3 px-4 rounded-lg text-lg transition-all",
             location.pathname === item.href
               ? "bg-primary/15 text-primary shadow-md border-l-4 border-primary"
-              : "text-gray-300 hover:bg-white/10 hover:text-primary/90"
+              : theme === 'light' 
+                ? "text-black hover:bg-black/5 hover:text-primary" 
+                : "text-gray-300 hover:bg-white/10 hover:text-primary/90"
           )}
           onClick={item.onClick}
         >
-          <item.icon className="h-7 w-7" />
+          <item.icon className={theme === 'light' ? "h-7 w-7 text-black" : "h-7 w-7"} />
           <span className="text-lg font-medium">{item.label}</span>
         </Button>
       ) : (
@@ -134,10 +148,12 @@ export const DesktopSideNav = () => {
             "flex items-center gap-4 w-full py-3 px-4 rounded-lg text-lg transition-all",
             location.pathname === item.href
               ? "bg-primary/15 text-primary shadow-md border-l-4 border-primary"
-              : "text-gray-300 hover:bg-white/10 hover:text-primary/90"
+              : theme === 'light' 
+                ? "text-black hover:bg-black/5 hover:text-primary" 
+                : "text-gray-300 hover:bg-white/10 hover:text-primary/90"
           )}
         >
-          <item.icon className="h-7 w-7" />
+          <item.icon className={theme === 'light' ? "h-7 w-7 text-black" : "h-7 w-7"} />
           <span className="text-lg font-medium">{item.label}</span>
         </Link>
       )}
@@ -147,7 +163,10 @@ export const DesktopSideNav = () => {
 ))}
             </div>
           </nav>
-          <div className="w-full max-w-[240px] mx-auto mt-6 border-t border-white/10 pt-4 flex flex-col items-center gap-3">
+          <div className={cn(
+            "w-full max-w-[240px] mx-auto mt-6 pt-4 flex flex-col items-center gap-3",
+            theme === 'light' ? "border-t border-gray-200" : "border-t border-white/10"
+          )}>
             {userProfile && (
               <div className="flex items-center gap-3 w-full px-2">
                 <Avatar className="h-10 w-10">
@@ -157,8 +176,8 @@ export const DesktopSideNav = () => {
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm truncate">{userProfile?.first_name || 'User'}</div>
-                  <div className="text-xs text-gray-400 truncate">{user?.email}</div>
+                  <div className={cn("font-medium text-sm truncate", theme === 'light' ? "text-black" : undefined)}>{userProfile?.first_name || 'User'}</div>
+                  <div className={cn("text-xs truncate", theme === 'light' ? "text-gray-600" : "text-gray-400")}>{user?.email}</div>
                 </div>
               </div>
             )}
@@ -166,7 +185,10 @@ export const DesktopSideNav = () => {
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center gap-4 w-full py-3 px-4 h-auto text-red-400 hover:bg-red-500/10 rounded-lg"
+                  className={cn(
+                    "flex items-center gap-4 w-full py-3 px-4 h-auto rounded-lg",
+                    theme === 'light' ? "text-red-600 hover:bg-red-50" : "text-red-400 hover:bg-red-500/10"
+                  )}
                   onClick={handleLogout}
                 >
                   <LogOut className="h-5 w-5" />

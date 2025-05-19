@@ -8,26 +8,27 @@
 @layer base {
   :root,
   .light {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    --background: 206 50% 99%; /* soft blue-tinted white */
+    --foreground: 210 25% 8%; /* rich dark text */
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 210 25% 8%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 25% 8%;
+    --primary: 199 95% 45%; /* vibrant blue */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 230 60% 98%; /* light blue-purple */
+    --secondary-foreground: 220 50% 15%;
     --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    --muted-foreground: 215 25% 30%;
+    --accent: 199 90% 94%; /* matching blue accent */
+    --accent-foreground: 199 95% 25%;
+    --highlight: 199 95% 97%; /* bright highlight */
+    --destructive: 0 95% 60%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.75rem;
+    --border: 210 30% 92%;
+    --input: 210 30% 96%;
+    --ring: 199 95% 65%;
+    --radius: 0.85rem;
   }
 
   .dark {
@@ -60,6 +61,12 @@
   body {
     @apply bg-background text-foreground font-sans;
     font-family: 'Inter', sans-serif;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  .light body {
+    background: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
@@ -77,28 +84,182 @@
   @apply text-foreground;
 }
 
+/* Light mode section headers and highlights */
+.light .section-header {
+  background: linear-gradient(110deg, hsl(var(--accent) / 0.3), hsl(var(--highlight)));
+  color: hsl(var(--primary));
+  border-radius: var(--radius);
+  padding: 0.85rem 1.5rem;
+  margin-bottom: 1.35rem;
+  font-weight: 600;
+  box-shadow: 0 3px 10px rgba(30, 174, 219, 0.1);
+  border-left: 4px solid hsl(var(--primary));
+  letter-spacing: 0.02em;
+  position: relative;
+  overflow: hidden;
+}
+
+.light .section-header::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: translateX(-100%);
+  animation: shine 3s infinite linear;
+}
+
+@keyframes shine {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Light mode card/main backgrounds */
+.light .main-bg {
+  background: hsl(var(--highlight));
+}
+
+/* Sidebar in light mode */
+.light .sidebar {
+  background: #ffffff;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.03);
+  border-right: 1px solid rgba(0, 0, 0, 0.06);
+  color: hsl(var(--foreground));
+}
+.light .sidebar .sidebar-link {
+  color: #000000;
+  transition: all 0.2s ease;
+  margin: 4px 8px;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.light .sidebar .sidebar-link:hover {
+  color: hsl(var(--primary));
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.light .sidebar .sidebar-link.active {
+  background-color: hsl(var(--primary));
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.light .sidebar .sidebar-link .icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.8;
+}
+
+.light .sidebar .sidebar-link:hover .icon {
+  opacity: 1;
+}
+
+.light .sidebar .sidebar-link.active .icon {
+  opacity: 1;
+  color: white;
+}
+
+/* Bottom nav solid background in light mode */
+.light .bottom-nav {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.95));
+  box-shadow: 0 -4px 15px 0 rgba(30, 174, 219, 0.08);
+  border-top: 1px solid rgba(30, 174, 219, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 10;
+}
+
+/* Improve contrast for sidebar icons/text */
+.light .sidebar .icon {
+  color: #000000;
+}
+
+/* Add logo/brand styling to top of sidebar */
+.light .sidebar .brand {
+  padding: 20px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 15px;
+}
+
+.light .sidebar .brand h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(210, 80%, 55%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+
 /* Improved card styling */
 .card-enhanced {
   @apply rounded-lg border border-border bg-card p-4 shadow-sm;
+  transition: all 0.25s ease;
 }
 
 .light .card-enhanced {
-  @apply border-gray-200 shadow-md;
+  @apply border-gray-100 bg-white;
+  background: linear-gradient(135deg, #ffffff, #f8fdff);
+  box-shadow: 0 8px 25px -5px rgba(30, 174, 219, 0.1), 0 3px 6px -2px rgba(16, 42, 67, 0.04);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius: calc(var(--radius) + 0.1rem);
+  border: 1px solid rgba(30, 174, 219, 0.08);
+}
+
+.light .card-enhanced:hover {
+  box-shadow: 0 12px 30px -8px rgba(30, 174, 219, 0.15), 0 4px 10px -3px rgba(16, 42, 67, 0.07);
+  transform: translateY(-3px) scale(1.01);
+  background: linear-gradient(135deg, #ffffff, #f0f9ff);
+  border-color: rgba(30, 174, 219, 0.15);
 }
 
 /* Light mode specific card styles */
 .light .bg-secondary {
-  @apply border border-gray-200 shadow-sm;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(236, 249, 255, 0.9));
+  @apply border border-gray-100 shadow-sm;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(30, 174, 219, 0.06);
+}
+
+.light .bg-secondary:hover {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 1), rgba(230, 247, 255, 0.95));
+  box-shadow: 0 6px 15px rgba(30, 174, 219, 0.12);
+  border-color: rgba(30, 174, 219, 0.12);
 }
 
 /* Ensure text visibility in light mode */
 .light .text-white {
-  @apply text-gray-800;
+  @apply text-gray-900;
 }
 
 /* Add subtle hover effects */
 .interactive-item {
-  @apply transition-all hover:bg-accent/50;
+  @apply transition-all duration-300 ease-in-out;
+  border-radius: var(--radius);
+}
+
+.light .interactive-item {
+  @apply hover:bg-accent/40 hover:shadow-md;
+  transform: scale(1);
+  transition: transform 0.2s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.light .interactive-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px rgba(30, 174, 219, 0.1);
 }
 
 /* Emoji picker customizations */
@@ -130,17 +291,88 @@
 
 /* Light mode brand colors */
 .light .product-action-button {
-  @apply bg-[#1EAEDB]/10 text-[#1EAEDB] hover:bg-[#1EAEDB]/20 border-[#1EAEDB]/30;
+  background: linear-gradient(135deg, rgba(30, 174, 219, 0.08), rgba(30, 174, 219, 0.12));
+  color: hsl(var(--primary));
+  border: 1px solid rgba(30, 174, 219, 0.25);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 8px -2px rgba(30, 174, 219, 0.15);
+  font-weight: 500;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+.light .product-action-button:hover {
+  background: linear-gradient(135deg, rgba(30, 174, 219, 0.12), rgba(30, 174, 219, 0.18));
+  box-shadow: 0 6px 12px -2px rgba(30, 174, 219, 0.25);
+  transform: translateY(-2px);
+  border-color: rgba(30, 174, 219, 0.4);
+}
+
+.light .product-action-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px -1px rgba(30, 174, 219, 0.2);
+  transition: all 0.1s ease;
+}
+
+.light .product-action-button::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+  transform: rotate(30deg);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.light .product-action-button:hover::after {
+  opacity: 1;
 }
 
 /* Heart icon in liked state */
 .light .liked-icon {
-  @apply text-[#ea384c] fill-[#ea384c];
+  color: #ea384c;
+  fill: #ea384c;
+  filter: drop-shadow(0 1px 2px rgba(234, 56, 76, 0.3));
+  animation: heartBeat 1.2s ease-in-out;
+}
+
+@keyframes heartBeat {
+  0%, 100% { transform: scale(1); }
+  15% { transform: scale(1.2); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.1); }
 }
 
 /* Light mode navigation for image carousel */
 .light .carousel-nav {
-  @apply bg-white/80 text-[#1EAEDB] hover:bg-white/90 border border-[#1EAEDB]/30;
+  background: rgba(255, 255, 255, 0.75);
+  color: hsl(var(--primary));
+  border: 1px solid rgba(30, 174, 219, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(30, 174, 219, 0.15);
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.light .carousel-nav:hover {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 6px 16px rgba(30, 174, 219, 0.25);
+  transform: scale(1.08);
+}
+
+.light .carousel-nav:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 8px rgba(30, 174, 219, 0.2);
 }
 
 @keyframes fadeIn {
@@ -154,4 +386,259 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Light mode additional animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.light .float-animation {
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Improve light mode scrollbars */
+.light ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.light ::-webkit-scrollbar-track {
+  background: rgba(236, 249, 255, 0.6);
+  border-radius: 10px;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(30, 174, 219, 0.2);
+  border-radius: 10px;
+  transition: all 0.3s ease;
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(30, 174, 219, 0.4);
+}
+
+/* Add glass morphism effect to important elements */
+.light .glass-effect {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px 0 rgba(30, 174, 219, 0.1);
+}
+
+/* Enhance light mode text for better readability */
+.light h1, .light h2, .light h3 {
+  background: linear-gradient(90deg, hsl(var(--foreground)), hsl(199, 85%, 25%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}
+
+/* Light mode specific improvements */
+.light {
+  /* Global light mode adjustments */
+  --page-content-shadow: 0 16px 40px -12px rgba(30, 174, 219, 0.12), 0 10px 15px -8px rgba(16, 42, 67, 0.06);
+  background: linear-gradient(180deg, hsl(var(--background)), rgba(236, 249, 255, 0.8));
+  min-height: 100vh;
+}
+
+.light .logo {
+  filter: drop-shadow(0 3px 5px rgba(30, 174, 219, 0.3));
+  animation: pulse 5s infinite alternate;
+}
+
+@keyframes pulse {
+  0% {
+    filter: drop-shadow(0 3px 5px rgba(30, 174, 219, 0.3));
+  }
+  100% {
+    filter: drop-shadow(0 5px 8px rgba(30, 174, 219, 0.5));
+  }
+}
+
+/* Add subtle pattern to background for more texture */
+.light::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%231EAEDB' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  z-index: -1;
+}
+
+/* Add a gentle light gradient at the top */
+.light::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(180deg, rgba(236, 249, 255, 0.8), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Clean sidebar user section */
+.light .sidebar .user-section {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  margin-top: auto;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.light .sidebar .user-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.light .sidebar .user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.light .sidebar .user-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: hsl(var(--foreground));
+}
+
+.light .sidebar .user-role {
+  font-size: 0.75rem;
+  color: hsl(var(--muted-foreground));
+}
+
+.light .product-card {
+  background: linear-gradient(165deg, #ffffff, #f5faff);
+  border-radius: calc(var(--radius) + 0.1rem);
+  box-shadow: 0 6px 18px -6px rgba(30, 174, 219, 0.12), 0 2px 5px -2px rgba(16, 42, 67, 0.05);
+  transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border: 1px solid rgba(30, 174, 219, 0.06);
+  overflow: hidden;
+  position: relative;
+}
+
+.light .product-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--primary) / 0.5));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.light .product-card:hover {
+  box-shadow: 0 12px 25px -8px rgba(30, 174, 219, 0.2), 0 5px 12px -3px rgba(16, 42, 67, 0.08);
+  transform: translateY(-5px);
+  border-color: rgba(30, 174, 219, 0.15);
+}
+
+.light .product-card:hover::before {
+  opacity: 1;
+}
+
+.light input, .light select, .light textarea {
+  border: 1px solid rgba(30, 174, 219, 0.2);
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.9), rgba(248, 252, 255, 0.95));
+  box-shadow: 0 3px 8px -2px rgba(16, 42, 67, 0.04), inset 0 1px 0 0 rgba(255, 255, 255, 0.95);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  border-radius: calc(var(--radius) - 0.25rem);
+}
+
+.light input:hover, .light select:hover, .light textarea:hover {
+  border-color: rgba(30, 174, 219, 0.3);
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.95), rgba(246, 251, 255, 1));
+}
+
+.light input:focus, .light select:focus, .light textarea:focus {
+  border-color: rgba(30, 174, 219, 0.5);
+  box-shadow: 0 0 0 3px rgba(30, 174, 219, 0.15), 0 3px 8px -2px rgba(16, 42, 67, 0.04);
+  background-color: #ffffff;
+  outline: none;
+}
+
+.light button {
+  transition: all 0.2s ease;
+}
+
+.light button:active {
+  transform: scale(0.98);
+}
+
+/* Fix emoji display in all contexts */
+/* The emoji-container class ensures emojis display in their natural colors */
+.emoji-container {
+  /* The trick is to use a specific value for -webkit-text-fill-color that */
+  /* affects text but not emoji rendering */
+  color-scheme: light dark; /* Support both light and dark modes */
+}
+
+/* This ensures emojis themselves aren't affected by text color */
+.emoji-container:not(:has(span)) {
+  /* Only apply this when we're using the direct text approach */
+  -webkit-text-fill-color: currentColor;
+}
+
+/* For dark mode, force text to be white but leave emojis alone */
+.dark .emoji-container {
+  color: white !important;
+}
+
+/* For light mode, force text to be normal color but leave emojis alone */
+.light .emoji-container {
+  color: rgb(31, 41, 55) !important; /* text-gray-800 equivalent */
+}
+
+/* This forces emojis to display with their natural colors regardless of parent */
+.emoji-container * {
+  text-shadow: none !important;
+}
+
+/* These legacy rules are kept for backward compatibility */
+.card-enhanced h3 {
+  color-scheme: light dark;
+}
+
+/* Force white text for SavedItems product titles */
+.saved-item-title {
+  color: white !important;
+  -webkit-text-fill-color: white !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Always allow emoji in product titles to show their natural colors */
+.product-title {
+  color: var(--foreground);
+}
+
+.dark .product-title {
+  color: white;
+}
+
+.light .product-title {
+  color: #333;
 }

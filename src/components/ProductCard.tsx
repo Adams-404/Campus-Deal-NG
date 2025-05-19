@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { toast } from "sonner";
 
 interface ProductCardProps {
@@ -127,6 +127,9 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
     return new Intl.NumberFormat('en-US').format(price);
   };
 
+  // Just leave the title as plain text for simpler rendering
+  // We'll handle emoji colors with CSS only
+
   return (
     <div className={cn(
       "bg-secondary rounded-lg border border-white/10 dark:border-white/10 light:border-gray-200 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group",
@@ -135,8 +138,8 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
       <div className="relative aspect-[16/9]">
         <ImageCarousel 
           images={item.images} 
-          navClassName="light:bg-white/80 light:text-[#1EAEDB] light:hover:bg-white/90 light:border light:border-[#1EAEDB]/30 dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70"
-          imageCountClassName="light:bg-white/80 light:text-[#1EAEDB] light:border light:border-[#1EAEDB]/30 dark:bg-black/50 dark:backdrop-blur-sm"
+          navClassName="light:bg-white/90 light:text-[#1078a7] light:hover:bg-white light:border light:border-[#1078a7] light:shadow-sm dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70"
+          imageCountClassName="light:bg-white/90 light:text-[#1078a7] light:border light:border-[#1078a7] light:shadow-sm dark:bg-black/50 dark:backdrop-blur-sm"
         />
         <div className="absolute top-2 right-2 z-10 flex gap-2">
           <Button
@@ -145,13 +148,15 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
             onClick={handleLike}
             disabled={isLoading}
             className={cn(
-              "dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70 light:bg-white/70 light:backdrop-blur-sm light:hover:bg-white/90 light:border",
-              isSaved ? "light:text-[#ea384c] dark:text-red-500 light:border-[#ea384c]/30" : "light:text-gray-700 dark:text-white light:border-gray-300"
+              "dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70 light:bg-white/90 light:hover:bg-black/40 light:hover:backdrop-blur-sm light:border-2 light:shadow-sm transition-colors",
+              isSaved 
+                ? "light:text-[#ea384c] dark:text-red-500 light:border-[#ea384c] light:hover:text-white" 
+                : "light:text-[#1078a7] dark:text-white light:border-[#1078a7] light:hover:text-white"
             )}
           >
             <Heart className={cn(
               "h-5 w-5",
-              isSaved ? "fill-current" : ""
+              isSaved ? "text-[#ea384c] fill-current" : ""
             )} />
           </Button>
         </div>
@@ -159,9 +164,11 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
       <div className="p-4">
         <div className="flex justify-between items-start gap-4 mb-3">
           <h3 className={cn(
-            "font-medium dark:text-white light:text-gray-800 line-clamp-2 flex-1",
+            "line-clamp-2 flex-1 dark:text-white text-gray-800 emoji-container",
             fontSizeClass
-          )}>{item.title}</h3>
+          )}>
+            {item.title}
+          </h3>
           <Button
             variant="ghost"
             size="icon"
