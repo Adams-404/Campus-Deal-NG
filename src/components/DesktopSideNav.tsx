@@ -15,10 +15,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { toast } from "sonner";
 import { useTheme } from "../contexts/ThemeContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const DesktopSideNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
   const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
   const location = useLocation();
@@ -104,7 +115,7 @@ export const DesktopSideNav = () => {
           "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col w-[300px] h-screen min-h-0 p-0 m-0",
           theme === 'light' 
             ? "border-r border-gray-200 bg-white shadow-sm" 
-            : "border-r border-white/10 bg-secondary/95"
+            : "border-r border-white/10 bg-black"
         )}
         style={{height: '100vh', top: 0, bottom: 0}}
         initial={{ x: -20, opacity: 0 }}
@@ -189,7 +200,7 @@ export const DesktopSideNav = () => {
                     "flex items-center gap-4 w-full py-3 px-4 h-auto rounded-lg",
                     theme === 'light' ? "text-red-600 hover:bg-red-50" : "text-red-400 hover:bg-red-500/10"
                   )}
-                  onClick={handleLogout}
+                  onClick={() => setShowLogoutDialog(true)}
                 >
                   <LogOut className="h-5 w-5" />
                   <span className="text-sm">Logout</span>
@@ -208,6 +219,26 @@ export const DesktopSideNav = () => {
         trigger="sell"
       />
       <SellModal isOpen={isSellModalOpen} onClose={() => setIsSellModalOpen(false)} />
+      
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign Out</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out? You will need to sign in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-600 text-white"
+            >
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };

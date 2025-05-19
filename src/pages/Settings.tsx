@@ -113,10 +113,6 @@ export default function Settings() {
 
   const sections = [
     {
-      title: "Preferences",
-      items: []
-    },
-    {
       title: "Account",
       items: user ? [
         {
@@ -232,35 +228,46 @@ export default function Settings() {
 
   return (
     <div className="bg-background">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10
-  ml-0 lg:ml-[300px] transition-all duration-300">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
 
-        <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
-          <div className="h-16 flex items-center justify-center relative">
-            <h1 className="text-lg font-semibold">Settings</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate('/support')}
-              className="text-blue-500 hover:text-blue-400 absolute right-0"
-            >
-              <Headset className="h-9 w-9" />
-            </Button>
+        <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="w-10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => navigate(-1)}
+                className="text-primary lg:hidden"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </div>
+            <h1 className="text-lg font-semibold absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">Settings</h1>
+            <div className="w-10 flex justify-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/support')}
+                className="text-[#1078a7] hover:text-[#1078a7]/80 bg-white/90 dark:bg-transparent shadow-sm"
+              >
+                <Headset className="h-6 w-6" />
+              </Button>
+            </div>
           </div>
           <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
         </div>
       </div>
 
-      <main className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
+      <main className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300">
         <PageTransition>
           {isLoading ? (
             renderSkeleton()
           ) : (
-            <div className="pt-24 pb-32 space-y-8">
+            <div className="pt-24 pb-32 space-y-8 mx-auto max-w-3xl">
               <div className="space-y-8">
                 {/* Theme Section */}
-                <div>
-                  <h2 className="text-sm font-medium text-gray-400 mb-4">Preferences</h2>
+                <div className="lg:bg-background/5 lg:rounded-xl lg:p-6 lg:border lg:border-white/10 lg:shadow-sm">
+                  <h2 className="text-sm font-medium text-gray-600 mb-4">Theme & Notifications</h2>
                   <div className="space-y-4">
                     <ExpandableSection
                       icon={theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor}
@@ -310,7 +317,7 @@ export default function Settings() {
                     >
                       <div className="space-y-6">
                         {notificationTypes.map((type) => (
-                          <div key={type.label} className="flex items-start gap-4 py-2">
+                          <div key={type.label} className="flex items-start gap-4 py-2 lg:p-3 lg:bg-pink-500/15 dark:lg:bg-transparent lg:border lg:border-pink-300 dark:lg:border-white/10 lg:rounded-lg lg:shadow-sm">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
                                 <type.icon className="w-4 h-4 text-gray-400" />
@@ -335,14 +342,16 @@ export default function Settings() {
 
                 {/* Other Sections */}
                 {sections.map((section) => (
-                  <div key={section.title}>
-                    <h2 className="text-sm font-medium text-gray-400 mb-4">{section.title}</h2>
-                    <div className="space-y-2">
+                  <div key={section.title} className="lg:bg-background/5 lg:rounded-xl lg:p-6 lg:border lg:border-white/10 lg:shadow-sm">
+                    <h2 className="text-sm font-medium text-gray-600 mb-4">{section.title}</h2>
+                    <div className="space-y-3 lg:space-y-3">
                       {section.items.map((item) => (
                         <Link
                           key={item.label}
                           to={item.href}
-                          className="bg-secondary/50 rounded-lg border border-white/10 p-4 flex items-center justify-between hover:bg-secondary/80 transition-colors"
+                          className={cn("rounded-lg p-4 flex items-center justify-between hover:bg-opacity-80 transition-colors shadow-sm", 
+                             item.bgColor.replace('bg-', 'bg-') + '/15',
+                             'border border-' + item.bgColor.split('-')[1] + '-200 dark:border-white/10')}
                         >
                           <div className="flex items-center gap-3">
                             <div className={cn("p-2 rounded-full", item.bgColor)}>
@@ -359,25 +368,34 @@ export default function Settings() {
               </div>
 
               {user && (
-                <div className="mt-24">
-                  <Button
-                    variant="ghost"
-                    className="w-full h-[60px] bg-secondary/50 rounded-lg border border-white/10 flex items-center justify-between hover:bg-secondary/80 transition-colors group"
-                    onClick={() => setShowSignOutDialog(true)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-full bg-red-500/10">
-                        <LogOut className="w-5 h-5 text-red-500" />
+                <div className="mt-12 lg:hidden xl:hidden">
+                  <div>
+                    <h2 className="text-sm font-medium text-gray-600 mb-4">Account Actions</h2>
+                    <Button
+                      variant="ghost"
+                      className="w-full h-[60px] bg-red-500/15 dark:bg-secondary/50 rounded-lg border border-red-300 dark:border-white/10 flex items-center justify-between hover:bg-red-100 transition-colors group shadow-sm"
+                      onClick={() => setShowSignOutDialog(true)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-red-500/10">
+                          <LogOut className="w-5 h-5 text-red-500" />
+                        </div>
+                        <span className="text-red-500">Sign Out</span>
                       </div>
-                      <span className="text-red-500">Sign Out</span>
+                      <ChevronRight className="w-5 h-5 text-red-500 transition-transform group-hover:translate-x-0.5" />
+                    </Button>
+                    
+                    <div className="mt-8 text-center">
+                      <p className="text-sm text-gray-400">GSU Market v1.0.0</p>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-red-500 transition-transform group-hover:translate-x-0.5" />
-                  </Button>
+                  </div>
                 </div>
               )}
-              <div className="mt-8 text-center">
-                <p className="text-sm text-gray-400">GSU Market v1.0.0</p>
-              </div>
+              {!user && (
+                <div className="mt-8 text-center">
+                  <p className="text-sm text-gray-400">GSU Market v1.0.0</p>
+                </div>
+              )}
             </div>
           )}
         </PageTransition>
