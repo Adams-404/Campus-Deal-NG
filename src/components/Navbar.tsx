@@ -40,15 +40,23 @@ import {
 } from "./ui/popover"
 import { Skeleton } from './ui/skeleton'
 import { useDeviceType } from "../hooks/use-mobile"
+import { useTheme } from "../contexts/ThemeContext"
 
 const NavbarSkeleton = () => {
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'mobile';
+  const { theme } = useTheme();
   
   return (
     <nav className={cn(
-      "fixed top-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10",
-      isMobile ? "w-full" : "left-[300px] right-0"
+      "fixed top-0 z-50 backdrop-blur-md",
+      theme === 'light'
+        ? isMobile 
+          ? "w-full bg-white/80 border-b border-gray-200" 
+          : "left-[300px] right-0 bg-white/80 border-b border-gray-200"
+        : isMobile 
+          ? "w-full bg-secondary/80 border-b border-white/10" 
+          : "left-[300px] right-0 bg-black/80 border-b border-white/10"
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -89,6 +97,7 @@ export const Navbar = () => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
   const deviceType = useDeviceType();
   const location = useLocation();
+  const { theme } = useTheme();
   
   // Only show navbar on home page for desktop view
   const shouldShowOnDesktop = location.pathname === '/home';
@@ -227,22 +236,28 @@ export const Navbar = () => {
     ? "pl-4" 
     : "";
   
+  if (isLoading) {
+    return <NavbarSkeleton />
+  }
+  
   return (
-    isLoading ? <NavbarSkeleton /> : (
-      <nav className={cn(
-        "fixed top-0 z-50 border-b border-white/10",
-        navbarClass,
-        "bg-black/80 backdrop-blur-md"
+    <nav className={cn(
+      "fixed top-0 z-50 backdrop-blur-md",
+      theme === 'light'
+        ? isMobile 
+          ? "w-full bg-white/80 border-b border-gray-200 shadow-sm" 
+          : "left-[300px] right-0 bg-white/80 border-b border-gray-200 shadow-sm"
+        : isMobile 
+          ? "w-full bg-secondary/80 border-b border-white/10" 
+          : "left-[300px] right-0 bg-black/80 border-b border-white/10"
+    )}>
+      <div className={cn(
+        "mx-auto px-4 sm:px-6 lg:px-8",
+        mainContentClass
       )}>
-        <div className={cn(
-          "mx-auto px-4 sm:px-6 lg:px-8",
-          mainContentClass
-        )}>
-          {/* First Row */}
-          <div className={`flex justify-between items-center ${navbarHeight} ${!isMobile ? 'py-4 lg:px-2 gap-8' : ''}`}>
-            {/* Only show GSU Market text on desktop, not on mobile */}
-            
-
+        {/* First Row */}
+        <div className={`flex justify-between items-center ${navbarHeight} ${!isMobile ? 'py-4 lg:px-2 gap-8' : ''}`}>
+          {/* Only show GSU Market text on desktop, not on mobile */}
             {/* Search and User Icons */}
             <div className={`flex items-center ${isMobile ? 'w-full justify-between gap-4' : 'gap-8 w-full'}`}>
               {/* Search Input */}
@@ -398,5 +413,4 @@ export const Navbar = () => {
         </div>
       </nav>
     )
-  )
 }

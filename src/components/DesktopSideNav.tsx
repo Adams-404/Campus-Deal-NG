@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -112,22 +112,35 @@ export const DesktopSideNav = () => {
     <>
       <motion.aside 
         className={cn(
-          "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col w-[300px] h-screen min-h-0 p-0 m-0",
+          "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col w-[300px] h-screen min-h-0 p-0 m-0 backdrop-blur-sm",
           theme === 'light' 
-            ? "border-r border-gray-200 bg-white shadow-sm" 
+            ? "border-r border-gray-200 bg-white/95 shadow-md" 
             : "border-r border-white/10 bg-black"
         )}
         style={{height: '100vh', top: 0, bottom: 0}}
-        initial={{ x: -20, opacity: 0 }}
+        initial={{ x: -30, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
       >
         <div className={cn(
-          "flex items-center p-4 h-16",
-          theme === 'light' ? "border-b border-gray-100" : undefined
+          "flex items-center px-6 h-20",
+          theme === 'light' ? "border-b border-gray-200" : "border-b border-white/10"
         )}>
-          <Link to="/home" className="text-2xl font-bold">
-            <span className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent">GSU Market</span>
+          <Link to="/home" className="group relative overflow-hidden text-2xl font-bold transition-all duration-300 hover:scale-105">
+            <motion.span 
+              className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent"
+              initial={{ y: 0 }}
+              whileHover={{ y: -2 }}
+              transition={{ duration: 0.3 }}
+            >
+              GSU Market
+            </motion.span>
+            <motion.span 
+              className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-primary to-blue-500 transition-all duration-300 group-hover:w-full"
+              initial={{ width: 0 }}
+              whileHover={{ width: '100%' }}
+              transition={{ duration: 0.3 }}
+            />
           </Link>
         </div>
         <div className="flex-1 flex flex-col justify-between min-h-0">
@@ -140,54 +153,120 @@ export const DesktopSideNav = () => {
         <Button
           variant="ghost"
           className={cn(
-            "flex items-center gap-4 w-full py-3 px-4 rounded-lg text-lg transition-all",
+            "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
             location.pathname === item.href
-              ? "bg-primary/15 text-primary shadow-md border-l-4 border-primary"
+              ? theme === 'light'
+                ? "bg-white text-primary shadow-md border-l-4 border-[#1078a7]"
+                : "bg-primary/15 text-primary shadow-md border-l-4 border-primary"
               : theme === 'light' 
-                ? "text-black hover:bg-black/5 hover:text-primary" 
-                : "text-gray-300 hover:bg-white/10 hover:text-primary/90"
+                ? "text-black hover:bg-white hover:shadow-md hover:text-[#1078a7] hover:border-l-4 hover:border-[#1078a7]/50" 
+                : "text-gray-300 hover:bg-white/10 hover:text-primary/90 hover:border-l-4 hover:border-primary/50"
           )}
           onClick={item.onClick}
         >
-          <item.icon className={theme === 'light' ? "h-7 w-7 text-black" : "h-7 w-7"} />
-          <span className="text-lg font-medium">{item.label}</span>
+          <div className="relative flex items-center justify-center">
+            <motion.div
+              className="absolute -inset-1 rounded-full bg-primary/0 group-hover:bg-primary/10 transition-all duration-300"
+              initial={{ scale: 0.8, opacity: 0 }}
+              whileHover={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            />
+            <item.icon className={cn(
+              "h-6 w-6 transition-all duration-300", 
+              location.pathname === item.href
+                ? "text-primary"
+                : theme === 'light' ? "text-black group-hover:text-[#1078a7]" : "text-gray-300 group-hover:text-primary"
+            )} />
+          </div>
+          <span className={cn(
+            "text-lg font-medium transition-all duration-300", 
+            location.pathname === item.href
+              ? "translate-x-1"
+              : "group-hover:translate-x-1"
+          )}>{item.label}</span>
+          {item.hasNotification && (
+            <div className="ml-auto flex items-center justify-center">
+              <div className="bg-red-500 text-white text-xs rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                {item.notificationCount > 99 ? "99+" : item.notificationCount}
+              </div>
+            </div>
+          )}
         </Button>
       ) : (
         <Link
           to={item.href}
           className={cn(
-            "flex items-center gap-4 w-full py-3 px-4 rounded-lg text-lg transition-all",
+            "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
             location.pathname === item.href
-              ? "bg-primary/15 text-primary shadow-md border-l-4 border-primary"
+              ? theme === 'light'
+                ? "bg-white text-primary shadow-md border-l-4 border-[#1078a7]"
+                : "bg-primary/15 text-primary shadow-md border-l-4 border-primary"
               : theme === 'light' 
-                ? "text-black hover:bg-black/5 hover:text-primary" 
-                : "text-gray-300 hover:bg-white/10 hover:text-primary/90"
+                ? "text-black hover:bg-white hover:shadow-md hover:text-[#1078a7] hover:border-l-4 hover:border-[#1078a7]/50" 
+                : "text-gray-300 hover:bg-white/10 hover:text-primary/90 hover:border-l-4 hover:border-primary/50"
           )}
         >
-          <item.icon className={theme === 'light' ? "h-7 w-7 text-black" : "h-7 w-7"} />
-          <span className="text-lg font-medium">{item.label}</span>
+          <div className="relative flex items-center justify-center">
+            <motion.div
+              className="absolute -inset-1 rounded-full bg-primary/0 group-hover:bg-primary/10 transition-all duration-300"
+              initial={{ scale: 0.8, opacity: 0 }}
+              whileHover={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.2 }}
+            />
+            <item.icon className={cn(
+              "h-6 w-6 transition-all duration-300", 
+              location.pathname === item.href
+                ? "text-primary"
+                : theme === 'light' ? "text-black group-hover:text-[#1078a7]" : "text-gray-300 group-hover:text-primary"
+            )} />
+          </div>
+          <span className={cn(
+            "text-lg font-medium transition-all duration-300", 
+            location.pathname === item.href
+              ? "translate-x-1"
+              : "group-hover:translate-x-1"
+          )}>{item.label}</span>
+          {item.hasNotification && (
+            <div className="ml-auto flex items-center justify-center">
+              <div className="bg-red-500 text-white text-xs rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                {item.notificationCount > 99 ? "99+" : item.notificationCount}
+              </div>
+            </div>
+          )}
         </Link>
       )}
     </TooltipTrigger>
-    <TooltipContent>{item.label}</TooltipContent>
+    <TooltipContent className="bg-black/90 text-white border-white/10 px-3 py-1">
+      {item.label}
+    </TooltipContent>
   </Tooltip>
 ))}
             </div>
           </nav>
           <div className={cn(
-            "w-full max-w-[240px] mx-auto mt-6 pt-4 flex flex-col items-center gap-3",
+            "w-full max-w-[260px] mx-auto mt-8 pt-6 flex flex-col items-center gap-4",
             theme === 'light' ? "border-t border-gray-200" : "border-t border-white/10"
           )}>
             {userProfile && (
-              <div className="flex items-center gap-3 w-full px-2">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={userProfile?.avatar_url} />
-                  <AvatarFallback className="bg-primary/20 text-primary">
-                    {userProfile?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
+              <div className="group relative flex items-center gap-4 w-full px-4 py-3 rounded-xl transition-all duration-300 hover:bg-primary/5">
+                <div className="relative">
+                  <motion.div
+                    className="absolute -inset-1 rounded-full bg-primary/0 group-hover:bg-primary/10 transition-all duration-300"
+                    initial={{ scale: 0.9, opacity: 0 }}
+                    whileHover={{ scale: 1, opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  />
+                  <Avatar className="h-12 w-12 border-2 border-transparent group-hover:border-primary transition-all duration-300 shadow-sm">
+                    <AvatarImage src={userProfile?.avatar_url} />
+                    <AvatarFallback className="bg-primary/20 text-primary font-medium">
+                      {userProfile?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
                 <div className="flex-1 min-w-0">
-                  <div className={cn("font-medium text-sm truncate", theme === 'light' ? "text-black" : undefined)}>{userProfile?.first_name || 'User'}</div>
+                  <div className={cn("font-medium text-sm truncate group-hover:text-primary transition-all duration-300", theme === 'light' ? "text-black" : undefined)}>
+                    {userProfile?.first_name || 'User'}
+                  </div>
                   <div className={cn("text-xs truncate", theme === 'light' ? "text-gray-600" : "text-gray-400")}>{user?.email}</div>
                 </div>
               </div>
@@ -197,15 +276,26 @@ export const DesktopSideNav = () => {
                 <Button
                   variant="ghost"
                   className={cn(
-                    "flex items-center gap-4 w-full py-3 px-4 h-auto rounded-lg",
-                    theme === 'light' ? "text-red-600 hover:bg-red-50" : "text-red-400 hover:bg-red-500/10"
+                    "group relative flex items-center gap-3 w-full py-3 px-4 h-auto rounded-lg transition-all duration-300",
+                    theme === 'light' ? "text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200" : "text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/30"
                   )}
                   onClick={() => setShowLogoutDialog(true)}
                 >
-                  <LogOut className="h-5 w-5" />
-                  <span className="text-sm">Logout</span>
+                  <div className="relative flex items-center justify-center">
+                    <motion.div
+                      className="absolute -inset-1 rounded-full bg-red-400/0 group-hover:bg-red-400/10 transition-all duration-300"
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      whileHover={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                    />
+                    <LogOut className="h-5 w-5 transition-transform duration-300 group-hover:rotate-12" />
+                  </div>
+                  <span className="text-sm font-medium group-hover:translate-x-1 transition-transform duration-300">Logout</span>
                 </Button>
               </TooltipTrigger>
+              <TooltipContent className="bg-black/90 text-white border-white/10 px-3 py-1">
+                Sign out from your account
+              </TooltipContent>
             </Tooltip>
           </div>
         </div>
