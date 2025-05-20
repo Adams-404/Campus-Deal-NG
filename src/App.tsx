@@ -40,6 +40,7 @@ import Support from "./pages/Support";
 import LazyHomepage from "./pages/LazyHomepage";
 import LazyViewItem from "./pages/LazyViewItem";
 import { useDeviceType } from "./hooks/use-mobile";
+import DeliveryCoordinator from "./pages/DeliveryCoordinator";
 
 const queryClient = new QueryClient();
 
@@ -210,6 +211,9 @@ const AnimatedRoutes = () => {
               <Route path="/item/:id" element={<ProtectedRoute allowGuest><LazyViewItem /></ProtectedRoute>} />
               <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+              
+              {/* Add the new Delivery Coordinator route */}
+              <Route path="/delivery" element={<ProtectedRoute><DeliveryCoordinator /></ProtectedRoute>} />
 
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
 

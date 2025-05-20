@@ -1,5 +1,4 @@
-
-import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -100,6 +99,8 @@ export const DesktopSideNav = () => {
     { icon: Plus, label: "Sell", href: "#", onClick: handleSellClick },
     { icon: Heart, label: "Saved", href: "/saved" },
     { icon: User, label: "Profile", href: "/profile" },
+    // Add the Delivery tab - only visible on desktop/tablet
+    { icon: Truck, label: "Delivery", href: "/delivery", desktopOnly: true },
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
   
@@ -146,7 +147,11 @@ export const DesktopSideNav = () => {
         <div className="flex-1 flex flex-col justify-between min-h-0">
           <nav className="flex-1 flex flex-col justify-between">
             <div className="flex-1 flex flex-col gap-2 py-6">
-              {navItems.map((item) => (
+              {navItems.map((item) => {
+                // Skip desktop-only items on mobile
+                if (item.desktopOnly && deviceType === 'mobile') return null;
+                
+                return (
                 <Tooltip key={item.label}>
                   <TooltipTrigger asChild>
                     {item.label === "Sell" ? (
@@ -295,7 +300,7 @@ export const DesktopSideNav = () => {
                     {item.label}
                   </TooltipContent>
                 </Tooltip>
-              ))}
+              )})}
             </div>
           </nav>
           <div className={cn(
