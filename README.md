@@ -1,5 +1,5 @@
 
-# GSU Market Hub
+# GSU Market
 
 ![GSU Market Hub](https://gsu-market-hub.vercel.app/logo.png)
 
