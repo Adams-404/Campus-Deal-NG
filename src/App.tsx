@@ -212,7 +212,7 @@ const AnimatedRoutes = () => {
               <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
               
-              {/* Add the new Delivery Coordinator route */}
+              {/* Delivery Coordinator route */}
               <Route path="/delivery" element={<ProtectedRoute><DeliveryCoordinator /></ProtectedRoute>} />
 
               <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />

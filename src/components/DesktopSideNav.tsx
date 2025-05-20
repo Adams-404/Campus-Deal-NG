@@ -1,3 +1,4 @@
+
 import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
@@ -93,13 +94,13 @@ export const DesktopSideNav = () => {
   const hasNewMessages = Object.keys(unreadMessagesByUser).length > 0;
   const totalUnreadMessages = Object.values(unreadMessagesByUser).reduce((a, b) => a + b, 0);
 
+  // Reordered navItems to put Saved right before Sell
   const navItems = [
     { icon: Home, label: "Home", href: "/home" },
     { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
+    { icon: Heart, label: "Saved", href: "/saved" }, // Moved up above Sell
     { icon: Plus, label: "Sell", href: "#", onClick: handleSellClick },
-    { icon: Heart, label: "Saved", href: "/saved" },
     { icon: User, label: "Profile", href: "/profile" },
-    // Add the Delivery tab - only visible on desktop/tablet
     { icon: Truck, label: "Delivery", href: "/delivery", desktopOnly: true },
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
@@ -145,164 +146,91 @@ export const DesktopSideNav = () => {
           </Link>
         </div>
         <div className="flex-1 flex flex-col justify-between min-h-0">
-          <nav className="flex-1 flex flex-col justify-between">
+          <nav className="flex-1 flex flex-col">
+            {/* First part of the navigation - top items */}
             <div className="flex-1 flex flex-col gap-2 py-6">
-              {navItems.map((item) => {
-                // Skip desktop-only items on mobile
-                if (item.desktopOnly && deviceType === 'mobile') return null;
-                
-                return (
-                <Tooltip key={item.label}>
-                  <TooltipTrigger asChild>
-                    {item.label === "Sell" ? (
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "group relative flex items-center justify-between w-full transition-all duration-300",
-                          theme === 'light'
-                            ? "bg-gradient-to-r from-white/90 via-blue-50 to-white/90 border-2 border-[#1078a7] shadow-sm"
-                            : "bg-gradient-to-r from-black/80 via-primary/20 to-black/80 border border-primary/30 shadow-md"
-                        )}
-                        style={{
-                          borderRadius: '2rem',
-                          padding: '0.75rem 1.5rem',
-                        }}
-                        onClick={item.onClick}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="relative">
-                            <motion.div
-                              className={cn(
-                                "absolute inset-0 rounded-full",
-                                theme === 'light' ? "bg-[#1078a7]/10" : "bg-primary/20"
-                              )}
-                              initial={{ scale: 0.9 }}
-                              animate={{ 
-                                scale: [1, 1.05, 1],
-                                opacity: [0.7, 1, 0.7]
-                              }}
-                              transition={{ 
-                                duration: 2,
-                                repeat: Infinity,
-                                repeatType: "mirror"
-                              }}
-                            />
-                            <div className={cn(
-                              "flex items-center justify-center w-10 h-10 rounded-full",
-                              theme === 'light' ? "bg-white shadow-md" : "bg-black shadow-inner border border-primary/30"
-                            )}>
-                              <item.icon className={cn(
-                                "h-5 w-5",
-                                theme === 'light' ? "text-[#1078a7]" : "text-primary"
-                              )} />
-                            </div>
-                          </div>
-                          <span className={cn(
-                            "text-lg font-medium",
-                            theme === 'light' ? "text-[#1078a7]" : "text-primary"
-                          )}>{item.label}</span>
-                        </div>
-                        <div className={cn(
-                          "w-8 h-8 rounded-full flex items-center justify-center",
-                          theme === 'light' ? "bg-[#1078a7]/10 text-[#1078a7]" : "bg-primary/20 text-primary"
-                        )}>
-                          <ShoppingBag className="h-4 w-4" />
-                        </div>
-                      </Button>
-                    ) : item.onClick ? (
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
-                          location.pathname === item.href
-                            ? theme === 'light'
-                              ? "bg-gradient-to-r from-white/90 via-blue-50/80 to-white/90 text-[#1078a7] shadow-md border-2 border-[#1078a7] rounded-xl"
-                              : "bg-gradient-to-r from-primary/30 to-primary/10 text-primary shadow-inner border border-primary/50 rounded-xl"
-                            : theme === 'light' 
-                              ? "text-black hover:bg-white hover:shadow-md hover:text-[#1078a7] hover:border-l-4 hover:border-[#1078a7]/50" 
-                              : "text-gray-300 hover:bg-white/10 hover:text-primary/90 hover:border-l-4 hover:border-primary/50"
-                        )}
-                        onClick={item.onClick}
-                      >
-                        <div className="relative flex items-center justify-center">
-                          <motion.div
-                            className="absolute -inset-1 rounded-full bg-primary/0 group-hover:bg-primary/10 transition-all duration-300"
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            whileHover={{ scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.2 }}
-                          />
-                          <item.icon className={cn(
-                            "h-6 w-6 transition-all duration-300", 
-                            location.pathname === item.href
-                              ? "text-primary"
-                              : theme === 'light' ? "text-black group-hover:text-[#1078a7]" : "text-gray-300 group-hover:text-primary"
-                          )} />
-                        </div>
-                        <span className={cn(
-                          "text-lg font-medium transition-all duration-300", 
-                          location.pathname === item.href
-                            ? "translate-x-1"
-                            : "group-hover:translate-x-1"
-                        )}>{item.label}</span>
-                        {item.hasNotification && (
-                          <div className="ml-auto flex items-center justify-center">
-                            <div className="bg-red-500 text-white text-xs rounded-full h-5 min-w-5 flex items-center justify-center px-1">
-                              {item.notificationCount > 99 ? "99+" : item.notificationCount}
-                            </div>
-                          </div>
-                        )}
-                      </Button>
-                    ) : (
-                      <Link
-                        to={item.href}
-                        className={cn(
-                          "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
-                          location.pathname === item.href
-                            ? theme === 'light'
-                              ? "bg-gradient-to-r from-white/90 via-blue-50/80 to-white/90 text-[#1078a7] shadow-md border-2 border-[#1078a7] rounded-xl"
-                              : "bg-gradient-to-r from-primary/30 to-primary/10 text-primary shadow-inner border border-primary/50 rounded-xl"
-                            : theme === 'light' 
-                              ? "text-black hover:bg-white hover:shadow-md hover:text-[#1078a7] hover:border-l-4 hover:border-[#1078a7]/50" 
-                              : "text-gray-300 hover:bg-white/10 hover:text-primary/90 hover:border-l-4 hover:border-primary/50"
-                        )}
-                      >
-                        <div className="relative flex items-center justify-center">
-                          <motion.div
-                            className="absolute -inset-1 rounded-full bg-primary/0 group-hover:bg-primary/10 transition-all duration-300"
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            whileHover={{ scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.2 }}
-                          />
-                          <item.icon className={cn(
-                            "h-6 w-6 transition-all duration-300", 
-                            location.pathname === item.href
-                              ? "text-primary"
-                              : theme === 'light' ? "text-black group-hover:text-[#1078a7]" : "text-gray-300 group-hover:text-primary"
-                          )} />
-                        </div>
-                        <span className={cn(
-                          "text-lg font-medium transition-all duration-300", 
-                          location.pathname === item.href
-                            ? "translate-x-1"
-                            : "group-hover:translate-x-1"
-                        )}>{item.label}</span>
-                        {item.hasNotification && (
-                          <div className="ml-auto flex items-center justify-center">
-                            <div className="bg-red-500 text-white text-xs rounded-full h-5 min-w-5 flex items-center justify-center px-1">
-                              {item.notificationCount > 99 ? "99+" : item.notificationCount}
-                            </div>
-                          </div>
-                        )}
-                      </Link>
+              {navItems.slice(0, 2).map((item) => renderNavItem(item, location, theme))}
+            </div>
+
+            {/* Center sell and saved buttons */}
+            <div className="flex flex-col items-center gap-4 py-6">
+              {/* Saved button */}
+              {renderNavItem(navItems[2], location, theme)}
+              
+              {/* Sell button - styled differently */}
+              <Tooltip key={navItems[3].label}>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "group relative flex items-center justify-between w-[80%] transition-all duration-300",
+                      theme === 'light'
+                        ? "bg-gradient-to-r from-white/90 via-blue-50 to-white/90 border-2 border-[#1078a7] shadow-sm"
+                        : "bg-gradient-to-r from-black/80 via-primary/20 to-black/80 border border-primary/30 shadow-md"
                     )}
-                  </TooltipTrigger>
-                  <TooltipContent className="bg-black/90 text-white border-white/10 px-3 py-1">
-                    {item.label}
-                  </TooltipContent>
-                </Tooltip>
-              )})}
+                    style={{
+                      borderRadius: '2rem',
+                      padding: '0.75rem 1.5rem',
+                    }}
+                    onClick={navItems[3].onClick}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <motion.div
+                          className={cn(
+                            "absolute inset-0 rounded-full",
+                            theme === 'light' ? "bg-[#1078a7]/10" : "bg-primary/20"
+                          )}
+                          initial={{ scale: 0.9 }}
+                          animate={{ 
+                            scale: [1, 1.05, 1],
+                            opacity: [0.7, 1, 0.7]
+                          }}
+                          transition={{ 
+                            duration: 2,
+                            repeat: Infinity,
+                            repeatType: "mirror"
+                          }}
+                        />
+                        <div className={cn(
+                          "flex items-center justify-center w-10 h-10 rounded-full",
+                          theme === 'light' ? "bg-white shadow-md" : "bg-black shadow-inner border border-primary/30"
+                        )}>
+                          <navItems[3].icon className={cn(
+                            "h-5 w-5",
+                            theme === 'light' ? "text-[#1078a7]" : "text-primary"
+                          )} />
+                        </div>
+                      </div>
+                      <span className={cn(
+                        "text-lg font-medium",
+                        theme === 'light' ? "text-[#1078a7]" : "text-primary"
+                      )}>{navItems[3].label}</span>
+                    </div>
+                    <div className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center",
+                      theme === 'light' ? "bg-[#1078a7]/10 text-[#1078a7]" : "bg-primary/20 text-primary"
+                    )}>
+                      <ShoppingBag className="h-4 w-4" />
+                    </div>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="bg-black/90 text-white border-white/10 px-3 py-1">
+                  {navItems[3].label}
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            
+            {/* Bottom part of navigation */}
+            <div className="flex-1 flex flex-col gap-2 py-6">
+              {navItems.slice(4).map((item) => {
+                // Skip desktop-only items on mobile
+                if (item.desktopOnly && deviceType === "mobile") return null;
+                return renderNavItem(item, location, theme);
+              })}
             </div>
           </nav>
+          
           <div className={cn(
             "w-full max-w-[260px] mx-auto mt-8 pt-6 flex flex-col items-center gap-4",
             theme === 'light' ? "border-t border-gray-200" : "border-t border-white/10"
@@ -392,3 +320,159 @@ export const DesktopSideNav = () => {
     </>
   );
 };
+
+// Helper function to render nav items with the new active styling
+function renderNavItem(item: any, location: any, theme: string) {
+  const isActive = location.pathname === item.href;
+  
+  // Different animation variants for the icon
+  const iconAnimations = {
+    hover: {
+      rotate: [0, -10, 10, -5, 5, 0],
+      scale: [1, 1.1, 1],
+      transition: { duration: 0.6 }
+    },
+    tap: {
+      scale: 0.9
+    }
+  };
+
+  if (item.onClick) {
+    return (
+      <Tooltip key={item.label}>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            className={cn(
+              "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
+              theme === 'light' ? "text-black hover:bg-white hover:shadow-sm" : "text-gray-300 hover:bg-white/5"
+            )}
+            onClick={item.onClick}
+          >
+            <div className="relative flex items-center justify-center">
+              <motion.div
+                className={cn(
+                  "absolute -inset-3 rounded-full",
+                  isActive ? "bg-primary/10" : "bg-transparent"
+                )}
+                whileHover="hover"
+                whileTap="tap"
+                variants={{
+                  hover: { scale: 1.1, opacity: 0.8 },
+                  tap: { scale: 0.9 }
+                }}
+              />
+              <motion.div
+                whileHover="hover"
+                whileTap="tap"
+                variants={iconAnimations}
+              >
+                <item.icon className={cn(
+                  "h-6 w-6 transition-all duration-300", 
+                  isActive
+                    ? "stroke-primary stroke-[2.5px]"
+                    : theme === 'light' ? "text-black" : "text-gray-300"
+                )} />
+              </motion.div>
+            </div>
+            <span className={cn(
+              "text-lg font-medium transition-all duration-300",
+              isActive && "text-primary"
+            )}>
+              {item.label}
+            </span>
+            {item.hasNotification && (
+              <div className="ml-auto flex items-center justify-center">
+                <div className="bg-red-500 text-white text-xs rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                  {item.notificationCount > 99 ? "99+" : item.notificationCount}
+                </div>
+              </div>
+            )}
+            {isActive && (
+              <motion.div
+                className={cn(
+                  "absolute bottom-0 left-6 right-6 h-0.5 rounded-full",
+                  theme === 'light' ? "bg-primary" : "bg-primary"
+                )}
+                initial={{ width: 0, left: '50%', right: '50%' }}
+                animate={{ width: '50%', left: '25%', right: '25%' }}
+                transition={{ duration: 0.3 }}
+              />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="bg-black/90 text-white border-white/10 px-3 py-1">
+          {item.label}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+  
+  return (
+    <Tooltip key={item.label}>
+      <TooltipTrigger asChild>
+        <Link
+          to={item.href}
+          className={cn(
+            "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
+            theme === 'light' ? "text-black hover:bg-white hover:shadow-sm" : "text-gray-300 hover:bg-white/5"
+          )}
+        >
+          <div className="relative flex items-center justify-center">
+            <motion.div
+              className={cn(
+                "absolute -inset-3 rounded-full",
+                isActive ? "bg-primary/10" : "bg-transparent"
+              )}
+              whileHover="hover"
+              whileTap="tap"
+              variants={{
+                hover: { scale: 1.1, opacity: 0.8 },
+                tap: { scale: 0.9 }
+              }}
+            />
+            <motion.div
+              whileHover="hover"
+              whileTap="tap"
+              variants={iconAnimations}
+            >
+              <item.icon className={cn(
+                "h-6 w-6 transition-all duration-300", 
+                isActive
+                  ? "stroke-primary stroke-[2.5px]"
+                  : theme === 'light' ? "text-black" : "text-gray-300"
+              )} />
+            </motion.div>
+          </div>
+          <span className={cn(
+            "text-lg font-medium transition-all duration-300",
+            isActive && "text-primary"
+          )}>
+            {item.label}
+          </span>
+          {item.hasNotification && (
+            <div className="ml-auto flex items-center justify-center">
+              <div className="bg-red-500 text-white text-xs rounded-full h-5 min-w-5 flex items-center justify-center px-1">
+                {item.notificationCount > 99 ? "99+" : item.notificationCount}
+              </div>
+            </div>
+          )}
+          {isActive && (
+            <motion.div
+              className={cn(
+                "absolute bottom-0 left-6 right-6 h-0.5 rounded-full",
+                theme === 'light' ? "bg-primary" : "bg-primary"
+              )}
+              initial={{ width: 0, left: '50%', right: '50%' }}
+              animate={{ width: '50%', left: '25%', right: '25%' }}
+              transition={{ duration: 0.3 }}
+            />
+          )}
+        </Link>
+      </TooltipTrigger>
+      <TooltipContent className="bg-black/90 text-white border-white/10 px-3 py-1">
+        {item.label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
