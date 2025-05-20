@@ -153,26 +153,21 @@ export const DesktopSideNav = () => {
           </Link>
         </div>
         <div className="flex-1 flex flex-col justify-between min-h-0">
-          <nav className="flex-1 flex flex-col pt-6 px-2">
-            {/* Top navigation items - Home & Messages */}
-            <div className="space-y-1 mb-4">
+          <nav className="flex-1 flex flex-col pt-5 px-2">
+            {/* All navigation items with consistent spacing */}
+            <div className="space-y-1.5">
+              {/* Home & Messages */}
               {navItems.slice(0, 2).map((item) => (
                 <SideNavItem key={item.label} item={item} theme={theme} />
               ))}
-            </div>
-
-            {/* Saved item */}
-            <div className="space-y-1 mb-6">
+              
+              {/* Saved item */}
               <SideNavItem item={navItems[2]} theme={theme} />
-            </div>
-            
-            {/* Sell button - styled differently */}
-            <div className="mb-6">
+              
+              {/* Sell button - styled differently */}
               <SellButton item={sellItem} theme={theme} />
-            </div>
-            
-            {/* Bottom navigation items - Profile, Delivery, Settings */}
-            <div className="space-y-1 flex-1">
+              
+              {/* Bottom navigation items - Profile, Delivery, Settings */}
               {navItems.slice(3).map((item) => {
                 // Skip desktop-only items on non-desktop devices
                 if (item.desktopOnly && deviceType === 'mobile') return null;
@@ -183,11 +178,11 @@ export const DesktopSideNav = () => {
           
           {/* User profile and logout section */}
           <div className={cn(
-            "mt-auto pt-6 px-4 pb-6",
+            "mt-auto pt-4 px-4 pb-4",
             theme === 'light' ? "border-t border-gray-200" : "border-t border-white/10"
           )}>
             <UserProfileSection userProfile={userProfile} user={user} theme={theme} />
-            <div className="mt-4">
+            <div className="mt-4 relative z-10 w-full">
               <LogoutButton onClick={() => setShowLogoutDialog(true)} theme={theme} />
             </div>
           </div>
