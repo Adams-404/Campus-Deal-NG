@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -432,7 +431,7 @@ const DeliveryCoordinator = () => {
             initial={{ opacity: 0, scaleY: 0 }}
             animate={{ opacity: 1, scaleY: 1 }}
             transition={{ duration: 0.5, delay: 0.7 }}
-            transformOrigin="90 230"
+            style={{ transformOrigin: "90px 230px" }}
           />
           
           {/* Another Building */}
@@ -484,7 +483,7 @@ const DeliveryCoordinator = () => {
             initial={{ opacity: 0, scaleY: 0 }}
             animate={{ opacity: 1, scaleY: 1 }}
             transition={{ duration: 0.5, delay: 0.8 }}
-            transformOrigin="290 230"
+            style={{ transformOrigin: "290px 230px" }}
           />
           
           {/* Ground */}
