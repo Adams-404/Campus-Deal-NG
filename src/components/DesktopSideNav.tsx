@@ -144,7 +144,7 @@ export const DesktopSideNav = () => {
               <img src="/logo.png" alt="GSU Market Logo" className="h-full object-contain" />
             </motion.div>
             <motion.span 
-              className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-primary to-blue-500 transition-all duration-300 group-hover:w-full"
+              className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-[#16a34a] to-emerald-500 transition-all duration-300 group-hover:w-full"
               initial={{ width: 0 }}
               whileHover={{ width: '100%' }}
               transition={{ duration: 0.3 }}

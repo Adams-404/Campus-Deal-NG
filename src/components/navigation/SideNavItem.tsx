@@ -40,7 +40,7 @@ export const SideNavItem = ({ item, theme }: SideNavItemProps) => {
         <motion.div
           className={cn(
             "absolute -inset-3 rounded-full",
-            isActive ? theme === 'light' ? "bg-[#1078a7]/10" : "bg-blue-500/10" : "bg-transparent"
+            isActive ? theme === 'light' ? "bg-[#16a34a]/10" : "bg-emerald-500/10" : "bg-transparent"
           )}
           whileHover="hover"
           whileTap="tap"
@@ -57,14 +57,14 @@ export const SideNavItem = ({ item, theme }: SideNavItemProps) => {
           <item.icon className={cn(
             "h-6 w-6 transition-all duration-300", 
             isActive
-              ? theme === 'light' ? "stroke-[#1078a7] stroke-[2.5px]" : "stroke-blue-500 stroke-[2.5px]"
+              ? theme === 'light' ? "stroke-[#16a34a] stroke-[2.5px]" : "stroke-emerald-500 stroke-[2.5px]"
               : theme === 'light' ? "text-black" : "text-gray-300"
           )} />
         </motion.div>
       </div>
       <span className={cn(
         "text-lg font-medium transition-all duration-300",
-        isActive && (theme === 'light' ? "text-[#1078a7]" : "text-blue-500")
+        isActive && (theme === 'light' ? "text-[#16a34a]" : "text-emerald-500")
       )}>
         {item.label}
       </span>
@@ -79,7 +79,7 @@ export const SideNavItem = ({ item, theme }: SideNavItemProps) => {
         <motion.div
           className={cn(
             "absolute bottom-0 left-6 right-6 h-0.5 rounded-full",
-            theme === 'light' ? "bg-[#1078a7]" : "bg-blue-500"
+            theme === 'light' ? "bg-[#16a34a]" : "bg-emerald-500"
           )}
           initial={{ width: 0, left: '50%', right: '50%' }}
           animate={{ width: '60%', left: '20%', right: '20%' }}
