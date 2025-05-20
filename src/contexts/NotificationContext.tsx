@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -10,12 +11,6 @@ interface NotificationContextType {
   unreadMessagesByUser: Record<string, number>;
   toggleNotifications: () => Promise<void>;
   markConversationAsRead: (conversationId: string) => Promise<void>;
-}
-
-interface Message {
-  receiver_id: string;
-  is_read: boolean;
-  sender_id: string;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -117,7 +112,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         // Count messages by sender
         const messagesByUser: Record<string, number> = {};
         if (data) {
-          (data as Message[]).forEach(message => {
+          data.forEach(message => {
             const senderId = message.sender_id;
             messagesByUser[senderId] = (messagesByUser[senderId] || 0) + 1;
           });
@@ -145,14 +140,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         },
         (payload) => {
           // Only update if the message is unread and for this user
-          const newMessage = payload.new as Message;
-          if (newMessage && newMessage.receiver_id === userId && !newMessage.is_read) {
-            const senderId = newMessage.sender_id;
+          if (payload.new && payload.new.receiver_id === userId && !payload.new.is_read) {
+            const senderId = payload.new.sender_id;
             setUnreadMessagesByUser(prev => ({
               ...prev,
               [senderId]: (prev[senderId] || 0) + 1
             }));
           }
+          // Optionally, refetch all unread messages for full sync:
+          // fetchUnreadMessages();
         }
       )
       .subscribe();
@@ -187,7 +183,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         .limit(1);
         
       if (data && data.length > 0) {
-        const senderId = (data[0] as Message).sender_id;
+        const senderId = data[0].sender_id;
         setUnreadMessagesByUser(prev => {
           const updated = { ...prev };
           delete updated[senderId];

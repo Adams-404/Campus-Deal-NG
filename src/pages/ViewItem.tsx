@@ -427,7 +427,8 @@ export default function ViewItem() {
               <div style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.2s' }} className="h-full">
                 <ImageCarousel 
                   images={item.images} 
-                  aspectRatio="square"
+                  showZoom={true}
+                  aspectRatio="full"
                   className="h-full"
                 />
               </div>

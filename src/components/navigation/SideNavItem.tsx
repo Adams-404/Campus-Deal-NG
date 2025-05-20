@@ -9,7 +9,7 @@ interface SideNavItemProps {
   item: {
     icon: React.FC<any>;
     label: string;
-    href?: string;
+    href: string;
     onClick?: () => void;
     hasNotification?: boolean;
     notificationCount?: number;
@@ -20,7 +20,7 @@ interface SideNavItemProps {
 
 export const SideNavItem = ({ item, theme }: SideNavItemProps) => {
   const location = useLocation();
-  const isActive = item.href && location.pathname === item.href;
+  const isActive = location.pathname === item.href;
   
   // Different animation variants for the icon
   const iconAnimations = {
@@ -115,7 +115,7 @@ export const SideNavItem = ({ item, theme }: SideNavItemProps) => {
     <Tooltip>
       <TooltipTrigger asChild>
         <Link
-          to={item.href || "#"}
+          to={item.href}
           className={cn(
             "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
             theme === 'light' ? "text-black hover:bg-white hover:shadow-sm" : "text-gray-300 hover:bg-white/5"
