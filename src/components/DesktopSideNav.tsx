@@ -211,8 +211,8 @@ export const DesktopSideNav = () => {
                           "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
                           location.pathname === item.href
                             ? theme === 'light'
-                              ? "bg-white text-primary shadow-md border-l-4 border-[#1078a7]"
-                              : "bg-primary/15 text-primary shadow-md border-l-4 border-primary"
+                              ? "bg-gradient-to-r from-white/90 via-blue-50/80 to-white/90 text-[#1078a7] shadow-md border-2 border-[#1078a7] rounded-xl"
+                              : "bg-gradient-to-r from-primary/30 to-primary/10 text-primary shadow-inner border border-primary/50 rounded-xl"
                             : theme === 'light' 
                               ? "text-black hover:bg-white hover:shadow-md hover:text-[#1078a7] hover:border-l-4 hover:border-[#1078a7]/50" 
                               : "text-gray-300 hover:bg-white/10 hover:text-primary/90 hover:border-l-4 hover:border-primary/50"
@@ -254,8 +254,8 @@ export const DesktopSideNav = () => {
                           "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
                           location.pathname === item.href
                             ? theme === 'light'
-                              ? "bg-white text-primary shadow-md border-l-4 border-[#1078a7]"
-                              : "bg-primary/15 text-primary shadow-md border-l-4 border-primary"
+                              ? "bg-gradient-to-r from-white/90 via-blue-50/80 to-white/90 text-[#1078a7] shadow-md border-2 border-[#1078a7] rounded-xl"
+                              : "bg-gradient-to-r from-primary/30 to-primary/10 text-primary shadow-inner border border-primary/50 rounded-xl"
                             : theme === 'light' 
                               ? "text-black hover:bg-white hover:shadow-md hover:text-[#1078a7] hover:border-l-4 hover:border-[#1078a7]/50" 
                               : "text-gray-300 hover:bg-white/10 hover:text-primary/90 hover:border-l-4 hover:border-primary/50"
