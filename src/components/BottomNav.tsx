@@ -10,6 +10,7 @@ import { useSettings } from "../contexts/SettingsContext";
 import SafetyTipsDialog from "./SafetyTipsDialog";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useDeviceType } from "../hooks/use-mobile";
+import { useTheme } from "../contexts/ThemeContext";
 
 export const BottomNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
@@ -20,6 +21,7 @@ export const BottomNav = () => {
   const { hideSellTips } = useSettings();
   const { unreadMessagesByUser } = useNotifications();
   const deviceType = useDeviceType();
+  const { theme } = useTheme();
   
   useEffect(() => {
     // Check for existing user session
@@ -68,7 +70,12 @@ export const BottomNav = () => {
 
   return (
     <>
-      <nav data-bottom-nav className="fixed bottom-0 left-0 right-0 bg-secondary border-t border-white/10 px-6 pb-6 pt-3 z-40">
+      <nav data-bottom-nav className={cn(
+        "fixed bottom-0 left-0 right-0 backdrop-blur-md border-t px-6 pb-6 pt-3 z-40 w-full",
+        theme === 'light' 
+          ? "bg-white/90 border-gray-200 shadow-sm" 
+          : "bg-neutral-900/90 border-white/10"
+      )}>
         <div className="flex justify-between items-center max-w-md mx-auto relative">
           {navItems.map((item, index) => (
             index === 2 ? (
@@ -83,7 +90,10 @@ export const BottomNav = () => {
                 <div className="bg-primary rounded-full p-4 shadow-lg shadow-primary/20 -mt-6">
                   <item.icon className="w-6 h-6 text-white" />
                 </div>
-                <span className="text-xs text-gray-400">{item.label}</span>
+                <span className={cn(
+                  "text-xs",
+                  theme === 'light' ? "text-black" : "text-gray-400"
+                )}>{item.label}</span>
               </button>
             ) : (
               <Link
@@ -107,11 +117,15 @@ export const BottomNav = () => {
                 )}
                 <item.icon className={cn(
                   "w-6 h-6",
-                  location.pathname === item.href ? "text-primary" : "text-gray-400"
+                  location.pathname === item.href 
+                    ? "text-primary" 
+                    : theme === 'light' ? "text-black" : "text-gray-400"
                 )} />
                 <span className={cn(
                   "text-xs",
-                  location.pathname === item.href ? "text-primary" : "text-gray-400"
+                  location.pathname === item.href 
+                    ? "text-primary" 
+                    : theme === 'light' ? "text-black" : "text-gray-400"
                 )}>{item.label}</span>
               </Link>
             )
