@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-// Import new components
+// Import components
 import { SideNavItem } from "./navigation/SideNavItem";
 import { SellButton } from "./navigation/SellButton";
 import { UserProfileSection } from "./navigation/UserProfileSection";
@@ -166,7 +166,11 @@ export const DesktopSideNav = () => {
               <SideNavItem item={navItems[2]} theme={theme} />
               
               {/* Sell button - styled differently */}
-              <SellButton item={navItems[3]} theme={theme} />
+              <SellButton item={{
+                icon: navItems[3].icon,
+                label: navItems[3].label,
+                onClick: handleSellClick
+              }} theme={theme} />
             </div>
             
             {/* Bottom part of navigation */}

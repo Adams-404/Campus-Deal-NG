@@ -229,7 +229,7 @@ export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => 
                 <ImageCarousel 
                   images={[...imageUrls, ...videoUrls]} 
                   className="bg-black"
-                  aspectRatio="product"
+                  aspectRatio="square"
                 />
               </div>
             )}

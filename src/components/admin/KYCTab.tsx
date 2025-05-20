@@ -81,10 +81,6 @@ export function KYCTab() {
         console.log("KYC document change detected:", payload);
         fetchKYCDocuments();
       })
-      .on('error', (error) => {
-        console.error('KYC documents channel error:', error);
-        toast.error('Connection to KYC updates lost. Please refresh the page.');
-      })
       .subscribe();
 
     // Listen for changes in profiles to catch KYC status updates
@@ -105,10 +101,6 @@ export function KYCTab() {
               : doc
           )
         );
-      })
-      .on('error', (error) => {
-        console.error('Profiles channel error:', error);
-        toast.error('Connection to profile updates lost. Please refresh the page.');
       })
       .subscribe();
 
