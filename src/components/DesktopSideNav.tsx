@@ -132,18 +132,17 @@ export const DesktopSideNav = () => {
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         <div className={cn(
-          "flex items-center px-6 h-20",
-          theme === 'light' ? "border-b border-gray-200" : "border-b border-white/10"
+          "flex justify-center items-center px-6 h-20"
         )}>
-          <Link to="/home" className="group relative overflow-hidden text-2xl font-bold transition-all duration-300 hover:scale-105">
-            <motion.span 
-              className="bg-gradient-to-r from-primary to-blue-500 bg-clip-text text-transparent"
+          <Link to="/home" className="group relative flex items-center transition-all duration-300 hover:scale-105">
+            <motion.div 
+              className="h-14 overflow-hidden"
               initial={{ y: 0 }}
               whileHover={{ y: -2 }}
               transition={{ duration: 0.3 }}
             >
-              GSU Market
-            </motion.span>
+              <img src="/logo.png" alt="GSU Market Logo" className="h-full object-contain" />
+            </motion.div>
             <motion.span 
               className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-primary to-blue-500 transition-all duration-300 group-hover:w-full"
               initial={{ width: 0 }}
