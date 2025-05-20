@@ -41,6 +41,7 @@ import LazyHomepage from "./pages/LazyHomepage";
 import LazyViewItem from "./pages/LazyViewItem";
 import { useDeviceType } from "./hooks/use-mobile";
 import DeliveryCoordinator from "./pages/DeliveryCoordinator";
+import Feedback from "./pages/Feedback";
 
 const queryClient = new QueryClient();
 
@@ -198,6 +199,7 @@ const AnimatedRoutes = () => {
               <Route path="/about" element={<About />} />
               <Route path="/help" element={<Help />} />
               <Route path="/support" element={<Support />} />
+              <Route path="/feedback" element={<Feedback />} />
 
               <Route path="/home" element={<ProtectedRoute allowGuest><LazyHomepage /></ProtectedRoute>} />
               <Route path="/category/:category" element={<ProtectedRoute allowGuest><CategoryPage /></ProtectedRoute>} />
@@ -235,6 +237,7 @@ const AnimatedRoutes = () => {
 };
 
 const App = () => {
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
