@@ -100,18 +100,19 @@ export const DesktopSideNav = () => {
   const hasNewMessages = Object.keys(unreadMessagesByUser).length > 0;
   const totalUnreadMessages = Object.values(unreadMessagesByUser).reduce((a, b) => a + b, 0);
 
-  // Reordered navItems to put Saved right before Sell
   const navItems = [
     { icon: Home, label: "Home", href: "/home" },
     { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
-    { icon: Heart, label: "Saved", href: "/saved" }, // Moved up above Sell
-    { icon: Plus, label: "Sell", href: "#", onClick: handleSellClick },
+    { icon: Heart, label: "Saved", href: "/saved" },
     { icon: User, label: "Profile", href: "/profile" },
     { icon: Truck, label: "Delivery", href: "/delivery", desktopOnly: true },
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
   
-  // Don't show on mobile, show on tablet and desktop
+  // The sell item with onClick handler
+  const sellItem = { icon: Plus, label: "Sell", href: "#", onClick: handleSellClick };
+  
+  // Don't show on mobile
   if (deviceType === 'mobile') {
     return null;
   }
@@ -152,42 +153,48 @@ export const DesktopSideNav = () => {
           </Link>
         </div>
         <div className="flex-1 flex flex-col justify-between min-h-0">
-          <nav className="flex-1 flex flex-col">
-            {/* First part of the navigation - top items */}
-            <div className="flex-1 flex flex-col gap-2 py-6">
+          <nav className="flex-1 flex flex-col pt-6 px-2">
+            {/* Top navigation items - Home & Messages */}
+            <div className="space-y-1 mb-4">
               {navItems.slice(0, 2).map((item) => (
                 <SideNavItem key={item.label} item={item} theme={theme} />
               ))}
             </div>
 
-            {/* Center sell and saved buttons */}
-            <div className="flex flex-col items-center gap-4 py-6">
-              {/* Saved button */}
+            {/* Saved item */}
+            <div className="space-y-1 mb-6">
               <SideNavItem item={navItems[2]} theme={theme} />
-              
-              {/* Sell button - styled differently */}
-              <SellButton item={navItems[3]} theme={theme} />
             </div>
             
-            {/* Bottom part of navigation */}
-            <div className="flex-1 flex flex-col gap-2 py-6">
-              {navItems.slice(4).map((item) => {
-                // Skip desktop-only items on mobile
-                if (item.desktopOnly && deviceType === "mobile") return null;
+            {/* Sell button - styled differently */}
+            <div className="mb-6">
+              <SellButton item={sellItem} theme={theme} />
+            </div>
+            
+            {/* Bottom navigation items - Profile, Delivery, Settings */}
+            <div className="space-y-1 flex-1">
+              {navItems.slice(3).map((item) => {
+                // Skip desktop-only items on non-desktop devices
+                if (item.desktopOnly && deviceType === 'mobile') return null;
                 return <SideNavItem key={item.label} item={item} theme={theme} />;
               })}
             </div>
           </nav>
           
+          {/* User profile and logout section */}
           <div className={cn(
-            "w-full max-w-[260px] mx-auto mt-8 pt-6 flex flex-col items-center gap-4",
+            "mt-auto pt-6 px-4 pb-6",
             theme === 'light' ? "border-t border-gray-200" : "border-t border-white/10"
           )}>
             <UserProfileSection userProfile={userProfile} user={user} theme={theme} />
-            <LogoutButton onClick={() => setShowLogoutDialog(true)} theme={theme} />
+            <div className="mt-4">
+              <LogoutButton onClick={() => setShowLogoutDialog(true)} theme={theme} />
+            </div>
           </div>
         </div>
       </motion.aside>
+      
+      {/* Modals */}
       <SafetyTipsDialog 
         open={showSellSafetyTips} 
         onClose={() => {

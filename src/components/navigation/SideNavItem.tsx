@@ -82,8 +82,9 @@ export const SideNavItem = ({ item, theme }: SideNavItemProps) => {
             "bg-primary"
           )}
           initial={{ width: 0, left: '50%', right: '50%' }}
-          animate={{ width: '50%', left: '25%', right: '25%' }}
+          animate={{ width: '60%', left: '20%', right: '20%' }}
           transition={{ duration: 0.3 }}
+          style={{ maxWidth: '120px' }} /* Limit the width of active indicator */
         />
       )}
     </>
@@ -91,42 +92,46 @@ export const SideNavItem = ({ item, theme }: SideNavItemProps) => {
 
   if (item.onClick) {
     return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              className={cn(
+                "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
+                theme === 'light' ? "text-black hover:bg-white hover:shadow-sm" : "text-gray-300 hover:bg-white/5"
+              )}
+              onClick={item.onClick}
+            >
+              {renderContent()}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="bg-black/90 text-white border-white/10 px-3 py-1">
+            {item.label}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+  
+  return (
+    <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
+          <Link
+            to={item.href}
             className={cn(
               "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
               theme === 'light' ? "text-black hover:bg-white hover:shadow-sm" : "text-gray-300 hover:bg-white/5"
             )}
-            onClick={item.onClick}
           >
             {renderContent()}
-          </Button>
+          </Link>
         </TooltipTrigger>
         <TooltipContent className="bg-black/90 text-white border-white/10 px-3 py-1">
           {item.label}
         </TooltipContent>
       </Tooltip>
-    );
-  }
-  
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Link
-          to={item.href}
-          className={cn(
-            "group relative flex items-center gap-4 w-full py-4 px-6 rounded-xl text-lg transition-all duration-300",
-            theme === 'light' ? "text-black hover:bg-white hover:shadow-sm" : "text-gray-300 hover:bg-white/5"
-          )}
-        >
-          {renderContent()}
-        </Link>
-      </TooltipTrigger>
-      <TooltipContent className="bg-black/90 text-white border-white/10 px-3 py-1">
-        {item.label}
-      </TooltipContent>
-    </Tooltip>
+    </TooltipProvider>
   );
 };
