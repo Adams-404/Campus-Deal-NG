@@ -7,7 +7,7 @@ GSU Market Hub is a secure online marketplace designed specifically for students
 
 ## 🌐 Live Website
 
-**URL**: [GSU Market Hub](https://gsu-market-hub.vercel.app)
+**URL**: [GSU Market Hub](https://gsumarket.vercel.app/)
 
 ## 🎯 Purpose & Vision
 
@@ -65,7 +65,7 @@ GSU Market Hub is built with modern, robust technologies:
 ## 🚀 Getting Started
 
 ### For Users
-1. Visit [GSU Market Hub](https://gsu-market-hub.vercel.app)
+1. Visit [GSU Market Hub](https://gsumarket.vercel.app)
 2. Create an account using your GSU email address
 3. Complete your profile and verification
 4. Start browsing or listing items!
@@ -75,7 +75,7 @@ If you want to contribute to the development:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/gsu-market-hub.git
+git clone https://github.com/Adams-404/gsu-market-hub.git
 
 # Install dependencies
 npm install
@@ -99,7 +99,7 @@ We're constantly working to improve GSU Market Hub with new features:
 Having issues or questions? Contact our support team:
 - Email: support@gsumarkethub.com
 - Twitter: [@GSUMarketHub](https://twitter.com/GSUMarketHub)
-- Instagram: [@gsumarkethub](https://instagram.com/gsumarkethub)
+- Instagram: [@gsumarkethub](https://instagram.com/gsu.market)
 
 ## 📜 License
 
