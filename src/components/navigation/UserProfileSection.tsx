@@ -13,7 +13,7 @@ export const UserProfileSection = ({ userProfile, user, theme }: UserProfileSect
   if (!userProfile) return null;
   
   return (
-    <div className="group relative flex items-center gap-4 w-full px-4 py-3 rounded-xl transition-all duration-300 hover:bg-primary/5">
+    <div className="group relative flex items-center gap-3 w-full px-4 py-2 rounded-xl transition-all duration-300 hover:bg-primary/5">
       <div className="relative">
         <motion.div
           className="absolute -inset-1 rounded-full bg-primary/0 group-hover:bg-primary/10 transition-all duration-300"
@@ -21,7 +21,7 @@ export const UserProfileSection = ({ userProfile, user, theme }: UserProfileSect
           whileHover={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.2 }}
         />
-        <Avatar className="h-12 w-12 border-2 border-transparent group-hover:border-primary transition-all duration-300 shadow-sm">
+        <Avatar className="h-10 w-10 border-2 border-transparent group-hover:border-primary transition-all duration-300 shadow-sm">
           <AvatarImage src={userProfile?.avatar_url} />
           <AvatarFallback className="bg-primary/20 text-primary font-medium">
             {userProfile?.first_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}

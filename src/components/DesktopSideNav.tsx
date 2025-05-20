@@ -178,7 +178,7 @@ export const DesktopSideNav = () => {
           
           {/* User profile and logout section */}
           <div className={cn(
-            "mt-auto pt-4 px-4 pb-4",
+            "mt-auto pt-2 px-4 pb-2",
             theme === 'light' ? "border-t border-gray-200" : "border-t border-white/10"
           )}>
             <UserProfileSection userProfile={userProfile} user={user} theme={theme} />
