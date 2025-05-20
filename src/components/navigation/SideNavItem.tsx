@@ -38,18 +38,6 @@ export const SideNavItem = ({ item, theme }: SideNavItemProps) => {
     <>
       <div className="relative flex items-center justify-center">
         <motion.div
-          className={cn(
-            "absolute -inset-3 rounded-full",
-            isActive ? theme === 'light' ? "bg-[#16a34a]/10" : "bg-emerald-500/10" : "bg-transparent"
-          )}
-          whileHover="hover"
-          whileTap="tap"
-          variants={{
-            hover: { scale: 1.1, opacity: 0.8 },
-            tap: { scale: 0.9 }
-          }}
-        />
-        <motion.div
           whileHover="hover"
           whileTap="tap"
           variants={iconAnimations}
@@ -57,7 +45,7 @@ export const SideNavItem = ({ item, theme }: SideNavItemProps) => {
           <item.icon className={cn(
             "h-6 w-6 transition-all duration-300", 
             isActive
-              ? theme === 'light' ? "stroke-[#16a34a] stroke-[2.5px]" : "stroke-emerald-500 stroke-[2.5px]"
+              ? theme === 'light' ? "stroke-orange-600 stroke-[2.5px]" : "stroke-orange-500 stroke-[2.5px]"
               : theme === 'light' ? "text-black" : "text-gray-300"
           )} />
         </motion.div>

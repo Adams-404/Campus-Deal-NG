@@ -372,6 +372,195 @@ const DeliveryCoordinator = () => {
     </div>
   );
 
+  // Create a Coming Soon animation for the delivery feature
+  const ComingSoonAnimation = () => {
+    return (
+      <motion.div 
+        className="w-full h-[400px] relative"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        <svg 
+          width="100%" 
+          height="100%"
+          viewBox="0 0 800 400"
+          className={cn(theme === 'light' ? "text-primary" : "text-primary")}
+        >
+          {/* Campus Map Background */}
+          <motion.rect
+            x="50"
+            y="50"
+            width="700"
+            height="300"
+            rx="10"
+            fill={theme === 'light' ? "#f0f4f8" : "#1a2030"}
+            stroke={theme === 'light' ? "#1078a7" : "#4a90e2"}
+            strokeWidth="2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          />
+          
+          {/* Campus Buildings */}
+          {/* Building 1 - ICT Center */}
+          <motion.g
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <rect 
+              x="100" 
+              y="100" 
+              width="120" 
+              height="100" 
+              rx="5"
+              fill={theme === 'light' ? "#d1e8ff" : "#193048"}
+              stroke={theme === 'light' ? "#1078a7" : "#4a90e2"}
+              strokeWidth="2"
+            />
+            <text x="160" y="160" textAnchor="middle" fill="currentColor" fontSize="12" fontWeight="bold">ICT Center</text>
+          </motion.g>
+          
+          {/* Building 2 - Faculty of Law */}
+          <motion.g
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <rect 
+              x="550" 
+              y="150" 
+              width="120" 
+              height="100" 
+              rx="5"
+              fill={theme === 'light' ? "#ffe8d1" : "#483019"}
+              stroke={theme === 'light' ? "#1078a7" : "#4a90e2"}
+              strokeWidth="2"
+            />
+            <text x="610" y="200" textAnchor="middle" fill="currentColor" fontSize="12" fontWeight="bold">Faculty of Law</text>
+          </motion.g>
+          
+          {/* Delivery Person Animation */}
+          <motion.g
+            initial={{ x: 150, y: 150 }}
+            animate={{
+              x: [150, 250, 350, 450, 550],
+              y: [150, 170, 180, 175, 190]
+            }}
+            transition={{ 
+              duration: 4, 
+              repeat: Infinity,
+              repeatType: "reverse",
+              ease: "easeInOut" 
+            }}
+          >
+            {/* Delivery Person */}
+            <circle 
+              cx="0" 
+              cy="0" 
+              r="15" 
+              fill={theme === 'light' ? "#1078a7" : "#4a90e2"} 
+            />
+            <rect 
+              x="-10" 
+              y="-25" 
+              width="20" 
+              height="10" 
+              fill={theme === 'light' ? "#1078a7" : "#4a90e2"} 
+              rx="2" 
+            />
+            <rect 
+              x="-7" 
+              y="15" 
+              width="14" 
+              height="10" 
+              fill={theme === 'light' ? "#34495e" : "#2c3e50"} 
+            />
+            
+            {/* Package/Food being delivered */}
+            <rect 
+              x="-10" 
+              y="-10" 
+              width="20" 
+              height="20" 
+              fill={theme === 'light' ? "#BA8E4A" : "#8e6a33"} 
+              rx="2" 
+            />
+            
+            {/* Speed lines */}
+            <motion.path 
+              d="M -30 -5 L -45 -10" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeDasharray="5,5"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 0] }}
+              transition={{ duration: 1, repeat: Infinity, repeatDelay: 0.5 }}
+            />
+            <motion.path 
+              d="M -30 5 L -45 10" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeDasharray="5,5"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 0] }}
+              transition={{ duration: 1, repeat: Infinity, repeatDelay: 0.5, delay: 0.2 }}
+            />
+          </motion.g>
+          
+          {/* Money/Commission Indicator */}
+          <motion.g
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ 
+              opacity: [0, 1, 1, 0],
+              scale: [0, 1, 1, 0],
+              y: [0, -20, -30, -40]
+            }}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity,
+              repeatDelay: 2,
+              times: [0, 0.2, 0.8, 1],
+              delay: 2
+            }}
+            style={{ x: 300, y: 175 }}
+          >
+            <circle 
+              cx="0" 
+              cy="0" 
+              r="20" 
+              fill={theme === 'light' ? "#ffd700" : "#d4af37"} 
+            />
+            <text x="0" y="4" fontSize="16" fontWeight="bold" fill="#000" textAnchor="middle">$</text>
+          </motion.g>
+          
+          {/* Coming Soon Text */}
+          <motion.g
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            <rect 
+              x="300" 
+              y="50" 
+              width="200" 
+              height="40" 
+              rx="20"
+              fill={theme === 'light' ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.7)"}
+              stroke={theme === 'light' ? "#1078a7" : "#4a90e2"}
+              strokeWidth="2"
+              className="shadow-sm"
+            />
+            <text x="400" y="75" textAnchor="middle" fill="currentColor" fontSize="18" fontWeight="bold">
+              Coming Soon!
+            </text>
+          </motion.g>
+        </svg>
+      </motion.div>
+    );
+  };
+
   // Create a simple SVG animation for the delivery concept
   const DeliveryAnimation = () => {
     return (
@@ -660,213 +849,115 @@ const DeliveryCoordinator = () => {
     
     return (
       <div>
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center justify-between mb-8">
           <Button
-            variant="outline"
-            className="flex items-center gap-2"
+            variant="ghost"
             onClick={() => setSelectedView("info")}
+            className="flex items-center gap-2"
           >
             <ArrowRight className="w-4 h-4 rotate-180" />
             Back to Info
           </Button>
         </div>
-        
-        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid grid-cols-4 mb-8">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-            <TabsTrigger value="in_transit">In Transit</TabsTrigger>
-            <TabsTrigger value="delivered">Delivered</TabsTrigger>
-          </TabsList>
 
-          <TabsContent value={activeTab}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {isLoading ? (
-                // Loading skeletons
-                Array(3).fill(0).map((_, i) => (
-                  <Card key={i} className={cn(
-                    "border",
-                    theme === 'light' ? "border-gray-200 bg-white" : "border-gray-800 bg-gray-900"
-                  )}>
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-6 w-16" />
-                      </div>
-                      <Skeleton className="h-6 w-40 mt-2" />
-                      <Skeleton className="h-4 w-full mt-2" />
-                    </CardHeader>
-                    <CardContent className="pb-4">
-                      <Skeleton className="h-32 w-full mb-4" />
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-full" />
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-4 w-1/2" />
-                      </div>
-                    </CardContent>
-                    <CardFooter>
-                      <Skeleton className="h-9 w-full" />
-                    </CardFooter>
-                  </Card>
-                ))
-              ) : filteredDeliveries.length === 0 ? (
-                <div className="col-span-full flex flex-col items-center justify-center py-12">
-                  <Package className="h-16 w-16 text-gray-400 mb-4" />
-                  <h3 className="text-xl font-medium mb-2">No deliveries found</h3>
-                  <p className="text-gray-500 text-center max-w-md">
-                    There are no deliveries matching your current filter. Try changing your filter or check back later.
-                  </p>
-                </div>
-              ) : (
-                filteredDeliveries.map((delivery) => (
-                  <motion.div
-                    key={delivery.id}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Card className={cn(
-                      "h-full flex flex-col border",
-                      delivery.status === "cancelled" && "border-red-500/30",
-                      theme === 'light' ? "border-gray-200 bg-white" : "border-gray-800 bg-gray-900"
-                    )}>
-                      <CardHeader className="pb-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <Package className="h-4 w-4 mr-2 text-gray-500" />
-                            <span className="text-sm text-gray-500">Order #{delivery.id}</span>
-                          </div>
-                          {getStatusBadge(delivery.status)}
-                        </div>
-                        <CardTitle className="mt-2">{delivery.item_title}</CardTitle>
-                        <CardDescription>
-                          {delivery.status !== "cancelled" ? (
-                            <>
-                              {delivery.status === "delivered" ? (
-                                <span className="flex items-center text-green-500">
-                                  <CheckCircle className="h-4 w-4 mr-1" /> 
-                                  Delivered on {formatDate(delivery.completed_at)}
-                                </span>
-                              ) : delivery.estimated_delivery ? (
-                                <span className="flex items-center">
-                                  <Clock className="h-4 w-4 mr-1" /> 
-                                  Estimated delivery: {formatDate(delivery.estimated_delivery)}
-                                </span>
-                              ) : (
-                                <span className="flex items-center">
-                                  <Calendar className="h-4 w-4 mr-1" /> 
-                                  Processing order
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <span className="flex items-center text-red-500">
-                              <AlertCircle className="h-4 w-4 mr-1" /> 
-                              Cancelled
-                            </span>
-                          )}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="py-4 flex-grow">
-                        {delivery.image_url && (
-                          <div className="relative h-40 mb-4 rounded-md overflow-hidden">
-                            <img 
-                              src={delivery.image_url} 
-                              alt={delivery.item_title}
-                              className="w-full h-full object-cover" 
-                            />
-                            
-                            {/* Commission badge */}
-                            <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-md flex items-center">
-                              <Coins className="w-3 h-3 mr-1" />
-                              ${delivery.commission} commission
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="space-y-3 mb-4">
-                          <div className="flex items-start space-x-2">
-                            <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium">Pickup</p>
-                              <p className="text-sm text-gray-500">{delivery.pickup_address}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start space-x-2">
-                            <MapPin className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                            <div>
-                              <p className="text-sm font-medium">Delivery</p>
-                              <p className="text-sm text-gray-500">{delivery.delivery_address}</p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {delivery.status !== "cancelled" && (
-                          <div className="mb-2">
-                            <div className="flex justify-between text-xs mb-1">
-                              <span>Order Placed</span>
-                              <span>Delivered</span>
-                            </div>
-                            <Progress 
-                              value={getProgressPercentage(delivery.status)} 
-                              className={cn(
-                                "h-2",
-                                delivery.status === "delivered" ? "bg-green-200" : "bg-gray-200"
-                              )}
-                            />
-                          </div>
-                        )}
-
-                        <div className="flex justify-between items-center mt-4">
-                          <div className="flex items-center">
-                            <p className="text-sm mr-1">{delivery.status === "pending" ? "Seller:" : "From:"}</p>
-                            <div className="flex items-center">
-                              <Avatar className="h-6 w-6 mr-1">
-                                <AvatarImage src={userProfiles[delivery.seller_id]?.avatar_url || undefined} />
-                                <AvatarFallback className="text-xs">
-                                  {userProfiles[delivery.seller_id]?.first_name?.[0] || "S"}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-sm font-medium">
-                                {userProfiles[delivery.seller_id]?.first_name} {userProfiles[delivery.seller_id]?.last_name}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                      <CardFooter className="pt-0">
-                        {delivery.status === "pending" && (
-                          <Button className="w-full" variant="default">
-                            <Truck className="mr-2 h-4 w-4" />
-                            Accept Delivery
-                          </Button>
-                        )}
-                        {delivery.status === "in_transit" && (
-                          <Button className="w-full" variant="default">
-                            <Truck className="mr-2 h-4 w-4" />
-                            Track Delivery
-                          </Button>
-                        )}
-                        {delivery.status === "delivered" && (
-                          <Button className="w-full" variant="outline" disabled>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Delivered
-                          </Button>
-                        )}
-                        {delivery.status === "cancelled" && (
-                          <Button className="w-full" variant="outline" disabled>
-                            <AlertCircle className="mr-2 h-4 w-4" />
-                            Cancelled
-                          </Button>
-                        )}
-                      </CardFooter>
-                    </Card>
-                  </motion.div>
-                ))
-              )}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className={cn(
+            "p-8 rounded-xl mb-8",
+            theme === 'light' 
+              ? "bg-white/90 border-2 border-[#1078a7] shadow-sm" 
+              : "bg-black border border-white/10"
+          )}
+        >
+          <h2 className="text-2xl font-bold mb-4 text-center">
+            Campus Delivery Service - Coming Soon
+          </h2>
+          
+          <ComingSoonAnimation />
+          
+          <div className="mt-8 space-y-6">
+            <div className="flex flex-col space-y-2">
+              <h3 className="text-xl font-semibold">
+                <span className="emoji-container mr-2">🚚</span> How It Will Work
+              </h3>
+              <p className="text-md">
+                Our campus delivery system will connect sellers and buyers through student delivery partners. 
+                When a seller books a delivery, nearby students can accept the job and earn a commission for 
+                delivering items across campus.
+              </p>
             </div>
-          </TabsContent>
-        </Tabs>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+              <div className={cn(
+                "p-4 rounded-lg flex flex-col items-center text-center",
+                theme === 'light' 
+                  ? "bg-white/90 border-2 border-[#1078a7] shadow-sm" 
+                  : "bg-black/40 border border-white/10"
+              )}>
+                <div className="mb-3 p-3 rounded-full bg-blue-100 dark:bg-blue-900/30 emoji-container">
+                  <Package className="w-8 h-8 text-blue-500" />
+                </div>
+                <h4 className="font-semibold mb-2">For Sellers</h4>
+                <p className="text-sm">Request a delivery service when you sell an item and need it transported to the buyer</p>
+              </div>
+              
+              <div className={cn(
+                "p-4 rounded-lg flex flex-col items-center text-center",
+                theme === 'light' 
+                  ? "bg-white/90 border-2 border-[#1078a7] shadow-sm" 
+                  : "bg-black/40 border border-white/10"
+              )}>
+                <div className="mb-3 p-3 rounded-full bg-green-100 dark:bg-green-900/30 emoji-container">
+                  <Truck className="w-8 h-8 text-green-500" />
+                </div>
+                <h4 className="font-semibold mb-2">For Deliverers</h4>
+                <p className="text-sm">Accept delivery requests in your area and earn money while helping fellow students</p>
+              </div>
+              
+              <div className={cn(
+                "p-4 rounded-lg flex flex-col items-center text-center",
+                theme === 'light' 
+                  ? "bg-white/90 border-2 border-[#1078a7] shadow-sm" 
+                  : "bg-black/40 border border-white/10"
+              )}>
+                <div className="mb-3 p-3 rounded-full bg-yellow-100 dark:bg-yellow-900/30 emoji-container">
+                  <Coins className="w-8 h-8 text-yellow-500" />
+                </div>
+                <h4 className="font-semibold mb-2">Commission System</h4>
+                <p className="text-sm">Earn a percentage from each delivery completed based on distance and item value</p>
+              </div>
+            </div>
+            
+            <div className="mt-8">
+              <h3 className="text-xl font-semibold mb-4">
+                <span className="emoji-container mr-2">📆</span> Launch Timeline
+              </h3>
+              <div className={cn(
+                "p-4 rounded-lg",
+                theme === 'light' 
+                  ? "bg-white/90 border-2 border-[#1078a7] shadow-sm" 
+                  : "bg-black/40 border border-white/10"
+              )}>
+                <p className="text-center text-md">
+                  We're working hard to bring this feature to you soon! Check back for updates on the launch date.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex justify-center mt-8">
+              <Button 
+                variant="outline"
+                onClick={() => setSelectedView("info")}
+                className="flex items-center gap-2"
+              >
+                <ArrowRight className="w-4 h-4 rotate-180" />
+                Go Back
+              </Button>
+            </div>
+          </div>
+        </motion.div>
       </div>
     );
   };
