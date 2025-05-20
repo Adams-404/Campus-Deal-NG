@@ -7,7 +7,7 @@ GSU Market Hub is a secure online marketplace designed specifically for students
 
 ## 🌐 Live Website
 
-**URL**: [GSU Market Hub](https://gsumarket.vercel.app/)
+**URL**: [GSU Market](https://gsumarket.vercel.app/)
 
 ## 🎯 Purpose & Vision
 
