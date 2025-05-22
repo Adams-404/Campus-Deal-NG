@@ -57,7 +57,7 @@ export function NLPSearchBar({ className }: NLPSearchBarProps) {
   ];
   
   const handleCategorySelect = (category: string) => {
-    if (category === '') {
+    if (category === '' || category === 'all') {
       setSelectedCategories([]);
       setSortBy("random");
     } else {
@@ -120,75 +120,111 @@ export function NLPSearchBar({ className }: NLPSearchBarProps) {
             className={cn(
               "w-full h-8 pl-10 pr-24 rounded-full focus:outline-none transition-all duration-200 border-2 text-sm",
               theme === 'light' 
-                ? "bg-white/90 border-[#1a7fba] text-black shadow-sm focus:border-[#1a7fba] focus:ring-0" 
-                : "bg-background border-white/10 text-white focus:border-[#1a7fba] focus:ring-0",
+                ? "bg-white/90 border-primary text-black shadow-sm focus:border-primary focus:ring-0" 
+                : "bg-background border-white/10 text-white focus:border-primary focus:ring-0",
               "placeholder:text-gray-500 truncate pr-2"
             )}
             style={{
-              paddingRight: selectedCategories.length > 0 ? '100px' : '80px',
+              paddingRight: typeof window !== 'undefined' && window.innerWidth >= 768 
+                ? '50px' 
+                : selectedCategories.length > 0 ? '120px' : '90px',
               textOverflow: 'ellipsis'
             }}
           />
           
-          {/* Category filter button - mobile */}
-          {typeof window !== 'undefined' && window.innerWidth < 768 && (
-            <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex items-center">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsCategoryOpen(!isCategoryOpen);
-                }}
-                className={cn(
-                  "flex items-center gap-1 h-6 px-2 rounded-full mr-1",
-                  theme === 'light' 
-                    ? "text-[#1a7fba] hover:bg-blue-100" 
-                    : "text-[#1a7fba] hover:bg-primary/20",
-                  selectedCategories.length > 0 && "font-medium"
-                )}
-                title="Filter by category"
-              >
-                {selectedCategories.length > 0 ? (
-                  <span className="text-xs max-w-[60px] truncate">
-                    {categories.find(c => c.value === selectedCategories[0])?.label}
-                  </span>
-                ) : (
-                  <Filter className="w-3.5 h-3.5 flex-shrink-0" />
-                )}
-                <ChevronDown className={cn("w-3 h-3 transition-transform flex-shrink-0", isCategoryOpen ? "rotate-180" : "")} />
-              </button>
-
-              {/* NLP toggle button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setUseNLP(!useNLP);
-                }}
-                className={cn(
-                  "p-1 rounded-full mr-1",
-                  useNLP ? 
-                    (theme === 'light' ? "text-[#1a7fba] hover:bg-blue-100" : "text-[#1a7fba] hover:bg-primary/20") : 
-                    "text-muted-foreground hover:text-[#1a7fba]"
-                )}
-                title={useNLP ? "Natural language search enabled" : "Natural language search disabled"}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-              </button>
-
-              {/* Clear search button */}
-              {searchQuery && (  
-                <button  
+          {/* Right side controls */}
+          <div className="absolute right-0 top-1/2 transform -translate-y-1/2 flex items-center">
+            {/* Mobile controls */}
+            {typeof window !== 'undefined' && window.innerWidth < 768 && (
+              <>
+                <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    clearSearch();
+                    setIsCategoryOpen(!isCategoryOpen);
                   }}
-                  className="text-muted-foreground hover:text-primary p-1"  
-                  title="Clear search"
-                >  
-                  <X className="w-3.5 h-3.5" />
-                </button>  
-              )}
-            </div>
-          )}
+                  className={cn(
+                    "flex items-center gap-1 h-6 px-2 rounded-full mr-1 min-w-[24px] max-w-[80px] overflow-hidden",
+                    theme === 'light' 
+                      ? "text-primary hover:bg-primary/10" 
+                      : "text-primary hover:bg-primary/20",
+                    selectedCategories.length > 0 && "font-medium bg-primary/5"
+                  )}
+                  title="Filter by category"
+                >
+                  {selectedCategories.length > 0 ? (
+                    <span className="text-xs max-w-[60px] truncate">
+                      {categories.find(c => c.value === selectedCategories[0])?.label}
+                    </span>
+                  ) : (
+                    <Filter className="w-3.5 h-3.5 flex-shrink-0" />
+                  )}
+                  <ChevronDown className={cn("w-3 h-3 transition-transform flex-shrink-0", isCategoryOpen ? "rotate-180" : "")} />
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setUseNLP(!useNLP);
+                  }}
+                  className={cn(
+                    "p-1 rounded-full mr-1",
+                    useNLP ? 
+                      (theme === 'light' ? "text-primary hover:bg-primary/10" : "text-primary hover:bg-primary/20") : 
+                      "text-muted-foreground hover:text-primary"
+                  )}
+                  title={useNLP ? "Natural language search enabled" : "Natural language search disabled"}
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                </button>
+
+                {searchQuery && (  
+                  <button  
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearSearch();
+                    }}
+                    className="text-muted-foreground hover:text-primary p-1"  
+                    title="Clear search"
+                  >  
+                    <X className="w-3.5 h-3.5" />
+                  </button>  
+                )}
+              </>
+            )}
+
+            {/* Desktop AI toggle button */}
+            {typeof window !== 'undefined' && window.innerWidth >= 768 && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setUseNLP(!useNLP);
+                  }}
+                  className={cn(
+                    "p-1.5 rounded-full mr-2",
+                    useNLP ? 
+                      (theme === 'light' ? "text-primary hover:bg-primary/10" : "text-primary hover:bg-primary/20") : 
+                      "text-muted-foreground hover:text-primary"
+                  )}
+                  title={useNLP ? "Natural language search enabled" : "Natural language search disabled"}
+                >
+                  <Sparkles className="w-4 h-4" />
+                </button>
+                {searchQuery && (  
+                  <button  
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      clearSearch();
+                    }}
+                    className="text-muted-foreground hover:text-primary p-1.5 mr-1"  
+                    title="Clear search"
+                  >  
+                    <X className="w-4 h-4" />
+                  </button>  
+                )}
+              </>
+            )}
+          </div>
         </div>
             
         {/* Category dropdown */}
@@ -203,10 +239,15 @@ export function NLPSearchBar({ className }: NLPSearchBarProps) {
           >
             <div 
               className={cn(
-                "px-4 py-2 text-sm cursor-pointer hover:bg-opacity-10 hover:bg-primary",
+                "w-full px-4 py-2 text-sm cursor-pointer hover:bg-opacity-10 hover:bg-primary",
                 selectedCategories.length === 0 ? "bg-blue-100 text-blue-800" : ""
               )}
-              onClick={() => handleCategorySelect('')}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCategorySelect('all');
+              }}
+              role="button"
+              tabIndex={0}
             >
               All Categories
             </div>
