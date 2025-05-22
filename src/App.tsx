@@ -11,6 +11,7 @@ import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { trackPageView } from "@/utils/analytics"; // Import analytics tracking
+import { initializeOpenAI } from "@/services/nlpService"; // Import OpenAI initializer
 import Index from "./pages/Index";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
@@ -237,6 +238,16 @@ const AnimatedRoutes = () => {
 };
 
 const App = () => {
+  // Initialize OpenAI with API key
+  useEffect(() => {
+    const openAiKey = import.meta.env.REACT_APP_OPENAI_API_KEY;
+    if (openAiKey) {
+      initializeOpenAI(openAiKey);
+      console.log('OpenAI initialized for NLP search');
+    } else {
+      console.warn('OpenAI API key not found. NLP search will use fallback mode.');
+    }
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

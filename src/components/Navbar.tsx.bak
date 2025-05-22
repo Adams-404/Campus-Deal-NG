@@ -272,6 +272,21 @@ export const Navbar = () => {
               >
                 {/* Using our new NLPSearchBar component */}
                 <NLPSearchBar />
+                  </div>
+                          >
+                            All Categories
+                          </button>
+                          {categories.map((category) => (
+                            <button
+                              key={category.value}
+                              onClick={() => handleCategoryChange(category.value)}
+                              className="flex items-center gap-2 px-3 py-2 hover:bg-primary/10 rounded-md"
+                            >
+                              <category.icon className="h-4 w-4 text-primary" />
+                              <span className="text-sm">{category.label}</span>
+                            </button>
+                  )}
+                </div>
               </div>
 
               {/* Category Selector for desktop */}
