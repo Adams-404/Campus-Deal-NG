@@ -271,7 +271,7 @@ export const Navbar = () => {
                 ) + (!isMobile ? ' mr-8' : '')}
               >
                 {/* Using our new NLPSearchBar component */}
-                <NLPSearchBar />
+                <NLPSearchBar className={isSearchFocused ? 'ring-0' : ''} />
               </div>
 
               {/* Category Selector for desktop */}
