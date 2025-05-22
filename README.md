@@ -3,7 +3,7 @@
 
 ![GSU Market](https://gsu-market-hub.vercel.app/logo.png)
 
-GSU Market Hub is a secure online marketplace designed specifically for students of Gombe State University. Our platform enables students to buy, sell, and trade items within the campus community safely and efficiently.
+GSU Market Hub is a secure online marketplace designed specifically for students of Gombe State University. Our platform enables students to buy, sell, and trade items within the campus community safely and efficiently!
 
 ## 🌐 Live Website
 
