@@ -304,7 +304,7 @@ const Homepage = () => {
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
             ) : (
-              <div className="container mx-auto px-4 pb-8">
+              <div className="w-full max-w-[100vw] px-0 sm:px-4 sm:mx-auto sm:max-w-7xl pb-8">
                 <div className="flex flex-col mb-8">
                   {/* Search History and Spelling Suggestions */}
                   <SearchHistoryAndSuggestions onSelectQuery={(query) => {
@@ -399,7 +399,7 @@ const Homepage = () => {
                             {/* Horizontal Scroll for Other Items on Mobile */}
                             {categoryItems.length > 1 && (
                               <div className="overflow-x-auto pb-4">
-                                <div className="flex gap-4 w-max">
+                                <div className="flex gap-4 w-max pl-4 sm:pl-0">
                                   {categoryItems.slice(1, 5).map(item => (
                                     <div key={item.id} className="w-48 md:w-64 flex-shrink-0">
                                       <ProductCard item={item} hideSellerName={true} />
