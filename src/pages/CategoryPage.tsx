@@ -85,26 +85,30 @@ const CategoryPage = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="h-16 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Button
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+        <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="w-10">
+              <Button 
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate(-1)}
-                className="h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+                className="text-primary"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <h1 className="text-lg sm:text-xl font-semibold capitalize truncate">{category}</h1>
             </div>
+            <h1 className="text-lg font-semibold absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 capitalize">
+              {category}
+            </h1>
+            <div className="w-10"></div> {/* Spacer for alignment */}
           </div>
+          <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
         </div>
       </div>
 
-      <main className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="pt-20 sm:pt-24 pb-20 sm:pb-32">
+      <main className="w-full max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 transition-all duration-300">
+        <div className="pt-24 pb-32">
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
               {[...Array(10)].map((_, i) => (
