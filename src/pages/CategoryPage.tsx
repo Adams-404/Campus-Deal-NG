@@ -130,13 +130,19 @@ const CategoryPage = () => {
         </div>
       </main>
       <style>{`
-        .category-page-card [class*='group/profile'] span {
+        /* Hide only the seller's name on mobile */
+        .category-page-card [class*='group/profile'] > span:not([class*='Avatar']) {
           display: none;
         }
+        /* Show seller's name on larger screens */
         @media (min-width: 640px) {
-          .category-page-card [class*='group/profile'] span {
+          .category-page-card [class*='group/profile'] > span:not([class*='Avatar']) {
             display: inline;
           }
+        }
+        /* Ensure avatar is always visible */
+        .category-page-card [class*='group/profile'] [class*='Avatar'] {
+          display: flex !important;
         }
       `}</style>
     </div>

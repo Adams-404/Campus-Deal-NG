@@ -166,10 +166,18 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
       </div>
       <div className="p-4">
         <div className="flex justify-between items-start gap-4 mb-3">
-          <h3 className={cn(
-            "line-clamp-2 flex-1 dark:text-white text-gray-800 emoji-container",
-            fontSizeClass
-          )}>
+          <h3 
+            className={cn(
+              "flex-1 dark:text-white text-gray-800 emoji-container truncate",
+              fontSizeClass,
+              {
+                'text-base': fontSizeClass === 'small',
+                'text-lg': fontSizeClass === 'medium',
+                'text-xl': fontSizeClass === 'large',
+              }
+            )}
+            title={item.title}
+          >
             {item.title}
           </h3>
           <Button
@@ -181,7 +189,27 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
             <Eye className="h-4 w-4" />
           </Button>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between mt-3 pt-3 border-t dark:border-white/10 light:border-gray-200">
+          <div className="flex items-center gap-2">
+            <div 
+              className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity group/profile"
+              onClick={handleViewProfile}
+            >
+              <div className="flex-shrink-0">
+                <Avatar className="h-8 w-8 ring-2 ring-offset-2 ring-offset-background ring-primary/20 group-hover/profile:ring-primary/40 transition-all light:ring-[#1EAEDB]/30 light:group-hover/profile:ring-[#1EAEDB]/60">
+                  <AvatarImage src={item.seller?.avatar_url} className="object-cover" />
+                  <AvatarFallback className="bg-primary/10 dark:bg-primary/20">
+                    <User className="h-4 w-4 text-primary dark:text-white light:text-[#1EAEDB]" />
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              {!hideSellerName && (
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {item.seller?.first_name || item.seller?.full_name || 'Seller'}
+                </span>
+              )}
+            </div>
+          </div>
           <p className={cn(
             "font-semibold text-primary dark:text-primary light:text-[#1EAEDB]",
             {
@@ -190,22 +218,6 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
               'text-base': fontSizeClass === 'small',
             }
           )}>₦{formatPrice(item.price)}</p>
-          <div 
-            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity group/profile"
-            onClick={handleViewProfile}
-          >
-            <Avatar className="h-6 w-6 ring-2 ring-offset-2 ring-offset-background ring-primary/20 group-hover/profile:ring-primary/40 transition-all light:ring-[#1EAEDB]/30 light:group-hover/profile:ring-[#1EAEDB]/60">
-              <AvatarImage src={item.seller?.avatar_url} />
-              <AvatarFallback>
-                <User className="h-3 w-3 text-primary light:text-[#1EAEDB]" />
-              </AvatarFallback>
-            </Avatar>
-            {!hideSellerName && (
-              <span className="text-sm text-gray-400 dark:text-gray-400 light:text-gray-600 truncate group-hover/profile:text-primary light:group-hover/profile:text-[#1EAEDB] transition-colors">
-                {item.seller?.first_name || 'Anonymous'}
-              </span>
-            )}
-          </div>
         </div>
       </div>
     </div>
