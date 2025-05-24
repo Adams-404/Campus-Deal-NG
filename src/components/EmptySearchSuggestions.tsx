@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSearch } from '@/contexts/SearchContext';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -20,92 +20,96 @@ export function EmptySearchSuggestions({
   const { searchParams } = useSearch();
   const { theme } = useTheme();
 
-  // Generate suggestions based on the search query and extracted parameters
-  useEffect(() => {
-    const generateSuggestions = async () => {
-      if (!searchQuery.trim()) return;
+  // Generate suggestions locally without API
+  const generateLocalSuggestions = useCallback(() => {
+    if (!searchQuery?.trim()) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // Extract keywords for suggestions
+      const keywords = searchParams.keywords?.length 
+        ? searchParams.keywords 
+        : searchQuery.split(' ').filter(w => w.length > 2);
       
-      setIsLoading(true);
-      try {
-        // Try to use OpenAI if available (through a different fetch to avoid exposing API key)
-        const response = await fetch('/api/generate-suggestions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ searchQuery, searchParams }),
-        }).catch(() => null);
-
-        if (response?.ok) {
-          const data = await response.json();
-          setSuggestions(data.suggestions || []);
-          setRelatedCategories(data.categories || []);
-          setIsLoading(false);
-          return;
-        }
-
-        // Fallback: Generate suggestions locally
-        generateLocalSuggestions();
-      } catch (error) {
-        console.error('Error generating suggestions:', error);
-        generateLocalSuggestions();
-      }
-    };
-
-    generateSuggestions();
-  }, [searchQuery, searchParams]);
-
-  // Fallback function to generate suggestions locally without API
-  const generateLocalSuggestions = () => {
-    // Extract keywords for suggestions
-    const keywords = searchParams.keywords || searchQuery.split(' ').filter(w => w.length > 3);
-    
-    // Generate basic suggestions
-    const generatedSuggestions = [];
-    
-    // 1. Check if there's a price range and suggest adjusting it
-    if (searchParams.priceRange?.min || searchParams.priceRange?.max) {
-      generatedSuggestions.push(`Try a different price range`);
-    }
-    
-    // 2. Suggest broader terms
-    if (keywords.length > 0) {
-      // Take the first keyword and suggest a broader category
-      const mainKeyword = keywords[0];
-      generatedSuggestions.push(`Browse all ${mainKeyword}s`);
+      // Generate basic suggestions
+      const generatedSuggestions: string[] = [];
+      const categories: string[] = [];
       
-      // Suggest removing specific terms
-      if (keywords.length > 1) {
-        generatedSuggestions.push(`Search for ${mainKeyword} only`);
+      // 1. Check for price range and suggest adjustments
+      if (searchParams.priceRange?.min || searchParams.priceRange?.max) {
+        generatedSuggestions.push(`Try a different price range`);
       }
-    }
-    
-    // 3. Add generic fallbacks
-    generatedSuggestions.push('View popular items');
-    generatedSuggestions.push('Browse recent listings');
-    
-    // 4. Generate related categories based on keywords
-    const categories = [];
-    const categoryMappings: Record<string, string[]> = {
-      'phone': ['Electronics', 'Gadgets', 'Accessories'],
-      'laptop': ['Electronics', 'Computers', 'Office'],
-      'cloth': ['Fashion', 'Clothing', 'Accessories'],
-      'shoe': ['Fashion', 'Footwear', 'Sports'],
-      'book': ['Books', 'Education', 'Entertainment'],
-      'food': ['Food', 'Groceries', 'Household'],
-    };
-    
-    // Match keywords to categories
-    keywords.forEach(keyword => {
-      Object.entries(categoryMappings).forEach(([key, relatedCats]) => {
-        if (keyword.toLowerCase().includes(key.toLowerCase())) {
-          categories.push(...relatedCats);
+      
+      // 2. Generate keyword-based suggestions
+      if (keywords.length > 0) {
+        // Take the first keyword and suggest a broader category
+        const mainKeyword = keywords[0];
+        if (mainKeyword) {
+          generatedSuggestions.push(`Browse all ${mainKeyword}s`);
+          
+          // Suggest removing specific terms if there are multiple keywords
+          if (keywords.length > 1) {
+            generatedSuggestions.push(`Search for ${mainKeyword} only`);
+          }
         }
+      }
+      
+      // 3. Add generic fallbacks
+      generatedSuggestions.push('View popular items');
+      generatedSuggestions.push('Browse recent listings');
+      
+      // 4. Generate related categories based on keywords
+      const categoryMappings: Record<string, string[]> = {
+        'phone': ['Electronics', 'Gadgets', 'Accessories'],
+        'laptop': ['Electronics', 'Computers', 'Office'],
+        'cloth': ['Fashion', 'Clothing', 'Accessories'],
+        'shoe': ['Fashion', 'Footwear', 'Sports'],
+        'book': ['Books', 'Education', 'Entertainment'],
+        'food': ['Food', 'Groceries', 'Household', 'Restaurant', 'Cafe'],
+        'electronic': ['Electronics', 'Gadgets', 'Accessories'],
+        'furniture': ['Home', 'Furniture', 'Decor'],
+        'bike': ['Vehicles', 'Bicycles', 'Sports'],
+        'car': ['Vehicles', 'Cars', 'Automotive'],
+      };
+      
+      // Match keywords to categories
+      keywords.forEach(keyword => {
+        Object.entries(categoryMappings).forEach(([key, relatedCats]) => {
+          if (keyword.toLowerCase().includes(key.toLowerCase())) {
+            relatedCats.forEach(cat => {
+              if (!categories.includes(cat)) {
+                categories.push(cat);
+              }
+            });
+          }
+        });
       });
-    });
-    
-    setRelatedCategories([...new Set(categories)].slice(0, 3)); // Remove duplicates
-    setSuggestions(generatedSuggestions.slice(0, 4)); // Limit to 4 suggestions
-    setIsLoading(false);
-  };
+      
+      // Add some generic categories if none found
+      if (categories.length === 0) {
+        categories.push('Electronics', 'Fashion', 'Books', 'Home', 'Sports');
+      }
+      
+      // Remove duplicates and limit to 5 categories
+      const finalCategories = [...new Set(categories)].slice(0, 5);
+      
+      // Update state with generated suggestions and categories
+      setSuggestions(generatedSuggestions);
+      setRelatedCategories(finalCategories);
+    } catch (error) {
+      console.error('Error generating local suggestions:', error);
+      setSuggestions(['Try a different search', 'Browse all categories']);
+      setRelatedCategories(['Electronics', 'Fashion', 'Books', 'Home', 'Sports']);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchQuery, searchParams, setSuggestions, setRelatedCategories, setIsLoading]);
+
+  // Generate suggestions when search query or params change
+  useEffect(() => {
+    generateLocalSuggestions();
+  }, [generateLocalSuggestions]);
 
   if (!searchQuery.trim()) {
     return null;

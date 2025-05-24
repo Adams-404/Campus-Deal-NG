@@ -9,6 +9,16 @@ GSU Market Hub is a secure online marketplace designed specifically for students
 
 **URL**: [GSU Market](https://gsumarket.vercel.app/)
 
+## 🔑 Environment Variables
+
+Create a `.env.local` file in the root directory and add your Gemini API key:
+
+```
+NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+
 ## 🎯 Purpose & Vision
 
 GSU Market Hub was created to address the challenges students face when trying to sell or purchase items on campus. We provide a centralized, secure platform that:

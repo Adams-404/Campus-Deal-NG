@@ -14,6 +14,8 @@ import { EmptySearchSuggestions } from "@/components/EmptySearchSuggestions";
 import { SearchHistoryAndSuggestions } from "@/components/SearchHistoryAndSuggestions";
 import { useTheme } from "@/contexts/ThemeContext";
 
+type ItemCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor';
+
 interface Item {
   id: string;
   title: string;
@@ -30,7 +32,7 @@ interface Item {
   };
   featured?: boolean; // Made optional since it's not always present in the database
   description?: string;
-  condition?: string; // Used for NLP filtering
+  condition?: ItemCondition; // Used for NLP filtering
   status?: string; // Add status field to match database schema
 }
 
@@ -66,6 +68,14 @@ const Homepage = () => {
     try {
       setLoading(true);
       
+      console.log('Fetching items with params:', {
+        searchQuery,
+        selectedCategories,
+        searchParams,
+        sortBy
+      });
+      
+      // Start building the query
       let query = supabase
         .from('items')
         .select(`
@@ -80,17 +90,133 @@ const Homepage = () => {
             avatar_url
           )
         `)
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
 
-      if (selectedCategories.length > 0) {
-        query = query.in('category', selectedCategories);
+      // Handle search query if it exists and we don't have searchParams
+      if (searchQuery && (!searchParams.keywords || searchParams.keywords.length === 0)) {
+        const searchTerms = searchQuery.toLowerCase().split(' ').filter(term => term.length > 2);
+        if (searchTerms.length > 0) {
+          const searchConditions = searchTerms.flatMap(term => [
+            `title.ilike.%${term}%`,
+            `description.ilike.%${term}%`,
+            `category.ilike.%${term}%`
+          ]).filter(Boolean);
+          
+          if (searchConditions.length > 0) {
+            query = query.or(searchConditions.join(','));
+          }
+        }
       }
 
-      const { data: itemsData, error: itemsError } = await query;
+      // Apply category filter if categories are selected or if a category was detected in search
+      const categoriesToSearch = [
+        ...selectedCategories,
+        ...(searchParams.category ? [searchParams.category] : [])
+      ].filter((v, i, a) => v && a.indexOf(v) === i); // Remove duplicates and empty values
 
-      if (itemsError) throw itemsError;
+      console.log('Categories to search:', categoriesToSearch);
+      
+      if (categoriesToSearch.length > 0) {
+        console.log('Applying category filter:', categoriesToSearch);
+        // Create an array of OR conditions for each category
+        const categoryConditions = categoriesToSearch.flatMap(cat => {
+          if (!cat) return [];
+          return [
+            `category.ilike.%${cat}%`,
+            `title.ilike.%${cat}%`,
+            `description.ilike.%${cat}%`
+          ];
+        }).filter(Boolean);
+        
+        if (categoryConditions.length > 0) {
+          query = query.or(categoryConditions.join(','));
+        } else {
+          console.warn('No valid category conditions to apply');
+        }
+      } else {
+        console.log('No categories to filter by');
+      }
+
+      // Apply price range filter
+      if (searchParams.priceRange) {
+        const { min, max } = searchParams.priceRange;
+        console.log('Applying price range:', { min, max });
+        
+        if (min !== undefined) {
+          query = query.gte('price', min);
+        }
+        if (max !== undefined) {
+          query = query.lte('price', max);
+        }
+      }
+
+      // Apply condition filter
+      const validConditions: ItemCondition[] = ['new', 'like_new', 'good', 'fair', 'poor'];
+      if (searchParams.condition && validConditions.includes(searchParams.condition as ItemCondition)) {
+        console.log('Applying condition filter:', searchParams.condition);
+        query = query.eq('condition', searchParams.condition as ItemCondition);
+      }
+
+      // Apply keyword search - only if we have keywords and no categories were found
+      // This prevents duplicate conditions when categories are already being searched
+      const shouldApplyKeywordSearch = searchParams.keywords && 
+                                    searchParams.keywords.length > 0 && 
+                                    (!categoriesToSearch || categoriesToSearch.length === 0);
+      
+      if (shouldApplyKeywordSearch) {
+        console.log('Applying keyword search:', searchParams.keywords);
+        
+        // Create search conditions for each keyword
+        const keywordConditions = searchParams.keywords.flatMap(keyword => {
+          if (!keyword || keyword.length < 2) return [];
+          const trimmedKeyword = keyword.trim();
+          if (!trimmedKeyword) return [];
+          
+          return [
+            `title.ilike.%${trimmedKeyword}%`,
+            `description.ilike.%${trimmedKeyword}%`,
+            `category.ilike.%${trimmedKeyword}%`
+          ];
+        }).filter(Boolean);
+        
+        console.log('Generated keyword conditions:', keywordConditions);
+        
+        // Only apply if we have valid conditions
+        if (keywordConditions.length > 0) {
+          // For multiple keywords, we want to match any of the keywords in any field
+          query = query.or(keywordConditions.join(','));
+        } else {
+          console.warn('No valid keyword conditions to apply');
+        }
+      } else if (searchParams.keywords?.length > 0) {
+        console.log('Skipping keyword search as categories are being used');
+      } else {
+        console.log('No keywords to search for');
+      }
+      
+      // Log the actual SQL query for debugging
+      console.log('Generated SQL query:', query);
+      console.log('Query parameters:', {
+        categories: categoriesToSearch,
+        keywords: searchParams.keywords,
+        priceRange: searchParams.priceRange,
+        condition: searchParams.condition,
+        sortBy
+      });
+
+      console.log('Executing query...');
+      const { data: itemsData, error: itemsError, count } = await query;
+
+      console.log('Query results:', { itemsData, itemsError });
+
+      if (itemsError) {
+        console.error('Error fetching items:', itemsError);
+        throw itemsError;
+      }
 
       if (!itemsData) {
+        console.log('No data returned from query');
         setItems([]);
         return;
       }
@@ -158,7 +284,7 @@ const Homepage = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedCategories, sortBy]);
+  }, [selectedCategories, sortBy, searchParams, searchQuery]);
 
   const handleRefresh = useCallback(async () => {
     await fetchItems();
@@ -258,16 +384,21 @@ const Homepage = () => {
 
   // Filter items based on search query
   const filteredItems = useMemo(() => {
+    // If we have search params from the context, let the server handle the filtering
+    if (searchParams.keywords?.length || searchParams.priceRange || searchParams.condition) {
+      return items;
+    }
+    
+    // Only do client-side filtering if we have a search query
     if (!searchQuery) return items;
     
     const query = searchQuery.toLowerCase();
-    const results = items.filter(item => 
+    return items.filter(item => 
       item.title.toLowerCase().includes(query) ||
-      item.description?.toLowerCase().includes(query)
+      item.description?.toLowerCase().includes(query) ||
+      item.category?.toLowerCase().includes(query)
     );
-    
-    return results;
-  }, [items, searchQuery]);
+  }, [items, searchQuery, searchParams]);
 
   // Determine grid columns based on device type
   const getGridCols = () => {
@@ -314,14 +445,18 @@ const Homepage = () => {
                 </div>
                 
                 {searchQuery ? (
-                  filteredItems.length === 0 ? (
+                  loading ? (
+                    <div className="flex justify-center items-center py-10">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                      <span className="ml-2">Searching for "{searchQuery}"...</span>
+                    </div>
+                  ) : filteredItems.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-10">
                       <h2 className="text-2xl font-bold mb-2">No results found</h2>
                       <p className="text-gray-500 mb-8">
                         No items match your search for "{searchQuery}".
                       </p>
                       
-                      {/* AI-powered search suggestions */}
                       <EmptySearchSuggestions
                         searchQuery={searchQuery}
                         onSuggestionClick={handleSuggestionClick}
@@ -329,7 +464,9 @@ const Homepage = () => {
                     </div>
                   ) : (
                     <section className="py-6 w-full">
-                      <h2 className="text-2xl font-bold mb-6">Search Results</h2>
+                      <h2 className="text-2xl font-bold mb-6">
+                        {filteredItems.length} result{filteredItems.length !== 1 ? 's' : ''} for "{searchQuery}"
+                      </h2>
                       <div className={`grid ${getGridCols()} gap-4 w-full`}>
                         {filteredItems.map(item => (
                           <ProductCard key={item.id} item={item} />

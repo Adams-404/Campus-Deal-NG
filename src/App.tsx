@@ -11,7 +11,7 @@ import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { trackPageView } from "@/utils/analytics"; // Import analytics tracking
-import { initializeOpenAI } from "@/services/nlpService"; // Import OpenAI initializer
+import { initializeGemini } from "@/services/nlpService"; // Import Gemini initializer
 import Index from "./pages/Index";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
@@ -238,16 +238,13 @@ const AnimatedRoutes = () => {
 };
 
 const App = () => {
-  // Initialize OpenAI with API key
-  useEffect(() => {
-    const openAiKey = import.meta.env.REACT_APP_OPENAI_API_KEY;
-    if (openAiKey) {
-      initializeOpenAI(openAiKey);
-      console.log('OpenAI initialized for NLP search');
-    } else {
-      console.warn('OpenAI API key not found. NLP search will use fallback mode.');
-    }
-  }, []);
+  // Initialize Gemini with API key from environment variables
+  const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (geminiApiKey) {
+    initializeGemini(geminiApiKey);
+  } else {
+    console.warn('Gemini API key not found. Some features may be limited.');
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
