@@ -132,31 +132,34 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
 
   return (
     <div className={cn(
-      "bg-secondary rounded-lg border border-white/10 dark:border-white/10 light:border-gray-200 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group",
+      "bg-secondary rounded-lg border border-white/10 dark:border-white/10 light:border-gray-200 overflow-hidden hover:shadow-lg hover:shadow-primary/5 transition-all animate-fadeIn group relative",
       className
     )}>
-      <div className="relative aspect-[16/9]">
+      <div className="relative aspect-[16/9] pb-10">
         <ImageCarousel 
           images={item.images} 
           navClassName="light:bg-white/90 light:text-[#1078a7] light:hover:bg-white light:border light:border-[#1078a7] light:shadow-sm dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70"
           imageCountClassName="light:bg-white/90 light:text-[#1078a7] light:border light:border-[#1078a7] light:shadow-sm dark:bg-black/50 dark:backdrop-blur-sm"
         />
-        <div className="absolute top-2 right-2 z-10 flex gap-2">
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleLike}
             disabled={isLoading}
             className={cn(
-              "dark:bg-black/50 dark:backdrop-blur-sm dark:hover:bg-black/70 light:bg-white/90 light:hover:bg-black/40 light:hover:backdrop-blur-sm light:border-2 light:shadow-sm transition-colors",
+              "h-14 w-14 rounded-full backdrop-blur-sm transition-all",
+              "dark:bg-black/50 dark:hover:bg-black/70",
+              "light:bg-white/95 light:hover:bg-white",
+              "shadow-xl border-2 border-white/20",
               isSaved 
-                ? "light:text-[#ea384c] dark:text-red-500 light:border-[#ea384c] light:hover:text-white" 
-                : "light:text-[#1078a7] dark:text-white light:border-[#1078a7] light:hover:text-white"
+                ? "text-red-500 hover:text-red-500/90 dark:text-red-400 dark:hover:text-red-300" 
+                : "text-[#1078a7] hover:text-[#0d5f8a] dark:text-white dark:hover:text-gray-200"
             )}
           >
             <Heart className={cn(
-              "h-5 w-5",
-              isSaved ? "text-[#ea384c] fill-current" : ""
+              "h-12 w-12 scale-110",
+              isSaved ? "fill-current" : ""
             )} />
           </Button>
         </div>
