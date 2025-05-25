@@ -158,23 +158,22 @@ const Homepage = () => {
         query = query.eq('condition', searchParams.condition as ItemCondition);
       }
 
-      // Apply keyword search - only if we have keywords and no categories were found
-      // This prevents duplicate conditions when categories are already being searched
-      const shouldApplyKeywordSearch = searchParams.keywords && 
-                                    searchParams.keywords.length > 0 && 
-                                    (!categoriesToSearch || categoriesToSearch.length === 0);
-      
-      if (shouldApplyKeywordSearch) {
+      // Always apply keyword search if we have keywords
+      // This ensures exact matches are always found
+      if (searchParams.keywords && searchParams.keywords.length > 0) {
         console.log('Applying keyword search:', searchParams.keywords);
         
         // Create search conditions for each keyword
         const keywordConditions = searchParams.keywords.flatMap(keyword => {
-          if (!keyword || keyword.length < 2) return [];
+          if (!keyword || keyword.length < 1) return [];
           const trimmedKeyword = keyword.trim();
           if (!trimmedKeyword) return [];
           
+          // First try exact match (case insensitive)
+          // Then try partial match with higher weight
           return [
-            `title.ilike.%${trimmedKeyword}%`,
+            `title.ilike.${trimmedKeyword}`,  // Exact match first
+            `title.ilike.%${trimmedKeyword}%`,  // Then partial match
             `description.ilike.%${trimmedKeyword}%`,
             `category.ilike.%${trimmedKeyword}%`
           ];
@@ -184,7 +183,7 @@ const Homepage = () => {
         
         // Only apply if we have valid conditions
         if (keywordConditions.length > 0) {
-          // For multiple keywords, we want to match any of the keywords in any field
+          console.log('Applying keyword conditions:', keywordConditions);
           query = query.or(keywordConditions.join(','));
         } else {
           console.warn('No valid keyword conditions to apply');
