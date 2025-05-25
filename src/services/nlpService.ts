@@ -97,29 +97,46 @@ export const extractSearchParamsWithoutAI = (query: string): SearchParams => {
 
   // Extract price range - handle formats like "under 3000", "below ₦3k", "less than 3,000"
   const pricePatterns = [
-    { regex: /(under|below|less than)\s*[₦$]?\s*(\d+[kK]?|\d+([,.]\d+)?)/, type: 'max' },
-    { regex: /(above|over|more than)\s*[₦$]?\s*(\d+[kK]?|\d+([,.]\d+)?)/, type: 'min' },
-    { regex: /[₦$]?\s*(\d+[kK]?|\d+([,.]\d+)?)\s*(and\s*)?(under|below|less than)/, type: 'max', group: 1 },
-    { regex: /[₦$]?\s*(\d+[kK]?|\d+([,.]\d+)?)\s*(and\s*)?(above|over|more than)/, type: 'min', group: 1 },
+    { regex: /(under|below|less than|max|maximum|up to|under ₦|below ₦|less than ₦)\s*[₦$]?\s*(\d+[kK]?|\d+([,.]\d+)?)/, type: 'max' },
+    { regex: /(above|over|more than|min|minimum|from|above ₦|over ₦|more than ₦)\s*[₦$]?\s*(\d+[kK]?|\d+([,.]\d+)?)/, type: 'min' },
+    { regex: /[₦$]?\s*(\d+[kK]?|\d+([,.]\d+)?)\s*(and\s*)?(under|below|less than|max|maximum|up to)/, type: 'max', group: 1 },
+    { regex: /[₦$]?\s*(\d+[kK]?|\d+([,.]\d+)?)\s*(and\s*)?(above|over|more than|min|minimum|from)/, type: 'min', group: 1 },
   ];
 
-  for (const pattern of pricePatterns) {
-    const match = queryLower.match(pattern.regex);
-    if (match) {
-      let value = match[pattern.group || 2] || match[1];
-      
-      // Convert 'k' notation to actual number (e.g., 3k -> 3000)
-      if (value.toLowerCase().endsWith('k')) {
-        value = (parseFloat(value.slice(0, -1)) * 1000).toString();
-      }
-      
-      const numValue = parseFloat(value.replace(/[^\d.]/g, ''));
-      if (!isNaN(numValue)) {
-        if (!params.priceRange) params.priceRange = {};
-        if (pattern.type === 'max') {
-          params.priceRange.max = numValue;
-        } else {
-          params.priceRange.min = numValue;
+  // First check for exact price range patterns
+  const exactPriceMatch = queryLower.match(/(\d+)\s*(?:-|to|and)\s*(\d+)/);
+  if (exactPriceMatch) {
+    const min = parseFloat(exactPriceMatch[1].replace(/[^\d.]/g, ''));
+    const max = parseFloat(exactPriceMatch[2].replace(/[^\d.]/g, ''));
+    if (!isNaN(min) && !isNaN(max)) {
+      params.priceRange = { min, max };
+    }
+  } else {
+    // If no exact range, check for individual min/max patterns
+    for (const pattern of pricePatterns) {
+      const match = queryLower.match(pattern.regex);
+      if (match) {
+        let value = match[pattern.group || 2] || match[1];
+        
+        // Convert 'k' notation to actual number (e.g., 3k -> 3000)
+        if (value && value.toLowerCase().endsWith('k')) {
+          value = (parseFloat(value.slice(0, -1).replace(/[^\d.]/g, '')) * 1000).toString();
+        }
+        
+        const numValue = parseFloat((value || '').replace(/[^\d.]/g, ''));
+        if (!isNaN(numValue)) {
+          if (!params.priceRange) params.priceRange = {};
+          if (pattern.type === 'max') {
+            // For max price, ensure it's not less than existing min
+            if (!params.priceRange.min || numValue >= params.priceRange.min) {
+              params.priceRange.max = numValue;
+            }
+          } else {
+            // For min price, ensure it's not more than existing max
+            if (!params.priceRange.max || numValue <= params.priceRange.max) {
+              params.priceRange.min = numValue;
+            }
+          }
         }
       }
     }
