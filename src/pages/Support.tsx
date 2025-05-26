@@ -124,81 +124,71 @@ export default function Support() {
   }
 
   return (
-    <PageTransition>
-      <div className="min-h-screen bg-gradient-to-b from-background via-background/95 to-background/90">
-        {/* Header - Fixed */}
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/30 shadow-sm"
-        >
-          <div className="max-w-3xl mx-auto px-2 sm:px-6">
-            <div className="h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
+    <div className="bg-background">
+      {/* Header - Fixed */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+        <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="w-10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
                 onClick={() => navigate(-1)}
-                className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all duration-300 hover:scale-105"
+                className="text-primary"
               >
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+                <ArrowLeft className="h-5 w-5" />
                 <span className="sr-only">Go back</span>
               </Button>
-
-              <motion.div
-                className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2"
-                initial={{ scale: 0.9, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: 0.1, duration: 0.3 }}
-              >
-                <motion.div 
-                  className="relative"
-                  animate={{ 
-                    rotate: [0, 10, -10, 0],
-                    scale: [1, 1.1, 1]
-                  }}
-                  transition={{
-                    duration: 2,
-                    repeat: Number.POSITIVE_INFINITY,
-                    repeatType: "reverse"
-                  }}
-                >
-                  <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                  <motion.div
-                    className="absolute -inset-1 rounded-full bg-primary/20"
-                    animate={{
-                      scale: [1, 1.2, 1],
-                      opacity: [0.7, 1, 0.7],
-                    }}
-                    transition={{
-                      repeat: Number.POSITIVE_INFINITY,
-                      duration: 2,
-                      ease: "easeInOut",
-                    }}
-                  />
-                </motion.div>
-                <motion.div 
-                  className="flex flex-col items-center"
-                  animate={{ y: [0, -2, 0] }}
-                  transition={{
-                    duration: 2,
-                    repeat: Number.POSITIVE_INFINITY,
-                    repeatType: "reverse"
-                  }}
-                >
-                  <h1 className="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
-                    Tradie
-                  </h1>
-                  <p className="text-[10px] sm:text-xs text-muted-foreground">Online • Typically replies instantly</p>
-                </motion.div>
-              </motion.div>
             </div>
+            <motion.div 
+              className="flex flex-col items-center"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
+            >
+              <motion.div 
+                className="relative"
+                animate={{ 
+                  rotate: [0, 10, -10, 0],
+                  scale: [1, 1.1, 1]
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Number.POSITIVE_INFINITY,
+                  repeatType: "reverse"
+                }}
+              >
+                <MessageSquare className="h-5 w-5 text-primary" />
+                <motion.div
+                  className="absolute -inset-1 rounded-full bg-primary/20"
+                  animate={{
+                    scale: [1, 1.2, 1],
+                    opacity: [0.7, 1, 0.7],
+                  }}
+                  transition={{
+                    repeat: Number.POSITIVE_INFINITY,
+                    duration: 2,
+                    ease: "easeInOut",
+                  }}
+                />
+              </motion.div>
+              <h1 className="text-lg font-semibold text-center">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
+                  Tradie
+                </span>
+              </h1>
+              <p className="text-[10px] text-muted-foreground">Online • Typically replies instantly</p>
+            </motion.div>
+            <div className="w-10"></div> {/* Spacer for balance */}
           </div>
-        </motion.div>
+          <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
+        </div>
+      </div>
 
+      <PageTransition>
         {/* Main Chat Container - Fixed position and height */}
-        <div className="fixed inset-0 pt-14 sm:pt-16 pb-0">
-          <div className="h-full max-w-3xl mx-auto px-2 sm:px-6 py-3 sm:py-4">
+        <div className="fixed inset-0 pt-16 pb-0 lg:pl-[300px]">
+          <div className="h-full w-full max-w-4xl mx-auto px-4 sm:px-6 py-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -208,7 +198,7 @@ export default function Support() {
               {/* Messages Area */}
               <div
                 ref={messagesContainerRef}
-                className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 scroll-smooth scrollbar-thin scrollbar-thumb-primary/10 scrollbar-track-transparent hover:scrollbar-thumb-primary/20"
+                className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 scroll-smooth [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent [&:hover::-webkit-scrollbar-thumb]:bg-primary/10 [&::-webkit-scrollbar-track]:bg-transparent"
                 id="messages"
               >
                 <AnimatePresence initial={false}>
@@ -419,8 +409,8 @@ export default function Support() {
             </motion.div>
           </div>
         </div>
-      </div>
-    </PageTransition>
+      </PageTransition>
+    </div>
   )
 }
 

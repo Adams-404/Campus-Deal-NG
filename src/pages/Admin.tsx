@@ -167,13 +167,29 @@ const Admin = () => {
         activeSellers: new Set(formattedItems?.map((item) => item.seller.id)).size || 0,
       })
 
-      const kycStatusCounts: Record<string, number> = {}
+      // Initialize with all possible statuses in the desired order
+      const kycStatusCounts = {
+        verified: 0,
+        pending: 0,
+        processing: 0,
+        rejected: 0,
+        // Add any other possible statuses
+      }
+      
+      // Count the actual statuses
       profilesData?.forEach((user) => {
         const status = user.kyc_status || "pending"
-        kycStatusCounts[status] = (kycStatusCounts[status] || 0) + 1
+        if (status in kycStatusCounts) {
+          kycStatusCounts[status as keyof typeof kycStatusCounts]++
+        }
       })
 
-      setUserStats(Object.entries(kycStatusCounts).map(([name, value]) => ({ name, value })))
+      // Convert to array in the desired order
+      setUserStats(
+        Object.entries(kycStatusCounts)
+          .filter(([_, value]) => value > 0) // Only include statuses with count > 0
+          .map(([name, value]) => ({ name, value }))
+      )
 
       const itemStatusCounts: Record<string, number> = {}
       formattedItems?.forEach((item) => {

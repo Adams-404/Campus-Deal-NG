@@ -66,6 +66,7 @@ interface ChartProps {
 }
 
 export function AdminCharts({ userGrowthData, kycStatusData }: ChartProps) {
+  // Colors in order: verified, pending, processing, rejected
   const COLORS = ['#22c55e', '#f97316', '#eab308', '#ef4444'];
   
   return (
