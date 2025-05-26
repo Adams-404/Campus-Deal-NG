@@ -6,20 +6,21 @@ import ReactMarkdown from "react-markdown"
 import { PageTransition } from "@/components/PageTransition"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Send, Bot, User, Loader2, Sparkles, MoreVertical, Copy, Check, MessageSquare } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { ArrowLeft, Send, Bot, User, Loader2, Sparkles, MoreVertical, Copy, Check, MessageSquare, ExternalLink } from "lucide-react"
+import { useNavigate, Link } from "react-router-dom"
 import { useState, useRef, useEffect } from "react"
 import { toast } from "sonner"
 import { supabase } from "@/integrations/supabase/client"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { getAIResponse } from "@/services/ai-assistant"
+import { getAIResponse, type RichContentItem, type FormattedResults } from "@/services/ai-assistant"
 
 interface Message {
   id: string
   content: string
   role: "user" | "assistant"
   timestamp: Date
+  richContent?: FormattedResults
 }
 
 // Initial greeting from the AI
@@ -95,12 +96,26 @@ export default function Support() {
 
       // Get AI response
       const aiResponseContent = await getAIResponse(userMessage.content, chatHistory)
-
-      const aiResponse: Message = {
+      
+      let aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        content: aiResponseContent || "I apologize, but I'm having trouble responding right now. Please try again.",
+        content: "",
         role: "assistant",
         timestamp: new Date(),
+      };
+
+      try {
+        // Try to parse as JSON for rich content
+        const parsedContent = JSON.parse(aiResponseContent);
+        if (parsedContent && typeof parsedContent === 'object') {
+          aiResponse.content = parsedContent.message || "Here's what I found:";
+          aiResponse.richContent = parsedContent;
+        } else {
+          aiResponse.content = aiResponseContent;
+        }
+      } catch (e) {
+        // If not JSON, use as plain text
+        aiResponse.content = aiResponseContent;
       }
 
       setMessages((prev) => [...prev, aiResponse])
@@ -243,8 +258,49 @@ export default function Support() {
                             "transform hover:scale-[1.01]",
                           )}
                         >
-                          <div className="whitespace-pre-wrap break-words font-normal prose prose-sm dark:prose-invert max-w-none">
-                            <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          <div className="w-full">
+                            <div className="whitespace-pre-wrap break-words font-normal prose prose-sm dark:prose-invert max-w-none prose-p:my-0.5 prose-ul:my-1 prose-li:my-0 leading-snug">
+                              <ReactMarkdown>{msg.content}</ReactMarkdown>
+                            </div>
+                            {msg.richContent?.isRichContent && msg.richContent.richContent && (
+                              <div className="mt-3 space-y-3">
+                                {msg.richContent.richContent.map((item, idx) => (
+                                  <div 
+                                    key={`${msg.id}-item-${idx}`}
+                                    className="border rounded-lg overflow-hidden bg-card/50 backdrop-blur-sm hover:bg-card/70 transition-colors"
+                                  >
+                                    <div className="flex gap-3 p-3">
+                                      {item.image && (
+                                        <div className="w-20 h-20 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+                                          <img 
+                                            src={item.image} 
+                                            alt={item.title}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+                                      )}
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="font-medium text-foreground truncate">{item.title}</h4>
+                                        <p className="text-sm text-muted-foreground">₦{item.price.toLocaleString()}</p>
+                                        <p className="text-xs text-muted-foreground truncate">{item.category}</p>
+                                        <p className="text-xs text-muted-foreground">Sold by: {item.sellerName}</p>
+                                        <Button 
+                                          asChild
+                                          variant="outline" 
+                                          size="sm" 
+                                          className="mt-2 w-full bg-background/80 hover:bg-background/100 border-primary/20 hover:border-primary/40"
+                                        >
+                                          <Link to={`/item/${item.id}`} className="flex items-center gap-1">
+                                            <span>View Item</span>
+                                            <ExternalLink className="h-3.5 w-3.5" />
+                                          </Link>
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex items-center justify-between mt-1.5 sm:mt-2">

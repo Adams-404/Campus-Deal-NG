@@ -9,8 +9,19 @@ if (!import.meta.env.VITE_GEMINI_API_KEY) {
   console.error('Gemini API key is missing. Please add VITE_GEMINI_API_KEY to your .env file.');
 }
 
-// Interface for item search results
-interface SearchResult {
+// Interface for rich content items
+export interface RichContentItem {
+  type: 'item';
+  id: string;
+  title: string;
+  price: number;
+  image?: string;
+  category: string;
+  sellerName: string;
+}
+
+// Interface for search results
+export interface SearchResult {
   id: string;
   title: string;
   price: number;
@@ -22,6 +33,13 @@ interface SearchResult {
   };
   description?: string;
   condition?: string;
+}
+
+// Interface for formatted results
+export interface FormattedResults {
+  message: string;
+  isRichContent: boolean;
+  richContent?: RichContentItem[];
 }
 
 // Search for items in the database
@@ -96,23 +114,29 @@ async function searchItems(query: string): Promise<SearchResult[]> {
   }
 }
 
-// Format item results into a readable string
-function formatItemResults(items: SearchResult[]): string {
-  if (items.length === 0) return 'No items found matching your search.';
+// Format item results into a structured format
+function formatItemResults(items: SearchResult[]): FormattedResults {
+  if (items.length === 0) return { message: 'No items found', isRichContent: false };
 
-  return items.slice(0, 3).map((item, index) => {
-    const sellerName = [item.seller.first_name, item.seller.last_name]
-      .filter(Boolean)
-      .join(' ');
-      
-    return `
-${index + 1}. **${item.title}**  
-   - Price: ₦${item.price.toLocaleString()}
-   - Category: ${item.category}
-   - Seller: ${sellerName || 'Anonymous'}
-   ${item.images[0] ? `![Item Image](${item.images[0]})` : ''}
-`;
-  }).join('\n');
+  return {
+    message: 'I found these items that match your search:',
+    isRichContent: true,
+    richContent: items.slice(0, 3).map(item => {
+      const sellerName = [item.seller.first_name, item.seller.last_name]
+        .filter(Boolean)
+        .join(' ');
+
+      return {
+        type: 'item',
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        image: item.images[0],
+        category: item.category,
+        sellerName: sellerName || 'Anonymous'
+      };
+    })
+  };
 }
 
 // App context that will be fed to the AI
@@ -165,7 +189,7 @@ Important guidelines for your responses:
 5. If you're not sure about something, say so
 6. Suggest related features when relevant`;
 
-interface ChatMessage {
+export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
 }
@@ -212,8 +236,7 @@ export async function getAIResponse(userMessage: string, chatHistory: ChatMessag
         if (items.length > 0) {
           console.log('Formatting item results...');
           const formattedResults = formatItemResults(items);
-          return `I found these items that match your search:\n\n${formattedResults}\n\n` +
-                 `You can click on any item to view more details or refine your search if needed.`;
+          return JSON.stringify(formattedResults);
         } else {
           console.log('No items found for the query');
         }
@@ -279,7 +302,10 @@ export async function getAIResponse(userMessage: string, chatHistory: ChatMessag
           const items = await searchItems(userMessage);
           if (items.length > 0) {
             const formattedResults = formatItemResults(items);
-            responseText = `I found these items that might interest you:\n\n${formattedResults}`;
+            responseText = JSON.stringify({
+              ...formattedResults,
+              message: 'I found these items that might interest you:'
+            });
           }
         } catch (fallbackError) {
           console.error('Error in fallback item search:', fallbackError);
