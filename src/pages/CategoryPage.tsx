@@ -5,8 +5,15 @@ import { useParams, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, ChevronDown } from "lucide-react"
 import { ProductCard } from "@/components/ProductCard"
+import { useTheme } from "@/contexts/ThemeContext"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface Item {
   id: string
@@ -29,6 +36,19 @@ const CategoryPage = () => {
   const navigate = useNavigate()
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
+  const [sortBy, setSortBy] = useState<string>('random')
+  const [shuffledItems, setShuffledItems] = useState<Item[]>([])
+  const { theme } = useTheme()
+  
+  // Function to shuffle array using Fisher-Yates algorithm
+  const shuffleArray = (array: Item[]) => {
+    const newArray = [...array]
+    for (let i = newArray.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[newArray[i], newArray[j]] = [newArray[j], newArray[i]]
+    }
+    return newArray
+  }
 
   const fetchItems = async () => {
     try {
@@ -49,6 +69,8 @@ const CategoryPage = () => {
         `)
         .ilike("category", `%${category}%`)
         .eq("status", "active")
+        .order(sortBy === 'newest' ? 'created_at' : 'price', 
+              { ascending: sortBy === 'price_asc' })
 
       if (error) throw error
 
@@ -72,6 +94,8 @@ const CategoryPage = () => {
         })) || []
 
       setItems(formattedItems)
+      // Initialize shuffled items
+      setShuffledItems(shuffleArray(formattedItems))
     } catch (error: any) {
       toast.error(error.message || "Failed to fetch items")
     } finally {
@@ -79,9 +103,19 @@ const CategoryPage = () => {
     }
   }
 
+  // Handle sorting and shuffling
+  useEffect(() => {
+    if (sortBy === 'random') {
+      setShuffledItems(shuffleArray([...items]))
+    }
+  }, [sortBy])
+
   useEffect(() => {
     fetchItems()
-  }, [category])
+  }, [category, sortBy])
+
+  // Determine which items to display based on sort
+  const displayItems = sortBy === 'random' ? shuffledItems : items
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -101,7 +135,47 @@ const CategoryPage = () => {
             <h1 className="text-lg font-semibold absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 capitalize">
               {category}
             </h1>
-            <div className="w-10"></div> {/* Spacer for alignment */}
+            <div className="flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="flex items-center gap-1 sm:gap-2 border-2 border-primary bg-background/90 hover:bg-background text-foreground shadow-sm px-2 sm:px-3">
+                    <span className="hidden sm:inline">Sort by: </span>
+                    <span className="hidden sm:inline">
+                      {sortBy === 'newest' ? 'Newest' : 
+                       sortBy === 'price_asc' ? 'Low to High' : 
+                       sortBy === 'price_desc' ? 'High to Low' : 'Random'}
+                    </span>
+                    <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-background/90 backdrop-blur-sm border-2 border-primary rounded-lg shadow-lg">
+                  <DropdownMenuItem 
+                    className={`cursor-pointer ${sortBy === 'newest' ? 'bg-primary/10 text-primary' : 'hover:bg-accent'}`}
+                    onClick={() => setSortBy('newest')}
+                  >
+                    Newest First
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className={`cursor-pointer ${sortBy === 'price_asc' ? 'bg-primary/10 text-primary' : 'hover:bg-accent'}`}
+                    onClick={() => setSortBy('price_asc')}
+                  >
+                    Price: Low to High
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className={`cursor-pointer ${sortBy === 'price_desc' ? 'bg-primary/10 text-primary' : 'hover:bg-accent'}`}
+                    onClick={() => setSortBy('price_desc')}
+                  >
+                    Price: High to Low
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    className={`cursor-pointer ${sortBy === 'random' ? 'bg-primary/10 text-primary' : 'hover:bg-accent'}`}
+                    onClick={() => setSortBy('random')}
+                  >
+                    Random
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
           <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
         </div>
@@ -124,7 +198,7 @@ const CategoryPage = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4">
-              {items.map((item) => (
+              {displayItems.map((item) => (
                 <div key={item.id} className="w-full flex flex-col">
                   <ProductCard item={item} className="h-full flex-1 min-h-[260px] category-page-card" hideSellerName={window.innerWidth < 640} />
                 </div>
