@@ -43,6 +43,7 @@ import LazyViewItem from "./pages/LazyViewItem";
 import { useDeviceType } from "./hooks/use-mobile";
 import DeliveryCoordinator from "./pages/DeliveryCoordinator";
 import Feedback from "./pages/Feedback";
+import { usePWATheme } from "./hooks/usePWATheme";
 
 const queryClient = new QueryClient();
 
@@ -97,6 +98,9 @@ const AnimatedRoutes = () => {
   const [user, setUser] = useState<any>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
   const deviceType = useDeviceType();
+  
+  // Initialize PWA theme adaptation
+  usePWATheme();
   
   // Track page views when route changes
   useEffect(() => {
