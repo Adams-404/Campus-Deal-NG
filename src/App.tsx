@@ -10,9 +10,8 @@ import { DesktopSideNav } from "@/components/DesktopSideNav";
 import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { trackPageView } from "@/utils/analytics";
-import { initializeGemini } from "@/services/nlpService";
-import { usePWATheme } from "@/hooks/usePWATheme";
+import { trackPageView } from "@/utils/analytics"; // Import analytics tracking
+import { initializeGemini } from "@/services/nlpService"; // Import Gemini initializer
 import Index from "./pages/Index";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
@@ -99,11 +98,9 @@ const AnimatedRoutes = () => {
   const [authLoaded, setAuthLoaded] = useState(false);
   const deviceType = useDeviceType();
   
-  // Initialize PWA theme management
-  usePWATheme();
-  
   // Track page views when route changes
   useEffect(() => {
+    // Track page view with Google Analytics
     trackPageView(location.pathname);
   }, [location.pathname]);
   
@@ -241,6 +238,7 @@ const AnimatedRoutes = () => {
 };
 
 const App = () => {
+  // Initialize Gemini with API key from environment variables
   const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
   if (geminiApiKey) {
     initializeGemini(geminiApiKey);
