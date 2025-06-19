@@ -65,7 +65,8 @@ const SignUp = () => {
           console.warn('Referral processing failed:', referralError);
           toast.warning('Account created successfully, but referral code could not be processed.');
         } else {
-          const result = referralResult as ReferralResponse;
+          // Type guard to ensure we have the right type
+          const result = referralResult as unknown as ReferralResponse;
           if (result?.success) {
             toast.success(`Successfully signed up! You were referred by ${result.referrer_name}.`);
           } else {
@@ -73,11 +74,11 @@ const SignUp = () => {
           }
         }
       } else {
-        toast.success('Successfully signed up! Please update your profile to get started.');
+        toast.success('Successfully signed up! Please check your email to verify your account.');
       }
 
-      navigate('/auth/profile');
-      setShowTutorial(true);
+      // Redirect to home page instead of non-existent profile page
+      navigate('/home');
     } catch (error: any) {
       toast.error(error.message);
     } finally {

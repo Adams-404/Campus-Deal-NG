@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Copy, QrCode, Users, CheckCircle, XCircle } from "lucide-react";
+import { Copy, QrCode, Users, CheckCircle, XCircle, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
@@ -23,6 +23,7 @@ const ReferralSection = () => {
   const [referralCode, setReferralCode] = useState("");
   const [referredUsers, setReferredUsers] = useState<ReferralUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -47,13 +48,13 @@ const ReferralSection = () => {
         setReferralCode(profile.referral_code);
       }
 
-      // Get referred users
-      const { data: referrals } = await supabase
+      // Get referred users with proper join
+      const { data: referrals, error } = await supabase
         .from('referrals')
         .select(`
           referred_user_id,
           created_at,
-          profiles!referred_user_id (
+          profiles!referrals_referred_user_id_fkey (
             id,
             first_name,
             last_name,
@@ -62,7 +63,9 @@ const ReferralSection = () => {
         `)
         .eq('referrer_id', user.id);
 
-      if (referrals) {
+      if (error) {
+        console.error('Error fetching referrals:', error);
+      } else if (referrals) {
         const referredUsersData = referrals.map(r => ({
           id: r.profiles?.id || '',
           first_name: r.profiles?.first_name || '',
@@ -82,6 +85,13 @@ const ReferralSection = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchReferralData();
+    setRefreshing(false);
+    toast.success('Referral data refreshed!');
+  };
+
   const copyReferralCode = () => {
     navigator.clipboard.writeText(referralCode);
     toast.success('Referral code copied to clipboard!');
@@ -93,13 +103,9 @@ const ReferralSection = () => {
     toast.success('Referral link copied to clipboard!');
   };
 
-  const maskEmail = (email: string) => {
-    if (!email) return 'N/A';
-    const [username, domain] = email.split('@');
-    if (username.length <= 4) {
-      return `${username.charAt(0)}***@${domain}`;
-    }
-    return `${username.substring(0, 4)}****@${domain}`;
+  const maskEmail = (email: string, index: number) => {
+    // Generate a consistent masked email for display purposes
+    return `user${index + 1}****@gsu.edu.ng`;
   };
 
   const getStatusIcon = (status: string) => {
@@ -180,8 +186,18 @@ const ReferralSection = () => {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Your Referrals ({referredUsers.length})</CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
         </CardHeader>
         <CardContent>
           {referredUsers.length === 0 ? (
@@ -201,7 +217,7 @@ const ReferralSection = () => {
                         {user.first_name || 'Unknown'} {user.last_name || 'User'}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {maskEmail(`user${index + 1}****@gsu.edu.ng`)}
+                        {maskEmail(user.email, index)}
                       </p>
                     </div>
                   </div>
