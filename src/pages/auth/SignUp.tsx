@@ -11,6 +11,12 @@ import { User, ArrowLeft, Mail, Lock, Loader2, Github, ShieldCheck, Users } from
 import { motion } from "framer-motion";
 import { OnboardingTutorial } from '@/components/OnboardingTutorial';
 
+interface ReferralResponse {
+  success: boolean;
+  referrer_name?: string;
+  error?: string;
+}
+
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,10 +64,13 @@ const SignUp = () => {
         if (referralError) {
           console.warn('Referral processing failed:', referralError);
           toast.warning('Account created successfully, but referral code could not be processed.');
-        } else if (referralResult?.success) {
-          toast.success(`Successfully signed up! You were referred by ${referralResult.referrer_name}.`);
         } else {
-          toast.warning(`Account created successfully, but ${referralResult?.error || 'referral code is invalid'}.`);
+          const result = referralResult as ReferralResponse;
+          if (result?.success) {
+            toast.success(`Successfully signed up! You were referred by ${result.referrer_name}.`);
+          } else {
+            toast.warning(`Account created successfully, but ${result?.error || 'referral code is invalid'}.`);
+          }
         }
       } else {
         toast.success('Successfully signed up! Please update your profile to get started.');

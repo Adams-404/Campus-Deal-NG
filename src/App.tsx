@@ -11,8 +11,8 @@ import { DesktopSideNav } from "@/components/DesktopSideNav";
 import { useEffect, useState, Suspense } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { trackPageView } from "@/utils/analytics"; // Import analytics tracking
-import { initializeGemini } from "@/services/nlpService"; // Import Gemini initializer
+import { trackPageView } from "@/utils/analytics";
+import { initializeGemini } from "@/services/nlpService";
 import Index from "./pages/Index";
 import Messages from "./pages/Messages";
 import Profile from "./pages/Profile";
@@ -47,7 +47,15 @@ import Feedback from "./pages/Feedback";
 import Leaderboard from "./pages/Leaderboard";
 import { usePWATheme } from "./hooks/usePWATheme";
 
-const queryClient = new QueryClient();
+// Create a single query client instance outside of the component
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
