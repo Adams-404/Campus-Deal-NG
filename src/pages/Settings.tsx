@@ -1,343 +1,441 @@
-
-import { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { 
-  LogOut, 
-  User, 
-  Bell, 
-  Eye, 
-  Type, 
-  Moon, 
-  Sun, 
-  Settings as SettingsIcon,
-  Users,
-  HelpCircle,
-  MessageSquare,
-  Shield,
-  Info
-} from "lucide-react";
-import { useTheme } from "next-themes";
-import { useNavigate } from 'react-router-dom';
 import { PageTransition } from "@/components/PageTransition";
 import { useSettings } from "@/contexts/SettingsContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTheme } from "@/contexts/ThemeContext";
+import { Button } from "@/components/ui/button";
+import { ExpandableSection } from "@/components/ui/expandable-section";
+import { Switch } from "@/components/ui/switch";
+import { 
+  ChevronRight, 
+  Type, 
+  Bell, 
+  Share2, 
+  User, 
+  Moon,
+  Sun,
+  HelpCircle,
+  Shield,
+  MessageSquare,
+  Info,
+  LogOut,
+  Monitor,
+  BellRing,
+  BellOff,
+  Mail,
+  ArrowLeft,
+  Headphones,
+  Headset,
+  Users
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { toast } from "sonner";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import ReferralSection from "@/components/ReferralSection";
 
-const Settings = () => {
+export default function Settings() {
   const { theme, setTheme } = useTheme();
+  const { isEnabled, isPushSupported, toggleNotifications } = useNotifications();
   const navigate = useNavigate();
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(isEnabled);
   const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  
-  const {
-    fontSizeClass,
-    updateFontSize,
-    hideSafetyTips,
-    setHideSafetyTips,
-    hideSellTips,
-    setHideSellTips,
-    hideMessageTips,
-    setHideMessageTips
-  } = useSettings();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    checkUser();
+    // Faster loading by doing both requests in parallel
+    const fetchData = async () => {
+      Promise.all([checkAuthStatus(), checkAdminStatus()]).then(() => {
+        // Use a short timeout to prevent skeleton flash
+        setTimeout(() => setIsLoading(false), 100);
+      });
+    };
+    fetchData();
   }, []);
 
-  const checkUser = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    } catch (error) {
-      console.error('Error checking user:', error);
-    } finally {
-      setLoading(false);
-    }
+  const checkAuthStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    setUser(user);
+    return user;
   };
+
+  const checkAdminStatus = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: roles } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+      setIsAdmin(roles?.some(r => r.role === 'admin') ?? false);
+      return roles;
+    }
+    return null;
+  };
+
+  const notificationTypes = [
+    {
+      icon: BellRing,
+      label: "Push Notifications",
+      description: "Get notified about new messages and updates",
+      enabled: isEnabled,
+      supported: isPushSupported,
+      onToggle: toggleNotifications
+    },
+    {
+      icon: Mail,
+      label: "Email Notifications",
+      description: "Receive email updates about your activity",
+      enabled: false,
+      supported: true,
+      onToggle: () => toast.info("Email notification settings coming soon!")
+    },
+    {
+      icon: BellOff,
+      label: "Do Not Disturb",
+      description: "Temporarily disable all notifications",
+      enabled: false,
+      supported: true,
+      onToggle: () => toast.info("Do Not Disturb settings coming soon!")
+    }
+  ];
+
+  const sections = [
+    {
+      title: "Account",
+      items: user ? [
+        {
+          icon: User,
+          label: "Profile",
+          href: "/profile",
+          iconColor: "text-blue-500",
+          bgColor: "bg-blue-500/10"
+        },
+        ...(isAdmin ? [{
+          icon: Shield,
+          label: "Admin Dashboard",
+          href: "/admin",
+          iconColor: "text-purple-500",
+          bgColor: "bg-purple-500/10"
+        }] : [])
+      ] : [
+        {
+          icon: User,
+          label: "Login",
+          href: "/auth/SignIn",
+          iconColor: "text-blue-500",
+          bgColor: "bg-blue-500/10"
+        }
+      ]
+    },
+    {
+      title: "Support & About",
+      items: [
+        {
+          icon: HelpCircle,
+          label: "Help Center",
+          href: "/help",
+          iconColor: "text-green-500",
+          bgColor: "bg-green-500/10"
+        },
+        {
+          icon: Shield,
+          label: "Privacy Policy",
+          href: "/privacy",
+          iconColor: "text-yellow-500",
+          bgColor: "bg-yellow-500/10"
+        },
+        {
+          icon: MessageSquare,
+          label: "Feedback",
+          href: "/feedback",
+          iconColor: "text-pink-500",
+          bgColor: "bg-pink-500/10"
+        },
+        {
+          icon: Info,
+          label: "About App",
+          href: "/about",
+          iconColor: "text-cyan-500",
+          bgColor: "bg-cyan-500/10"
+        },
+        {
+          icon: Share2,
+          label: "Share App",
+          href: "/share",
+          iconColor: "text-orange-500",
+          bgColor: "bg-orange-500/10"
+        }
+      ]
+    }
+  ];
 
   const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      toast.success('Signed out successfully');
+      await supabase.auth.signOut();
       navigate('/');
+      toast.success('Signed out successfully');
     } catch (error: any) {
-      toast.error(error.message);
+      toast.error('Failed to sign out');
     }
   };
 
-  const handleFontSizeChange = async (newSize: string) => {
-    await updateFontSize(newSize);
-    toast.success('Font size updated');
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  // Render skeleton with enhanced loading
+  const renderSkeleton = () => (
+    <div className="pt-24 pb-32 space-y-8">
+      <div className="space-y-8">
+        <div>
+          <div className="h-4 bg-secondary rounded w-1/4 mb-4" />
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="flex items-center space-x-4">
+                <div className="h-10 w-10 bg-secondary rounded-full" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 bg-secondary rounded w-3/4" />
+                  <div className="h-4 bg-secondary rounded w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    );
-  }
+      <div>
+        <div className="h-4 bg-secondary rounded w-1/4 mb-4" />
+        <div className="space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center space-x-4">
+              <div className="h-10 w-10 bg-secondary rounded-full" />
+              <div className="flex-1">
+                <div className="h-4 bg-secondary rounded w-3/4" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 
   return (
-    <PageTransition>
-      <div className="container max-w-4xl mx-auto px-4 py-8 pb-32">
-        <div className="flex items-center gap-3 mb-8">
-          <SettingsIcon className="h-8 w-8 text-primary" />
-          <h1 className="text-3xl font-bold">Settings</h1>
+    <div className="bg-background">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+
+        <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="w-10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => navigate(-1)}
+                className="text-primary lg:hidden"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </div>
+            <h1 className="text-lg font-semibold absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">Settings</h1>
+            <div className="w-10 flex justify-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/support')}
+                className="text-[#1078a7] hover:text-[#1078a7]/80 bg-white/90 dark:bg-transparent shadow-sm"
+              >
+                <Headset className="h-6 w-6" />
+              </Button>
+            </div>
+          </div>
+          <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
         </div>
+      </div>
 
-        <Tabs defaultValue="general" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="privacy">Privacy</TabsTrigger>
-            <TabsTrigger value="referrals">Referrals</TabsTrigger>
-            <TabsTrigger value="about">About</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="general" className="space-y-6 mt-6">
-            {/* Account Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="h-5 w-5" />
-                  Account
-                </CardTitle>
-                <CardDescription>
-                  Manage your account settings and preferences
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
+      <main className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300">
+        <PageTransition>
+          {isLoading ? (
+            renderSkeleton()
+          ) : (
+            <div className="pt-24 pb-32 space-y-8 mx-auto max-w-3xl">
+              <div className="space-y-8">
+                {/* Referrals Section - Only show for logged-in users */}
                 {user && (
-                  <div className="flex items-center justify-between p-4 bg-secondary/50 rounded-lg">
-                    <div>
-                      <p className="font-medium">Signed in as</p>
-                      <p className="text-sm text-muted-foreground">{user.email}</p>
-                    </div>
-                    <Button variant="outline" onClick={() => navigate('/profile')}>
-                      View Profile
-                    </Button>
+                  <div className="lg:bg-background/5 lg:rounded-xl lg:p-6 lg:border lg:border-white/10 lg:shadow-sm">
+                    <h2 className="text-sm font-medium text-gray-600 mb-4">Referrals</h2>
+                    <ExpandableSection
+                      icon={Users}
+                      label="Invite Friends"
+                      iconColor="text-indigo-500"
+                      bgColor="bg-indigo-500/10"
+                    >
+                      <ReferralSection />
+                    </ExpandableSection>
                   </div>
                 )}
-                <Button 
-                  variant="destructive" 
-                  onClick={handleSignOut}
-                  className="w-full"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </Button>
-              </CardContent>
-            </Card>
 
-            {/* Appearance Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Eye className="h-5 w-5" />
-                  Appearance
-                </CardTitle>
-                <CardDescription>
-                  Customize how the app looks and feels
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="font-medium">Theme</p>
-                    <p className="text-sm text-muted-foreground">
-                      Choose your preferred theme
-                    </p>
-                  </div>
-                  <Select value={theme} onValueChange={setTheme}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="light">
-                        <div className="flex items-center gap-2">
-                          <Sun className="h-4 w-4" />
-                          Light
+                {/* Theme Section */}
+                <div className="lg:bg-background/5 lg:rounded-xl lg:p-6 lg:border lg:border-white/10 lg:shadow-sm">
+                  <h2 className="text-sm font-medium text-gray-600 mb-4">Theme & Notifications</h2>
+                  <div className="space-y-4">
+                    <ExpandableSection
+                      icon={theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor}
+                      label="Theme"
+                      iconColor="text-purple-500"
+                      bgColor="bg-purple-500/10"
+                    >
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Moon className="h-4 w-4" />
+                            <span>Dark</span>
+                          </div>
+                          <Switch 
+                            checked={theme === 'dark'} 
+                            onCheckedChange={() => setTheme('dark')}
+                          />
                         </div>
-                      </SelectItem>
-                      <SelectItem value="dark">
-                        <div className="flex items-center gap-2">
-                          <Moon className="h-4 w-4" />
-                          Dark
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Sun className="h-4 w-4" />
+                            <span>Light</span>
+                          </div>
+                          <Switch 
+                            checked={theme === 'light'} 
+                            onCheckedChange={() => setTheme('light')}
+                          />
                         </div>
-                      </SelectItem>
-                      <SelectItem value="system">System</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Monitor className="h-4 w-4" />
+                            <span>System</span>
+                          </div>
+                          <Switch 
+                            checked={theme === 'system'} 
+                            onCheckedChange={() => setTheme('system')}
+                          />
+                        </div>
+                      </div>
+                    </ExpandableSection>
 
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="font-medium">Font Size</p>
-                    <p className="text-sm text-muted-foreground">
-                      Adjust text size for better readability
-                    </p>
+                    <ExpandableSection
+                      icon={Bell}
+                      label="Notifications"
+                      iconColor="text-pink-500"
+                      bgColor="bg-pink-500/10"
+                    >
+                      <div className="space-y-6">
+                        {notificationTypes.map((type) => (
+                          <div key={type.label} className="flex items-start gap-4 py-2 lg:p-3 lg:bg-pink-500/15 dark:lg:bg-transparent lg:border lg:border-pink-300 dark:lg:border-white/10 lg:rounded-lg lg:shadow-sm">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <type.icon className="w-4 h-4 text-gray-400" />
+                                <span className="font-medium">{type.label}</span>
+                                {!type.supported && (
+                                  <span className="text-xs text-yellow-500">(Not supported)</span>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-400 mt-2">{type.description}</p>
+                            </div>
+                            <Switch
+                              checked={type.enabled}
+                              onCheckedChange={type.onToggle}
+                              disabled={!type.supported}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </ExpandableSection>
                   </div>
-                  <Select value={fontSizeClass} onValueChange={handleFontSizeChange}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="small">Small</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="large">Large</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="privacy" className="space-y-6 mt-6">
-            {/* Tips & Notifications Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" />
-                  Tips & Notifications
-                </CardTitle>
-                <CardDescription>
-                  Control which tips and notifications you receive
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="font-medium">Safety Tips</p>
-                    <p className="text-sm text-muted-foreground">
-                      Show safety tips when browsing items
-                    </p>
+                {/* Other Sections */}
+                {sections.map((section) => (
+                  <div key={section.title} className="lg:bg-background/5 lg:rounded-xl lg:p-6 lg:border lg:border-white/10 lg:shadow-sm">
+                    <h2 className="text-sm font-medium text-gray-600 mb-4">{section.title}</h2>
+                    <div className="space-y-3 lg:space-y-3">
+                      {section.items.map((item) => (
+                        <Link
+                          key={item.label}
+                          to={item.href}
+                          className={cn("rounded-lg p-4 flex items-center justify-between hover:bg-opacity-80 transition-colors shadow-sm", 
+                             item.bgColor.replace('bg-', 'bg-') + '/15',
+                             'border border-' + item.bgColor.split('-')[1] + '-200 dark:border-white/10')}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={cn("p-2 rounded-full", item.bgColor)}>
+                              <item.icon className={cn("w-5 h-5", item.iconColor)} />
+                            </div>
+                            <span>{item.label}</span>
+                          </div>
+                          <ChevronRight className="w-5 h-5 text-gray-400" />
+                        </Link>
+                      ))}
+                    </div>
                   </div>
-                  <Switch
-                    checked={!hideSafetyTips}
-                    onCheckedChange={(checked) => setHideSafetyTips(!checked)}
-                  />
-                </div>
+                ))}
+              </div>
 
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="font-medium">Selling Tips</p>
-                    <p className="text-sm text-muted-foreground">
-                      Show tips when creating listings
-                    </p>
+              {user && (
+                <div className="mt-12 lg:hidden xl:hidden">
+                  <div>
+                    <h2 className="text-sm font-medium text-gray-600 mb-4">Account Actions</h2>
+                    <Button
+                      variant="ghost"
+                      className="w-full h-[60px] bg-red-500/15 dark:bg-secondary/50 rounded-lg border border-red-300 dark:border-white/10 flex items-center justify-between hover:bg-red-100 transition-colors group shadow-sm"
+                      onClick={() => setShowSignOutDialog(true)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-red-500/10">
+                          <LogOut className="w-5 h-5 text-red-500" />
+                        </div>
+                        <span className="text-red-500">Sign Out</span>
+                      </div>
+                      <ChevronRight className="w-5 h-5 text-red-500 transition-transform group-hover:translate-x-0.5" />
+                    </Button>
+                    
+                    <div className="mt-8 text-center">
+                      <p className="text-sm text-gray-400">GSU Market v1.0.0</p>
+                    </div>
                   </div>
-                  <Switch
-                    checked={!hideSellTips}
-                    onCheckedChange={(checked) => setHideSellTips(!checked)}
-                  />
                 </div>
-
-                <Separator />
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <p className="font-medium">Messaging Tips</p>
-                    <p className="text-sm text-muted-foreground">
-                      Show tips when messaging other users
-                    </p>
-                  </div>
-                  <Switch
-                    checked={!hideMessageTips}
-                    onCheckedChange={(checked) => setHideMessageTips(!checked)}
-                  />
+              )}
+              {!user && (
+                <div className="mt-8 text-center">
+                  <p className="text-sm text-gray-400">GSU Market v1.0.0</p>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              )}
+            </div>
+          )}
+        </PageTransition>
+      </main>
 
-          <TabsContent value="referrals" className="mt-6">
-            <ReferralSection />
-          </TabsContent>
-
-          <TabsContent value="about" className="space-y-6 mt-6">
-            {/* Help & Support Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <HelpCircle className="h-5 w-5" />
-                  Help & Support
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => navigate('/help')}
-                >
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  Help Center
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => navigate('/support')}
-                >
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Contact Support
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Legal Section */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="h-5 w-5" />
-                  Legal
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => navigate('/privacy')}
-                >
-                  <Shield className="mr-2 h-4 w-4" />
-                  Privacy Policy
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => navigate('/about')}
-                >
-                  <Info className="mr-2 h-4 w-4" />
-                  About GSU Market
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* App Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>App Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 text-sm text-muted-foreground">
-                  <p>Version: 1.0.0</p>
-                  <p>© 2024 GSU Market. All rights reserved.</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </PageTransition>
+      <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign Out</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out? You will need to sign in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleSignOut}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              Sign Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
-};
-
-export default Settings;
+}
