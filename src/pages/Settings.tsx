@@ -1,4 +1,3 @@
-
 import { PageTransition } from "@/components/PageTransition";
 import { useSettings } from "@/contexts/SettingsContext";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -24,7 +23,8 @@ import {
   Mail,
   ArrowLeft,
   Headphones,
-  Headset
+  Headset,
+  Users
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -43,6 +43,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import ReferralSection from "@/components/ReferralSection";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -265,6 +266,21 @@ export default function Settings() {
           ) : (
             <div className="pt-24 pb-32 space-y-8 mx-auto max-w-3xl">
               <div className="space-y-8">
+                {/* Referrals Section - Only show for logged-in users */}
+                {user && (
+                  <div className="lg:bg-background/5 lg:rounded-xl lg:p-6 lg:border lg:border-white/10 lg:shadow-sm">
+                    <h2 className="text-sm font-medium text-gray-600 mb-4">Referrals</h2>
+                    <ExpandableSection
+                      icon={Users}
+                      label="Invite Friends"
+                      iconColor="text-indigo-500"
+                      bgColor="bg-indigo-500/10"
+                    >
+                      <ReferralSection />
+                    </ExpandableSection>
+                  </div>
+                )}
+
                 {/* Theme Section */}
                 <div className="lg:bg-background/5 lg:rounded-xl lg:p-6 lg:border lg:border-white/10 lg:shadow-sm">
                   <h2 className="text-sm font-medium text-gray-600 mb-4">Theme & Notifications</h2>

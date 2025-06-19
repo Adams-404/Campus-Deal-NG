@@ -1,12 +1,13 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { User, ArrowLeft, Mail, Lock, Loader2, Github, ShieldCheck } from "lucide-react";
+import { User, ArrowLeft, Mail, Lock, Loader2, Github, ShieldCheck, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { OnboardingTutorial } from '@/components/OnboardingTutorial';
 
@@ -14,10 +15,20 @@ const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Auto-fill referral code from URL
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      setReferralCode(refCode);
+    }
+  }, [searchParams]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,14 +41,32 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
       });
 
       if (error) throw error;
 
-      toast.success('Successfully signed up! Please update your profile to get started.');
+      // If user was created and referral code provided, process referral
+      if (data.user && referralCode.trim()) {
+        const { data: referralResult, error: referralError } = await supabase.rpc('process_referral_signup', {
+          referred_user_id: data.user.id,
+          referral_code_input: referralCode.trim()
+        });
+
+        if (referralError) {
+          console.warn('Referral processing failed:', referralError);
+          toast.warning('Account created successfully, but referral code could not be processed.');
+        } else if (referralResult?.success) {
+          toast.success(`Successfully signed up! You were referred by ${referralResult.referrer_name}.`);
+        } else {
+          toast.warning(`Account created successfully, but ${referralResult?.error || 'referral code is invalid'}.`);
+        }
+      } else {
+        toast.success('Successfully signed up! Please update your profile to get started.');
+      }
+
       navigate('/auth/profile');
       setShowTutorial(true);
     } catch (error: any) {
@@ -50,10 +79,14 @@ const SignUp = () => {
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true);
     try {
+      const redirectUrl = referralCode 
+        ? `${window.location.origin}/home?ref=${encodeURIComponent(referralCode)}`
+        : `${window.location.origin}/home`;
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/home`
+          redirectTo: redirectUrl
         }
       });
 
@@ -223,6 +256,22 @@ const SignUp = () => {
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   className="pl-10 bg-gray-900/50 border-gray-800 focus:border-blue-500/50 focus:ring-blue-500/20 h-11 text-sm w-full"
                   required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="referralCode" className="text-sm font-medium text-gray-300">
+                Referral Code <span className="text-gray-500">(Optional)</span>
+              </Label>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                <Input
+                  id="referralCode"
+                  type="text"
+                  placeholder="Enter referral code"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  className="pl-10 bg-gray-900/50 border-gray-800 focus:border-blue-500/50 focus:ring-blue-500/20 h-11 text-sm w-full"
                 />
               </div>
             </div>

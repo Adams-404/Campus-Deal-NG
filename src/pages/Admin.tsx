@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -25,7 +26,8 @@ import { KYCTab } from "@/components/admin/KYCTab"
 import { PostsTab } from "@/components/admin/PostsTab"
 import { AdminsTab } from "@/components/admin/AdminsTab"
 import { AdminGuide } from "@/components/admin/AdminGuide"
-import { ArrowLeft, Menu, X, LayoutDashboard, Users, FileCheck, ShoppingBag, Shield, HelpCircle } from "lucide-react"
+import ReferralsTab from "@/components/admin/ReferralsTab"
+import { ArrowLeft, Menu, X, LayoutDashboard, Users, FileCheck, ShoppingBag, Shield, HelpCircle, UserPlus } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
@@ -327,6 +329,7 @@ const Admin = () => {
     { id: "users", label: "Users", icon: <Users className="h-4 w-4 mr-2" /> },
     { id: "kyc", label: "KYC Verification", icon: <FileCheck className="h-4 w-4 mr-2" /> },
     { id: "posts", label: "Listings", icon: <ShoppingBag className="h-4 w-4 mr-2" /> },
+    { id: "referrals", label: "Referrals", icon: <UserPlus className="h-4 w-4 mr-2" /> },
     { id: "admins", label: "Administrators", icon: <Shield className="h-4 w-4 mr-2" /> },
     { id: "guide", label: "Admin Guide", icon: <HelpCircle className="h-4 w-4 mr-2" /> },
   ]
@@ -491,6 +494,10 @@ const Admin = () => {
                             onDeleteItem={handleDeleteItem}
                             onRefresh={fetchData}
                           />
+                        </TabsContent>
+
+                        <TabsContent value="referrals" className="m-0 mt-2">
+                          <ReferralsTab />
                         </TabsContent>
 
                         <TabsContent value="admins" className="m-0 mt-2">

@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -43,6 +44,7 @@ import LazyViewItem from "./pages/LazyViewItem";
 import { useDeviceType } from "./hooks/use-mobile";
 import DeliveryCoordinator from "./pages/DeliveryCoordinator";
 import Feedback from "./pages/Feedback";
+import Leaderboard from "./pages/Leaderboard";
 import { usePWATheme } from "./hooks/usePWATheme";
 
 const queryClient = new QueryClient();
@@ -91,7 +93,8 @@ const AnimatedRoutes = () => {
     "/auth/signup", 
     "/admin", 
     "/notifications",
-    "/support"
+    "/support",
+    "/leaderboard"
   ].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
   
   const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings } = useSettings();
@@ -205,6 +208,7 @@ const AnimatedRoutes = () => {
               <Route path="/help" element={<Help />} />
               <Route path="/support" element={<Support />} />
               <Route path="/feedback" element={<Feedback />} />
+              <Route path="/leaderboard" element={<Leaderboard />} />
 
               <Route path="/home" element={<ProtectedRoute allowGuest><LazyHomepage /></ProtectedRoute>} />
               <Route path="/category/:category" element={<ProtectedRoute allowGuest><CategoryPage /></ProtectedRoute>} />
