@@ -43,7 +43,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import ReferralSection from "@/components/ReferralSection";
 
 export default function Settings() {
   const { theme, setTheme } = useTheme();
@@ -87,7 +86,7 @@ export default function Settings() {
 
   const notificationTypes = [
     {
-      icon: BellRing,
+      icon: Bell,
       label: "Push Notifications",
       description: "Get notified about new messages and updates",
       enabled: isEnabled,
@@ -122,6 +121,13 @@ export default function Settings() {
           href: "/profile",
           iconColor: "text-blue-500",
           bgColor: "bg-blue-500/10"
+        },
+        {
+          icon: Users,
+          label: "Invite Friends",
+          href: "/invite-friends",
+          iconColor: "text-indigo-500",
+          bgColor: "bg-indigo-500/10"
         },
         ...(isAdmin ? [{
           icon: Shield,
@@ -230,7 +236,6 @@ export default function Settings() {
   return (
     <div className="bg-background">
       <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
-
         <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="w-10">
@@ -266,21 +271,6 @@ export default function Settings() {
           ) : (
             <div className="pt-24 pb-32 space-y-8 mx-auto max-w-3xl">
               <div className="space-y-8">
-                {/* Referrals Section - Only show for logged-in users */}
-                {user && (
-                  <div className="lg:bg-background/5 lg:rounded-xl lg:p-6 lg:border lg:border-white/10 lg:shadow-sm">
-                    <h2 className="text-sm font-medium text-gray-600 mb-4">Referrals</h2>
-                    <ExpandableSection
-                      icon={Users}
-                      label="Invite Friends"
-                      iconColor="text-indigo-500"
-                      bgColor="bg-indigo-500/10"
-                    >
-                      <ReferralSection />
-                    </ExpandableSection>
-                  </div>
-                )}
-
                 {/* Theme Section */}
                 <div className="lg:bg-background/5 lg:rounded-xl lg:p-6 lg:border lg:border-white/10 lg:shadow-sm">
                   <h2 className="text-sm font-medium text-gray-600 mb-4">Theme & Notifications</h2>

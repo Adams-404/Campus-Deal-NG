@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -45,6 +44,7 @@ import { useDeviceType } from "./hooks/use-mobile";
 import DeliveryCoordinator from "./pages/DeliveryCoordinator";
 import Feedback from "./pages/Feedback";
 import Leaderboard from "./pages/Leaderboard";
+import InviteFriends from "./pages/InviteFriends";
 import { usePWATheme } from "./hooks/usePWATheme";
 
 // Create a single query client instance outside of the component
@@ -227,6 +227,7 @@ const AnimatedRoutes = () => {
               <Route path="/settings" element={<ProtectedRoute allowGuest><Settings /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><SavedItems /></ProtectedRoute>} />
               <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
+              <Route path="/invite-friends" element={<ProtectedRoute><InviteFriends /></ProtectedRoute>} />
               <Route path="/item/:id" element={<ProtectedRoute allowGuest><LazyViewItem /></ProtectedRoute>} />
               <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />

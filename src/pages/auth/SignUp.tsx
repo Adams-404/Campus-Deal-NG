@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,12 +9,6 @@ import { toast } from "sonner";
 import { User, ArrowLeft, Mail, Lock, Loader2, Github, ShieldCheck, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { OnboardingTutorial } from '@/components/OnboardingTutorial';
-
-interface ReferralResponse {
-  success: boolean;
-  referrer_name?: string;
-  error?: string;
-}
 
 const SignUp = () => {
   const [email, setEmail] = useState("");
@@ -56,27 +49,30 @@ const SignUp = () => {
 
       // If user was created and referral code provided, process referral
       if (data.user && referralCode.trim()) {
-        const { data: referralResult, error: referralError } = await supabase.rpc('process_referral_signup', {
-          referred_user_id: data.user.id,
-          referral_code_input: referralCode.trim()
-        });
+        try {
+          const { data: referralResult, error: referralError } = await supabase.rpc('process_referral_signup', {
+            referred_user_id: data.user.id,
+            referral_code_input: referralCode.trim()
+          });
 
-        if (referralError) {
-          console.warn('Referral processing failed:', referralError);
-          toast.warning('Account created successfully, but referral code could not be processed.');
-        } else {
-          const result = referralResult as ReferralResponse;
-          if (result?.success) {
-            toast.success(`Successfully signed up! You were referred by ${result.referrer_name}.`);
+          if (referralError) {
+            console.warn('Referral processing failed:', referralError);
+            toast.warning('Account created successfully, but referral code could not be processed.');
+          } else if (referralResult?.success) {
+            toast.success(`Successfully signed up! You were referred by ${referralResult.referrer_name}.`);
           } else {
-            toast.warning(`Account created successfully, but ${result?.error || 'referral code is invalid'}.`);
+            toast.warning(`Account created successfully, but ${referralResult?.error || 'referral code is invalid'}.`);
           }
+        } catch (referralErr) {
+          console.warn('Referral processing error:', referralErr);
+          toast.warning('Account created successfully, but referral code could not be processed.');
         }
       } else {
-        toast.success('Successfully signed up! Please update your profile to get started.');
+        toast.success('Successfully signed up! Please check your email to verify your account.');
       }
 
-      navigate('/auth/profile');
+      // Redirect to home instead of profile
+      navigate('/home');
       setShowTutorial(true);
     } catch (error: any) {
       toast.error(error.message);
