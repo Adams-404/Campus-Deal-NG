@@ -53,13 +53,13 @@ const InviteFriends = () => {
         setReferralCode(profile.referral_code);
       }
 
-      // Get referred users with better query
+      // Get referred users with better query - fix the ambiguous column reference
       const { data: referrals } = await supabase
         .from('referrals')
         .select(`
-          referred_user_id,
-          created_at,
-          profiles!referred_user_id (
+          referrals.referred_user_id,
+          referrals.created_at,
+          profiles!referrals_referred_user_id_fkey (
             id,
             first_name,
             last_name,
