@@ -32,13 +32,50 @@ interface ReferralData {
   }[];
 }
 
+interface Profile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  kyc_status: string;
+  created_at: string;
+  name: string;
+}
+
+interface UserProfile {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+  kyc_status: string;
+  created_at: string;
+}
+
+interface AuthUser {
+  id: string;
+  email?: string;
+}
+
 const ReferralsTab = () => {
   const [referrals, setReferrals] = useState<ReferralData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetchReferrals();
+    const checkAdmin = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase.rpc('is_admin', { user_id: user.id });
+          setIsAdmin(!!data);
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
   }, []);
 
   const fetchReferrals = async () => {
@@ -55,7 +92,6 @@ const ReferralsTab = () => {
         return;
       }
 
-
       // Get all unique user IDs
       const userIds = new Set<string>();
       referrals.forEach(ref => {
@@ -63,23 +99,48 @@ const ReferralsTab = () => {
         userIds.add(ref.referred_user_id);
       });
 
-      // Get all user profiles
+      // First get all user profiles with basic info
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name, kyc_status, created_at')
-        .in('id', Array.from(userIds));
+        .in('id', Array.from(userIds)) as { data: UserProfile[] | null, error: any };
 
       if (profileError) throw profileError;
-      if (!profiles?.length) {
+      if (!profiles) {
+        setReferrals([]);
+        return;
+      }
+
+      // Generate placeholder emails based on profile info
+      const profilesWithEmails = profiles.map(profile => {
+        // Create a placeholder email using first name and last initial
+        let email: string;
+        if (profile.first_name && profile.last_name) {
+          email = `${profile.first_name.toLowerCase()}.${profile.last_name.charAt(0).toLowerCase()}@example.com`;
+        } else if (profile.first_name) {
+          email = `${profile.first_name.toLowerCase()}@example.com`;
+        } else {
+          email = `user_${profile.id.substring(0, 6)}@example.com`;
+        }
+
+        return {
+          ...profile,
+          email: email,
+          name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'
+        };
+      });
+
+      if (profilesWithEmails.length === 0) {
         setReferrals([]);
         return;
       }
 
       // Create a map of user IDs to profiles
-      const profileMap = new Map(profiles.map(p => [p.id, {
-        ...p,
-        name: `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown User'
-      }]));
+      const profileMap = new Map<string, Profile>();
+
+      profilesWithEmails.forEach(p => {
+        profileMap.set(p.id, p);
+      });
 
       // Group by referrer
       const groupedData: { [key: string]: ReferralData } = {};
@@ -88,7 +149,7 @@ const ReferralsTab = () => {
       referrals.forEach(ref => {
         const referrerId = ref.referrer_id;
         const referrer = profileMap.get(referrerId);
-        
+
         if (!referrer) return;
 
         if (!groupedData[referrerId]) {
@@ -96,7 +157,7 @@ const ReferralsTab = () => {
             referrer: {
               id: referrerId,
               name: referrer.name,
-              email: `${referrer.first_name?.toLowerCase() || 'user'}@gsu.edu.ng`,
+              email: referrer.email || `${referrer.first_name?.toLowerCase() || 'user'}@example.com`,
               referral_count: 0
             },
             referred_users: []
@@ -108,7 +169,7 @@ const ReferralsTab = () => {
       referrals.forEach(ref => {
         const referrerId = ref.referrer_id;
         const referredUser = profileMap.get(ref.referred_user_id);
-        
+
         if (!referredUser || !groupedData[referrerId]) return;
 
         groupedData[referrerId].referred_users.push({
@@ -118,7 +179,7 @@ const ReferralsTab = () => {
           kyc_status: referredUser.kyc_status || 'pending',
           created_at: ref.created_at
         });
-        
+
         // Update the referral count
         groupedData[referrerId].referrer.referral_count++;
       });
@@ -159,7 +220,7 @@ const ReferralsTab = () => {
   const exportData = () => {
     const csvContent = [
       ['Referrer Name', 'Referrer Email', 'Total Referrals', 'Referred User', 'Referred Email', 'Verification Status', 'Signup Date'],
-      ...referrals.flatMap(referral => 
+      ...referrals.flatMap(referral =>
         referral.referred_users.map(user => [
           referral.referrer.name,
           referral.referrer.email,
@@ -181,10 +242,44 @@ const ReferralsTab = () => {
     window.URL.revokeObjectURL(url);
   };
 
+  const getUserEmail = async (userId: string) => {
+    try {
+      // Only fetch email if current user is admin
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      const { data: isAdmin } = await supabase.rpc('is_admin', { user_id: currentUser?.id || '' });
+
+      if (!isAdmin) {
+        return ''; // Only admins can see real emails
+      }
+
+      const { data: { user }, error } = await supabase.auth.admin.getUserById(userId);
+      if (error) throw error;
+      return user?.email || '';
+    } catch (error) {
+      console.error('Error fetching user email:', error);
+      return '';
+    }
+  };
+
+  const columns = [
+    {
+      header: 'Name',
+      accessor: (ref: ReferralData) => ref.referrer.name
+    },
+    ...(isAdmin ? [{
+      header: 'Email',
+      accessor: async (ref: ReferralData) => await getUserEmail(ref.referrer.id)
+    }] : []),
+    {
+      header: 'Total Referrals',
+      accessor: (ref: ReferralData) => ref.referrer.referral_count.toString()
+    }
+  ];
+
   const filteredReferrals = referrals.filter(referral =>
     referral.referrer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    referral.referrer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    referral.referred_users.some(user => 
+    (isAdmin && referral.referrer.email?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    referral.referred_users.some(user =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase())
     )
