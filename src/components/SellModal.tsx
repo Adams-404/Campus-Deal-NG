@@ -1,11 +1,12 @@
-import { X, Upload, Video, ImagePlus, Trash2, Loader2 } from "lucide-react";
+import { X, Upload, Video, ImagePlus, Trash2, Loader2, ShieldAlert } from "lucide-react";
 import { Button } from "./ui/button";
-import { useState, useRef, FormEvent } from "react";
+import { useState, useRef, FormEvent, useEffect } from "react";
 import { ImageCarousel } from "./ui/image-carousel";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { v4 as uuidv4 } from 'uuid';
+import { useNavigate } from 'react-router-dom';
 
 interface SellModalProps {
   isOpen: boolean;
@@ -39,6 +40,9 @@ const categories = [
 ];
 
 export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => {
+  const [isVerified, setIsVerified] = useState<boolean | null>(null);
+  const [loadingVerification, setLoadingVerification] = useState(true);
+  const navigate = useNavigate();
   const [images, setImages] = useState<File[]>([]);
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [videos, setVideos] = useState<File[]>([]);
@@ -209,7 +213,122 @@ export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => 
     setVideoUrls(prev => prev.filter((_, i) => i !== index));
   };
 
+  useEffect(() => {
+    const checkVerification = async () => {
+      if (!isOpen) return;
+      
+      try {
+        // Check if we have a cached verification status
+        const cachedVerification = localStorage.getItem('user_verification');
+        if (cachedVerification) {
+          const { status, timestamp } = JSON.parse(cachedVerification);
+          // If verification is recent (less than 1 hour old), use the cached value
+          if (Date.now() - timestamp < 60 * 60 * 1000) {
+            setIsVerified(status === 'verified');
+            setLoadingVerification(false);
+            return;
+          }
+        }
+
+        setLoadingVerification(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          localStorage.removeItem('user_verification');
+          navigate('/sign-in');
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('kyc_status')
+          .eq('id', user.id)
+          .single();
+
+        const isUserVerified = profile?.kyc_status === 'verified';
+        setIsVerified(isUserVerified);
+        
+        // Cache the verification status
+        if (isUserVerified) {
+          localStorage.setItem('user_verification', JSON.stringify({
+            status: 'verified',
+            timestamp: Date.now()
+          }));
+        } else {
+          // Clear any existing verification cache if not verified
+          localStorage.removeItem('user_verification');
+        }
+      } catch (error) {
+        console.error('Error checking verification status:', error);
+        toast.error('Error checking verification status');
+        setIsVerified(false);
+      } finally {
+        setLoadingVerification(false);
+      }
+    };
+
+    if (isOpen) {
+      checkVerification();
+    }
+
+    // Clear verification cache on sign out
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('user_verification');
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [isOpen, navigate]);
+
   if (!isOpen) return null;
+
+  if (loadingVerification) {
+    return (
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="bg-secondary p-8 rounded-2xl max-w-md w-full mx-4 text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+          <p className="text-white">Checking your verification status...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isVerified === false) {
+    return (
+      <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div className="bg-secondary p-6 rounded-2xl max-w-md w-full mx-4">
+          <div className="flex items-center justify-center mb-4">
+            <ShieldAlert className="h-12 w-12 text-yellow-500" />
+          </div>
+          <h3 className="text-xl font-semibold text-center mb-2">Verification Required</h3>
+          <p className="text-gray-300 text-center mb-6">
+            You need to verify your account before you can list items for sale. Please complete the verification process in your profile.
+          </p>
+          <div className="flex flex-col space-y-3">
+            <Button 
+              onClick={() => {
+                onClose();
+                navigate('/profile');
+              }}
+              className="w-full"
+            >
+              Go to Profile
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={onClose}
+              className="w-full"
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-in fade-in duration-300">
@@ -229,7 +348,7 @@ export const SellModal = ({ isOpen, onClose, onItemListed }: SellModalProps) => 
                 <ImageCarousel 
                   images={[...imageUrls, ...videoUrls]} 
                   className="bg-black"
-                  aspectRatio="product"
+                  aspectRatio="square"
                 />
               </div>
             )}
