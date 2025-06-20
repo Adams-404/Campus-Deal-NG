@@ -99,11 +99,18 @@ const ReferralsTab = () => {
         userIds.add(ref.referred_user_id);
       });
 
-      // First get all user profiles with basic info
+      // First get all user profiles with basic info and emails
       const { data: profiles, error: profileError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, kyc_status, created_at')
-        .in('id', Array.from(userIds)) as { data: UserProfile[] | null, error: any };
+        .select(`
+          id, 
+          first_name, 
+          last_name, 
+          kyc_status, 
+          created_at,
+          email
+        `)
+        .in('id', Array.from(userIds));
 
       if (profileError) throw profileError;
       if (!profiles) {
@@ -111,24 +118,11 @@ const ReferralsTab = () => {
         return;
       }
 
-      // Generate placeholder emails based on profile info
-      const profilesWithEmails = profiles.map(profile => {
-        // Create a placeholder email using first name and last initial
-        let email: string;
-        if (profile.first_name && profile.last_name) {
-          email = `${profile.first_name.toLowerCase()}.${profile.last_name.charAt(0).toLowerCase()}@example.com`;
-        } else if (profile.first_name) {
-          email = `${profile.first_name.toLowerCase()}@example.com`;
-        } else {
-          email = `user_${profile.id.substring(0, 6)}@example.com`;
-        }
-
-        return {
-          ...profile,
-          email: email,
-          name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'
-        };
-      });
+      // Use real emails from profiles
+      const profilesWithEmails = profiles.map(profile => ({
+        ...profile,
+        name: `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Unknown User'
+      }));
 
       if (profilesWithEmails.length === 0) {
         setReferrals([]);
@@ -175,7 +169,7 @@ const ReferralsTab = () => {
         groupedData[referrerId].referred_users.push({
           id: ref.referred_user_id,
           name: referredUser.name,
-          email: `${referredUser.first_name?.toLowerCase() || 'user'}@gsu.edu.ng`,
+          email: referredUser.email || `${referredUser.first_name?.toLowerCase() || 'user'}@gsu.edu.ng`,
           kyc_status: referredUser.kyc_status || 'pending',
           created_at: ref.created_at
         });
