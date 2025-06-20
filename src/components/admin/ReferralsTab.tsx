@@ -43,63 +43,91 @@ const ReferralsTab = () => {
 
   const fetchReferrals = async () => {
     try {
-      // Get all referrals with user details
-      const { data: referralData, error } = await supabase
+      // First, get all referrals with created_at
+      const { data: referrals, error: refError } = await supabase
         .from('referrals')
-        .select(`
-          referrer_id,
-          referred_user_id,
-          created_at,
-          referrer:profiles!referrer_id (
-            id,
-            first_name,
-            last_name,
-            referral_code
-          ),
-          referred:profiles!referred_user_id (
-            id,
-            first_name,
-            last_name,
-            kyc_status,
-            created_at
-          )
-        `);
+        .select('referrer_id, referred_user_id, created_at')
+        .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (refError) throw refError;
+      if (!referrals?.length) {
+        setReferrals([]);
+        return;
+      }
+
+
+      // Get all unique user IDs
+      const userIds = new Set<string>();
+      referrals.forEach(ref => {
+        userIds.add(ref.referrer_id);
+        userIds.add(ref.referred_user_id);
+      });
+
+      // Get all user profiles
+      const { data: profiles, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, first_name, last_name, kyc_status, created_at')
+        .in('id', Array.from(userIds));
+
+      if (profileError) throw profileError;
+      if (!profiles?.length) {
+        setReferrals([]);
+        return;
+      }
+
+      // Create a map of user IDs to profiles
+      const profileMap = new Map(profiles.map(p => [p.id, {
+        ...p,
+        name: `${p.first_name || ''} ${p.last_name || ''}`.trim() || 'Unknown User'
+      }]));
 
       // Group by referrer
       const groupedData: { [key: string]: ReferralData } = {};
 
-      referralData?.forEach((ref) => {
+      // First, initialize all referrers with empty arrays
+      referrals.forEach(ref => {
         const referrerId = ref.referrer_id;
-        const referrer = ref.referrer;
-        const referred = ref.referred;
-
-        if (!referrer || !referred) return;
+        const referrer = profileMap.get(referrerId);
+        
+        if (!referrer) return;
 
         if (!groupedData[referrerId]) {
           groupedData[referrerId] = {
             referrer: {
               id: referrerId,
-              name: `${referrer.first_name || ''} ${referrer.last_name || ''}`.trim(),
-              email: `${referrer.first_name?.toLowerCase() || 'user'}@gsu.edu.ng`, // Mock email
+              name: referrer.name,
+              email: `${referrer.first_name?.toLowerCase() || 'user'}@gsu.edu.ng`,
               referral_count: 0
             },
             referred_users: []
           };
         }
-
-        groupedData[referrerId].referrer.referral_count++;
-        groupedData[referrerId].referred_users.push({
-          id: referred.id,
-          name: `${referred.first_name || ''} ${referred.last_name || ''}`.trim(),
-          email: `${referred.first_name?.toLowerCase() || 'user'}@gsu.edu.ng`, // Mock email
-          kyc_status: referred.kyc_status || 'pending',
-          created_at: ref.created_at
-        });
       });
 
-      setReferrals(Object.values(groupedData));
+      // Then, populate the referred users
+      referrals.forEach(ref => {
+        const referrerId = ref.referrer_id;
+        const referredUser = profileMap.get(ref.referred_user_id);
+        
+        if (!referredUser || !groupedData[referrerId]) return;
+
+        groupedData[referrerId].referred_users.push({
+          id: ref.referred_user_id,
+          name: referredUser.name,
+          email: `${referredUser.first_name?.toLowerCase() || 'user'}@gsu.edu.ng`,
+          kyc_status: referredUser.kyc_status || 'pending',
+          created_at: ref.created_at
+        });
+        
+        // Update the referral count
+        groupedData[referrerId].referrer.referral_count++;
+      });
+
+      // Convert to array and sort by referral count (descending)
+      const sortedReferrals = Object.values(groupedData)
+        .sort((a, b) => b.referrer.referral_count - a.referrer.referral_count);
+
+      setReferrals(sortedReferrals);
     } catch (error) {
       console.error('Error fetching referrals:', error);
       toast.error('Failed to fetch referral data');

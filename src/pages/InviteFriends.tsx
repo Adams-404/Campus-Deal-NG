@@ -34,49 +34,58 @@ const InviteFriends = () => {
 
   const fetchReferralData = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) {
         navigate('/auth/signin');
         return;
       }
       
-      setUser(user);
+      setUser(currentUser);
 
-      // Get user's referral code
-      const { data: profile } = await supabase
+      // Get user's referral code and profile
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('referral_code')
-        .eq('id', user.id)
+        .select('referral_code, first_name, last_name')
+        .eq('id', currentUser.id)
         .single();
+
+      if (profileError) throw profileError;
 
       if (profile?.referral_code) {
         setReferralCode(profile.referral_code);
       }
 
-      // Get referred users with better query - fix the ambiguous column reference
-      const { data: referrals } = await supabase
+      // Get referred users with their profiles
+      const { data: referrals, error: referralsError } = await supabase
         .from('referrals')
         .select(`
-          referrals.referred_user_id,
-          referrals.created_at,
-          profiles!referrals_referred_user_id_fkey (
+          referred_user_id,
+          created_at,
+          profiles:referred_user_id (
             id,
             first_name,
             last_name,
-            kyc_status
+            kyc_status,
+            created_at
           )
         `)
-        .eq('referrer_id', user.id);
+        .eq('referrer_id', currentUser.id)
+        .order('created_at', { ascending: false });
+
+      if (referralsError) throw referralsError;
 
       if (referrals) {
-        const referredUsersData = referrals.map(r => ({
-          id: r.profiles?.id || '',
-          first_name: r.profiles?.first_name || '',
-          last_name: r.profiles?.last_name || '',
-          email: '', // We'll mask this
-          kyc_status: r.profiles?.kyc_status || 'pending',
-          created_at: r.created_at
-        }));
+        const referredUsersData = referrals
+          .filter(r => r.profiles) // Filter out any null profiles
+          .map((r, index) => ({
+            id: r.profiles?.id || '',
+            first_name: r.profiles?.first_name || '',
+            last_name: r.profiles?.last_name || '',
+            email: `user${index + 1}****@gsu.edu.ng`, // Masked email for privacy
+            kyc_status: r.profiles?.kyc_status || 'pending',
+            created_at: r.created_at || r.profiles?.created_at || new Date().toISOString()
+          }));
+
 
         setReferredUsers(referredUsersData);
       }
