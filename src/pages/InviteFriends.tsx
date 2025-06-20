@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,14 +38,59 @@ interface ReferralData {
 const InviteFriends = () => {
   const [referralCode, setReferralCode] = useState("");
   const [referredUsers, setReferredUsers] = useState<ReferralUser[]>([]);
-  const [leaderboard, setLeaderboard] = useState<Array<{name: string, count: number}>>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUser[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
 
+  const fetchLeaderboard = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      const { data, error } = await supabase
+        .rpc('get_leaderboard');
+      
+      if (error) throw error;
+      
+      if (data) {
+        const formattedLeaderboard = data.map((item: any) => ({
+          id: item.user_id,
+          name: item.name,
+          count: Number(item.referral_count) || 0,
+          isCurrentUser: item.is_current_user
+        }));
+        setLeaderboard(formattedLeaderboard);
+      }
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      toast.error('Failed to refresh leaderboard');
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchReferralData();
-  }, []);
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('referrals_changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'referrals'
+      }, () => {
+        fetchLeaderboard();
+      })
+      .subscribe();
+
+    // Initial fetch
+    fetchLeaderboard();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchLeaderboard]);
 
   const fetchReferralData = async () => {
     try {
@@ -71,23 +116,8 @@ const InviteFriends = () => {
         setReferralCode(profile.referral_code);
       }
       
-      // Fetch leaderboard using the server-side function
-      const { data: leaderboardData, error: leaderboardError } = await supabase
-        .rpc('get_leaderboard');
-      
-      if (leaderboardError) {
-        console.error('Error fetching leaderboard:', leaderboardError);
-      } else if (leaderboardData) {
-        // Map the data to match our expected format
-        const formattedLeaderboard = leaderboardData.map((item: any) => ({
-          id: item.user_id,
-          name: item.name,
-          count: Number(item.referral_count) || 0,
-          isCurrentUser: item.is_current_user
-        }));
-        
-        setLeaderboard(formattedLeaderboard);
-      }
+      // Fetch leaderboard using the refetch function
+      await fetchLeaderboard();
 
       if (profile?.referral_code) {
         setReferralCode(profile.referral_code);
@@ -336,11 +366,39 @@ const InviteFriends = () => {
             {/* Leaderboard Card */}
             <Card className="border-border/50 shadow-sm">
               <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-foreground/90">
-                    <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
-                    Top Referrers
-                  </CardTitle>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-amber-500" />
+                      Top Referrers
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={fetchLeaderboard}
+                      disabled={isRefreshing}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className={`${isRefreshing ? 'animate-spin' : ''}`}
+                      >
+                        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                        <path d="M3 3v5h5" />
+                        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+                        <path d="M16 16h5v5" />
+                      </svg>
+                      <span className="sr-only">Refresh leaderboard</span>
+                    </Button>
+                  </div>
                   {leaderboard.length > 0 && (
                     <span className="text-[10px] sm:text-xs bg-primary/10 text-primary px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">
                       Updated now
