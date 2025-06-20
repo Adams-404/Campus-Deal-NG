@@ -40,6 +40,9 @@ import SafetyTipsDialog from "./components/SafetyTipsDialog";
 import Support from "./pages/Support";
 import LazyHomepage from "./pages/LazyHomepage";
 import LazyViewItem from "./pages/LazyViewItem";
+import LazySettings from "./components/LazySettings";
+import LazySavedItems from "./components/LazySavedItems";
+import LazyInviteFriends from "./components/LazyInviteFriends";
 import { useDeviceType } from "./hooks/use-mobile";
 import DeliveryCoordinator from "./pages/DeliveryCoordinator";
 import Feedback from "./pages/Feedback";
@@ -47,12 +50,14 @@ import Leaderboard from "./pages/Leaderboard";
 import InviteFriends from "./pages/InviteFriends";
 import { usePWATheme } from "./hooks/usePWATheme";
 
-// Create a single query client instance outside of the component
+// Create a single query client instance outside of the component with better caching
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 3,
+      retry: 1, // Reduced retries for faster loading
       refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes cache
+      cacheTime: 10 * 60 * 1000, // 10 minutes cache
     },
   },
 });
@@ -153,8 +158,8 @@ const AnimatedRoutes = () => {
   }, [location.pathname]);
   
   const fallbackLoader = (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+    <div className="flex items-center justify-center min-h-screen bg-background">
+      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
     </div>
   );
 
@@ -224,10 +229,10 @@ const AnimatedRoutes = () => {
               <Route path="/messages/:conversationId" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/user/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute allowGuest><Settings /></ProtectedRoute>} />
-              <Route path="/saved" element={<ProtectedRoute><SavedItems /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute allowGuest><LazySettings /></ProtectedRoute>} />
+              <Route path="/saved" element={<ProtectedRoute><LazySavedItems /></ProtectedRoute>} />
               <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
-              <Route path="/invite-friends" element={<ProtectedRoute><InviteFriends /></ProtectedRoute>} />
+              <Route path="/invite-friends" element={<ProtectedRoute><LazyInviteFriends /></ProtectedRoute>} />
               <Route path="/item/:id" element={<ProtectedRoute allowGuest><LazyViewItem /></ProtectedRoute>} />
               <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />

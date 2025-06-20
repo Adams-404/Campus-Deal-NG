@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +18,17 @@ interface ReferralUser {
   email: string;
   kyc_status: string;
   created_at: string;
+}
+
+interface ReferralData {
+  referred_user_id: string;
+  created_at: string;
+  profiles: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    kyc_status: string;
+  } | null;
 }
 
 const InviteFriends = () => {
