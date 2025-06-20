@@ -741,6 +741,13 @@ export type Database = {
         Args: { user_id: string; first_name?: string; last_name?: string }
         Returns: string
       }
+      get_masked_emails: {
+        Args: { user_ids: string[] }
+        Returns: {
+          id: string
+          email: string
+        }[]
+      }
       get_or_create_user_wallet: {
         Args: { p_user_id: string }
         Returns: {

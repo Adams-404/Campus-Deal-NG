@@ -66,7 +66,7 @@ const SignUp = () => {
             console.warn('Referral processing failed:', referralError);
             toast.warning('Account created successfully, but referral code could not be processed.');
           } else if (referralResult) {
-            const result = referralResult as ReferralResult;
+            const result = referralResult as unknown as ReferralResult;
             if (result.success) {
               toast.success(`Successfully signed up! You were referred by ${result.referrer_name}.`);
             } else {

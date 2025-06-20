@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +18,17 @@ interface ReferralUser {
   email: string;
   kyc_status: string;
   created_at: string;
+}
+
+interface ReferralData {
+  referred_user_id: string;
+  created_at: string;
+  profiles: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    kyc_status: string;
+  } | null;
 }
 
 const InviteFriends = () => {
@@ -53,12 +63,12 @@ const InviteFriends = () => {
         setReferralCode(profile.referral_code);
       }
 
-      // Get referred users with better query - fix the ambiguous column reference
+      // Get referred users with proper typing
       const { data: referrals } = await supabase
         .from('referrals')
         .select(`
-          referrals.referred_user_id,
-          referrals.created_at,
+          referred_user_id,
+          created_at,
           profiles!referrals_referred_user_id_fkey (
             id,
             first_name,
@@ -69,7 +79,7 @@ const InviteFriends = () => {
         .eq('referrer_id', user.id);
 
       if (referrals) {
-        const referredUsersData = referrals.map(r => ({
+        const referredUsersData = (referrals as ReferralData[]).map(r => ({
           id: r.profiles?.id || '',
           first_name: r.profiles?.first_name || '',
           last_name: r.profiles?.last_name || '',

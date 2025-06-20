@@ -1,17 +1,25 @@
 
 import { cn } from "@/lib/utils"
+import { memo } from "react"
 
-function Skeleton({
+interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
+  loading?: boolean;
+}
+
+const SkeletonComponent = ({
   className,
+  loading = true,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+}: SkeletonProps) => {
+  if (!loading) return null;
+  
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-secondary/80 dark:bg-secondary/80 light:bg-gray-200/80", className)}
+      className={cn("animate-pulse rounded-md bg-secondary/60 dark:bg-secondary/60 light:bg-gray-200/60", className)}
       {...props}
-      style={{animationDuration: '1s'}} // Faster animation
+      style={{animationDuration: '0.8s'}} // Faster, smoother animation
     />
   )
 }
 
-export { Skeleton }
+export const Skeleton = memo(SkeletonComponent);
