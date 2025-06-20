@@ -71,47 +71,20 @@ const InviteFriends = () => {
         setReferralCode(profile.referral_code);
       }
       
-      // Fetch leaderboard using a public view or function
+      // Fetch leaderboard using the server-side function
       const { data: leaderboardData, error: leaderboardError } = await supabase
-        .from('referrals')
-        .select(`
-          referrer_id,
-          profiles:profiles!referrals_referrer_id_fkey(
-            id,
-            first_name,
-            last_name
-          )`);
+        .rpc('get_leaderboard');
       
       if (leaderboardError) {
         console.error('Error fetching leaderboard:', leaderboardError);
       } else if (leaderboardData) {
-        // Process the data client-side
-        const referralCounts = leaderboardData.reduce((acc, item) => {
-          if (item.referrer_id && item.profiles) {
-            acc[item.referrer_id] = (acc[item.referrer_id] || 0) + 1;
-          }
-          return acc;
-        }, {} as Record<string, number>);
-
-        // Get unique referrers with their counts
-        const uniqueReferrers = Array.from(new Set(leaderboardData
-          .filter(item => item.referrer_id && item.profiles)
-          .map(item => item.referrer_id)
-        ));
-
-        const formattedLeaderboard = uniqueReferrers
-          .map(referrerId => {
-            const profile = leaderboardData.find(item => item.referrer_id === referrerId)?.profiles;
-            return {
-              id: referrerId,
-              name: profile ? [profile.first_name, profile.last_name].filter(Boolean).join(' ') : 'Anonymous',
-              count: referralCounts[referrerId] || 0,
-              isCurrentUser: referrerId === currentUser.id
-            };
-          })
-          .filter(item => item.count > 0)
-          .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
+        // Map the data to match our expected format
+        const formattedLeaderboard = leaderboardData.map((item: any) => ({
+          id: item.user_id,
+          name: item.name,
+          count: Number(item.referral_count) || 0,
+          isCurrentUser: item.is_current_user
+        }));
         
         setLeaderboard(formattedLeaderboard);
       }
