@@ -11,12 +11,6 @@ import { User, ArrowLeft, Mail, Lock, Loader2, Github, ShieldCheck, Users } from
 import { motion } from "framer-motion";
 import { OnboardingTutorial } from '@/components/OnboardingTutorial';
 
-interface ReferralResult {
-  success: boolean;
-  referrer_name?: string;
-  error?: string;
-}
-
 const SignUp = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,41 +41,27 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
+      // Include referral code in user metadata if provided
+      const userMetadata = {};
+      if (referralCode.trim()) {
+        userMetadata.referral_code = referralCode.trim();
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: userMetadata,
+          emailRedirectTo: `${window.location.origin}/home`
+        }
       });
 
       if (error) throw error;
 
-      // If user was created and referral code provided, process referral
-      if (data.user && referralCode.trim()) {
-        try {
-          const { data: referralResult, error: referralError } = await supabase.rpc('process_referral_signup', {
-            referred_user_id: data.user.id,
-            referral_code_input: referralCode.trim()
-          });
+      // Show success message
+      toast.success('Successfully signed up! Please check your email to verify your account.');
 
-          if (referralError) {
-            console.warn('Referral processing failed:', referralError);
-            toast.warning('Account created successfully, but referral code could not be processed.');
-          } else if (referralResult) {
-            const result = referralResult as unknown as ReferralResult;
-            if (result.success) {
-              toast.success(`Successfully signed up! You were referred by ${result.referrer_name}.`);
-            } else {
-              toast.warning(`Account created successfully, but ${result.error || 'referral code is invalid'}.`);
-            }
-          }
-        } catch (referralErr) {
-          console.warn('Referral processing error:', referralErr);
-          toast.warning('Account created successfully, but referral code could not be processed.');
-        }
-      } else {
-        toast.success('Successfully signed up! Please check your email to verify your account.');
-      }
-
-      // Redirect to home instead of profile
+      // Redirect to home
       navigate('/home');
       setShowTutorial(true);
     } catch (error: any) {
@@ -94,14 +74,22 @@ const SignUp = () => {
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true);
     try {
-      const redirectUrl = referralCode 
-        ? `${window.location.origin}/home?ref=${encodeURIComponent(referralCode)}`
-        : `${window.location.origin}/home`;
+      // Include referral code in the state parameter for OAuth
+      const state = {};
+      if (referralCode.trim()) {
+        state.referral_code = referralCode.trim();
+      }
 
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl
+          redirectTo: `${window.location.origin}/home`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+          scopes: 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+          ...(Object.keys(state).length > 0 && { state: JSON.stringify(state) })
         }
       });
 
