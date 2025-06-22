@@ -468,11 +468,45 @@ export type Database = {
           },
         ]
       }
+      pending_referrals: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          processed_at: string | null
+          referral_code: string
+          referred_email: string
+          referrer_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          referral_code: string
+          referred_email: string
+          referrer_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          processed_at?: string | null
+          referral_code?: string
+          referred_email?: string
+          referrer_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           address: string | null
           avatar_url: string | null
           created_at: string | null
+          email: string | null
           first_name: string | null
           font_size: string | null
           hide_message_tips: boolean | null
@@ -490,6 +524,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string | null
+          email?: string | null
           first_name?: string | null
           font_size?: string | null
           hide_message_tips?: boolean | null
@@ -507,6 +542,7 @@ export type Database = {
           address?: string | null
           avatar_url?: string | null
           created_at?: string | null
+          email?: string | null
           first_name?: string | null
           font_size?: string | null
           hide_message_tips?: boolean | null
@@ -519,6 +555,42 @@ export type Database = {
           phone?: string | null
           referral_code?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      referral_audit_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          referral_code: string | null
+          referrer_id: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          referral_code?: string | null
+          referrer_id?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          referral_code?: string | null
+          referrer_id?: string | null
+          status?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -619,45 +691,57 @@ export type Database = {
       transactions: {
         Row: {
           amount: number
-          created_at: string | null
+          completed_at: string | null
+          created_at: string
+          currency: string | null
           description: string | null
           fee: number | null
           id: string
           metadata: Json | null
+          payment_method: string | null
+          payment_provider: string | null
           reference: string
-          status: string
-          type: string
-          updated_at: string | null
-          user_id: string
-          wallet_id: string
+          status: Database["public"]["Enums"]["transaction_status"]
+          type: string | null
+          updated_at: string
+          user_id: string | null
+          wallet_id: string | null
         }
         Insert: {
           amount: number
-          created_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string | null
           description?: string | null
           fee?: number | null
           id?: string
           metadata?: Json | null
+          payment_method?: string | null
+          payment_provider?: string | null
           reference: string
-          status: string
-          type: string
-          updated_at?: string | null
-          user_id: string
-          wallet_id: string
+          status?: Database["public"]["Enums"]["transaction_status"]
+          type?: string | null
+          updated_at?: string
+          user_id?: string | null
+          wallet_id?: string | null
         }
         Update: {
           amount?: number
-          created_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          currency?: string | null
           description?: string | null
           fee?: number | null
           id?: string
           metadata?: Json | null
+          payment_method?: string | null
+          payment_provider?: string | null
           reference?: string
-          status?: string
-          type?: string
-          updated_at?: string | null
-          user_id?: string
-          wallet_id?: string
+          status?: Database["public"]["Enums"]["transaction_status"]
+          type?: string | null
+          updated_at?: string
+          user_id?: string | null
+          wallet_id?: string | null
         }
         Relationships: [
           {
@@ -730,16 +814,98 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      referral_monitoring: {
+        Row: {
+          error_message: string | null
+          referral_code: string | null
+          referral_created_at: string | null
+          referred_user_email: string | null
+          referrer_email: string | null
+          signup_time: string | null
+          status: string | null
+          status_updated_at: string | null
+        }
+        Relationships: []
+      }
+      transaction_history: {
+        Row: {
+          amount: number | null
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          id: string | null
+          reference: string | null
+          status: Database["public"]["Enums"]["transaction_status"] | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          amount?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          amount?: number | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string | null
+          reference?: string | null
+          status?: Database["public"]["Enums"]["transaction_status"] | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      wallet_balance: {
+        Row: {
+          balance_ngn: number | null
+          currency: string | null
+          last_updated: string | null
+          user_id: string | null
+        }
+        Insert: {
+          balance_ngn?: never
+          currency?: string | null
+          last_updated?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          balance_ngn?: never
+          currency?: string | null
+          last_updated?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       assign_referral_codes: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      fix_missing_referral: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       generate_referral_code: {
         Args: { user_id: string; first_name?: string; last_name?: string }
         Returns: string
+      }
+      get_leaderboard: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          name: string
+          referral_count: number
+          is_current_user: boolean
+        }[]
       }
       get_masked_emails: {
         Args: { user_ids: string[] }
@@ -760,9 +926,43 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_wallet_balance: {
+        Args: { p_user_id: string }
+        Returns: {
+          balance_ngn: number
+          currency: string
+          last_updated: string
+        }[]
+      }
+      increment_wallet_balance: {
+        Args: { p_user_id: string; p_amount: number }
+        Returns: undefined
+      }
+      initialize_transaction: {
+        Args: {
+          p_user_id: string
+          p_reference: string
+          p_amount: number
+          p_description?: string
+          p_metadata?: Json
+        }
+        Returns: Json
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      log_referral_event: {
+        Args: {
+          p_event_type: string
+          p_user_id?: string
+          p_referrer_id?: string
+          p_referral_code?: string
+          p_status?: string
+          p_error_message?: string
+          p_metadata?: Json
+        }
+        Returns: undefined
       }
       notify_seller_about_deletion: {
         Args: { seller_id: string; item_title: string; reason: string }
@@ -773,7 +973,34 @@ export type Database = {
         Returns: undefined
       }
       process_referral_signup: {
-        Args: { referred_user_id: string; referral_code_input: string }
+        Args:
+          | {
+              referral_code_input: string
+              referred_user_id?: string
+              referred_email?: string
+            }
+          | { referred_user_id: string; referral_code_input: string }
+        Returns: Json
+      }
+      process_successful_transaction: {
+        Args: {
+          p_reference: string
+          p_amount_paid: number
+          p_transaction_data: Json
+        }
+        Returns: undefined
+      }
+      retry_failed_referrals: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          user_id: string
+          user_email: string
+          status: string
+          message: string
+        }[]
+      }
+      retry_pending_referrals: {
+        Args: Record<PropertyKey, never>
         Returns: Json
       }
       update_kyc_status: {
@@ -800,6 +1027,7 @@ export type Database = {
       item_condition: "new" | "like_new" | "good" | "fair" | "poor"
       item_status: "active" | "sold" | "deleted"
       kyc_status: "pending" | "verified" | "rejected" | "processing"
+      transaction_status: "pending" | "completed" | "failed" | "refunded"
       user_role: "admin" | "user"
     }
     CompositeTypes: {
@@ -919,6 +1147,7 @@ export const Constants = {
       item_condition: ["new", "like_new", "good", "fair", "poor"],
       item_status: ["active", "sold", "deleted"],
       kyc_status: ["pending", "verified", "rejected", "processing"],
+      transaction_status: ["pending", "completed", "failed", "refunded"],
       user_role: ["admin", "user"],
     },
   },
