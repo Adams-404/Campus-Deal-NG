@@ -1,545 +1,577 @@
-// ViewItem.tsx
+import { useParams, useNavigate } from "react-router-dom";
+import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { ImageCarousel } from "@/components/ui/image-carousel";
+import { EditItemModal } from "@/components/EditItemModal";
+import { 
+  ArrowLeft, 
+  Heart, 
+  MessageCircle, 
+  User, 
+  ZoomIn, 
+  ZoomOut,
+  Pencil,
+  Trash2
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useState, useEffect } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
-import { User, ArrowLeft, Mail, Lock, Loader2, Github, ShieldCheck, Users, Copy, CheckCircle, AlertTriangle, MessageSquare, Phone, MapPin, MoreHorizontal, Heart, Share2, Flag, Edit, Trash2, Loader, ChevronLeft, ChevronRight, X } from "lucide-react";
-import { motion } from "framer-motion";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useUser } from "@/hooks/use-user";
-import { formatTimeToNow } from "@/lib/utils";
-import { ImageCarousel } from "@/components/ImageCarousel";
-import { useSettings } from "@/contexts/SettingsContext";
-import { useToast } from "@/components/ui/use-toast";
-import { useSearch } from "@/contexts/SearchContext";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { useDeviceType } from "@/hooks/use-mobile";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ReportDialog } from "@/components/ReportDialog";
-import { ShareDialog } from "@/components/ShareDialog";
-import { useTheme } from "@/contexts/ThemeContext";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
+import { useSettings } from "@/contexts/SettingsContext";
+import SafetyTipsDialog from "@/components/SafetyTipsDialog";
 
-const LazyViewItem = () => {
-  const { id } = useParams<{ id: string }>();
-  const [item, setItem] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isReporting, setIsReporting] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isOwner, setIsOwner] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
-  const [sellerProfile, setSellerProfile] = useState<any>(null);
-  const [showFullDescription, setShowFullDescription] = useState(false);
-  const [showContactInfo, setShowContactInfo] = useState(false);
-  const [isContactInfoLoading, setIsContactInfoLoading] = useState(false);
-  const [contactInfo, setContactInfo] = useState<{ phone?: string; email?: string }>({});
-  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
-  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const { user } = useUser();
+interface Item {
+  id: string;
+  title: string;
+  price: number;
+  condition: string;
+  description: string;
+  category: string;
+  created_at: string;
+  seller_id: string;
+  status: string;
+  seller?: {
+    full_name?: string;
+    first_name?: string;
+    last_name?: string;
+    avatar_url?: string;
+    phone?: string;
+  };
+  images: string[];
+}
+
+export default function ViewItem() {
+  const { id } = useParams();
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { setItemForEdit } = useSearch();
-  const deviceType = useDeviceType();
-  const { theme } = useTheme();
+  const [item, setItem] = useState<Item | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isOwner, setIsOwner] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [zoom, setZoom] = useState(1);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState("");
+  const { hideMessageTips } = useSettings();
+  const [showMessageSafetyTips, setShowMessageSafetyTips] = useState(false);
+
+  const handleItemUpdated = async () => {
+    if (!id) return;
+    try {
+      const { data: itemData, error: itemError } = await supabase
+        .from('items')
+        .select(`
+          *,
+          item_images (
+            image_url
+          ),
+          profiles:seller_id (
+            first_name,
+            last_name,
+            avatar_url,
+            phone
+          )
+        `)
+        .eq('id', id)
+        .single();
+
+      if (itemError) throw itemError;
+      if (!itemData) throw new Error('Item not found');
+
+      const sellerData = itemData.profiles;
+      
+      setItem({
+        ...itemData,
+        images: itemData.item_images?.map((img: any) => img.image_url) || [],
+        seller: sellerData ? {
+          full_name: sellerData.first_name && sellerData.last_name 
+            ? `${sellerData.first_name} ${sellerData.last_name}`
+            : sellerData.first_name || sellerData.last_name || 'Anonymous',
+          first_name: sellerData.first_name || '',
+          last_name: sellerData.last_name || '',
+          avatar_url: sellerData.avatar_url || '',
+          phone: sellerData.phone || ''
+        } : {
+          full_name: 'Anonymous',
+          first_name: '',
+          last_name: '',
+          avatar_url: '',
+          phone: ''
+        }
+      });
+    } catch (error: any) {
+      console.error('Error refreshing item:', error);
+      toast.error(error.message);
+    }
+  };
 
   useEffect(() => {
     const fetchItem = async () => {
+      if (!id) return;
+      
       setIsLoading(true);
-      setError(null);
-
       try {
-        if (!id) {
-          throw new Error("Item ID is missing.");
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id);
+
+          setIsAdmin(roles?.some(r => r.role === 'admin') ?? false);
         }
 
-        const { data, error } = await supabase
-          .from("items")
+        const { data: itemData, error: itemError } = await supabase
+          .from('items')
           .select(`
             *,
-            profiles (
-              id,
-              full_name,
+            item_images (
+              image_url
+            ),
+            profiles:seller_id (
+              first_name,
+              last_name,
               avatar_url,
-              phone,
-              email
+              phone
             )
           `)
-          .eq("id", id)
+          .eq('id', id)
           .single();
 
-        if (error) {
-          throw error;
+        if (itemError) {
+          console.error('Error fetching item:', itemError);
+          toast.error('Item not found or error fetching item.');
+          navigate('/home');
+          return;
         }
 
-        if (!data) {
-          throw new Error("Item not found.");
+        if (!itemData) {
+          toast.error('Item not found.');
+          navigate('/home');
+          return;
         }
 
-        setItem(data);
-        setSellerProfile(data.profiles);
-        setIsOwner(user?.id === data.user_id);
+        setIsOwner(!!user && user.id === itemData.seller_id);
 
-        // Check if the item is saved
-        if (user) {
-          const { data: savedData, error: savedError } = await supabase
-            .from("saved_items")
-            .select("*")
-            .eq("user_id", user.id)
-            .eq("item_id", id);
-
-          if (savedError) {
-            throw savedError;
+        const sellerData = itemData.profiles;
+        
+        setItem({
+          ...itemData,
+          images: itemData.item_images?.map((img: any) => img.image_url) || [],
+          seller: sellerData ? {
+            full_name: sellerData.first_name && sellerData.last_name 
+              ? `${sellerData.first_name} ${sellerData.last_name}`
+              : sellerData.first_name || sellerData.last_name || 'Anonymous',
+            first_name: sellerData.first_name || '',
+            last_name: sellerData.last_name || '',
+            avatar_url: sellerData.avatar_url || '',
+            phone: sellerData.phone || ''
+          } : {
+            full_name: 'Anonymous',
+            first_name: '',
+            last_name: '',
+            avatar_url: '',
+            phone: ''
           }
-
-          setIsSaved(savedData && savedData.length > 0);
-        }
-      } catch (err: any) {
-        setError(err.message);
-        console.error("Error fetching item:", err);
-        toast({
-          title: "Error",
-          description: "Failed to load item. Please try again.",
-          variant: "destructive",
         });
+      } catch (error: any) {
+        console.error('Error fetching item:', error);
+        toast.error(error.message);
+        navigate('/home');
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchItem();
-  }, [id, user, toast]);
+  }, [id, navigate]);
 
-  useEffect(() => {
-    const getProfile = async () => {
-      if (user) {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
+  const handleDelete = async () => {
+    if (!id || !item) return;
 
-        setProfile(profileData);
-      }
-    };
-
-    getProfile();
-  }, [user]);
-
-  const toggleDescription = () => {
-    setShowFullDescription(!showFullDescription);
-  };
-
-  const handleSaveItem = async () => {
-    setIsSaving(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/auth/signin");
+        toast.error('You must be logged in to delete an item');
         return;
       }
 
-      if (isSaved) {
-        // Remove from saved items
-        const { error } = await supabase
-          .from("saved_items")
+      // Check if the user is an admin
+      if (isAdmin && !isOwner) {
+        // Admin deleting someone else's item
+        const { error: deleteError } = await supabase
+          .from('items')
           .delete()
-          .eq("user_id", user.id)
-          .eq("item_id", id);
+          .eq('id', id);
 
-        if (error) {
-          throw error;
+        if (deleteError) {
+          console.error('Error deleting item:', deleteError);
+          toast.error('Failed to delete item: ' + deleteError.message);
+          return;
         }
 
-        setIsSaved(false);
-        toast({
-          title: "Item unsaved",
-          description: "This item has been removed from your saved items.",
-        });
+        // Create notification with delete reason
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: item.seller_id,
+            type: 'admin_action',
+            title: 'Your listing has been removed',
+            content: `Your listing "${item.title}" has been completely removed by an administrator. Reason: ${deleteReason}`,
+            metadata: { item_id: id, item_title: item.title },
+            created_at: new Date().toISOString(),
+            is_read: false,
+          });
+
+        toast.success('Item deleted successfully and seller notified');
+        navigate('/admin');
+        return;
+      }
+
+      // Regular user deletion logic (owner deleting their own item)
+      if (isOwner) {
+        const { error: deleteError } = await supabase
+          .from('items')
+          .delete()
+          .eq('id', id)
+          .eq('seller_id', user.id);
+
+        if (deleteError) {
+          console.error('Error deleting item:', deleteError);
+          toast.error('Failed to delete item: ' + deleteError.message);
+          return;
+        }
+
+        // Create notification for the owner
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: user.id,
+            type: 'admin_action',
+            title: 'Your listing has been removed',
+            content: `Your listing "${item.title}" has been completely removed.`,
+            metadata: { item_id: id, item_title: item.title },
+            created_at: new Date().toISOString(),
+            is_read: false,
+          });
+
+        toast.success('Item deleted successfully');
+        navigate('/my-listings');
       } else {
-        // Add to saved items
-        const { error } = await supabase
-          .from("saved_items")
-          .insert([{ user_id: user.id, item_id: id }]);
+        toast.error('You do not have permission to delete this item');
+      }
+    } catch (error: any) {
+      console.error('Error deleting item:', error);
+      toast.error(error.message || 'Failed to delete item');
+    } finally {
+      setShowDeleteDialog(false);
+    }
+  };
 
-        if (error) {
-          throw error;
-        }
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + 0.25, 3));
+  };
 
-        setIsSaved(true);
-        toast({
-          title: "Item saved",
-          description: "This item has been added to your saved items.",
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev - 0.25, 1));
+  };
+
+  const handleMessageSeller = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('Please sign in to message the seller');
+        return;
+      }
+
+      if (user.id === item?.seller_id) {
+        toast.error("You can't message yourself");
+        return;
+      }
+
+      // Check if user has opted out of message safety tips
+      if (!hideMessageTips) {
+        setShowMessageSafetyTips(true);
+      } else {
+        // Skip tips and proceed directly
+        proceedWithMessaging();
+      }
+    } catch (error: any) {
+      console.error('Error preparing to message seller:', error);
+      toast.error(error.message);
+    }
+  };
+
+  const proceedWithMessaging = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user || !item) return;
+
+      const { data: newConversation, error: conversationError } = await supabase
+        .from('conversations')
+        .insert({
+          buyer_id: user.id,
+          seller_id: item.seller_id,
+          last_message: `Interested in ${item.title}`,
+          last_message_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (conversationError) throw conversationError;
+
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: newConversation.id,
+          content: `Hi, I'm interested in ${item.title}`,
+          sender_id: user.id,
+          created_at: new Date().toISOString(),
+          item_id: item.id
         });
-      }
-    } catch (err: any) {
-      console.error("Error saving item:", err);
-      toast({
-        title: "Error",
-        description: "Failed to save item. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
+
+      if (messageError) throw messageError;
+
+      navigate(`/messages/${newConversation.id}`);
+    } catch (error: any) {
+      console.error('Error starting conversation:', error);
+      toast.error(error.message);
     }
-  };
-
-  const handleDeleteItem = async () => {
-    setIsDeleting(true);
-    try {
-      const { error } = await supabase.from("items").delete().eq("id", id);
-
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: "Item deleted",
-        description: "This item has been successfully deleted.",
-      });
-      navigate("/my-listings");
-    } catch (err: any) {
-      console.error("Error deleting item:", err);
-      toast({
-        title: "Error",
-        description: "Failed to delete item. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleting(false);
-      setIsDeleteDialogOpen(false);
-    }
-  };
-
-  const handleEditItem = () => {
-    if (item) {
-      setItemForEdit(item);
-      navigate("/share");
-    }
-  };
-
-  const handleGetContactInfo = async () => {
-    setIsContactInfoLoading(true);
-    try {
-      if (!sellerProfile) {
-        throw new Error("Seller profile not found.");
-      }
-
-      // Simulate fetching contact info (replace with actual API call)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      setContactInfo({
-        phone: sellerProfile.phone || "N/A",
-        email: sellerProfile.email || "N/A",
-      });
-      setShowContactInfo(true);
-    } catch (err: any) {
-      console.error("Error fetching contact info:", err);
-      toast({
-        title: "Error",
-        description: "Failed to retrieve contact information.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsContactInfoLoading(false);
-    }
-  };
-
-  const handleImageClick = (index: number) => {
-    setSelectedImageIndex(index);
-    setIsImageDialogOpen(true);
-  };
-
-  const handleCloseImageDialog = () => {
-    setIsImageDialogOpen(false);
-  };
-
-  const handlePrevImage = () => {
-    setSelectedImageIndex((prevIndex) =>
-      prevIndex === 0 ? (item.images?.length || 0) - 1 : prevIndex - 1
-    );
-  };
-
-  const handleNextImage = () => {
-    setSelectedImageIndex((prevIndex) =>
-      prevIndex === (item.images?.length || 0) - 1 ? 0 : prevIndex + 1
-    );
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-red-500">
-        Error: {error}
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (!item) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Item not found.
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold mb-2">Item not found</h2>
+          <Button onClick={() => navigate("/home")}>Return Home</Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="container relative py-6">
-      {/* Back Button */}
-      <Button
-        variant="ghost"
-        onClick={() => navigate(-1)}
-        className="absolute top-3 left-3 group relative px-4 py-2 text-sm font-medium text-gray-300 transition-all duration-200 hover:text-white border border-blue-500/30 hover:border-blue-500/70"
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-        <div className="relative flex items-center">
-          <ArrowLeft className="mr-2 h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
-          <span className="relative">Back</span>
-        </div>
-        <div className="absolute bottom-0 left-0 h-px w-full bg-gradient-to-r from-blue-500/50 to-transparent scale-x-0 group-hover:scale-x-100 transition-transform duration-200" />
-      </Button>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {item.images && item.images.length > 0 && (
-          <div className="mb-8">
-            <ImageCarousel 
-              images={item.images} 
-              aspectRatio="square"
-            />
-          </div>
-        )}
-
-        <div>
-          <h1 className="text-2xl font-bold mb-2">{item.title}</h1>
-          <div className="flex items-center space-x-2 mb-4">
-            <Badge variant="secondary">{item.condition}</Badge>
-            <Badge>{item.category}</Badge>
-          </div>
-          <p className="text-gray-400 mb-4">
-            Posted {formatTimeToNow(item.created_at)}
-          </p>
-
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-2xl font-semibold">${item.price}</span>
-            <div className="flex items-center space-x-2">
-              {/* Save Button */}
-              <Button
-                variant="outline"
-                className="gap-2"
-                onClick={handleSaveItem}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : isSaved ? (
-                  <Heart className="h-4 w-4 fill-red-500 text-red-500" />
-                ) : (
-                  <Heart className="h-4 w-4" />
-                )}
-                {isSaved ? "Unsave" : "Save"}
-              </Button>
-
-              {/* Share Button */}
-              <Button variant="outline" onClick={() => setIsSharing(true)}>
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
-            </div>
-          </div>
-
-          <Separator className="mb-4" />
-
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Description</h2>
-            <p className="text-gray-500">
-              {showFullDescription
-                ? item.description
-                : `${item.description?.substring(0, 200)}...`}
-              {!showFullDescription && item.description?.length > 200 && (
-                <button
-                  className="text-blue-500 hover:underline ml-1"
-                  onClick={toggleDescription}
-                >
-                  Read More
-                </button>
-              )}
-              {showFullDescription && item.description?.length > 200 && (
-                <button
-                  className="text-blue-500 hover:underline ml-1"
-                  onClick={toggleDescription}
-                >
-                  Show Less
-                </button>
-              )}
-            </p>
-          </div>
-
-          <Separator className="mb-4" />
-
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold mb-2">Seller Information</h2>
-            <div className="flex items-center space-x-4">
-              <Avatar>
-                {sellerProfile?.avatar_url ? (
-                  <AvatarImage src={sellerProfile.avatar_url} alt={sellerProfile?.full_name} />
-                ) : (
-                  <AvatarFallback>{sellerProfile?.full_name?.charAt(0)}</AvatarFallback>
-                )}
-              </Avatar>
-              <div>
-                <p className="font-semibold">{sellerProfile?.full_name}</p>
-                <p className="text-sm text-gray-500">
-                  {/* Display location or other relevant info */}
-                  {item.location || "Location not specified"}
-                </p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-background">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6">
+          <div className="h-16 flex items-center justify-between gap-4">
             <Button
-              variant="secondary"
-              className="mt-4"
-              onClick={handleGetContactInfo}
-              disabled={showContactInfo || isContactInfoLoading}
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
             >
-              {isContactInfoLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading Contact Info...
-                </>
-              ) : showContactInfo ? (
-                "Contact Info Shown"
-              ) : (
-                "Get Contact Info"
-              )}
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-
-            {showContactInfo && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-500">
-                  <Phone className="h-4 w-4 inline-block mr-1" />
-                  Phone: {contactInfo.phone || "N/A"}
-                </p>
-                <p className="text-sm text-gray-500">
-                  <Mail className="h-4 w-4 inline-block mr-1" />
-                  Email: {contactInfo.email || "N/A"}
-                </p>
-              </div>
-            )}
-          </div>
-
-          <Separator className="mb-4" />
-
-          {/* Action Buttons */}
-          <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
-            {isOwner ? (
-              <>
+            <div className="flex items-center gap-2">
+              {isOwner && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowEditModal(true)}
+                    className="h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+                  >
+                    <Pencil className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="h-9 w-9 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20"
+                  >
+                    <Trash2 className="h-5 w-5" />
+                  </Button>
+                </>
+              )}
+              {isAdmin && !isOwner && (
                 <Button
-                  className="w-full"
-                  onClick={handleEditItem}
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="h-9 w-9 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20"
                 >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Item
+                  <Trash2 className="h-5 w-5" />
                 </Button>
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Item
-                </Button>
-              </>
-            ) : (
-              <Button className="w-full" onClick={() => setIsDialogOpen(true)}>
-                <Flag className="h-4 w-4 mr-2" />
-                Report Item
-              </Button>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Confirmation Dialog */}
-      <ConfirmDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-        title="Delete Item"
-        description="Are you sure you want to delete this item? This action cannot be undone."
-        onConfirm={handleDeleteItem}
-        isLoading={isDeleting}
-      />
+      <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
+        <PageTransition>
+          <div className="pt-24 pb-32">
+            <div className="rounded-lg overflow-hidden border border-white/10 relative h-[400px]">
+              <div style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.2s' }} className="h-full">
+                <ImageCarousel 
+                  images={item.images} 
+                  showZoom={true}
+                  aspectRatio="full"
+                  className="h-full"
+                />
+              </div>
+              <div className="absolute bottom-4 right-4 flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleZoomOut}
+                  disabled={zoom <= 1}
+                  className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleZoomIn}
+                  disabled={zoom >= 3}
+                  className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70"
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
 
-      {/* Report Dialog */}
-      <ReportDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        itemId={id}
-      />
+            <div className="mt-6 space-y-6">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h1 className="text-2xl font-bold emoji-container">{item.title}</h1>
+                  <p className="text-3xl font-bold text-primary mt-2">₦{item.price}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+                >
+                  <Heart className="h-5 w-5" />
+                </Button>
+              </div>
 
-      {/* Share Dialog */}
-      <ShareDialog
-        open={isSharing}
-        onOpenChange={setIsSharing}
-        item={item}
-      />
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={item.seller?.avatar_url} />
+                    <AvatarFallback>
+                      <User className="w-5 h-5 text-primary" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">
+                      {item.seller?.full_name || 'Anonymous'}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      {item.seller?.phone || 'No phone number provided'}
+                    </p>
+                  </div>
+                </div>
+                {!isOwner && (
+                  <Button 
+                    onClick={handleMessageSeller}
+                    className="ml-auto"
+                  >
+                    <MessageCircle className="w-4 h-4 mr-2" />
+                    Message Seller
+                  </Button>
+                )}
+              </div>
 
-      {/* Image Dialog */}
-      <Dialog open={isImageDialogOpen} onOpenChange={handleCloseImageDialog}>
-        <DialogContent className="sm:max-w-[80%] md:max-w-[60%] lg:max-w-[40%] bg-background border border-input rounded-md p-4">
-          <div className="relative">
-            {item.images && item.images.length > 0 && (
-              <img
-                src={item.images[selectedImageIndex]}
-                alt={`Full size ${selectedImageIndex + 1}`}
-                className="w-full rounded-md aspect-square object-contain"
-              />
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlePrevImage}
-              className="absolute left-2 top-1/2 transform -translate-y-1/2"
-            >
-              <ChevronLeft className="h-6 w-6" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleNextImage}
-              className="absolute right-2 top-1/2 transform -translate-y-1/2"
-            >
-              <ChevronRight className="h-6 w-6" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleCloseImageDialog}
-              className="absolute top-2 right-2"
-            >
-              <X className="h-5 w-5" />
-            </Button>
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">Condition</h2>
+                  <p className="text-gray-400">{item.condition}</p>
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold mb-2">Category</h2>
+                  <p className="text-gray-400">{item.category}</p>
+                </div>
+                {item.description && (
+                  <div>
+                    <h2 className="text-lg font-semibold mb-2">Description</h2>
+                    <p className="text-gray-400 whitespace-pre-wrap">{item.description}</p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </PageTransition>
+      </main>
+
+      <EditItemModal 
+        isOpen={showEditModal} 
+        onClose={() => setShowEditModal(false)} 
+        onItemUpdated={handleItemUpdated}
+        itemId={item.id}
+      />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {isAdmin && !isOwner 
+                ? "You are about to remove this listing as an admin. This will permanently delete the item and notify the seller." 
+                : "This action cannot be undone. This will permanently delete your item listing."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          {isAdmin && !isOwner && (
+            <div className="mb-4">
+              <label htmlFor="deleteReason" className="block text-sm font-medium mb-1">
+                Reason for removal (will be shown to seller)
+              </label>
+              <textarea
+                id="deleteReason"
+                className="w-full border rounded-md p-2 bg-background border-gray-600"
+                rows={3}
+                placeholder="Violates community guidelines..."
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+              />
+            </div>
+          )}
+          
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className={isAdmin && !isOwner ? "bg-red-600 hover:bg-red-700" : ""}
+            >
+              {isAdmin && !isOwner ? "Remove Listing" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <SafetyTipsDialog 
+        open={showMessageSafetyTips} 
+        onClose={() => {
+          setShowMessageSafetyTips(false);
+          proceedWithMessaging();
+        }} 
+        trigger="message_seller"
+      />
     </div>
   );
-};
-
-export default LazyViewItem;
+}
