@@ -51,7 +51,7 @@ const SignUp = () => {
         password,
         options: {
           data: userMetadata,
-          emailRedirectTo: `${window.location.origin}/home`
+          emailRedirectTo: `${window.location.origin}/email-confirmed`
         }
       });
 
@@ -81,7 +81,7 @@ const SignUp = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/home`,
+          redirectTo: `${window.location.origin}/email-confirmed`,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

@@ -29,6 +29,7 @@ import AuthLayout from "./components/AuthLayout";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
 import EmailVerification from "./pages/auth/EmailVerification";
+import EmailConfirmed from "./pages/auth/EmailConfirmed";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import Admin from "./pages/Admin";
@@ -105,6 +106,8 @@ const AnimatedRoutes = () => {
     "/auth", 
     "/auth/signin", 
     "/auth/signup", 
+    "/email-verification",
+    "/email-confirmed",
     "/admin", 
     "/notifications",
     "/support",
@@ -217,6 +220,7 @@ const AnimatedRoutes = () => {
                 <Route path="signup" element={<SignUp />} />
               </Route>
               <Route path="/email-verification" element={<EmailVerification />} />
+              <Route path="/email-confirmed" element={<EmailConfirmed />} />
 
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/about" element={<About />} />
