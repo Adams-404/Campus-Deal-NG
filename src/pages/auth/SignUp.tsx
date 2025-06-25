@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,7 +41,7 @@ const SignUp = () => {
 
     try {
       // Include referral code in user metadata if provided
-      const userMetadata = {};
+      const userMetadata: { referral_code?: string } = {};
       if (referralCode.trim()) {
         userMetadata.referral_code = referralCode.trim();
       }
@@ -58,12 +57,11 @@ const SignUp = () => {
 
       if (error) throw error;
 
-      // Show success message
-      toast.success('Successfully signed up! Please check your email to verify your account.');
-
-      // Redirect to home
-      navigate('/home');
-      setShowTutorial(true);
+      // Show success message and redirect to verification page
+      toast.success('Account created! Please check your email to verify your account.');
+      
+      // Navigate to email verification page with email parameter
+      navigate(`/email-verification?email=${encodeURIComponent(email)}`);
     } catch (error: any) {
       toast.error(error.message);
     } finally {
@@ -75,7 +73,7 @@ const SignUp = () => {
     setIsGoogleLoading(true);
     try {
       // Include referral code in the state parameter for OAuth
-      const state = {};
+      const state: { referral_code?: string } = {};
       if (referralCode.trim()) {
         state.referral_code = referralCode.trim();
       }

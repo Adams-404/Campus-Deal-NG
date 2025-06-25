@@ -28,6 +28,7 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 import AuthLayout from "./components/AuthLayout";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
+import EmailVerification from "./pages/auth/EmailVerification";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import Admin from "./pages/Admin";
@@ -57,7 +58,7 @@ const queryClient = new QueryClient({
       retry: 1, // Reduced retries for faster loading
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes cache
-      cacheTime: 10 * 60 * 1000, // 10 minutes cache
+      gcTime: 10 * 60 * 1000, // 10 minutes cache (renamed from cacheTime)
     },
   },
 });
@@ -215,6 +216,7 @@ const AnimatedRoutes = () => {
                 <Route path="signin" element={<SignIn />} />
                 <Route path="signup" element={<SignUp />} />
               </Route>
+              <Route path="/email-verification" element={<EmailVerification />} />
 
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/about" element={<About />} />
