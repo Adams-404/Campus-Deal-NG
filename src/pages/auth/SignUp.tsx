@@ -1,12 +1,12 @@
+
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { User, ArrowLeft, Mail, Lock, Loader2, Github, ShieldCheck, Users } from "lucide-react";
+import { User, ArrowLeft, Mail, Lock, Loader2, ShieldCheck, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { OnboardingTutorial } from '@/components/OnboardingTutorial';
 
