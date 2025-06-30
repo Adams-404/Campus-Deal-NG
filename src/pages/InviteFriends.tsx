@@ -22,7 +22,6 @@ interface ReferralUser {
 interface LeaderboardUser {
   name: string;
   count: number;
-  isCurrentUser?: boolean;
 }
 
 interface ReferralData {
@@ -124,13 +123,13 @@ const InviteFriends = () => {
         setReferralCode(profile.referral_code);
       }
 
-      // Get referred users with their profiles - only include users who have verified emails
+      // Get referred users with their profiles
       const { data: referrals, error: referralsError } = await supabase
         .from('referrals')
         .select(`
           referred_user_id,
           created_at,
-          referred_profiles:profiles!referred_user_id (
+          profiles:referred_user_id (
             id,
             first_name,
             last_name,
@@ -145,29 +144,30 @@ const InviteFriends = () => {
 
       if (referrals && referrals.length > 0) {
         const referredUsersData = referrals
-          .filter(r => r.referred_profiles) // Filter out any null profiles
+          .filter(r => r.profiles) // Filter out any null profiles
           .map((r, index) => {
             // Create a placeholder email based on available profile info
             let email: string;
-            if (r.referred_profiles?.first_name && r.referred_profiles?.last_name) {
-              email = `${r.referred_profiles.first_name.toLowerCase()}.${r.referred_profiles.last_name.charAt(0).toLowerCase()}@example.com`;
-            } else if (r.referred_profiles?.first_name) {
-              email = `${r.referred_profiles.first_name.toLowerCase()}@example.com`;
-            } else if (r.referred_profiles?.id) {
-              email = `user_${r.referred_profiles.id.substring(0, 6)}@example.com`;
+            if (r.profiles?.first_name && r.profiles?.last_name) {
+              email = `${r.profiles.first_name.toLowerCase()}.${r.profiles.last_name.charAt(0).toLowerCase()}@example.com`;
+            } else if (r.profiles?.first_name) {
+              email = `${r.profiles.first_name.toLowerCase()}@example.com`;
+            } else if (r.profiles?.id) {
+              email = `user_${r.profiles.id.substring(0, 6)}@example.com`;
             } else {
               email = `user${index + 1}@example.com`;
             }
 
             return {
-              id: r.referred_profiles?.id || `user-${index}`,
-              first_name: r.referred_profiles?.first_name || '',
-              last_name: r.referred_profiles?.last_name || '',
+              id: r.profiles?.id || `user-${index}`,
+              first_name: r.profiles?.first_name || '',
+              last_name: r.profiles?.last_name || '',
               email: email,
-              kyc_status: r.referred_profiles?.kyc_status || 'pending',
-              created_at: r.created_at || r.referred_profiles?.created_at || new Date().toISOString()
+              kyc_status: r.profiles?.kyc_status || 'pending',
+              created_at: r.created_at || r.profiles?.created_at || new Date().toISOString()
             };
           });
+
 
         setReferredUsers(referredUsersData);
       }
@@ -196,8 +196,8 @@ const InviteFriends = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Join Campus Deal',
-          text: 'Join me on Campus Deal - the best place to buy and sell within our university community!',
+          title: 'Join GSU Market',
+          text: 'Join me on GSU Market - the best place to buy and sell within our university community!',
           url: link,
         });
       } catch (error) {
@@ -290,7 +290,7 @@ const InviteFriends = () => {
                   Your Referral Code
                 </CardTitle>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  Share your code with friends and earn rewards when they verify their email and join
+                  Share your code with friends and earn rewards when they sign up
                 </p>
               </CardHeader>
               <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6">
@@ -406,7 +406,7 @@ const InviteFriends = () => {
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  See who's leading the referral program this month (verified users only)
+                  See who's leading the referral program this month
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -500,10 +500,10 @@ const InviteFriends = () => {
               <CardHeader className="pb-3 sm:pb-4 px-4 sm:px-6">
                 <CardTitle className="text-base sm:text-lg flex items-center gap-2 text-foreground/90">
                   <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                  Your Verified Referrals ({referredUsers.length})
+                  Your Referrals ({referredUsers.length})
                 </CardTitle>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  People who have joined and verified their email using your referral code
+                  People who have joined using your referral code
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -550,10 +550,10 @@ const InviteFriends = () => {
                   <div className="py-6 sm:py-8 text-center">
                     <Users className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2 sm:mb-3" />
                     <p className="text-muted-foreground text-sm sm:text-base">
-                      No verified referrals yet
+                      No referrals yet
                     </p>
                     <p className="text-xs sm:text-sm text-muted-foreground/70 mt-1">
-                      Share your referral link to invite friends! They'll appear here once they verify their email.
+                      Share your referral link to invite friends!
                     </p>
                   </div>
                 )}

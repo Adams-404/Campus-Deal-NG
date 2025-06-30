@@ -1,350 +1,359 @@
 import { useState, useEffect } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { KYCDocumentsTab } from "./KYCDocumentsTab";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Check, X, FileText, Calendar, User as UserIcon } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, Eye, Search, Download } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { KYCDocument } from "./types";
+import { cn } from "@/lib/utils";
+import { KycStatus, updateKYCStatus, getKycStatusBadgeProps } from "@/utils/kycUtils";
 
-interface KYCDocument {
-  id: string;
-  user_id: string;
-  document_type: string;
-  document_url: string;
-  status: 'pending' | 'verified' | 'rejected';
-  admin_notes?: string;
-  created_at: string;
-  user: {
-    first_name?: string;
-    last_name?: string;
-    email?: string;
-  };
-}
-
-const KYCTab = () => {
+export function KYCTab() {
   const [kycDocuments, setKycDocuments] = useState<KYCDocument[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedDocument, setSelectedDocument] = useState<KYCDocument | null>(null);
+  const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
-  const [updating, setUpdating] = useState(false);
-
-  useEffect(() => {
-    fetchKYCDocuments();
-  }, []);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [activeTab, setActiveTab] = useState<KycStatus | 'all'>('all');
 
   const fetchKYCDocuments = async () => {
     try {
-      const { data, error } = await supabase
+      console.log("Fetching KYC documents with activeTab:", activeTab);
+      
+      // Query kyc_documents with proper join to profiles
+      let query = supabase
         .from('kyc_documents')
         .select(`
-          *,
-          profiles!user_id (
+          id,
+          user_id,
+          document_type,
+          document_url,
+          status,
+          created_at,
+          admin_notes,
+          updated_at,
+          profile:profiles(
             first_name,
             last_name,
-            email
+            avatar_url,
+            kyc_status
           )
-        `)
-        .order('created_at', { ascending: false });
+        `);
 
-      if (error) throw error;
+      if (activeTab !== 'all') {
+        query = query.eq('status', activeTab);
+      }
 
-      const formattedData = data?.map(doc => ({
-        ...doc,
-        user: {
-          first_name: doc.profiles?.first_name,
-          last_name: doc.profiles?.last_name,
-          email: doc.profiles?.email
-        }
-      })) || [];
+      query = query.order('created_at', { ascending: false });
 
-      setKycDocuments(formattedData);
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error fetching KYC documents:", error);
+        throw error;
+      }
+
+      console.log("Fetched KYC documents:", data?.length);
+      setKycDocuments(data || []);
     } catch (error) {
       console.error('Error fetching KYC documents:', error);
       toast.error('Failed to fetch KYC documents');
-    } finally {
-      setLoading(false);
     }
   };
 
-  const updateKYCStatus = async (documentId: string, userId: string, newStatus: 'verified' | 'rejected', notes?: string) => {
-    setUpdating(true);
+  useEffect(() => {
+    fetchKYCDocuments();
+    
+    // Listen for changes in KYC documents and profiles
+    const channel = supabase
+      .channel('kyc-documents-changes')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'kyc_documents'
+      }, (payload) => {
+        console.log("KYC document change detected:", payload);
+        fetchKYCDocuments();
+      })
+      .on('error', (error) => {
+        console.error('KYC documents channel error:', error);
+        toast.error('Connection to KYC updates lost. Please refresh the page.');
+      })
+      .subscribe();
+
+    // Listen for changes in profiles to catch KYC status updates
+    const profilesChannel = supabase
+      .channel('profiles-changes')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'profiles',
+        filter: 'kyc_status=eq.processing,kyc_status=eq.verified,kyc_status=eq.rejected,kyc_status=eq.pending'
+      }, (payload) => {
+        console.log("Profile KYC status change detected:", payload);
+        // Update specific user's status in the local state
+        setKycDocuments(prevDocs => 
+          prevDocs.map(doc => 
+            doc.user_id === payload.new.id 
+              ? { ...doc, profile: { ...doc.profile, kyc_status: payload.new.kyc_status } } 
+              : doc
+          )
+        );
+      })
+      .on('error', (error) => {
+        console.error('Profiles channel error:', error);
+        toast.error('Connection to profile updates lost. Please refresh the page.');
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(profilesChannel);
+    };
+  }, [activeTab]);
+
+  const handleViewDocument = (document: KYCDocument) => {
+    setSelectedDocument(document);
+    setAdminNotes(document.admin_notes || "");
+    setIsViewerOpen(true);
+  };
+
+  const handleStatusUpdate = async (status: KycStatus) => {
+    if (!selectedDocument) return;
+    
+    setUpdatingStatus(true);
+    
     try {
-      const { data, error } = await supabase.rpc('update_kyc_status', {
-        document_id: documentId,
-        user_id: userId,
-        new_status: newStatus,
-        admin_notes_param: notes || null
+      console.log(`Updating KYC status for document ${selectedDocument.id} to ${status}...`, {
+        userId: selectedDocument.user_id,
+        adminNotes
+      });
+      
+      // Optimistically update local state
+      setSelectedDocument(prev => prev ? {...prev, status} : null);
+      setKycDocuments(prev => 
+        prev.map(doc => 
+          doc.id === selectedDocument.id 
+            ? { ...doc, status } 
+            : doc
+        )
+      );
+      
+      const result = await updateKYCStatus(
+        selectedDocument.id,
+        selectedDocument.user_id,
+        status,
+        adminNotes
+      );
+      
+      if (result.success) {
+        console.log('KYC status update successful:', {
+          documentId: selectedDocument.id,
+          newStatus: status
+        });
+        toast.success(`KYC document ${status === 'verified' ? 'approved' : 'rejected'} successfully`);
+        
+        // Force refresh documents after successful update
+        await fetchKYCDocuments();
+        
+        // Close the viewer after a short delay
+        setTimeout(() => {
+          setIsViewerOpen(false);
+        }, 500);
+      } else {
+        console.error('KYC status update failed:', result.error);
+        // Revert optimistic update if failed
+        setSelectedDocument(prev => prev ? {...prev, status: selectedDocument.status} : null);
+        setKycDocuments(prev => 
+          prev.map(doc => 
+            doc.id === selectedDocument.id 
+              ? { ...doc, status: selectedDocument.status } 
+              : doc
+          )
+        );
+        
+        toast.error(
+          result.error?.message || 'Failed to update KYC status',
+          {
+            description: 'Please check the logs for more details'
+          }
+        );
+      }
+    } catch (error) {
+      console.error('Error in handleStatusUpdate:', error);
+      // Revert optimistic update if error
+      setSelectedDocument(prev => prev ? {...prev, status: selectedDocument.status} : null);
+      setKycDocuments(prev => 
+        prev.map(doc => 
+          doc.id === selectedDocument.id 
+            ? { ...doc, status: selectedDocument.status } 
+            : doc
+        )
+      );
+      
+      toast.error('An unexpected error occurred while updating KYC status');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const handleVerifyUser = async (userId: string) => {
+    try {
+      console.log('Attempting to verify user:', userId);
+      const { data, error } = await supabase.rpc('verify_user', {
+        user_id: userId
       });
 
-      if (error) throw error;
-
-      if (data && !data.success) {
-        throw new Error(data.error || 'Failed to update KYC status');
+      if (error) {
+        console.error('Error verifying user:', error);
+        throw error;
       }
 
-      toast.success(`KYC status updated to ${newStatus}`);
+      console.log('User verification successful:', data);
+      toast.success('User verified successfully');
       await fetchKYCDocuments();
-      setSelectedDocument(null);
-      setAdminNotes("");
-    } catch (error: any) {
-      console.error('Error updating KYC status:', error);
-      toast.error(error.message || 'Failed to update KYC status');
-    } finally {
-      setUpdating(false);
+    } catch (error) {
+      console.error('Error in handleVerifyUser:', error);
+      toast.error('Failed to verify user');
     }
   };
-
-  const handleApprove = (doc: KYCDocument) => {
-    updateKYCStatus(doc.id, doc.user_id, 'verified', adminNotes);
-  };
-
-  const handleReject = (doc: KYCDocument) => {
-    updateKYCStatus(doc.id, doc.user_id, 'rejected', adminNotes);
-  };
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'verified':
-        return <Badge className="bg-green-500/10 text-green-500 border-green-500/20">Verified</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-500/10 text-red-500 border-red-500/20">Rejected</Badge>;
-      default:
-        return <Badge className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Pending</Badge>;
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    return status === 'verified' ? (
-      <CheckCircle className="w-4 h-4 text-green-500" />
-    ) : status === 'rejected' ? (
-      <XCircle className="w-4 h-4 text-red-500" />
-    ) : null;
-  };
-
-  const exportData = () => {
-    const csvContent = [
-      ['User Name', 'Email', 'Document Type', 'Status', 'Submission Date', 'Admin Notes'],
-      ...kycDocuments.map(doc => [
-        `${doc.user.first_name || ''} ${doc.user.last_name || ''}`.trim() || 'N/A',
-        doc.user.email || 'N/A',
-        doc.document_type,
-        doc.status,
-        new Date(doc.created_at).toLocaleDateString(),
-        doc.admin_notes || ''
-      ])
-    ].map(row => row.join(',')).join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'kyc-documents.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
-  const filteredDocuments = kycDocuments.filter(doc =>
-    `${doc.user.first_name || ''} ${doc.user.last_name || ''}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (doc.user.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    doc.document_type.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>KYC Document Verification</CardTitle>
-          <CardDescription>Loading KYC documents...</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-12 bg-secondary rounded" />
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>KYC Document Verification</CardTitle>
-            <CardDescription>
-              Review and verify user identity documents
-            </CardDescription>
-          </div>
-          <Button onClick={exportData} variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </Button>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <h2 className="text-lg font-semibold">KYC Verification Documents</h2>
+        <Button size="sm" onClick={fetchKYCDocuments} variant="outline">
+          Refresh
+        </Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as KycStatus | 'all')}>
+        <div className="overflow-x-auto pb-2">
+          <TabsList className="mb-4">
+            <TabsTrigger value="all">All Documents</TabsTrigger>
+            <TabsTrigger value="pending">Pending</TabsTrigger>
+            <TabsTrigger value="processing">Processing</TabsTrigger>
+            <TabsTrigger value="verified">Verified</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          </TabsList>
         </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <Search className="w-4 h-4 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, email, or document type..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
+        
+        <TabsContent value={activeTab}>
+          <KYCDocumentsTab 
+            documents={kycDocuments} 
+            onViewDocument={handleViewDocument}
+            onStatusChange={(documentId, newStatus) => {
+              const document = kycDocuments.find(doc => doc.id === documentId);
+              if (document) {
+                setSelectedDocument(document);
+                handleStatusUpdate(newStatus);
+              }
+            }}
+          />
+        </TabsContent>
+      </Tabs>
 
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Document Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Submitted</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDocuments.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
-                      <p className="text-muted-foreground">
-                        {searchTerm ? 'No documents found matching your search.' : 'No KYC documents found.'}
-                      </p>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredDocuments.map((doc) => (
-                    <TableRow key={doc.id}>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium">
-                            {`${doc.user.first_name || ''} ${doc.user.last_name || ''}`.trim() || 'N/A'}
-                          </p>
-                          <p className="text-sm text-muted-foreground">{doc.user.email}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="capitalize">{doc.document_type}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getStatusIcon(doc.status)}
-                          {getStatusBadge(doc.status)}
-                        </div>
-                      </TableCell>
-                      <TableCell>{new Date(doc.created_at).toLocaleDateString()}</TableCell>
-                      <TableCell>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedDocument(doc);
-                                setAdminNotes(doc.admin_notes || "");
-                              }}
-                            >
-                              <Eye className="w-4 h-4 mr-2" />
-                              Review
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="max-w-2xl">
-                            <DialogHeader>
-                              <DialogTitle>Review KYC Document</DialogTitle>
-                            </DialogHeader>
-                            {selectedDocument && (
-                              <div className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <label className="text-sm font-medium">User:</label>
-                                    <p>{`${selectedDocument.user.first_name || ''} ${selectedDocument.user.last_name || ''}`.trim()}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Email:</label>
-                                    <p>{selectedDocument.user.email}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Document Type:</label>
-                                    <p className="capitalize">{selectedDocument.document_type}</p>
-                                  </div>
-                                  <div>
-                                    <label className="text-sm font-medium">Current Status:</label>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      {getStatusIcon(selectedDocument.status)}
-                                      {getStatusBadge(selectedDocument.status)}
-                                    </div>
-                                  </div>
-                                </div>
+      <Dialog open={isViewerOpen} onOpenChange={setIsViewerOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>KYC Document Review</DialogTitle>
+          </DialogHeader>
 
-                                <div>
-                                  <label className="text-sm font-medium">Document:</label>
-                                  <div className="mt-2 border rounded-lg p-4">
-                                    <img
-                                      src={selectedDocument.document_url}
-                                      alt="KYC Document"
-                                      className="max-w-full max-h-96 object-contain mx-auto"
-                                    />
-                                  </div>
-                                </div>
+          {selectedDocument && (
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={selectedDocument.profile.avatar_url || undefined} />
+                    <AvatarFallback>
+                      {selectedDocument.profile.first_name?.[0]}
+                      {selectedDocument.profile.last_name?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">
+                      {selectedDocument.profile.first_name} {selectedDocument.profile.last_name}
+                    </p>
+                    <div className="text-sm text-muted-foreground flex items-center gap-2">
+                      <FileText className="h-3.5 w-3.5" />
+                      {selectedDocument.document_type}
+                    </div>
+                  </div>
+                </div>
+                
+                <Badge 
+                  variant="outline" 
+                  className={cn(
+                    selectedDocument.status === 'verified' && "bg-green-500/10 text-green-500 border-green-500/20",
+                    selectedDocument.status === 'rejected' && "bg-red-500/10 text-red-500 border-red-500/20",
+                    selectedDocument.status === 'processing' && "bg-orange-500/10 text-orange-500 border-orange-500/20",
+                    selectedDocument.status === 'pending' && "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
+                  )}
+                >
+                  {selectedDocument.status}
+                </Badge>
+                <Button 
+                  size="sm" 
+                  onClick={() => handleVerifyUser(selectedDocument.user_id)}
+                  variant="outline"
+                  className="ml-2"
+                >
+                  Verify User
+                </Button>
+              </div>
+              
+              <Card>
+                <CardContent className="p-4 flex justify-center">
+                  <img 
+                    src={selectedDocument.document_url} 
+                    alt="KYC Document" 
+                    className="max-w-full rounded-md shadow-md" 
+                  />
+                </CardContent>
+              </Card>
 
-                                <div>
-                                  <label className="text-sm font-medium">Admin Notes:</label>
-                                  <Textarea
-                                    value={adminNotes}
-                                    onChange={(e) => setAdminNotes(e.target.value)}
-                                    placeholder="Add notes about this verification..."
-                                    className="mt-1"
-                                  />
-                                </div>
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium">Admin Notes</h3>
+                <Textarea
+                  value={adminNotes}
+                  onChange={(e) => setAdminNotes(e.target.value)}
+                  placeholder="Add notes about this document (will be visible to the user)"
+                  rows={3}
+                />
+              </div>
 
-                                {selectedDocument.status === 'pending' && (
-                                  <div className="flex gap-2 pt-4">
-                                    <Button
-                                      onClick={() => handleApprove(selectedDocument)}
-                                      disabled={updating}
-                                      className="bg-green-600 hover:bg-green-700"
-                                    >
-                                      <CheckCircle className="w-4 h-4 mr-2" />
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      onClick={() => handleReject(selectedDocument)}
-                                      disabled={updating}
-                                      variant="destructive"
-                                    >
-                                      <XCircle className="w-4 h-4 mr-2" />
-                                      Reject
-                                    </Button>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </DialogContent>
-                        </Dialog>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+              {(selectedDocument.status === 'pending' || selectedDocument.status === 'processing') && (
+                <div className="flex justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    className="bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20"
+                    onClick={() => handleStatusUpdate('rejected')}
+                    disabled={updatingStatus}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Reject
+                  </Button>
+                  
+                  <Button
+                    className="bg-green-500 hover:bg-green-600 text-white"
+                    onClick={() => handleStatusUpdate('verified')}
+                    disabled={updatingStatus}
+                  >
+                    <Check className="h-4 w-4 mr-1" />
+                    Approve
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
-};
-
-export default KYCTab;
+}
