@@ -71,45 +71,6 @@ export type Database = {
         }
         Relationships: []
       }
-      bank_accounts: {
-        Row: {
-          account_name: string
-          account_number: string
-          bank_code: string
-          bank_name: string
-          created_at: string | null
-          currency: string | null
-          id: string
-          is_primary: boolean | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          account_name: string
-          account_number: string
-          bank_code: string
-          bank_name: string
-          created_at?: string | null
-          currency?: string | null
-          id?: string
-          is_primary?: boolean | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          account_name?: string
-          account_number?: string
-          bank_code?: string
-          bank_name?: string
-          created_at?: string | null
-          currency?: string | null
-          id?: string
-          is_primary?: boolean | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
       conversation_items: {
         Row: {
           conversation_id: string
@@ -519,6 +480,7 @@ export type Database = {
           phone: string | null
           referral_code: string | null
           updated_at: string | null
+          wallet_balance: number | null
         }
         Insert: {
           address?: string | null
@@ -537,6 +499,7 @@ export type Database = {
           phone?: string | null
           referral_code?: string | null
           updated_at?: string | null
+          wallet_balance?: number | null
         }
         Update: {
           address?: string | null
@@ -555,6 +518,7 @@ export type Database = {
           phone?: string | null
           referral_code?: string | null
           updated_at?: string | null
+          wallet_balance?: number | null
         }
         Relationships: []
       }
@@ -743,15 +707,7 @@ export type Database = {
           user_id?: string | null
           wallet_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "transactions_wallet_id_fkey"
-            columns: ["wallet_id"]
-            isOneToOne: false
-            referencedRelation: "wallets"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       user_roles: {
         Row: {
@@ -781,36 +737,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      wallets: {
-        Row: {
-          balance: number
-          created_at: string | null
-          currency: string | null
-          id: string
-          status: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          balance?: number
-          created_at?: string | null
-          currency?: string | null
-          id?: string
-          status?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          balance?: number
-          created_at?: string | null
-          currency?: string | null
-          id?: string
-          status?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
       }
     }
     Views: {
@@ -863,27 +789,6 @@ export type Database = {
         }
         Relationships: []
       }
-      wallet_balance: {
-        Row: {
-          balance_ngn: number | null
-          currency: string | null
-          last_updated: string | null
-          user_id: string | null
-        }
-        Insert: {
-          balance_ngn?: never
-          currency?: string | null
-          last_updated?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          balance_ngn?: never
-          currency?: string | null
-          last_updated?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
     }
     Functions: {
       assign_referral_codes: {
@@ -914,18 +819,6 @@ export type Database = {
           email: string
         }[]
       }
-      get_or_create_user_wallet: {
-        Args: { p_user_id: string }
-        Returns: {
-          balance: number
-          created_at: string | null
-          currency: string | null
-          id: string
-          status: string | null
-          updated_at: string | null
-          user_id: string
-        }[]
-      }
       get_wallet_balance: {
         Args: { p_user_id: string }
         Returns: {
@@ -935,7 +828,9 @@ export type Database = {
         }[]
       }
       increment_wallet_balance: {
-        Args: { p_user_id: string; p_amount: number }
+        Args:
+          | { p_user_id: string; p_amount: number }
+          | { user_id: string; amount: number }
         Returns: undefined
       }
       initialize_transaction: {
