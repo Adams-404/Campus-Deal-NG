@@ -1,361 +1,238 @@
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
-import { ImageCarousel } from "@/components/ui/image-carousel";
-import { EditItemModal } from "@/components/EditItemModal";
-import { 
-  ArrowLeft, 
-  Heart, 
-  MessageCircle, 
-  User, 
-  ZoomIn, 
-  ZoomOut,
-  Pencil,
-  Trash2
-} from "lucide-react";
-import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, MessageCircle, Heart, Share, MapPin, Calendar, Eye, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ImageCarousel } from "@/components/ui/image-carousel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
-import { useSettings } from "@/contexts/SettingsContext";
-import SafetyTipsDialog from "@/components/SafetyTipsDialog";
+import { formatDistanceToNow } from "date-fns";
+import { SafetyTipsDialog } from "@/components/SafetyTipsDialog";
+import { PageTransition } from "@/components/PageTransition";
 
 interface Item {
   id: string;
   title: string;
-  price: number;
-  condition: string;
   description: string;
+  price: number;
   category: string;
+  condition: string;
+  location: string;
   created_at: string;
-  seller_id: string;
-  status: string;
-  seller?: {
-    full_name?: string;
-    first_name?: string;
-    last_name?: string;
-    avatar_url?: string;
-    phone?: string;
+  seller: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    avatar_url: string;
   };
   images: string[];
 }
 
-export default function ViewItem() {
+const ViewItem = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [item, setItem] = useState<Item | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isOwner, setIsOwner] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [zoom, setZoom] = useState(1);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [deleteReason, setDeleteReason] = useState("");
-  const { hideMessageTips } = useSettings();
-  const [showMessageSafetyTips, setShowMessageSafetyTips] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [showSafetyTips, setShowSafetyTips] = useState(false);
 
-  const handleItemUpdated = async () => {
-    if (!id) return;
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
+
+  useEffect(() => {
+    if (id) {
+      fetchItem();
+    }
+  }, [id]);
+
+  const fetchItem = async () => {
     try {
       const { data: itemData, error: itemError } = await supabase
         .from('items')
         .select(`
           *,
-          item_images (
-            image_url
-          ),
-          profiles:seller_id (
+          seller:profiles!items_seller_id_fkey (
+            id,
             first_name,
             last_name,
-            avatar_url,
-            phone
+            avatar_url
+          ),
+          item_images (
+            image_url
           )
         `)
         .eq('id', id)
         .single();
 
       if (itemError) throw itemError;
-      if (!itemData) throw new Error('Item not found');
 
-      const sellerData = itemData.profiles;
-      
-      setItem({
+      const itemWithImages = {
         ...itemData,
-        images: itemData.item_images?.map((img: any) => img.image_url) || [],
-        seller: sellerData ? {
-          full_name: sellerData.first_name && sellerData.last_name 
-            ? `${sellerData.first_name} ${sellerData.last_name}`
-            : sellerData.first_name || sellerData.last_name || 'Anonymous',
-          first_name: sellerData.first_name || '',
-          last_name: sellerData.last_name || '',
-          avatar_url: sellerData.avatar_url || '',
-          phone: sellerData.phone || ''
-        } : {
-          full_name: 'Anonymous',
-          first_name: '',
-          last_name: '',
-          avatar_url: '',
-          phone: ''
-        }
-      });
-    } catch (error: any) {
-      console.error('Error refreshing item:', error);
-      toast.error(error.message);
-    }
-  };
+        seller: itemData.seller,
+        images: itemData.item_images?.map((img: any) => img.image_url) || []
+      };
 
-  useEffect(() => {
-    const fetchItem = async () => {
-      if (!id) return;
-      
-      setIsLoading(true);
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          const { data: roles } = await supabase
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', user.id);
+      setItem(itemWithImages);
 
-          setIsAdmin(roles?.some(r => r.role === 'admin') ?? false);
-        }
-
-        const { data: itemData, error: itemError } = await supabase
-          .from('items')
-          .select(`
-            *,
-            item_images (
-              image_url
-            ),
-            profiles:seller_id (
-              first_name,
-              last_name,
-              avatar_url,
-              phone
-            )
-          `)
-          .eq('id', id)
+      // Check if item is saved by current user
+      if (user) {
+        const { data: savedData } = await supabase
+          .from('saved_items')
+          .select('id')
+          .eq('item_id', id)
+          .eq('user_id', user.id)
           .single();
-
-        if (itemError) {
-          console.error('Error fetching item:', itemError);
-          toast.error('Item not found or error fetching item.');
-          navigate('/home');
-          return;
-        }
-
-        if (!itemData) {
-          toast.error('Item not found.');
-          navigate('/home');
-          return;
-        }
-
-        setIsOwner(!!user && user.id === itemData.seller_id);
-
-        const sellerData = itemData.profiles;
         
-        setItem({
-          ...itemData,
-          images: itemData.item_images?.map((img: any) => img.image_url) || [],
-          seller: sellerData ? {
-            full_name: sellerData.first_name && sellerData.last_name 
-              ? `${sellerData.first_name} ${sellerData.last_name}`
-              : sellerData.first_name || sellerData.last_name || 'Anonymous',
-            first_name: sellerData.first_name || '',
-            last_name: sellerData.last_name || '',
-            avatar_url: sellerData.avatar_url || '',
-            phone: sellerData.phone || ''
-          } : {
-            full_name: 'Anonymous',
-            first_name: '',
-            last_name: '',
-            avatar_url: '',
-            phone: ''
-          }
-        });
-      } catch (error: any) {
-        console.error('Error fetching item:', error);
-        toast.error(error.message);
-        navigate('/home');
-      } finally {
-        setIsLoading(false);
+        setIsSaved(!!savedData);
       }
-    };
-
-    fetchItem();
-  }, [id, navigate]);
-
-  const handleDelete = async () => {
-    if (!id || !item) return;
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error('You must be logged in to delete an item');
-        return;
-      }
-
-      // Check if the user is an admin
-      if (isAdmin && !isOwner) {
-        // Admin deleting someone else's item
-        const { error: deleteError } = await supabase
-          .from('items')
-          .delete()
-          .eq('id', id);
-
-        if (deleteError) {
-          console.error('Error deleting item:', deleteError);
-          toast.error('Failed to delete item: ' + deleteError.message);
-          return;
-        }
-
-        // Create notification with delete reason
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: item.seller_id,
-            type: 'admin_action',
-            title: 'Your listing has been removed',
-            content: `Your listing "${item.title}" has been completely removed by an administrator. Reason: ${deleteReason}`,
-            metadata: { item_id: id, item_title: item.title },
-            created_at: new Date().toISOString(),
-            is_read: false,
-          });
-
-        toast.success('Item deleted successfully and seller notified');
-        navigate('/admin');
-        return;
-      }
-
-      // Regular user deletion logic (owner deleting their own item)
-      if (isOwner) {
-        const { error: deleteError } = await supabase
-          .from('items')
-          .delete()
-          .eq('id', id)
-          .eq('seller_id', user.id);
-
-        if (deleteError) {
-          console.error('Error deleting item:', deleteError);
-          toast.error('Failed to delete item: ' + deleteError.message);
-          return;
-        }
-
-        // Create notification for the owner
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: user.id,
-            type: 'admin_action',
-            title: 'Your listing has been removed',
-            content: `Your listing "${item.title}" has been completely removed.`,
-            metadata: { item_id: id, item_title: item.title },
-            created_at: new Date().toISOString(),
-            is_read: false,
-          });
-
-        toast.success('Item deleted successfully');
-        navigate('/my-listings');
-      } else {
-        toast.error('You do not have permission to delete this item');
-      }
-    } catch (error: any) {
-      console.error('Error deleting item:', error);
-      toast.error(error.message || 'Failed to delete item');
+    } catch (error) {
+      console.error('Error fetching item:', error);
+      toast.error('Failed to load item');
+      navigate('/');
     } finally {
-      setShowDeleteDialog(false);
+      setLoading(false);
     }
   };
 
-  const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev + 0.25, 3));
-  };
+  const toggleSaveItem = async () => {
+    if (!user) {
+      toast.error('Please sign in to save items');
+      return;
+    }
 
-  const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev - 0.25, 1));
-  };
-
-  const handleMessageSeller = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        toast.error('Please sign in to message the seller');
-        return;
-      }
-
-      if (user.id === item?.seller_id) {
-        toast.error("You can't message yourself");
-        return;
-      }
-
-      // Check if user has opted out of message safety tips
-      if (!hideMessageTips) {
-        setShowMessageSafetyTips(true);
+      if (isSaved) {
+        await supabase
+          .from('saved_items')
+          .delete()
+          .eq('item_id', id)
+          .eq('user_id', user.id);
+        
+        setIsSaved(false);
+        toast.success('Item removed from saved items');
       } else {
-        // Skip tips and proceed directly
-        proceedWithMessaging();
+        await supabase
+          .from('saved_items')
+          .insert([{ item_id: id, user_id: user.id }]);
+        
+        setIsSaved(true);
+        toast.success('Item saved successfully');
       }
-    } catch (error: any) {
-      console.error('Error preparing to message seller:', error);
-      toast.error(error.message);
+    } catch (error) {
+      console.error('Error toggling save item:', error);
+      toast.error('Failed to save item');
     }
   };
 
-  const proceedWithMessaging = async () => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user || !item) return;
+  const createConversation = async () => {
+    if (!user) {
+      toast.error('Please sign in to message the seller');
+      return;
+    }
 
-      const { data: newConversation, error: conversationError } = await supabase
+    if (!item) return;
+
+    if (user.id === item.seller.id) {
+      toast.error("You can't message yourself");
+      return;
+    }
+
+    try {
+      // Check if conversation already exists
+      const { data: existingConversation } = await supabase
         .from('conversations')
-        .insert({
-          buyer_id: user.id,
-          seller_id: item.seller_id,
-          last_message: `Interested in ${item.title}`,
-          last_message_at: new Date().toISOString()
-        })
-        .select()
+        .select('id')
+        .or(`and(buyer_id.eq.${user.id},seller_id.eq.${item.seller.id}),and(buyer_id.eq.${item.seller.id},seller_id.eq.${user.id})`)
         .single();
 
-      if (conversationError) throw conversationError;
+      let conversationId;
 
-      const { error: messageError } = await supabase
-        .from('messages')
-        .insert({
-          conversation_id: newConversation.id,
-          content: `Hi, I'm interested in ${item.title}`,
-          sender_id: user.id,
-          created_at: new Date().toISOString(),
-          item_id: item.id
-        });
+      if (existingConversation) {
+        conversationId = existingConversation.id;
+      } else {
+        // Create new conversation
+        const { data: newConversation, error } = await supabase
+          .from('conversations')
+          .insert([{
+            buyer_id: user.id,
+            seller_id: item.seller.id,
+            last_message: `Hi! I'm interested in your item: ${item.title}`,
+            last_message_at: new Date().toISOString()
+          }])
+          .select('id')
+          .single();
 
-      if (messageError) throw messageError;
+        if (error) throw error;
+        conversationId = newConversation.id;
 
-      navigate(`/messages/${newConversation.id}`);
-    } catch (error: any) {
-      console.error('Error starting conversation:', error);
-      toast.error(error.message);
+        // Send initial message
+        await supabase
+          .from('messages')
+          .insert([{
+            conversation_id: conversationId,
+            sender_id: user.id,
+            receiver_id: item.seller.id,
+            content: `Hi! I'm interested in your item: ${item.title}`,
+            item_id: item.id
+          }]);
+      }
+
+      navigate(`/messages?conversation=${conversationId}`);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      toast.error('Failed to start conversation');
     }
   };
 
-  if (isLoading) {
+  const handleShare = async () => {
+    const url = window.location.href;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: item?.title,
+          text: `Check out this item: ${item?.title}`,
+          url: url,
+        });
+      } catch (error) {
+        // User cancelled sharing, just copy to clipboard
+        navigator.clipboard.writeText(url);
+        toast.success('Link copied to clipboard!');
+      }
+    } else {
+      navigator.clipboard.writeText(url);
+      toast.success('Link copied to clipboard!');
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-background">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+          <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <h1 className="text-lg font-semibold">Loading...</h1>
+              <div className="w-10" />
+            </div>
+          </div>
+        </div>
+        <main className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300">
+          <div className="pt-24 pb-32 space-y-4">
+            <div className="h-64 bg-secondary rounded" />
+            <div className="h-8 bg-secondary rounded w-3/4" />
+            <div className="h-6 bg-secondary rounded w-1/2" />
+          </div>
+        </main>
       </div>
     );
   }
@@ -364,8 +241,9 @@ export default function ViewItem() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Item not found</h2>
-          <Button onClick={() => navigate("/home")}>Return Home</Button>
+          <h1 className="text-2xl font-bold mb-2">Item not found</h1>
+          <p className="text-muted-foreground mb-4">The item you're looking for doesn't exist.</p>
+          <Button onClick={() => navigate('/')}>Go Home</Button>
         </div>
       </div>
     );
@@ -373,205 +251,161 @@ export default function ViewItem() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6">
-          <div className="h-16 flex items-center justify-between gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
-            >
-              <ArrowLeft className="h-5 w-5" />
+      {/* Fixed Header */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border/40 ml-0 lg:ml-[300px] transition-all duration-300 shadow-sm">
+        <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="h-9 w-9 sm:h-10 sm:w-10">
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
             </Button>
-            <div className="flex items-center gap-2">
-              {isOwner && (
-                <>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowEditModal(true)}
-                    className="h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
-                  >
-                    <Pencil className="h-5 w-5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="h-9 w-9 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </Button>
-                </>
-              )}
-              {isAdmin && !isOwner && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowDeleteDialog(true)}
-                  className="h-9 w-9 rounded-full bg-red-500/10 text-red-500 hover:bg-red-500/20"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </Button>
-              )}
+            <h1 className="text-lg font-semibold truncate max-w-xs sm:max-w-sm">{item.title}</h1>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Button variant="ghost" size="icon" onClick={handleShare} className="h-9 w-9 sm:h-10 sm:w-10">
+                <Share className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={toggleSaveItem}
+                className={`h-9 w-9 sm:h-10 sm:w-10 ${isSaved ? 'text-red-500' : ''}`}
+              >
+                <Heart className={`h-4 w-4 sm:h-5 sm:w-5 ${isSaved ? 'fill-current' : ''}`} />
+              </Button>
             </div>
           </div>
         </div>
       </div>
 
-      <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
-        <PageTransition>
-          <div className="pt-24 pb-32">
-            <div className="rounded-lg overflow-hidden border border-white/10 relative h-[400px]">
-              <div style={{ transform: `scale(${zoom})`, transformOrigin: 'center', transition: 'transform 0.2s' }} className="h-full">
+      <PageTransition>
+        <main className="w-full max-w-2xl lg:max-w-4xl mx-auto px-3 sm:px-4 md:px-6 transition-all duration-300">
+          <div className="pt-20 sm:pt-24 pb-28 sm:pb-32">
+            {/* Image Carousel */}
+            <div className="mb-6 sm:mb-8 -mx-3 sm:mx-0">
+              {item.images.length > 0 ? (
                 <ImageCarousel 
                   images={item.images} 
-                  showZoom={true}
-                  aspectRatio="full"
-                  className="h-full"
+                  aspectRatio="square"
+                  className="sm:rounded-xl overflow-hidden"
                 />
-              </div>
-              <div className="absolute bottom-4 right-4 flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleZoomOut}
-                  disabled={zoom <= 1}
-                  className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70"
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleZoomIn}
-                  disabled={zoom >= 3}
-                  className="h-8 w-8 rounded-full bg-black/50 backdrop-blur-sm hover:bg-black/70"
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-              </div>
+              ) : (
+                <div className="aspect-square bg-secondary/50 flex items-center justify-center sm:rounded-xl">
+                  <Eye className="h-12 w-12 text-muted-foreground" />
+                </div>
+              )}
             </div>
 
-            <div className="mt-6 space-y-6">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <h1 className="text-2xl font-bold emoji-container">{item.title}</h1>
-                  <p className="text-3xl font-bold text-primary mt-2">₦{item.price}</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
-                >
-                  <Heart className="h-5 w-5" />
-                </Button>
+            {/* Item Details */}
+            <div className="space-y-6 sm:space-y-8">
+              {/* Title and Price */}
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3">{item.title}</h1>
+                <p className="text-3xl sm:text-4xl font-bold text-primary">₦{item.price.toLocaleString()}</p>
               </div>
 
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Avatar className="w-10 h-10">
-                    <AvatarImage src={item.seller?.avatar_url} />
-                    <AvatarFallback>
-                      <User className="w-5 h-5 text-primary" />
+              {/* Item Info */}
+              <div className="grid grid-cols-2 gap-4 sm:gap-6">
+                <div>
+                  <h3 className="font-semibold text-sm sm:text-base mb-1 sm:mb-2">Category</h3>
+                  <Badge variant="secondary" className="text-xs sm:text-sm">
+                    {item.category}
+                  </Badge>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm sm:text-base mb-1 sm:mb-2">Condition</h3>
+                  <Badge variant="outline" className="text-xs sm:text-sm">
+                    {item.condition}
+                  </Badge>
+                </div>
+              </div>
+
+              {/* Location and Date */}
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <span>{item.location}</span>
+                </div>
+                <div className="flex items-center gap-1.5 sm:gap-2">
+                  <Calendar className="h-4 w-4 flex-shrink-0" />
+                  <span>{formatDistanceToNow(new Date(item.created_at))} ago</span>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div>
+                <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-3">Description</h3>
+                <p className="text-sm sm:text-base text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                  {item.description}
+                </p>
+              </div>
+
+              {/* Seller Info */}
+              <div className="p-4 sm:p-6 bg-muted/30 rounded-xl border border-border/50">
+                <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Seller Information</h3>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <Avatar className="h-12 w-12 sm:h-16 sm:w-16">
+                    <AvatarImage src={item.seller.avatar_url} />
+                    <AvatarFallback className="text-lg sm:text-xl">
+                      {item.seller.first_name?.charAt(0) || 'S'}
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-medium">
-                      {item.seller?.full_name || 'Anonymous'}
-                    </p>
-                    <p className="text-sm text-gray-400">
-                      {item.seller?.phone || 'No phone number provided'}
-                    </p>
+                    <h4 className="font-medium text-base sm:text-lg">
+                      {item.seller.first_name} {item.seller.last_name}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">Seller</p>
                   </div>
                 </div>
-                {!isOwner && (
-                  <Button 
-                    onClick={handleMessageSeller}
-                    className="ml-auto"
-                  >
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Message Seller
-                  </Button>
-                )}
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-lg font-semibold mb-2">Condition</h2>
-                  <p className="text-gray-400">{item.condition}</p>
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold mb-2">Category</h2>
-                  <p className="text-gray-400">{item.category}</p>
-                </div>
-                {item.description && (
-                  <div>
-                    <h2 className="text-lg font-semibold mb-2">Description</h2>
-                    <p className="text-gray-400 whitespace-pre-wrap">{item.description}</p>
+              {/* Safety Notice */}
+              <div className="p-4 sm:p-6 bg-amber-50/50 dark:bg-amber-950/20 rounded-xl border border-amber-200/50 dark:border-amber-800/50">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h4 className="font-medium text-amber-900 dark:text-amber-100 mb-1">
+                      Stay Safe
+                    </h4>
+                    <p className="text-sm text-amber-800 dark:text-amber-200 mb-3">
+                      Always meet in public places and never send money in advance.
+                    </p>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setShowSafetyTips(true)}
+                      className="text-amber-700 border-amber-300 hover:bg-amber-100 dark:text-amber-300 dark:border-amber-700 dark:hover:bg-amber-900/20"
+                    >
+                      View Safety Tips
+                    </Button>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>
-        </PageTransition>
-      </main>
+        </main>
 
-      <EditItemModal 
-        isOpen={showEditModal} 
-        onClose={() => setShowEditModal(false)} 
-        onItemUpdated={handleItemUpdated}
-        itemId={item.id}
-      />
-
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {isAdmin && !isOwner 
-                ? "You are about to remove this listing as an admin. This will permanently delete the item and notify the seller." 
-                : "This action cannot be undone. This will permanently delete your item listing."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          
-          {isAdmin && !isOwner && (
-            <div className="mb-4">
-              <label htmlFor="deleteReason" className="block text-sm font-medium mb-1">
-                Reason for removal (will be shown to seller)
-              </label>
-              <textarea
-                id="deleteReason"
-                className="w-full border rounded-md p-2 bg-background border-gray-600"
-                rows={3}
-                placeholder="Violates community guidelines..."
-                value={deleteReason}
-                onChange={(e) => setDeleteReason(e.target.value)}
-              />
+        {/* Fixed Bottom Action Bar */}
+        {user?.id !== item.seller.id && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-t border-border/40 ml-0 lg:ml-[300px] transition-all duration-300">
+            <div className="max-w-2xl lg:max-w-4xl mx-auto px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+              <Button 
+                onClick={createConversation}
+                className="w-full h-12 sm:h-14 text-base sm:text-lg font-semibold"
+                size="lg"
+              >
+                <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
+                Message Seller
+              </Button>
             </div>
-          )}
-          
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete}
-              className={isAdmin && !isOwner ? "bg-red-600 hover:bg-red-700" : ""}
-            >
-              {isAdmin && !isOwner ? "Remove Listing" : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          </div>
+        )}
+      </PageTransition>
 
       <SafetyTipsDialog 
-        open={showMessageSafetyTips} 
-        onClose={() => {
-          setShowMessageSafetyTips(false);
-          proceedWithMessaging();
-        }} 
-        trigger="message_seller"
+        open={showSafetyTips} 
+        onOpenChange={setShowSafetyTips} 
       />
     </div>
   );
-}
+};
+
+export default ViewItem;

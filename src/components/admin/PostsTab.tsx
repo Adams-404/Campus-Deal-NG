@@ -60,7 +60,7 @@ export function PostsTab({ items, onViewUserProfile, onDeleteItem, onRefresh }: 
           <Card key={item.id} className="overflow-hidden border-blue-500/30 bg-secondary/50 backdrop-blur-sm hover:shadow-lg transition-shadow">
             <div className="aspect-square relative">
               {item.images.length > 0 ? (
-                <ImageCarousel images={item.images} showZoom={false} />
+                <ImageCarousel images={item.images} />
               ) : (
                 <div className="h-full w-full flex items-center justify-center bg-gray-800">
                   <Image className="h-12 w-12 text-gray-400" />

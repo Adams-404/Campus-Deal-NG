@@ -22,6 +22,7 @@ interface ReferralUser {
 interface LeaderboardUser {
   name: string;
   count: number;
+  isCurrentUser: boolean;
 }
 
 interface ReferralData {
@@ -123,13 +124,13 @@ const InviteFriends = () => {
         setReferralCode(profile.referral_code);
       }
 
-      // Get referred users with their profiles
+      // Get referred users with their profiles - fix the query to be more specific
       const { data: referrals, error: referralsError } = await supabase
         .from('referrals')
         .select(`
           referred_user_id,
           created_at,
-          profiles:referred_user_id (
+          referred_profile:profiles!referrals_referred_user_id_fkey (
             id,
             first_name,
             last_name,
@@ -144,30 +145,17 @@ const InviteFriends = () => {
 
       if (referrals && referrals.length > 0) {
         const referredUsersData = referrals
-          .filter(r => r.profiles) // Filter out any null profiles
+          .filter(r => r.referred_profile) // Filter out any null profiles
           .map((r, index) => {
-            // Create a placeholder email based on available profile info
-            let email: string;
-            if (r.profiles?.first_name && r.profiles?.last_name) {
-              email = `${r.profiles.first_name.toLowerCase()}.${r.profiles.last_name.charAt(0).toLowerCase()}@example.com`;
-            } else if (r.profiles?.first_name) {
-              email = `${r.profiles.first_name.toLowerCase()}@example.com`;
-            } else if (r.profiles?.id) {
-              email = `user_${r.profiles.id.substring(0, 6)}@example.com`;
-            } else {
-              email = `user${index + 1}@example.com`;
-            }
-
+            const profile = r.referred_profile as any;
             return {
-              id: r.profiles?.id || `user-${index}`,
-              first_name: r.profiles?.first_name || '',
-              last_name: r.profiles?.last_name || '',
-              email: email,
-              kyc_status: r.profiles?.kyc_status || 'pending',
-              created_at: r.created_at || r.profiles?.created_at || new Date().toISOString()
+              id: profile?.id || `user-${index}`,
+              first_name: profile?.first_name || '',
+              last_name: profile?.last_name || '',
+              kyc_status: profile?.kyc_status || 'pending',
+              created_at: r.created_at || profile?.created_at || new Date().toISOString()
             };
           });
-
 
         setReferredUsers(referredUsersData);
       }
@@ -196,8 +184,8 @@ const InviteFriends = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Join GSU Market',
-          text: 'Join me on GSU Market - the best place to buy and sell within our university community!',
+          title: 'Join Campus Deal',
+          text: 'Join me on Campus Deal - the best place to buy and sell within our campus community!',
           url: link,
         });
       } catch (error) {
@@ -207,10 +195,6 @@ const InviteFriends = () => {
     } else {
       copyReferralLink();
     }
-  };
-
-  const maskEmail = (email: string, index: number) => {
-    return `user${index + 1}****@gsu.edu.ng`;
   };
 
   const getStatusIcon = (status: string) => {
@@ -290,7 +274,7 @@ const InviteFriends = () => {
                   Your Referral Code
                 </CardTitle>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  Share your code with friends and earn rewards when they sign up
+                  Share your code with friends and earn rewards when they verify their email and join
                 </p>
               </CardHeader>
               <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6 pb-4 sm:pb-6">
@@ -406,7 +390,7 @@ const InviteFriends = () => {
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  See who's leading the referral program this month
+                  See who's leading the referral program this month (only verified users count)
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -503,7 +487,7 @@ const InviteFriends = () => {
                   Your Referrals ({referredUsers.length})
                 </CardTitle>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  People who have joined using your referral code
+                  People who have joined and verified their email using your referral code
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -550,10 +534,11 @@ const InviteFriends = () => {
                   <div className="py-6 sm:py-8 text-center">
                     <Users className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2 sm:mb-3" />
                     <p className="text-muted-foreground text-sm sm:text-base">
-                      No referrals yet
+                      No verified referrals yet
                     </p>
                     <p className="text-xs sm:text-sm text-muted-foreground/70 mt-1">
-                      Share your referral link to invite friends!
+                      Share your referral link to invite friends!<br />
+                      Referrals only count after email verification.
                     </p>
                   </div>
                 )}
