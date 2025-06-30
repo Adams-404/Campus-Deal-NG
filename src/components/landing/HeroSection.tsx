@@ -39,7 +39,7 @@ export const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            Your platform for trading within the GSU community. Buy, sell, and exchange with confidence.
+            Your platform for trading within your campus community. Buy, sell, and exchange with confidence.
           </motion.p>
 
           <motion.div

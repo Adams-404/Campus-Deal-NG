@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 export const TypewriterText = () => {
   const [displayText, setDisplayText] = useState("");
-  const phrases = ["Connect & Exchange.", "Buy & Sell.", "Trade & Grow.", "Tradezy."];
+  const phrases = ["Connect & Exchange.", "Buy & Sell.", "Trade & Grow.", "Campus Deal."];
   const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
 
   useEffect(() => {

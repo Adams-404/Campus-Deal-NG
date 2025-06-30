@@ -330,7 +330,7 @@ const Homepage = () => {
               <div className="container mx-auto px-4 py-8">
                 <div className="flex flex-col mb-8">
                   <div className="flex justify-between items-center mb-4">
-                    <h1 className="text-2xl font-bold">Market Hub</h1>
+                    <h1 className="text-2xl font-bold">Campus Deal</h1>
                   </div>
                   
                   {/* Search History and Spelling Suggestions */}

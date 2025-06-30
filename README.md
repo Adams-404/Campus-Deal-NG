@@ -1,13 +1,13 @@
 
-# GSU Market
+# Campus Deal
 
-![GSU Market](https://gsu-market-hub.vercel.app/logo.png)
+![Campus Deal](https://campusdeal.ng/logo.png)
 
-GSU Market Hub is a secure online marketplace designed specifically for students of Gombe State University. Our platform enables students to buy, sell, and trade items within the campus community safely and efficiently!
+Campus Deal is a secure online marketplace designed for campus communities. Our platform enables anyone on campus to buy, sell, and trade items within their local community safely and efficiently!
 
 ## 🌐 Live Website
 
-**URL**: [GSU Market](https://gsumarket.vercel.app/)
+**URL**: [Campus Deal](https://campusdeal.ng/)
 
 ## 🔑 Environment Variables
 
@@ -21,10 +21,10 @@ Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 
 ## 🎯 Purpose & Vision
 
-GSU Market Hub was created to address the challenges students face when trying to sell or purchase items on campus. We provide a centralized, secure platform that:
+Campus Deal was created to address the challenges people face when trying to sell or purchase items on campus. We provide a centralized, secure platform that:
 
-- Connects buyers and sellers within the GSU community
-- Ensures transactions happen between verified students
+- Connects buyers and sellers within campus communities
+- Ensures transactions happen between verified campus members
 - Eliminates the need for third-party marketplaces
 - Reduces scams and fraudulent activities
 - Promotes a circular economy within the campus
@@ -32,7 +32,7 @@ GSU Market Hub was created to address the challenges students face when trying t
 ## ✨ Key Features
 
 ### 🔒 Security & Trust
-- **Verified Users**: All users must verify their GSU student status
+- **Verified Users**: All users must verify their campus affiliation
 - **KYC Process**: Know Your Customer verification ensures user authenticity
 - **Safety Tips**: Built-in safety guidelines for secure transactions
 - **Reporting System**: Flag suspicious listings or users
@@ -62,7 +62,7 @@ GSU Market Hub was created to address the challenges students face when trying t
 
 ## 🛠️ Technologies Used
 
-GSU Market Hub is built with modern, robust technologies:
+Campus Deal is built with modern, robust technologies:
 
 - **Frontend**: React, TypeScript, Tailwind CSS
 - **UI Components**: shadcn/ui for consistent, accessible components
@@ -75,8 +75,8 @@ GSU Market Hub is built with modern, robust technologies:
 ## 🚀 Getting Started
 
 ### For Users
-1. Visit [GSU Market Hub](https://gsumarket.vercel.app)
-2. Create an account using your GSU email address
+1. Visit [Campus Deal](https://campusdeal.ng)
+2. Create an account using your campus email address
 3. Complete your profile and verification
 4. Start browsing or listing items!
 
@@ -85,7 +85,7 @@ If you want to contribute to the development:
 
 ```bash
 # Clone the repository
-git clone https://github.com/Adams-404/gsu-market-hub.git
+git clone https://github.com/campusdeal/campus-deal.git
 
 # Install dependencies
 npm install
@@ -96,7 +96,7 @@ npm run dev
 
 ## 🔄 Future Plans
 
-We're constantly working to improve GSU Market Hub with new features:
+We're constantly working to improve Campus Deal with new features:
 
 - In-app payment processing
 - Delivery coordination system
@@ -107,15 +107,14 @@ We're constantly working to improve GSU Market Hub with new features:
 ## 👥 Support & Contact
 
 Having issues or questions? Contact our support team:
-- Email: support@gsumarkethub.com
-- Twitter: [@GSUMarketHub](https://twitter.com/GSUMarketHub)
-- Instagram: [@gsumarkethub](https://instagram.com/gsu.market)
+- Email: support@campusdeal.ng
+- Twitter: [@CampusDeal](https://twitter.com/CampusDeal)
+- Instagram: [@campusdeal](https://instagram.com/campusdeal)
 
 ## 📜 License
 
-GSU Market Hub is licensed under the MIT License - see the LICENSE file for details.
+Campus Deal is licensed under the MIT License - see the LICENSE file for details.
 
 ## 💖 Acknowledgments
 
-Special thanks to the GSU Student Union for their support and all the early adopters who provided valuable feedback.
-
+Special thanks to campus communities for their support and all the early adopters who provided valuable feedback.

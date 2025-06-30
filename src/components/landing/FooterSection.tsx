@@ -9,10 +9,10 @@ export const FooterSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <h3 className="font-bold mb-4 text-blue-500">
-              Tradezy
+              Campus Deal
             </h3>
             <p className="text-sm text-white/80">
-              Your trusted platform for campus trading at Gombe State University.
+              Your trusted platform for campus trading and marketplace needs.
             </p>
           </div>
           <div>
@@ -28,7 +28,7 @@ export const FooterSection = () => {
             <h4 className="font-semibold mb-4 text-green-500">Features</h4>
             <ul className="space-y-2 text-sm text-white/80">
               <li className="hover:text-blue-500 transition-colors">Secure Trading</li>
-              <li className="hover:text-green-500 transition-colors">Student Verification</li>
+              <li className="hover:text-green-500 transition-colors">Campus Verification</li>
               <li className="hover:text-orange-500 transition-colors">Direct Messaging</li>
               <li className="hover:text-red-500 transition-colors">Smart Search</li>
             </ul>
@@ -49,7 +49,7 @@ export const FooterSection = () => {
           </div>
         </div>
         <div className="pt-8 border-t border-blue-200/10 text-center text-sm text-white/60">
-          <p>&copy; {new Date().getFullYear()} Tradezy. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Campus Deal. All rights reserved.</p>
         </div>
       </div>
     </footer>
