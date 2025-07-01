@@ -24,6 +24,7 @@ interface LeaderboardUser {
   name: string;
   count: number;
   unverified_count: number;
+  total_count: number;
   isCurrentUser: boolean;
   avatar_url?: string;
 }
@@ -73,6 +74,7 @@ const InviteFriends = () => {
           name: item.name,
           count: Number(item.referral_count) || 0,
           unverified_count: Number(item.unverified_count) || 0,
+          total_count: (Number(item.referral_count) || 0) + (Number(item.unverified_count) || 0),
           isCurrentUser: item.is_current_user,
           avatar_url: profileMap.get(item.user_id)?.avatar_url
         }));
@@ -406,7 +408,7 @@ const InviteFriends = () => {
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  See who's leading the referral program this month (only verified users count for ranking)
+                  See who's leading the referral program this month (verified users count for ranking)
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -486,7 +488,7 @@ const InviteFriends = () => {
                             'bg-background border-border/50'
                           }`}
                         >
-                          {item.count} {item.count === 1 ? 'ref' : 'refs'}
+                          {item.total_count} {item.total_count === 1 ? 'referral' : 'referrals'}
                         </Badge>
                       </div>
                     ))}
@@ -513,7 +515,7 @@ const InviteFriends = () => {
                   Your Referrals ({referredUsers.length})
                 </CardTitle>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  People who have joined and verified their email using your referral code
+                  People who have joined using your referral code (only verified users count for ranking)
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -560,11 +562,11 @@ const InviteFriends = () => {
                   <div className="py-6 sm:py-8 text-center">
                     <Users className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2 sm:mb-3" />
                     <p className="text-muted-foreground text-sm sm:text-base">
-                      No verified referrals yet
+                      No referrals yet
                     </p>
                     <p className="text-xs sm:text-sm text-muted-foreground/70 mt-1">
                       Share your referral link to invite friends!<br />
-                      Referrals only count after email verification.
+                      Only verified users count for ranking.
                     </p>
                   </div>
                 )}
