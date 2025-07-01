@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
 import { PageTransition } from "@/components/PageTransition";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, Medal, Award, Users, ArrowLeft } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +12,9 @@ interface LeaderboardEntry {
   id: string;
   name: string;
   referral_count: number;
+  unverified_count: number;
   rank: number;
+  avatar_url?: string;
 }
 
 const Leaderboard = () => {
@@ -26,52 +28,34 @@ const Leaderboard = () => {
 
   const fetchLeaderboard = async () => {
     try {
-      const { data, error } = await supabase
-        .from('referrals')
-        .select(`
-          referrer_id,
-          profiles!referrer_id (
-            id,
-            first_name,
-            last_name
-          )
-        `);
-
-      if (error) throw error;
-
-      // Count referrals per user
-      const referralCounts: { [key: string]: { name: string; count: number } } = {};
+      const { data, error } = await supabase.rpc('get_leaderboard');
       
-      data?.forEach((referral) => {
-        const userId = referral.referrer_id;
-        const profile = referral.profiles;
-        
-        if (profile && profile.first_name) {
-          const name = `${profile.first_name} ${profile.last_name || ''}`.trim();
-          
-          if (!referralCounts[userId]) {
-            referralCounts[userId] = { name, count: 0 };
-          }
-          referralCounts[userId].count++;
-        }
-      });
+      if (error) throw error;
+      
+      if (data) {
+        // Get profile pictures for the users
+        const userIds = data.map((item: any) => item.user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, avatar_url')
+          .in('id', userIds);
 
-      // Convert to array and sort
-      const sortedData = Object.entries(referralCounts)
-        .map(([id, data]) => ({
-          id,
-          name: data.name,
-          referral_count: data.count,
-          rank: 0
-        }))
-        .sort((a, b) => b.referral_count - a.referral_count)
-        .slice(0, 10) // Top 10
-        .map((entry, index) => ({
-          ...entry,
-          rank: index + 1
+        const profileMap = new Map();
+        profiles?.forEach(profile => {
+          profileMap.set(profile.id, profile);
+        });
+
+        const formattedLeaderboard = data.map((item: any, index: number) => ({
+          id: item.user_id,
+          name: item.name,
+          referral_count: Number(item.referral_count) || 0,
+          unverified_count: Number(item.unverified_count) || 0,
+          rank: index + 1,
+          avatar_url: profileMap.get(item.user_id)?.avatar_url
         }));
-
-      setLeaderboard(sortedData);
+        
+        setLeaderboard(formattedLeaderboard);
+      }
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
     } finally {
@@ -182,11 +166,20 @@ const Leaderboard = () => {
                           <div className="flex items-center justify-center">
                             {getRankIcon(entry.rank)}
                           </div>
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={entry.avatar_url || ''} />
+                            <AvatarFallback>
+                              {entry.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div>
                             <p className="font-medium text-lg">{entry.name}</p>
-                            <p className="text-sm text-muted-foreground">
-                              {entry.referral_count} referral{entry.referral_count !== 1 ? 's' : ''}
-                            </p>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <span>{entry.referral_count} verified</span>
+                              {entry.unverified_count > 0 && (
+                                <span className="text-orange-500">• {entry.unverified_count} pending</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2">

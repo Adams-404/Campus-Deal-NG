@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Copy, QrCode, Users, CheckCircle, XCircle, ArrowLeft, Share2, Trophy, Clock, Sparkles } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
@@ -22,7 +23,9 @@ interface ReferralUser {
 interface LeaderboardUser {
   name: string;
   count: number;
+  unverified_count: number;
   isCurrentUser: boolean;
+  avatar_url?: string;
 }
 
 interface ReferralData {
@@ -48,17 +51,30 @@ const InviteFriends = () => {
   const fetchLeaderboard = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const { data, error } = await supabase
-        .rpc('get_leaderboard');
+      const { data, error } = await supabase.rpc('get_leaderboard');
       
       if (error) throw error;
       
       if (data) {
+        // Get profile pictures for the users
+        const userIds = data.map((item: any) => item.user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, avatar_url')
+          .in('id', userIds);
+
+        const profileMap = new Map();
+        profiles?.forEach(profile => {
+          profileMap.set(profile.id, profile);
+        });
+
         const formattedLeaderboard = data.map((item: any) => ({
           id: item.user_id,
           name: item.name,
           count: Number(item.referral_count) || 0,
-          isCurrentUser: item.is_current_user
+          unverified_count: Number(item.unverified_count) || 0,
+          isCurrentUser: item.is_current_user,
+          avatar_url: profileMap.get(item.user_id)?.avatar_url
         }));
         setLeaderboard(formattedLeaderboard);
       }
@@ -390,7 +406,7 @@ const InviteFriends = () => {
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  See who's leading the referral program this month (only verified users count)
+                  See who's leading the referral program this month (only verified users count for ranking)
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -442,15 +458,25 @@ const InviteFriends = () => {
                               </span>
                             )}
                           </div>
+                          <Avatar className="h-8 w-8 sm:h-10 sm:w-10">
+                            <AvatarImage src={item.avatar_url || ''} />
+                            <AvatarFallback>
+                              {item.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="min-w-0">
                             <span className={`font-medium truncate block ${
                               index === 0 ? 'text-amber-900 dark:text-amber-100' : 'text-foreground'
                             }`}>
                               {item.name || 'Anonymous'}
                             </span>
-                            {item.isCurrentUser && (
-                              <span className="text-[10px] text-muted-foreground">You</span>
-                            )}
+                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                              {item.isCurrentUser && <span>You • </span>}
+                              <span>{item.count} verified</span>
+                              {item.unverified_count > 0 && (
+                                <span className="text-orange-500">• {item.unverified_count} pending</span>
+                              )}
+                            </div>
                           </div>
                         </div>
                         <Badge 
