@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Copy, QrCode, Users, CheckCircle, XCircle, ArrowLeft, Share2, Trophy, Clock, Sparkles } from "lucide-react";
+import { Copy, QrCode, Users, CheckCircle, XCircle, ArrowLeft, Share2, Trophy, Clock, Sparkles, RefreshCw } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -11,22 +11,32 @@ import { QRCodeSVG } from "qrcode.react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
+type KYCStatus = 'pending' | 'processing' | 'verified' | 'rejected';
 
 interface ReferralUser {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  kyc_status: string;
+  kyc_status: KYCStatus;
   created_at: string;
 }
 
 interface LeaderboardUser {
+  id: string;
   name: string;
   count: number;
   unverified_count: number;
   total_count: number;
   isCurrentUser: boolean;
   avatar_url?: string;
+  status_counts: {
+    verified: number;
+    processing: number;
+    pending: number;
+    rejected: number;
+  };
 }
 
 interface ReferralData {
@@ -36,7 +46,7 @@ interface ReferralData {
     id: string;
     first_name: string;
     last_name: string;
-    kyc_status: string;
+    kyc_status: KYCStatus;
   } | null;
 }
 
@@ -59,7 +69,7 @@ const InviteFriends = () => {
       if (error) throw error;
       
       if (leaderboardData?.length) {
-        // Get profile pictures for the users
+        // Get profile pictures and referral details for the users
         const userIds = leaderboardData.map((item: any) => item.user_id);
         const { data: profiles } = await supabase
           .from('profiles')
@@ -68,16 +78,55 @@ const InviteFriends = () => {
 
         const profileMap = new Map(profiles?.map(p => [p.id, p]));
         
+        // Get all referrals with their KYC status
+        const { data: allReferrals, error: referralsError } = await supabase
+          .from('referrals')
+          .select(`
+            referrer_id,
+            referred_user:profiles!referrals_referred_user_id_fkey(
+              id,
+              kyc_status
+            )
+          `)
+          .in('referrer_id', userIds);
+          
+        if (referralsError) throw referralsError;
+        
+        // Group referrals by referrer and count by status
+        const referralsByUser = allReferrals?.reduce((acc, referral) => {
+          if (!acc[referral.referrer_id]) {
+            acc[referral.referrer_id] = [];
+          }
+          if (referral.referred_user) {
+            acc[referral.referrer_id].push(referral.referred_user);
+          }
+          return acc;
+        }, {} as Record<string, { id: string; kyc_status: KYCStatus }[]>);
+        
         // Format the leaderboard data
-        const formattedLeaderboard = leaderboardData.map((item: any) => ({
-          id: item.user_id,
-          name: item.name,
-          count: Number(item.referral_count) || 0,  // Verified count for ranking
-          unverified_count: Math.max(0, (Number(item.total_count) || 0) - (Number(item.referral_count) || 0)),
-          total_count: Number(item.total_count) || 0,  // Total referrals
-          isCurrentUser: item.is_current_user,
-          avatar_url: profileMap.get(item.user_id)?.avatar_url
-        }));
+        const formattedLeaderboard = leaderboardData.map((item: any) => {
+          const userReferrals = referralsByUser?.[item.user_id] || [];
+          const verifiedCount = userReferrals.filter(r => r.kyc_status === 'verified').length;
+          const processingCount = userReferrals.filter(r => r.kyc_status === 'processing').length;
+          const pendingCount = userReferrals.filter(r => r.kyc_status === 'pending').length;
+          const rejectedCount = userReferrals.filter(r => r.kyc_status === 'rejected').length;
+          
+          return {
+            id: item.user_id,
+            name: item.name,
+            count: verifiedCount,  // Verified count for ranking
+            unverified_count: pendingCount + processingCount + rejectedCount,
+            total_count: userReferrals.length,  // Total referrals
+            isCurrentUser: item.is_current_user,
+            avatar_url: profileMap.get(item.user_id)?.avatar_url,
+            status_counts: {
+              verified: verifiedCount,
+              processing: processingCount,
+              pending: pendingCount,
+              rejected: rejectedCount
+            }
+          };
+        });
         
         setLeaderboard(formattedLeaderboard);
       } else {
@@ -168,7 +217,7 @@ const InviteFriends = () => {
         const referredUsersData = referrals
           .filter(r => r.referred_profile) // Filter out any null profiles
           .map((r, index) => {
-            const profile = r.referred_profile as any;
+            const profile = r.referred_profile as { id: string; first_name: string; last_name: string; kyc_status: KYCStatus; created_at: string };
             return {
               id: profile?.id || `user-${index}`,
               first_name: profile?.first_name || '',
@@ -218,16 +267,38 @@ const InviteFriends = () => {
     }
   };
 
-  const getStatusIcon = (status: string) => {
-    return status === 'verified' ? (
-      <CheckCircle className="w-4 h-4 text-green-500" />
-    ) : (
-      <XCircle className="w-4 h-4 text-red-500" />
-    );
-  };
+  const getStatusBadge = (status: KYCStatus) => {
+    const statusConfig = {
+      pending: {
+        icon: <Clock className="h-3 w-3 mr-1" />,
+        label: 'Pending',
+        className: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800',
+      },
+      processing: {
+        icon: <RefreshCw className="h-3 w-3 mr-1 animate-spin" />,
+        label: 'Processing',
+        className: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+      },
+      verified: {
+        icon: <CheckCircle className="h-3 w-3 mr-1" />,
+        label: 'Verified',
+        className: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
+      },
+      rejected: {
+        icon: <XCircle className="h-3 w-3 mr-1" />,
+        label: 'Rejected',
+        className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
+      }
+    };
 
-  const getStatusText = (status: string) => {
-    return status === 'verified' ? 'Verified' : 'Not Verified';
+    const config = statusConfig[status] || statusConfig.pending;
+    
+    return (
+      <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${config.className}`}>
+        {config.icon}
+        <span>{config.label}</span>
+      </div>
+    );
   };
 
   if (loading) {
@@ -411,7 +482,7 @@ const InviteFriends = () => {
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  See who's leading the referral program this month (badge shows total referrals, verified users count for ranking)
+                  Every referral brings us closer to building a stronger community. Keep sharing and climb the ranks! 🚀
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -477,7 +548,38 @@ const InviteFriends = () => {
                             </span>
                             <div className="flex items-center gap-1 text-[10px]">
                               {item.isCurrentUser && <span>You • </span>}
-                              <span className="text-green-500 font-medium">{item.count} verified</span>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-muted/80 hover:bg-muted transition-colors cursor-help border border-border/50">
+                                      <span className="font-medium text-green-600 dark:text-green-400">{item.count} verified</span>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top" className="max-w-[200px] p-2 text-xs">
+                                    <div className="space-y-1.5">
+                                      <p className="font-medium text-xs text-center mb-1">Referral Status</p>
+                                      <div className="grid grid-cols-2 gap-1.5">
+                                        <div className="flex items-center justify-between px-2 py-1 bg-green-50 dark:bg-green-900/30 rounded">
+                                          <span className="text-green-600 dark:text-green-400">Verified</span>
+                                          <span className="font-medium">{item.status_counts.verified}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded">
+                                          <span className="text-blue-600 dark:text-blue-400">Processing</span>
+                                          <span className="font-medium">{item.status_counts.processing}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 rounded">
+                                          <span className="text-yellow-600 dark:text-yellow-400">Pending</span>
+                                          <span className="font-medium">{item.status_counts.pending}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between px-2 py-1 bg-red-50 dark:bg-red-900/20 rounded">
+                                          <span className="text-red-600 dark:text-red-400">Rejected</span>
+                                          <span className="font-medium">{item.status_counts.rejected}</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                             </div>
                           </div>
                         </div>
@@ -524,7 +626,7 @@ const InviteFriends = () => {
                   Your Referrals ({referredUsers.length})
                 </CardTitle>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  People who have joined using your referral code (only verified users count for ranking)
+                  See the impact you're making! Each verified referral helps grow our community. Keep sharing! 🌟
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
@@ -553,17 +655,7 @@ const InviteFriends = () => {
                             </p>
                           </div>
                         </div>
-                        <Badge 
-                          variant={user.kyc_status === 'verified' ? 'default' : 'secondary'}
-                          className="gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 text-[10px] sm:text-xs whitespace-nowrap"
-                        >
-                          {user.kyc_status === 'verified' ? (
-                            <CheckCircle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                          ) : (
-                            <Clock className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                          )}
-                          <span>{getStatusText(user.kyc_status)}</span>
-                        </Badge>
+                        {getStatusBadge(user.kyc_status as KYCStatus)}
                       </div>
                     ))}
                   </div>
@@ -571,11 +663,10 @@ const InviteFriends = () => {
                   <div className="py-6 sm:py-8 text-center">
                     <Users className="w-10 h-10 mx-auto text-muted-foreground/30 mb-2 sm:mb-3" />
                     <p className="text-muted-foreground text-sm sm:text-base">
-                      No referrals yet
+                      Your referral journey starts now! 🚀
                     </p>
                     <p className="text-xs sm:text-sm text-muted-foreground/70 mt-1">
-                      Share your referral link to invite friends!<br />
-                      Only verified users count for ranking.
+                      Share your unique link below and be the first to grow our community!
                     </p>
                   </div>
                 )}
