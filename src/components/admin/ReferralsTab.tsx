@@ -40,7 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatDistanceToNow } from "date-fns";
 
-type KYCStatus = 'pending' | 'processing' | 'verified' | 'rejected' | 'needs_review';
+type KYCStatus = 'pending' | 'processing' | 'verified' | 'rejected';
 
 interface ReferralData {
   referrer: {
@@ -602,11 +602,7 @@ const ReferralsTab = () => {
         label: 'Rejected',
         className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
       },
-      needs_review: {
-        icon: <AlertTriangle className="h-3.5 w-3.5 mr-1" />,
-        label: 'Needs Review',
-        className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800',
-      },
+
     };
 
     const config = statusConfig[status] || statusConfig.pending;
