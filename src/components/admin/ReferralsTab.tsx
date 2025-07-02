@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -25,7 +25,13 @@ import {
   ChevronUp,
   Filter,
   UserPlus,
-  BarChart2
+  BarChart2,
+  RefreshCw,
+  MoreVertical,
+  Check,
+  Clock,
+  X,
+  AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -33,6 +39,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatDistanceToNow } from "date-fns";
+
+type KYCStatus = 'pending' | 'processing' | 'verified' | 'rejected' | 'needs_review';
 
 interface ReferralData {
   referrer: {
@@ -45,7 +53,7 @@ interface ReferralData {
     id: string;
     name: string;
     email: string;
-    kyc_status: string;
+    kyc_status: KYCStatus;
     created_at: string;
   }[];
 }
@@ -85,6 +93,7 @@ const ReferralsTab = () => {
     key: 'referral_count', 
     direction: 'desc' 
   });
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   // Calculate totals for the summary cards
   const { totalReferrers, totalReferrals, verifiedReferrals } = useMemo(() => {
@@ -130,9 +139,12 @@ const ReferralsTab = () => {
     checkAdmin();
   }, []);
 
-  const fetchReferrals = async () => {
+  const fetchReferrals = async (manualRefresh = false) => {
     try {
-      setLoading(true);
+      // Only show loading indicator on initial load or manual refresh
+      if (!manualRefresh) {
+        setLoading(true);
+      }
       setError(null);
       
       // Get the current user's admin status
@@ -331,6 +343,12 @@ const ReferralsTab = () => {
     }
   };
 
+  // Memoize fetchReferrals to prevent unnecessary re-renders
+  const fetchData = useCallback(async () => {
+    await fetchReferrals();
+    setIsRefreshing(false);
+  }, []);
+
   const getStatusIcon = (status: string) => {
     return status === 'verified' ? (
       <CheckCircle className="w-4 h-4 text-green-500" />
@@ -468,7 +486,186 @@ const ReferralsTab = () => {
     }
   };
 
-  if (loading) {
+  // Set up real-time subscription
+  useEffect(() => {
+    fetchData();
+    const checkAdmin = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase.rpc('is_admin', { user_id: user.id });
+          setIsAdmin(!!data);
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+
+    // Set up real-time subscription for referrals
+    const referralsSubscription = supabase
+      .channel('referrals-changes')
+      .on('postgres_changes', 
+        { 
+          event: '*',
+          schema: 'public',
+          table: 'referrals'
+        }, 
+        (payload) => {
+          console.log('Change received!', payload);
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Set up real-time subscription for profile updates (for KYC status changes)
+    const profilesSubscription = supabase
+      .channel('profiles-changes')
+      .on('postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: 'kyc_status=eq.verified'
+        },
+        (payload) => {
+          console.log('Profile KYC status updated:', payload);
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      supabase.removeChannel(referralsSubscription);
+      supabase.removeChannel(profilesSubscription);
+    };
+  }, [fetchData]);
+
+  // Handle manual refresh
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchData();
+  };
+
+  // Update user KYC status
+  const updateKycStatus = async (userId: string, status: KYCStatus) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ kyc_status: status })
+        .eq('id', userId);
+
+      if (error) throw error;
+      
+      // Update local state immediately for better UX
+      setAllReferrals(prev => 
+        prev.map(group => ({
+          ...group,
+          referred_users: group.referred_users.map(user => 
+            user.id === userId ? { ...user, kyc_status: status } : user
+          )
+        }))
+      );
+
+      toast.success(`Status updated to ${status}`);
+    } catch (error) {
+      console.error('Error updating KYC status:', error);
+      toast.error('Failed to update status');
+    }
+  };
+
+  // Status badge component
+  const StatusBadge = ({ status, userId }: { status: KYCStatus, userId: string }) => {
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
+
+    const statusConfig = {
+      verified: {
+        icon: <CheckCircle className="h-3.5 w-3.5 mr-1" />,
+        label: 'Verified',
+        className: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
+      },
+      pending: {
+        icon: <Clock className="h-3.5 w-3.5 mr-1 opacity-70" />,
+        label: 'Pending',
+        className: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800',
+      },
+      processing: {
+        icon: <RefreshCw className="h-3.5 w-3.5 mr-1 animate-spin" />,
+        label: 'Processing',
+        className: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+      },
+      rejected: {
+        icon: <X className="h-3.5 w-3.5 mr-1" />,
+        label: 'Rejected',
+        className: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800',
+      },
+      needs_review: {
+        icon: <AlertTriangle className="h-3.5 w-3.5 mr-1" />,
+        label: 'Needs Review',
+        className: 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800',
+      },
+    };
+
+    const config = statusConfig[status] || statusConfig.pending;
+
+    if (!isAdmin) {
+      return (
+        <Badge className={`${config.className} cursor-default`}>
+          {config.icon}
+          {config.label}
+        </Badge>
+      );
+    }
+
+    return (
+      <div className="relative">
+        <Badge 
+          className={`${config.className} cursor-pointer flex items-center`}
+          onClick={() => setIsOpen(!isOpen)}
+        >
+          {config.icon}
+          {config.label}
+          <ChevronDown className="h-3.5 w-3.5 ml-1 opacity-70" />
+        </Badge>
+        
+        {isOpen && (
+          <div className="absolute right-0 mt-1 w-40 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-border">
+            <div className="py-1">
+              {Object.entries(statusConfig).map(([key, { icon, label, className }]) => (
+                <button
+                  key={key}
+                  className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 hover:bg-muted ${status === key ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    if (status !== key) {
+                      setIsUpdating(true);
+                      await updateKycStatus(userId, key as KYCStatus);
+                      setIsUpdating(false);
+                    }
+                    setIsOpen(false);
+                  }}
+                  disabled={isUpdating}
+                >
+                  <span className={status === key ? 'opacity-100' : 'opacity-70'}>
+                    {icon}
+                  </span>
+                  <span>{label}</span>
+                  {status === key && <Check className="h-3.5 w-3.5 ml-auto" />}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const isLoading = loading || isRefreshing;
+
+  if (isLoading && !isRefreshing) {
     return (
       <div className="space-y-6">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -572,6 +769,16 @@ const ReferralsTab = () => {
               <CardTitle className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-[#1078a7]" />
                 Referral Management
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 ml-2"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                >
+                  <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <span className="sr-only">Refresh</span>
+                </Button>
               </CardTitle>
               <CardDescription className="text-muted-foreground">
                 Manage and monitor user referrals and their verification status
@@ -692,19 +899,7 @@ const ReferralsTab = () => {
                                   {new Date(user.created_at).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell>
-                                  <div className="flex items-center gap-1.5">
-                                    {user.kyc_status === 'verified' ? (
-                                      <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40 border-green-200 dark:border-green-800">
-                                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                                        Verified
-                                      </Badge>
-                                    ) : (
-                                      <Badge variant="outline" className="text-muted-foreground">
-                                        <XCircle className="h-3.5 w-3.5 mr-1 opacity-70" />
-                                        Pending
-                                      </Badge>
-                                    )}
-                                  </div>
+                                  <StatusBadge status={user.kyc_status} userId={user.id} />
                                 </TableCell>
                               </TableRow>
                             ))}
