@@ -52,33 +52,36 @@ const InviteFriends = () => {
   const fetchLeaderboard = useCallback(async () => {
     setIsRefreshing(true);
     try {
-      const { data, error } = await supabase.rpc('get_leaderboard');
+      // Get the leaderboard data with both verified and total counts
+      const { data: leaderboardData, error } = await supabase
+        .rpc('get_leaderboard');
       
       if (error) throw error;
       
-      if (data) {
+      if (leaderboardData?.length) {
         // Get profile pictures for the users
-        const userIds = data.map((item: any) => item.user_id);
+        const userIds = leaderboardData.map((item: any) => item.user_id);
         const { data: profiles } = await supabase
           .from('profiles')
           .select('id, avatar_url')
           .in('id', userIds);
 
-        const profileMap = new Map();
-        profiles?.forEach(profile => {
-          profileMap.set(profile.id, profile);
-        });
-
-        const formattedLeaderboard = data.map((item: any) => ({
+        const profileMap = new Map(profiles?.map(p => [p.id, p]));
+        
+        // Format the leaderboard data
+        const formattedLeaderboard = leaderboardData.map((item: any) => ({
           id: item.user_id,
           name: item.name,
-          count: Number(item.referral_count) || 0,
-          unverified_count: Number(item.unverified_count) || 0,
-          total_count: (Number(item.referral_count) || 0) + (Number(item.unverified_count) || 0),
+          count: Number(item.referral_count) || 0,  // Verified count for ranking
+          unverified_count: Math.max(0, (Number(item.total_count) || 0) - (Number(item.referral_count) || 0)),
+          total_count: Number(item.total_count) || 0,  // Total referrals
           isCurrentUser: item.is_current_user,
           avatar_url: profileMap.get(item.user_id)?.avatar_url
         }));
+        
         setLeaderboard(formattedLeaderboard);
+      } else {
+        setLeaderboard([]);
       }
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
@@ -408,13 +411,13 @@ const InviteFriends = () => {
                   )}
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground">
-                  See who's leading the referral program this month (verified users count for ranking)
+                  See who's leading the referral program this month (badge shows total referrals, verified users count for ranking)
                 </p>
               </CardHeader>
               <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
                 {leaderboard.length > 0 ? (
                   <div className="space-y-2 sm:space-y-3">
-                    {leaderboard.map((item, index) => (
+                    {leaderboard.slice(0, 10).map((item, index) => (
                       <div 
                         key={index} 
                         className={`flex items-center justify-between p-2.5 sm:p-3 rounded-lg transition-all ${
@@ -472,24 +475,30 @@ const InviteFriends = () => {
                             }`}>
                               {item.name || 'Anonymous'}
                             </span>
-                            <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <div className="flex items-center gap-1 text-[10px]">
                               {item.isCurrentUser && <span>You • </span>}
-                              <span>{item.count} verified</span>
-                              {item.unverified_count > 0 && (
-                                <span className="text-orange-500">• {item.unverified_count} pending</span>
-                              )}
+                              <span className="text-green-500 font-medium">{item.count} verified</span>
                             </div>
                           </div>
                         </div>
-                        <Badge 
-                          variant="outline" 
-                          className={`font-medium text-xs sm:text-sm whitespace-nowrap ${
-                            index === 0 ? 'bg-amber-100/50 text-amber-900 border-amber-200/50 dark:bg-amber-900/30 dark:border-amber-800/50' :
-                            'bg-background border-border/50'
-                          }`}
-                        >
-                          {item.total_count} {item.total_count === 1 ? 'referral' : 'referrals'}
-                        </Badge>
+                        <div className="w-16 sm:w-24 text-center">
+                          <Badge 
+                            variant="outline" 
+                            className={`w-full justify-center font-medium text-xs sm:text-sm whitespace-nowrap ${
+                              index === 0 ? 'bg-gradient-to-r from-amber-100 to-amber-50 text-amber-900 border-amber-200 dark:from-amber-900/40 dark:to-amber-900/20 dark:border-amber-800/50' :
+                              index === 1 ? 'bg-gradient-to-r from-blue-100 to-blue-50 text-blue-900 border-blue-200 dark:from-blue-900/30 dark:to-blue-900/10 dark:border-blue-800/50' :
+                              index === 2 ? 'bg-gradient-to-r from-emerald-100 to-emerald-50 text-emerald-900 border-emerald-200 dark:from-emerald-900/30 dark:to-emerald-900/10 dark:border-emerald-800/50' :
+                              'bg-gradient-to-r from-neutral-100 to-neutral-50 text-neutral-700 border-neutral-200 dark:from-neutral-800/30 dark:to-neutral-800/10 dark:border-neutral-700/50 dark:text-neutral-200'
+                            } transition-colors`}
+                          >
+                            <span className={`sm:hidden ${index < 3 ? 'text-white dark:text-white' : ''}`}>
+                              {item.total_count} ref
+                            </span>
+                            <span className={`hidden sm:inline ${index < 3 ? 'text-white dark:text-white' : ''}`}>
+                              {item.total_count} {item.total_count === 1 ? 'referral' : 'referrals'}
+                            </span>
+                          </Badge>
+                        </div>
                       </div>
                     ))}
                   </div>
