@@ -656,10 +656,19 @@ const ReferralsTab = () => {
                           {isAdmin && referralGroup.referrer.email}
                         </p>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <Badge variant="outline" className="px-3 py-1">
-                          {referralGroup.referred_users.length} {referralGroup.referred_users.length === 1 ? 'Referral' : 'Referrals'}
-                        </Badge>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-1.5 rounded-md border border-blue-200 dark:border-blue-800">
+                          <Users className="h-4 w-4" />
+                          <span className="font-medium">
+                            {referralGroup.referred_users.length} {referralGroup.referred_users.length === 1 ? 'Referral' : 'Referrals'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 px-3 py-1.5 rounded-md border border-green-200 dark:border-green-800">
+                          <UserCheck className="h-4 w-4" />
+                          <span className="font-medium">
+                            {referralGroup.referred_users.filter(user => user.kyc_status === 'verified').length} Verified
+                          </span>
+                        </div>
                       </div>
                     </div>
 
@@ -683,12 +692,19 @@ const ReferralsTab = () => {
                                   {new Date(user.created_at).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell>
-                                  <Badge 
-                                    variant={user.kyc_status === 'verified' ? 'default' : 'outline'}
-                                    className={user.kyc_status === 'verified' ? 'bg-green-500' : ''}
-                                  >
-                                    {user.kyc_status}
-                                  </Badge>
+                                  <div className="flex items-center gap-1.5">
+                                    {user.kyc_status === 'verified' ? (
+                                      <Badge className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/40 border-green-200 dark:border-green-800">
+                                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
+                                        Verified
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="text-muted-foreground">
+                                        <XCircle className="h-3.5 w-3.5 mr-1 opacity-70" />
+                                        Pending
+                                      </Badge>
+                                    )}
+                                  </div>
                                 </TableCell>
                               </TableRow>
                             ))}
