@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -9,13 +9,30 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Users, Search, Download, AlertCircle } from "lucide-react";
+import { 
+  CheckCircle, 
+  XCircle, 
+  Users, 
+  Search, 
+  Download, 
+  AlertCircle, 
+  UserCheck, 
+  ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
+  Filter,
+  UserPlus,
+  BarChart2
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatDistanceToNow } from "date-fns";
 
 interface ReferralData {
   referrer: {
@@ -64,6 +81,37 @@ const ReferralsTab = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedReferrer, setSelectedReferrer] = useState<string>('all');
   const [error, setError] = useState<string | null>(null);
+  const [sortConfig, setSortConfig] = useState<{ key: keyof ReferralData['referrer'] | 'referral_count'; direction: 'asc' | 'desc' }>({ 
+    key: 'referral_count', 
+    direction: 'desc' 
+  });
+  
+  // Calculate totals for the summary cards
+  const { totalReferrers, totalReferrals, verifiedReferrals } = useMemo(() => {
+    return {
+      totalReferrers: allReferrals.length,
+      totalReferrals: allReferrals.reduce((sum, ref) => sum + ref.referrer.referral_count, 0),
+      verifiedReferrals: allReferrals.reduce((sum, ref) => 
+        sum + ref.referred_users.filter(u => u.kyc_status === 'verified').length, 0
+      )
+    };
+  }, [allReferrals]);
+  
+  // Handle sorting
+  const requestSort = (key: keyof ReferralData['referrer'] | 'referral_count') => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+  
+  const getSortIcon = (key: string) => {
+    if (sortConfig.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="ml-2 h-4 w-4" /> 
+      : <ChevronDown className="ml-2 h-4 w-4" />;
+  };
 
   useEffect(() => {
     fetchReferrals();
@@ -312,24 +360,22 @@ const ReferralsTab = () => {
     }))
   ];
   
-  // Filter referrals based on search term and selected referrer
+  // Filter and sort referrals
   useEffect(() => {
     let result = [...allReferrals];
     
-    // Filter by selected referrer first
+    // Filter by selected referrer
     if (selectedReferrer && selectedReferrer !== 'all') {
       result = result.filter(ref => ref.referrer.id === selectedReferrer);
     }
     
-    // Then apply search filter if there's a search term
+    // Apply search filter
     if (searchTerm) {
       const term = searchTerm.trim().toLowerCase();
       result = result.filter(referral => {
-        // Check if referrer matches
         const referrerMatch = referral.referrer.name?.toLowerCase().includes(term) || 
                             (isAdmin && referral.referrer.email?.toLowerCase().includes(term));
         
-        // Check if any referred user matches
         const referredUserMatch = referral.referred_users.some(user => 
           user.name?.toLowerCase().includes(term) || 
           (isAdmin && user.email?.toLowerCase().includes(term))
@@ -339,13 +385,30 @@ const ReferralsTab = () => {
       });
     }
     
-    // If no filters are applied, show all
-    if (selectedReferrer === 'all' && !searchTerm) {
-      setFilteredReferrals([...allReferrals]);
-    } else {
-      setFilteredReferrals(result);
+    // Apply sorting
+    if (sortConfig.key) {
+      result.sort((a, b) => {
+        let aValue, bValue;
+        
+        if (sortConfig.key === 'referral_count') {
+          aValue = a.referrer.referral_count;
+          bValue = b.referrer.referral_count;
+        } else {
+          aValue = a.referrer[sortConfig.key as keyof typeof a.referrer];
+          bValue = b.referrer[sortConfig.key as keyof typeof b.referrer];
+        }
+        
+        if (aValue === null) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (bValue === null) return sortConfig.direction === 'asc' ? 1 : -1;
+        if (aValue === bValue) return 0;
+        
+        const comparison = aValue > bValue ? 1 : -1;
+        return sortConfig.direction === 'asc' ? comparison : -comparison;
+      });
     }
-  }, [allReferrals, searchTerm, selectedReferrer, isAdmin]);
+    
+    setFilteredReferrals(result);
+  }, [allReferrals, searchTerm, selectedReferrer, isAdmin, sortConfig]);
 
   const exportData = () => {
     const csvContent = [
@@ -407,170 +470,240 @@ const ReferralsTab = () => {
 
   if (loading) {
     return (
-      <Card className="bg-background/90 dark:bg-black/90 border border-border/50 shadow-sm">
-        <CardHeader className="border-b border-border/30">
-          <CardTitle className="flex items-center gap-2 text-foreground">
-            <Users className="w-5 h-5 text-[#1078a7]" />
-            Referrals Management
-          </CardTitle>
-          <CardDescription className="text-muted-foreground">
-            Loading referral data...
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="space-y-4">
-            {[...Array(3)].map((_, i) => (
-              <div key={i} className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <div className="h-6 w-48 bg-muted rounded animate-pulse"></div>
-                  <div className="h-8 w-20 bg-muted rounded-full animate-pulse"></div>
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="bg-white/90 dark:bg-black/50 border border-border/50 shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-6 w-6 rounded-full" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-4 w-32 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        
+        <Card className="bg-white/90 dark:bg-black/50 border border-border/50 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-[#1078a7]" />
+              Loading Referrals...
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center space-x-4">
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-32" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-6 w-16 rounded-full" />
                 </div>
-                <div className="h-12 bg-muted/50 rounded animate-pulse"></div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <Card className="bg-background/90 dark:bg-black/90 border border-border/50 shadow-sm">
-      <CardHeader className="border-b border-border/30">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-foreground">
-              <Users className="w-5 h-5 text-[#1078a7]" />
-              Referrals Management
-            </CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Manage and monitor user referrals and their verification status
-            </CardDescription>
-          </div>
-          <Button 
-            onClick={exportData} 
-            variant="outline" 
-            size="sm"
-            className="bg-white/90 hover:bg-white border-2 border-[#1078a7] text-[#1078a7] hover:text-[#0d5f8a] hover:border-[#0d5f8a] transition-colors shadow-sm"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="p-6">
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 w-full bg-white/90 border-2 border-[#1078a7]/30 focus:border-[#1078a7] focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors"
-              />
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-white/90 dark:bg-black/50 border border-border/50 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Referrers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalReferrers}</div>
+            <p className="text-xs text-muted-foreground">Active users with referrals</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white/90 dark:bg-black/50 border border-border/50 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Referrals</CardTitle>
+            <UserPlus className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalReferrals}</div>
+            <p className="text-xs text-muted-foreground">Total users referred</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white/90 dark:bg-black/50 border border-border/50 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Verified</CardTitle>
+            <UserCheck className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{verifiedReferrals}</div>
+            <p className="text-xs text-muted-foreground">Verified accounts</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="bg-white/90 dark:bg-black/50 border border-border/50 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Conversion</CardTitle>
+            <BarChart2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {totalReferrers > 0 ? Math.round((verifiedReferrals / totalReferrals) * 100) : 0}%
             </div>
-            <select
-              value={selectedReferrer}
-              onChange={(e) => setSelectedReferrer(e.target.value)}
-              className="flex h-10 w-full sm:w-72 rounded-md border-2 border-[#1078a7]/30 bg-white/90 px-3 py-2 text-sm text-foreground ring-offset-background focus:outline-none focus:border-[#1078a7] focus-visible:ring-0 focus-visible:ring-offset-0 transition-colors"
-            >
-              {referrerOptions.map(option => (
-                <option key={option.id} value={option.id}>
-                  {option.name}
-                </option>
-              ))}
-            </select>
+            <p className="text-xs text-muted-foreground">Verification rate</p>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <Card className="bg-white/90 dark:bg-black/50 border border-border/50 shadow-sm">
+        <CardHeader className="border-b border-border/30">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-[#1078a7]" />
+                Referral Management
+              </CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Manage and monitor user referrals and their verification status
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="bg-white/90 hover:bg-white border-2 border-[#1078a7] text-[#1078a7] hover:text-[#0d5f8a] hover:border-[#0d5f8a] transition-colors shadow-sm"
+                      onClick={exportData}
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Export
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Export all referral data as CSV</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search referrals..."
+                  className="pl-9"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="w-full sm:w-64">
+                <select
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  value={selectedReferrer}
+                  onChange={(e) => setSelectedReferrer(e.target.value)}
+                >
+                  <option value="all">All Referrers</option>
+                  {allReferrals.map((ref) => (
+                    <option key={ref.referrer.id} value={ref.referrer.id}>
+                      {ref.referrer.name} ({ref.referrer.referral_count})
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-          {error ? (
-            <div className="text-center py-8">
-              <Alert variant="destructive" className="bg-red-50 dark:bg-red-900/20">
+            {error && (
+              <Alert variant="destructive">
                 <AlertCircle className="h-4 w-4" />
                 <AlertTitle>Error</AlertTitle>
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
-            </div>
-          ) : filteredReferrals.length === 0 ? (
-            <div className="text-center py-12 border-2 border-dashed rounded-lg">
-              <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-foreground mb-1">No referrals found</h3>
-              <p className="text-muted-foreground">
-                {searchTerm ? 'No referrals match your search.' : 'No referral data available.'}
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {filteredReferrals.map((referralGroup) => (
-                <div 
-                  key={referralGroup.referrer.id} 
-                  className="border rounded-lg p-5 bg-white/90 dark:bg-black/50 shadow-sm transition-all hover:shadow-md"
-                >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 pb-4 border-b border-border/30">
-                    <div>
-                      <h3 className="font-semibold text-lg text-foreground">
-                        {referralGroup.referrer.name}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {referralGroup.referrer.email}
-                      </p>
-                    </div>
-                    <Badge 
-                      variant="outline" 
-                      className="px-3 py-1.5 text-sm font-medium bg-[#1078a7]/10 text-[#1078a7] border-[#1078a7]/30"
-                    >
-                      {referralGroup.referrer.referral_count} referral{referralGroup.referrer.referral_count !== 1 ? 's' : ''}
-                    </Badge>
-                  </div>
+            )}
 
-                  {referralGroup.referred_users.length > 0 ? (
-                    <div className="rounded-lg overflow-hidden border border-border/30">
-                      <div className="overflow-x-auto">
+            {filteredReferrals.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <Users className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium">No referrals found</h3>
+                <p className="text-sm text-muted-foreground">
+                  {searchTerm || selectedReferrer !== 'all' 
+                    ? 'Try adjusting your search or filter criteria.'
+                    : 'No referral data available.'}
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {filteredReferrals.map((referralGroup) => (
+                  <div key={referralGroup.referrer.id} className="space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-muted/20 rounded-lg">
+                      <div>
+                        <h3 className="font-medium">{referralGroup.referrer.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {isAdmin && referralGroup.referrer.email}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Badge variant="outline" className="px-3 py-1">
+                          {referralGroup.referred_users.length} {referralGroup.referred_users.length === 1 ? 'Referral' : 'Referrals'}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {referralGroup.referred_users.length > 0 && (
+                      <div className="overflow-hidden border rounded-lg">
                         <Table>
-                          <TableHeader className="bg-muted/20">
-                            <TableRow className="hover:bg-transparent">
-                              <TableHead className="font-medium text-foreground">Referred User</TableHead>
-                              <TableHead className="font-medium text-foreground">Email</TableHead>
-                              <TableHead className="font-medium text-foreground">Signup Date</TableHead>
-                              <TableHead className="font-medium text-foreground">Status</TableHead>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Name</TableHead>
+                              <TableHead>Email</TableHead>
+                              <TableHead>Signup Date</TableHead>
+                              <TableHead>Status</TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {referralGroup.referred_users.map((user) => (
-                              <TableRow key={user.id} className="hover:bg-muted/10">
-                                <TableCell className="font-medium">{user.name}</TableCell>
-                                <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                                <TableCell className="text-muted-foreground">
-                                  {new Date(user.created_at).toLocaleDateString('en-US', {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })}
+                              <TableRow key={user.id}>
+                                <TableCell>{user.name}</TableCell>
+                                <TableCell>{user.email}</TableCell>
+                                <TableCell>
+                                  {new Date(user.created_at).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell>
-                                  <div className="flex items-center gap-2">
-                                    {getStatusIcon(user.kyc_status)}
-                                    {getStatusBadge(user.kyc_status)}
-                                  </div>
+                                  <Badge 
+                                    variant={user.kyc_status === 'verified' ? 'default' : 'outline'}
+                                    className={user.kyc_status === 'verified' ? 'bg-green-500' : ''}
+                                  >
+                                    {user.kyc_status}
+                                  </Badge>
                                 </TableCell>
                               </TableRow>
                             ))}
                           </TableBody>
                         </Table>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-6 text-muted-foreground">
-                      No referred users found
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
