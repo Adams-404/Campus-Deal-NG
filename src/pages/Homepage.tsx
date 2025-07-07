@@ -226,6 +226,17 @@ const Homepage = () => {
         const allImages = images.map(img => img.image_url);
         const seller = item.profiles;
 
+        // Create a safe seller object with fallback values
+        const safeSeller = {
+          id: seller?.id || 'unknown',
+          first_name: seller?.first_name || 'Anonymous',
+          last_name: seller?.last_name || '',
+          avatar_url: seller?.avatar_url || undefined,
+          full_name: seller?.first_name && seller?.last_name
+            ? `${seller.first_name} ${seller.last_name}`
+            : seller?.first_name || seller?.last_name || 'Anonymous'
+        };
+
         // Create the formatted item with all required fields
         const formattedItem: Item = {
           id: item.id,
@@ -234,17 +245,9 @@ const Homepage = () => {
           category: item.category,
           condition: item.condition,
           created_at: item.created_at,
-          status: item.status,
+          status: item.status || 'active',
           images: allImages,
-          seller: seller ? {
-            id: seller.id,
-            full_name: seller.first_name && seller.last_name 
-              ? `${seller.first_name} ${seller.last_name}`
-              : seller.first_name || seller.last_name || 'Anonymous',
-            first_name: seller.first_name || 'Anonymous',
-            last_name: seller.last_name,
-            avatar_url: seller.avatar_url
-          } : undefined,
+          seller: safeSeller,
           description: item.description
         };
 
@@ -405,11 +408,11 @@ const Homepage = () => {
       case 'mobile':
         return 'grid-cols-2';
       case 'tablet':
-        return 'grid-cols-3';
+        return 'grid-cols-2';
       case 'desktop':
-        return 'grid-cols-4 xl:grid-cols-5';
+        return 'grid-cols-3';
       default:
-        return 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
+        return 'grid-cols-2 md:grid-cols-2 lg:grid-cols-3';
     }
   };
 
@@ -447,28 +450,15 @@ const Homepage = () => {
                   loading ? (
                     <div className="flex justify-center items-center py-10">
                       <Loader2 className="h-8 w-8 animate-spin" />
-                      <span className="ml-2">Searching for "{searchQuery}"...</span>
-                    </div>
-                  ) : filteredItems.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-10">
-                      <h2 className="text-2xl font-bold mb-2">No results found</h2>
-                      <p className="text-gray-500 mb-8">
-                        No items match your search for "{searchQuery}".
-                      </p>
-                      
-                      <EmptySearchSuggestions
-                        searchQuery={searchQuery}
-                        onSuggestionClick={handleSuggestionClick}
-                      />
                     </div>
                   ) : (
                     <section className="py-6 w-full">
                       <h2 className="text-2xl font-bold mb-6">
                         {filteredItems.length} result{filteredItems.length !== 1 ? 's' : ''} for "{searchQuery}"
                       </h2>
-                      <div className={`grid ${getGridCols()} gap-4 w-full`}>
+                      <div className={`grid ${getGridCols()} gap-6 w-full`}>
                         {filteredItems.map(item => (
-                          <ProductCard key={item.id} item={item} />
+                          <ProductCard key={item.id} item={item} showOnlyFirstName={true} />
                         ))}
                       </div>
                     </section>
@@ -483,23 +473,27 @@ const Homepage = () => {
                           <ProductCard
                             item={featuredItems[0]}
                             className="w-full"
+                            showOnlyFirstName={true}
                           />
                         ) : (
                           <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
                             <ProductCard
                               item={featuredItems[0]}
                               className="w-full"
+                              showOnlyFirstName={true}
                             />
                             {featuredItems.length > 1 && (
                               <ProductCard
                                 item={featuredItems[1]}
                                 className="w-full"
+                                showOnlyFirstName={true}
                               />
                             )}
                             {featuredItems.length > 2 && deviceType === 'desktop' && (
                               <ProductCard
                                 item={featuredItems[2]}
                                 className="w-full"
+                                showOnlyFirstName={true}
                               />
                             )}
                           </div>
@@ -528,6 +522,7 @@ const Homepage = () => {
                                 <ProductCard
                                   item={categoryItems[0]}
                                   className="w-full"
+                                  showOnlyFirstName={true}
                                 />
                               </div>
                             )}
@@ -538,7 +533,11 @@ const Homepage = () => {
                                 <div className="flex gap-4 w-max pl-4 sm:pl-0">
                                   {categoryItems.slice(1, 5).map(item => (
                                     <div key={item.id} className="w-48 md:w-64 flex-shrink-0">
-                                      <ProductCard item={item} hideSellerName={true} />
+                                      <ProductCard 
+                                        item={item} 
+                                        hideSellerName={true} 
+                                        showOnlyFirstName={true} 
+                                      />
                                     </div>
                                   ))}
                                 </div>
@@ -547,9 +546,13 @@ const Homepage = () => {
                           </>
                         ) : (
                           /* Grid view for desktop and tablet */
-                          <div className={`grid ${getGridCols()} gap-4 w-full`}>
+                          <div className={`grid ${getGridCols()} gap-6 w-full`}>
                             {categoryItems.slice(0, deviceType === 'desktop' ? 15 : 9).map(item => (
-                              <ProductCard key={item.id} item={item} />
+                              <ProductCard 
+                                key={item.id} 
+                                item={item} 
+                                showOnlyFirstName={true}
+                              />
                             ))}
                           </div>
                         )}

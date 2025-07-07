@@ -28,10 +28,11 @@ interface ProductCardProps {
     description?: string;
   };
   hideSellerName?: boolean;
+  showOnlyFirstName?: boolean;
   className?: string;
 }
 
-export const ProductCard = ({ item, hideSellerName, className }: ProductCardProps) => {
+export const ProductCard = ({ item, hideSellerName, showOnlyFirstName = false, className }: ProductCardProps) => {
   const { fontSizeClass } = useSettings();
   const navigate = useNavigate();
   const [isSaved, setIsSaved] = useState(false);
@@ -46,16 +47,21 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('saved_items')
-        .select()
+        .select('*')
         .eq('user_id', user.id)
         .eq('item_id', item.id)
-        .single();
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking saved status:', error);
+        return;
+      }
 
       setIsSaved(!!data);
     } catch (error) {
-      console.error('Error checking saved status:', error);
+      console.error('Error in checkIfSaved:', error);
     }
   };
 
@@ -68,15 +74,17 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
     e.stopPropagation();
     const { id } = item.seller || {};
     
-    if (!id) return;
+    if (!id || id === 'unknown') {
+      return;
+    }
     
     const { data: { user } } = await supabase.auth.getUser();
     const currentUserId = user?.id;
 
     if (id === currentUserId) {
-        navigate('/profile');
+      navigate('/profile');
     } else {
-        navigate(`/user/${id}`);
+      navigate(`/user/${id}`);
     }
   };
 
@@ -196,16 +204,22 @@ export const ProductCard = ({ item, hideSellerName, className }: ProductCardProp
               onClick={handleViewProfile}
             >
               <div className="flex-shrink-0">
-                <Avatar className="h-8 w-8 ring-2 ring-offset-2 ring-offset-background ring-primary/20 group-hover/profile:ring-primary/40 transition-all light:ring-[#1EAEDB]/30 light:group-hover/profile:ring-[#1EAEDB]/60">
+                <Avatar 
+                  className="h-8 w-8 ring-2 ring-offset-2 ring-offset-background ring-primary/20 group-hover/profile:ring-primary/40 transition-all light:ring-[#1EAEDB]/30 light:group-hover/profile:ring-[#1EAEDB]/60"
+                  onClick={item.seller?.id && item.seller.id !== 'unknown' ? handleViewProfile : undefined}
+                  style={{ cursor: item.seller?.id && item.seller.id !== 'unknown' ? 'pointer' : 'default' }}
+                >
                   <AvatarImage src={item.seller?.avatar_url} className="object-cover" />
-                  <AvatarFallback className="bg-primary/10 dark:bg-primary/20">
-                    <User className="h-4 w-4 text-primary dark:text-white light:text-[#1EAEDB]" />
+                  <AvatarFallback className="text-xs bg-primary/10 text-primary dark:bg-white/10 dark:text-white">
+                    {item.seller?.first_name?.[0] || item.seller?.last_name?.[0] || <User className="h-3.5 w-3.5" />}
                   </AvatarFallback>
                 </Avatar>
               </div>
               {!hideSellerName && (
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {item.seller?.first_name || item.seller?.full_name || 'Seller'}
+                <span className="text-sm font-medium text-muted-foreground group-hover/profile:text-foreground transition-colors line-clamp-1">
+                  {showOnlyFirstName 
+                    ? item.seller?.first_name || item.seller?.last_name || 'Anonymous'
+                    : `${item.seller?.first_name || ''} ${item.seller?.last_name || ''}`.trim() || 'Anonymous'}
                 </span>
               )}
             </div>
