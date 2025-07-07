@@ -128,7 +128,16 @@ const InviteFriends = () => {
           };
         });
         
-        setLeaderboard(formattedLeaderboard);
+        // Sort leaderboard by total referrals (descending), then by verified count (descending)
+        const sortedLeaderboard = [...formattedLeaderboard].sort((a, b) => {
+          // First sort by total_count in descending order
+          if (b.total_count !== a.total_count) {
+            return b.total_count - a.total_count;
+          }
+          // If total_count is the same, sort by verified count (count) in descending order
+          return b.count - a.count;
+        });
+        setLeaderboard(sortedLeaderboard);
       } else {
         setLeaderboard([]);
       }
