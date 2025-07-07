@@ -413,6 +413,15 @@ export default function Messages() {
           items: msg.items
         }));
 
+        // Create a safe fallback for otherUser
+        const safeOtherUser = otherUser || {
+          id: 'unknown',
+          first_name: 'Unknown',
+          last_name: 'User',
+          avatar_url: null,
+          phone: null
+        };
+
         return {
           id: conv.id,
           buyer_id: conv.buyer_id,
@@ -423,11 +432,11 @@ export default function Messages() {
           seller_profile: conv.seller_profile,
           messages: formattedMessages,
           other_user: {
-            id: otherUser.id,
-            first_name: otherUser.first_name ?? null,
-            last_name: otherUser.last_name ?? null,
-            avatar_url: otherUser.avatar_url ?? null,
-            phone: otherUser.phone ?? null
+            id: safeOtherUser.id,
+            first_name: safeOtherUser.first_name ?? null,
+            last_name: safeOtherUser.last_name ?? null,
+            avatar_url: safeOtherUser.avatar_url ?? null,
+            phone: safeOtherUser.phone ?? null
           },
           item: item ? {
             id: item.id,
