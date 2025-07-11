@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from './ui/button';
 import { X, Download } from 'lucide-react';
 
@@ -15,6 +15,14 @@ const PWAInstallPrompt: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [translateX, setTranslateX] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
+  const promptRef = useRef<HTMLDivElement>(null);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const currentX = useRef(0);
+  const currentY = useRef(0);
 
   useEffect(() => {
     // Register service worker manually
@@ -83,6 +91,90 @@ const PWAInstallPrompt: React.FC = () => {
     localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
   };
 
+  // Touch/Swipe handlers
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    startX.current = touch.clientX;
+    startY.current = touch.clientY;
+    currentX.current = touch.clientX;
+    currentY.current = touch.clientY;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - startX.current;
+    const deltaY = touch.clientY - startY.current;
+    
+    setTranslateX(deltaX);
+    setTranslateY(deltaY);
+    
+    currentX.current = touch.clientX;
+    currentY.current = touch.clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (!isDragging) return;
+    
+    const deltaX = currentX.current - startX.current;
+    const deltaY = currentY.current - startY.current;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    // If swiped more than 100px in any direction, dismiss
+    if (distance > 100) {
+      handleDismiss();
+    } else {
+      // Reset position
+      setTranslateX(0);
+      setTranslateY(0);
+    }
+    
+    setIsDragging(false);
+  };
+
+  // Mouse drag handlers for desktop
+  const handleMouseDown = (e: React.MouseEvent) => {
+    startX.current = e.clientX;
+    startY.current = e.clientY;
+    currentX.current = e.clientX;
+    currentY.current = e.clientY;
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    
+    const deltaX = e.clientX - startX.current;
+    const deltaY = e.clientY - startY.current;
+    
+    setTranslateX(deltaX);
+    setTranslateY(deltaY);
+    
+    currentX.current = e.clientX;
+    currentY.current = e.clientY;
+  };
+
+  const handleMouseUp = () => {
+    if (!isDragging) return;
+    
+    const deltaX = currentX.current - startX.current;
+    const deltaY = currentY.current - startY.current;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    
+    // If dragged more than 100px in any direction, dismiss
+    if (distance > 100) {
+      handleDismiss();
+    } else {
+      // Reset position
+      setTranslateX(0);
+      setTranslateY(0);
+    }
+    
+    setIsDragging(false);
+  };
+
   // Don't show if already installed or recently dismissed
   useEffect(() => {
     const dismissed = localStorage.getItem('pwa-prompt-dismissed');
@@ -102,7 +194,23 @@ const PWAInstallPrompt: React.FC = () => {
   }
 
   return (
-    <div className="fixed top-4 left-4 right-4 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 max-w-sm mx-auto backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 animate-in slide-in-from-top-2 duration-300">
+    <div 
+      ref={promptRef}
+      className={`fixed top-4 left-4 right-4 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 max-w-sm mx-auto backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 animate-in slide-in-from-top-2 duration-300 cursor-grab active:cursor-grabbing select-none ${
+        isDragging ? 'transition-none' : 'transition-transform duration-200'
+      }`}
+      style={{
+        transform: `translate(${translateX}px, ${translateY}px)`,
+        opacity: isDragging ? 0.8 : 1
+      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+    >
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
           <img src="/logo.png" alt="Campus Deal" className="w-8 h-8" />
@@ -133,6 +241,15 @@ const PWAInstallPrompt: React.FC = () => {
             >
               <X className="w-4 h-4" />
             </Button>
+          </div>
+          
+          {/* Swipe indicator */}
+          <div className="flex justify-center mt-2">
+            <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+              <span>←</span>
+              <span>Swipe to dismiss</span>
+              <span>→</span>
+            </div>
           </div>
         </div>
       </div>
