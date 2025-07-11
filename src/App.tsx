@@ -51,6 +51,7 @@ import Feedback from "./pages/Feedback";
 import Leaderboard from "./pages/Leaderboard";
 import InviteFriends from "./pages/InviteFriends";
 import { usePWATheme } from "./hooks/usePWATheme";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 
 // Create a single query client instance outside of the component with better caching
 const queryClient = new QueryClient({
@@ -261,6 +262,8 @@ const AnimatedRoutes = () => {
         onClose={() => setShowSafetyTips(false)} 
         trigger="app_open"
       />
+      
+      <PWAInstallPrompt />
     </div>
   );
 };
