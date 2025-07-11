@@ -54,7 +54,7 @@ export const AppFeaturesList = () => {
             All the <span className="bg-indigo-500 px-6 py-2 rounded-[15px] inline-block my-2">Features You Need</span>
           </h2>
           <p className="text-white/80 max-w-2xl mx-auto">
-            Tradezy is packed with tools to help students buy, sell and connect
+            Campus Deal is packed with tools to help students buy, sell and connect
           </p>
         </div>
         

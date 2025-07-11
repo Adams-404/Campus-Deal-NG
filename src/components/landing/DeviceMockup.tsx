@@ -3,8 +3,8 @@ import { motion } from "framer-motion";
 
 export const DeviceMockup = ({ type, image }: { type: 'mobile' | 'laptop'; image?: string }) => {
   const defaultImage = type === 'mobile' 
-    ? "https://placehold.co/264x564/2563eb/FFFFFF?text=Tradezy+Mobile" 
-    : "https://placehold.co/584x376/2563eb/FFFFFF?text=Tradezy+Desktop";
+    ? "https://placehold.co/264x564/2563eb/FFFFFF?text=Campus+Deal+Mobile" 
+    : "https://placehold.co/584x376/2563eb/FFFFFF?text=Campus+Deal+Desktop";
   
   const imageSrc = image || defaultImage;
   
@@ -22,11 +22,11 @@ export const DeviceMockup = ({ type, image }: { type: 'mobile' | 'laptop'; image
             <div className="w-full h-full bg-blue-950 rounded-3xl overflow-hidden relative">
               <img 
                 src={imageSrc} 
-                alt="Tradezy mobile interface" 
+                alt="Campus Deal mobile interface" 
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "https://placehold.co/264x564/2563eb/FFFFFF?text=Tradezy+Mobile";
+                  target.src = "https://placehold.co/264x564/2563eb/FFFFFF?text=Campus+Deal+Mobile";
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
@@ -46,11 +46,11 @@ export const DeviceMockup = ({ type, image }: { type: 'mobile' | 'laptop'; image
             <div className="w-full h-full bg-blue-950 rounded-lg overflow-hidden relative">
               <img 
                 src={imageSrc} 
-                alt="Tradezy desktop interface" 
+                alt="Campus Deal desktop interface" 
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
-                  target.src = "https://placehold.co/584x376/2563eb/FFFFFF?text=Tradezy+Desktop";
+                  target.src = "https://placehold.co/584x376/2563eb/FFFFFF?text=Campus+Deal+Desktop";
                 }}
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>

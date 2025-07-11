@@ -79,7 +79,7 @@ export const FeaturesShowcase = () => {
             <span className="bg-purple-500 px-6 py-2 rounded-[15px] inline-block my-2">Featured Highlights</span>
           </h2>
           <p className="text-white/80 max-w-2xl mx-auto">
-            Discover the powerful features that make Tradezy the perfect platform for campus trading
+            Discover the powerful features that make Campus Deal the perfect platform for campus trading
           </p>
         </div>
         

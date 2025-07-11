@@ -30,7 +30,7 @@ export const AiAssistantSection = () => {
     {
       icon: Clock,
       title: "24/7 Availability",
-      description: "Tradie is always available to help, day or night, weekends and holidays"
+      description: "Campus Assistant is always available to help, day or night, weekends and holidays"
     },
     {
       icon: Zap,
@@ -52,7 +52,7 @@ export const AiAssistantSection = () => {
             viewport={{ once: true }}
           >
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-white">
-              Meet <span className="bg-purple-600 px-4 sm:px-5 py-1 sm:py-1.5 rounded-xl inline-block my-1 text-lg sm:text-xl lg:text-2xl">Tradie</span>
+              Meet <span className="bg-purple-600 px-4 sm:px-5 py-1 sm:py-1.5 rounded-xl inline-block my-1 text-lg sm:text-xl lg:text-2xl">Campus Assistant</span>
             </h2>
             <p className="text-white/80 max-w-2xl mx-auto">
               Your AI assistant that provides instant help and guidance, so you never have to wait for customer service
@@ -74,7 +74,7 @@ export const AiAssistantSection = () => {
                 <Bot className="w-6 h-6 text-white" /> {/* Changed Robot to Bot */}
               </div>
               <div>
-                <h3 className="font-medium text-white">Tradie</h3>
+                <h3 className="font-medium text-white">Campus Assistant</h3>
                 <p className="text-xs text-white/60">AI Assistant • Always Online</p>
               </div>
               <div className="ml-auto flex items-center">
@@ -91,7 +91,7 @@ export const AiAssistantSection = () => {
                     <Bot className="w-3 h-3 sm:w-4 sm:h-4 text-white" /> {/* Changed Robot to Bot */}
                   </div>
                   <div className="bg-purple-900/30 rounded-lg rounded-tl-none p-2 sm:p-3 max-w-[85%]">
-                    <p className="text-white text-sm sm:text-base">Hi there! I'm Tradie, your personal AI assistant for Tradezy. How can I help you today?</p>
+                    <p className="text-white text-sm sm:text-base">Hi there! I'm Campus Assistant, your personal AI assistant for Campus Deal. How can I help you today?</p>
                   </div>
                 </div>
                 
@@ -193,7 +193,7 @@ export const AiAssistantSection = () => {
               transition={{ duration: 0.5, delay: 0.6 }}
             >
               <p className="text-white/70 italic">
-                "Tradie uses advanced AI to understand your needs and provide relevant assistance for all your campus trading activities."
+                "Campus Assistant uses advanced AI to understand your needs and provide relevant assistance for all your campus trading activities."
               </p>
             </motion.div>
           </motion.div>

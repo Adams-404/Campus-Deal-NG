@@ -5,7 +5,7 @@ import { Star, Quote } from "lucide-react";
 export const TestimonialsSection = () => {
   const testimonials = [
     {
-      quote: "Tradezy has made buying and selling textbooks so much easier! The verification process makes me feel safe.",
+      quote: "Campus Deal has made buying and selling textbooks so much easier! The verification process makes me feel safe.",
       author: "Aisha Muhammad.",
       role: "Computer Science Student",
       avatar: "/lovable-uploads/3fdfaed5-4b18-4048-93dd-bea2e609ff26.png"

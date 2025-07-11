@@ -16,7 +16,7 @@ export const AppMockupSection = () => {
 
 
           <p className="text-white/80 max-w-2xl mx-auto">
-            Access Tradezy on any device. Our responsive design ensures a seamless experience whether you're on mobile or desktop.
+            Access Campus Deal on any device. Our responsive design ensures a seamless experience whether you're on mobile or desktop.
           </p>
         </div>
         
@@ -36,7 +36,7 @@ export const AppMockupSection = () => {
               <div className="w-full h-full bg-blue-950 rounded-lg overflow-hidden">
                 <img 
                   src={desktopScreen} 
-                  alt="Tradezy desktop interface" 
+                  alt="Campus Deal desktop interface" 
                   className="w-full h-full object-cover object-top"
                   fetchPriority="high" 
                   decoding="async"
@@ -72,7 +72,7 @@ export const AppMockupSection = () => {
                 <div className="w-full h-full bg-blue-950 rounded-3xl overflow-hidden">
                   <img 
                   src={mobileScreen} 
-                  alt="Tradezy mobile interface" 
+                  alt="Campus Deal mobile interface" 
                   className="w-full h-full object-cover object-center"
                   fetchPriority="high"
                   decoding="async"
