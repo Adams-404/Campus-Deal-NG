@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from './ui/button';
-import { X, Download, Smartphone } from 'lucide-react';
+import { X, Download } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -28,7 +28,10 @@ const PWAInstallPrompt: React.FC = () => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      setShowInstallPrompt(true);
+      // Add a small delay before showing the prompt
+      setTimeout(() => {
+        setShowInstallPrompt(true);
+      }, 2000); // 2 second delay
     };
 
     // Listen for the appinstalled event
@@ -88,12 +91,10 @@ const PWAInstallPrompt: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 max-w-sm mx-auto backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
+    <div className="fixed top-4 left-4 right-4 z-50 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 max-w-sm mx-auto backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 animate-in slide-in-from-top-2 duration-300">
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
-          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-            <Smartphone className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          </div>
+          <img src="/logo.png" alt="Campus Deal" className="w-8 h-8" />
         </div>
         
         <div className="flex-1 min-w-0">
@@ -101,7 +102,7 @@ const PWAInstallPrompt: React.FC = () => {
             Install Campus Deal
           </h3>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-            Get the full app experience with offline access and quick launch
+            Get the full app experience and quick launch
           </p>
           
           <div className="flex gap-2 mt-3">
