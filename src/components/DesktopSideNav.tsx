@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -104,6 +104,7 @@ export const DesktopSideNav = () => {
     { icon: Home, label: "Home", href: "/home" },
     { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
     { icon: Heart, label: "Saved", href: "/saved" },
+    { icon: Wallet, label: "Wallet", href: "/wallet", desktopOnly: true },
     { icon: User, label: "Profile", href: "/profile" },
     { icon: Truck, label: "Delivery", href: "/delivery", desktopOnly: true },
     { icon: Settings, label: "Settings", href: "/settings" },

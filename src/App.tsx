@@ -35,6 +35,7 @@ import AdminRoute from "./components/AdminRoute";
 import Admin from "./pages/Admin";
 import MyListings from "./pages/MyListings";
 import UserProfile from "./pages/UserProfile";
+import Wallet from "./pages/Wallet";
 import { SearchProvider } from "./contexts/SearchContext";
 import NotificationsPage from "./pages/NotificationsPage";
 import CategoryPage from "./pages/CategoryPage";
@@ -236,6 +237,7 @@ const AnimatedRoutes = () => {
               <Route path="/messages/:conversationId" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/user/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+              <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute allowGuest><LazySettings /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><LazySavedItems /></ProtectedRoute>} />
               <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
