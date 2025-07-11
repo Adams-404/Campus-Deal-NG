@@ -8,8 +8,6 @@ self.addEventListener('install', (event) => {
       .then((cache) => {
         console.log('Opened cache');
         return cache.addAll([
-          '/',
-          '/index.html',
           '/logo.png',
           '/manifest.json'
         ]);
@@ -17,13 +15,19 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Fetch event - serve from cache if available
+// Fetch event - network first, fallback to cache
 self.addEventListener('fetch', (event) => {
+  // Skip caching for HTML and JS files to avoid loading issues
+  if (event.request.url.includes('.html') || 
+      event.request.url.includes('.js') || 
+      event.request.url.includes('.css')) {
+    return;
+  }
+  
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
+    fetch(event.request)
+      .catch(() => {
+        return caches.match(event.request);
       })
   );
 });

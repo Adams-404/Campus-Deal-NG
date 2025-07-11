@@ -27,13 +27,18 @@ const PWAInstallPrompt: React.FC = () => {
   useEffect(() => {
     // Register service worker manually
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then((registration) => {
-          console.log('SW registered: ', registration);
-        })
-        .catch((registrationError) => {
-          console.log('SW registration failed: ', registrationError);
-        });
+      // Clear old service workers first to avoid conflicts
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (let registration of registrations) {
+          registration.unregister();
+        }
+      }).then(() => {
+        return navigator.serviceWorker.register('/sw.js');
+      }).then((registration) => {
+        console.log('SW registered: ', registration);
+      }).catch((registrationError) => {
+        console.log('SW registration failed: ', registrationError);
+      });
     }
 
     // Check if app is already installed
@@ -91,13 +96,11 @@ const PWAInstallPrompt: React.FC = () => {
     localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
   };
 
-  // Touch/Swipe handlers
+  // Touch/Swipe handlers - only left/right
   const handleTouchStart = (e: React.TouchEvent) => {
     const touch = e.touches[0];
     startX.current = touch.clientX;
-    startY.current = touch.clientY;
     currentX.current = touch.clientX;
-    currentY.current = touch.clientY;
     setIsDragging(true);
   };
 
@@ -106,40 +109,33 @@ const PWAInstallPrompt: React.FC = () => {
     
     const touch = e.touches[0];
     const deltaX = touch.clientX - startX.current;
-    const deltaY = touch.clientY - startY.current;
     
+    // Only allow horizontal movement
     setTranslateX(deltaX);
-    setTranslateY(deltaY);
     
     currentX.current = touch.clientX;
-    currentY.current = touch.clientY;
   };
 
   const handleTouchEnd = () => {
     if (!isDragging) return;
     
     const deltaX = currentX.current - startX.current;
-    const deltaY = currentY.current - startY.current;
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     
-    // If swiped more than 100px in any direction, dismiss
-    if (distance > 100) {
+    // If swiped more than 80px left or right, dismiss
+    if (Math.abs(deltaX) > 80) {
       handleDismiss();
     } else {
       // Reset position
       setTranslateX(0);
-      setTranslateY(0);
     }
     
     setIsDragging(false);
   };
 
-  // Mouse drag handlers for desktop
+  // Mouse drag handlers for desktop - only left/right
   const handleMouseDown = (e: React.MouseEvent) => {
     startX.current = e.clientX;
-    startY.current = e.clientY;
     currentX.current = e.clientX;
-    currentY.current = e.clientY;
     setIsDragging(true);
   };
 
@@ -147,29 +143,24 @@ const PWAInstallPrompt: React.FC = () => {
     if (!isDragging) return;
     
     const deltaX = e.clientX - startX.current;
-    const deltaY = e.clientY - startY.current;
     
+    // Only allow horizontal movement
     setTranslateX(deltaX);
-    setTranslateY(deltaY);
     
     currentX.current = e.clientX;
-    currentY.current = e.clientY;
   };
 
   const handleMouseUp = () => {
     if (!isDragging) return;
     
     const deltaX = currentX.current - startX.current;
-    const deltaY = currentY.current - startY.current;
-    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     
-    // If dragged more than 100px in any direction, dismiss
-    if (distance > 100) {
+    // If dragged more than 80px left or right, dismiss
+    if (Math.abs(deltaX) > 80) {
       handleDismiss();
     } else {
       // Reset position
       setTranslateX(0);
-      setTranslateY(0);
     }
     
     setIsDragging(false);
@@ -200,7 +191,7 @@ const PWAInstallPrompt: React.FC = () => {
         isDragging ? 'transition-none' : 'transition-transform duration-200'
       }`}
       style={{
-        transform: `translate(${translateX}px, ${translateY}px)`,
+        transform: `translateX(${translateX}px)`,
         opacity: isDragging ? 0.8 : 1
       }}
       onTouchStart={handleTouchStart}
@@ -241,15 +232,6 @@ const PWAInstallPrompt: React.FC = () => {
             >
               <X className="w-4 h-4" />
             </Button>
-          </div>
-          
-          {/* Swipe indicator */}
-          <div className="flex justify-center mt-2">
-            <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-              <span>←</span>
-              <span>Swipe to dismiss</span>
-              <span>→</span>
-            </div>
           </div>
         </div>
       </div>
