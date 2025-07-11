@@ -14,14 +14,15 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' &&
     componentTagger(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}']
-      },
-      includeAssets: ['logo.png'],
-      manifest: false // Use the external manifest.json instead
-    }),
+    // Temporarily disabled PWA plugin to fix mobile loading issues
+    // VitePWA({
+    //   registerType: 'autoUpdate',
+    //   workbox: {
+    //     globPatterns: ['**/*.{js,css,html,ico,png,svg}']
+    //   },
+    //   includeAssets: ['logo.png'],
+    //   manifest: false // Use the external manifest.json instead
+    // }),
   ].filter(Boolean),
   resolve: {
     alias: {
