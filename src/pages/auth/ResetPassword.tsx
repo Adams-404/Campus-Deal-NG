@@ -52,17 +52,30 @@ const ResetPassword = () => {
     }
   };
 
-  // Check if this is a valid password reset link
+  // Handle password reset session
   useEffect(() => {
-    const checkSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      if (error || !data.session) {
-        toast.error("Invalid or expired password reset link");
-        navigate("/auth/forgot-password");
-      }
+    const handleAuthStateChange = () => {
+      supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          // User clicked the password reset link, they should be able to reset password
+          return;
+        }
+        
+        if (event === 'SIGNED_IN' && session) {
+          // User is signed in, they can reset password
+          return;
+        }
+        
+        // For any other case, check if there's a valid session
+        const { data } = await supabase.auth.getSession();
+        if (!data.session) {
+          toast.error("Invalid or expired password reset link");
+          navigate("/auth/forgot-password");
+        }
+      });
     };
 
-    checkSession();
+    handleAuthStateChange();
   }, [navigate]);
 
   if (isSuccess) {
