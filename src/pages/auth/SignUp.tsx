@@ -40,6 +40,21 @@ const SignUp = () => {
     setIsLoading(true);
 
     try {
+      // First, check if a user with this email already exists
+      const { data: existingUsers, error: fetchError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email);
+
+      if (fetchError) throw fetchError;
+
+      if (existingUsers && existingUsers.length > 0) {
+        // User already exists, redirect to login with email pre-filled
+        toast.info('An account with this email already exists. Please sign in instead.');
+        navigate(`/auth/signin?email=${encodeURIComponent(email)}`);
+        return;
+      }
+
       // Include referral code in user metadata if provided
       const userMetadata: { referral_code?: string } = {};
       if (referralCode.trim()) {
