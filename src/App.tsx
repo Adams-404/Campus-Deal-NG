@@ -28,6 +28,8 @@ import { NotificationProvider } from "./contexts/NotificationContext";
 import AuthLayout from "./components/AuthLayout";
 import SignIn from "./pages/auth/SignIn";
 import SignUp from "./pages/auth/SignUp";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import EmailVerification from "./pages/auth/EmailVerification";
 import EmailConfirmed from "./pages/auth/EmailConfirmed";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -220,6 +222,8 @@ const AnimatedRoutes = () => {
                 <Route index element={<SignIn />} />
                 <Route path="signin" element={<SignIn />} />
                 <Route path="signup" element={<SignUp />} />
+                <Route path="forgot-password" element={<ForgotPassword />} />
+                <Route path="reset-password" element={<ResetPassword />} />
               </Route>
               <Route path="/email-verification" element={<EmailVerification />} />
               <Route path="/email-confirmed" element={<EmailConfirmed />} />
