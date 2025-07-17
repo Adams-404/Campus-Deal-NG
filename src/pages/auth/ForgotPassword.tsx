@@ -22,6 +22,8 @@ const ForgotPassword = () => {
       return;
     }
 
+    if (isLoading) return; // Prevent double submission
+
     setIsLoading(true);
 
     try {

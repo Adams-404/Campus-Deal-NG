@@ -71,6 +71,7 @@ const queryClient = new QueryClient({
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -80,8 +81,9 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     };
     checkUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      setIsPasswordRecovery(event === 'PASSWORD_RECOVERY');
     });
 
     return () => subscription.unsubscribe();
@@ -95,7 +97,8 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (user) {
+  // Don't redirect if user is in password recovery mode
+  if (user && !isPasswordRecovery) {
     return <Navigate to="/home" replace />;
   }
 
