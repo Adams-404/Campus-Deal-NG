@@ -118,6 +118,8 @@ const AnimatedRoutes = () => {
     "/auth", 
     "/auth/signin", 
     "/auth/signup", 
+    "/auth/forgot-password",
+    "/auth/reset-password",
     "/email-verification",
     "/email-confirmed",
     "/admin", 
