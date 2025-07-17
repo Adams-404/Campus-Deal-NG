@@ -54,16 +54,25 @@ const ResetPassword = () => {
 
   // Handle password reset session
   useEffect(() => {
-    const checkSession = async () => {
+    const checkAndHandleSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // If no session at all, redirect to forgot password
-      if (!session) {
+      // Check URL for password reset indicators
+      const urlParams = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const isPasswordReset = hashParams.get('type') === 'recovery' || 
+                              urlParams.get('type') === 'recovery' ||
+                              window.location.hash.includes('access_token');
+      
+      // If no session and no reset indicators, redirect to forgot password
+      if (!session && !isPasswordReset) {
         toast.error("Invalid or expired password reset link");
         navigate("/auth/forgot-password");
         return;
       }
     };
+
+    checkAndHandleSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'PASSWORD_RECOVERY') {
@@ -76,8 +85,6 @@ const ResetPassword = () => {
         navigate("/auth/forgot-password");
       }
     });
-
-    checkSession();
 
     return () => subscription.unsubscribe();
   }, [navigate]);

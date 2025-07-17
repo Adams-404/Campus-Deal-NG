@@ -71,7 +71,7 @@ const queryClient = new QueryClient({
 const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const [isPasswordRecovery, setIsPasswordRecovery] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -83,7 +83,6 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      setIsPasswordRecovery(event === 'PASSWORD_RECOVERY');
     });
 
     return () => subscription.unsubscribe();
@@ -97,8 +96,14 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Don't redirect if user is in password recovery mode
-  if (user && !isPasswordRecovery) {
+  // Check if this is a password reset link by looking at URL hash or current path
+  const isPasswordResetFlow = location.pathname === '/auth/reset-password' || 
+                              location.hash.includes('type=recovery') || 
+                              location.hash.includes('access_token') ||
+                              window.location.hash.includes('type=recovery');
+
+  // Don't redirect if user is on password reset flow
+  if (user && !isPasswordResetFlow) {
     return <Navigate to="/home" replace />;
   }
 
