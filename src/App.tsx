@@ -180,7 +180,8 @@ const AnimatedRoutes = () => {
   );
 
   // Determine if we should show the desktop sidenav
-  const shouldShowSideNav = user && deviceType !== 'mobile';
+  const isAuthPage = location.pathname.startsWith('/auth') || location.pathname === '/email-verification' || location.pathname === '/email-confirmed';
+  const shouldShowSideNav = user && deviceType !== 'mobile' && !isAuthPage;
   
   // Determine if we should show the header
   const shouldShowNavbar = (path: string) => {
