@@ -2,6 +2,7 @@ import type React from "react"
 import { 
   User,
   Bell,
+  Wallet,
   Utensils,
   Shirt,
   Heart,
@@ -309,6 +310,19 @@ export const Navbar = () => {
               <div className="flex items-center gap-2">
                 {user ? (
                   <>
+                    {/* Wallet Icon - Desktop Only */}
+                    {!isMobile && (
+                      <Link to="/wallet">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
+                        >
+                          <Wallet className="h-4 w-4 text-primary" />
+                        </Button>
+                      </Link>
+                    )}
+
                     {/* Notification Icon */}
                     <Link to="/notifications">
                       <div className="relative">

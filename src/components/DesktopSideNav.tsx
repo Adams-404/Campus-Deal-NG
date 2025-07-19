@@ -104,7 +104,6 @@ export const DesktopSideNav = () => {
     { icon: Home, label: "Home", href: "/home" },
     { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
     { icon: Heart, label: "Saved", href: "/saved" },
-    { icon: Wallet, label: "Wallet", href: "/wallet", desktopOnly: true },
     { icon: User, label: "Profile", href: "/profile" },
     { icon: Truck, label: "Delivery", href: "/delivery", desktopOnly: true },
     { icon: Settings, label: "Settings", href: "/settings" },

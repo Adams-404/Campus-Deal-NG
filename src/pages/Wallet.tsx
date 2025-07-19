@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Wallet as WalletIcon, CreditCard, DollarSign, TrendingUp, Lock, ArrowRight, Sparkles, Zap, Shield, Gift, Star, Users, GraduationCap, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Wallet as WalletIcon, CreditCard, DollarSign, TrendingUp, Lock, ArrowRight, Sparkles, Zap, Shield, Gift, Star, Users, GraduationCap, CheckCircle, ArrowLeft } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -20,9 +21,14 @@ interface WalletFeature {
 
 export default function Wallet() {
   const { theme } = useTheme();
+  const navigate = useNavigate();
   const [balance, setBalance] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFeature, setSelectedFeature] = useState<string | null>(null);
+
+  const handleBack = () => {
+    navigate(-1); // Go back to previous page
+  };
 
   // Simulate loading
   useEffect(() => {
@@ -101,9 +107,35 @@ export default function Wallet() {
     );
   }
 
+  const isMobile = window.innerWidth < 1024; // Simple mobile detection
+
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-12">
+    <div className="bg-background min-h-screen">
+      {/* Navbar */}
+      <div className={cn(
+        "fixed top-0 z-50 backdrop-blur-md transition-all duration-300",
+        theme === 'light'
+          ? isMobile 
+            ? "w-full bg-white/80 border-b border-gray-200" 
+            : "left-[300px] right-0 bg-white/80 border-b border-gray-200"
+          : isMobile 
+            ? "w-full bg-secondary/80 border-b border-white/10" 
+            : "left-[300px] right-0 bg-black/80 border-b border-white/10"
+      )}>
+        <div className="h-16 flex items-center px-4 sm:px-6">
+          <Button
+            variant="ghost"
+            onClick={handleBack}
+            className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
+            <span>Back</span>
+          </Button>
+        </div>
+      </div>
+
+      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300">
+        <div className="pt-24 pb-16 space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -127,7 +159,7 @@ export default function Wallet() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <Card className="relative overflow-hidden border-0 shadow-lg bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5">
+          <Card className="relative overflow-hidden border-2 border-primary/20 shadow-lg bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 dark:border-white/10">
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-50" />
             <CardHeader className="relative pb-6">
               <div className="flex items-center justify-between">
@@ -184,10 +216,10 @@ export default function Wallet() {
                 className="cursor-pointer group"
               >
                 <Card className={cn(
-                  "relative overflow-hidden transition-all duration-300 border-0 shadow-sm hover:shadow-md",
+                  "relative overflow-hidden transition-all duration-300 border-2 shadow-sm hover:shadow-md",
                   feature.status === 'available' 
-                    ? "bg-gradient-to-br from-primary/5 to-primary/10" 
-                    : "bg-card/50"
+                    ? "bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 dark:border-white/10" 
+                    : "bg-card/50 border-muted/30 dark:border-white/5"
                 )}>
                   {feature.status !== 'available' && (
                     <motion.div
@@ -271,7 +303,7 @@ export default function Wallet() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border border-primary/20 p-8"
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-2 border-primary/20 p-6 sm:p-8 mt-4"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-30" />
           <div className="relative text-center space-y-6">
@@ -313,7 +345,8 @@ export default function Wallet() {
             </div>
           </div>
         </motion.div>
-      </div>
+        </div>
+      </main>
     </div>
   );
 } 
