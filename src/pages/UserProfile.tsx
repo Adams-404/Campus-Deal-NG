@@ -85,22 +85,28 @@ const getColorByIndex = (index: number) => {
   return colors[index % colors.length]
 }
 
-// Header component that respects theme colors
+// Header component that matches the Settings page style but keeps back button on all screens
 const ProfileHeader = ({ onBack }: { onBack: () => void }) => {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 dark:border-white/10 light:border-gray-200 py-2 px-4 transition-all duration-200">
-      <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
-        <div className="h-12 flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onBack}
-            className="h-8 w-8 rounded-full dark:bg-primary/10 dark:text-primary dark:hover:bg-primary/20 light:bg-white/90 light:text-[#1078a7] light:hover:bg-black/40 light:hover:backdrop-blur-sm light:border-2 light:border-[#1078a7] light:shadow-sm transition-colors mr-4"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-lg font-semibold text-center flex-1 dark:text-white light:text-gray-800">User Profile</h1>
+    <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 dark:border-white/10 light:border-gray-200 ml-0 lg:ml-[300px] transition-all duration-300">
+      <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <div className="w-10">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onBack}
+              className="text-primary"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+          </div>
+          <h1 className="text-lg font-semibold absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 dark:text-white light:text-gray-800">
+            User Profile
+          </h1>
+          <div className="w-10"></div> {/* Spacer for alignment */}
         </div>
+        <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
       </div>
     </div>
   )
@@ -395,7 +401,7 @@ const UserProfile = () => {
   return (
     <PageTransition>
       <ProfileHeader onBack={() => navigate(-1)} />
-      <div className="container max-w-4xl mx-auto px-4 pb-32 mt-20 dark:text-white light:text-gray-800 flex flex-col items-center">
+      <div className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300 pt-24 pb-32 dark:text-white light:text-gray-800 flex flex-col items-center">
         <Card className="mb-8 overflow-hidden border dark:border-primary/30 light:border-[#1078a7]/30 shadow-sm rounded-xl dark:bg-gray-900 light:bg-white">
           <CardHeader className="p-6">
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
