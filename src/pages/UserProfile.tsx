@@ -402,83 +402,81 @@ const UserProfile = () => {
     <PageTransition>
       <ProfileHeader onBack={() => navigate(-1)} />
       <div className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300 pt-24 pb-32 dark:text-white light:text-gray-800 flex flex-col items-center">
-        <Card className="mb-8 overflow-hidden border dark:border-primary/30 light:border-[#1078a7]/30 shadow-sm rounded-xl dark:bg-gray-900 light:bg-white">
-          <CardHeader className="p-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-              <Avatar className="h-24 w-24 ring-2 dark:ring-primary/50 light:ring-[#1078a7] dark:ring-offset-gray-950 light:ring-offset-white ring-offset-2">
-                <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback className="text-2xl dark:bg-primary/10 light:bg-[#1078a7]/10 dark:text-primary light:text-[#1078a7]">
-                  {profile.first_name?.[0] || ""}
-                  {profile.last_name?.[0] || ""}
-                </AvatarFallback>
-              </Avatar>
+        <div className="w-full mb-8">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6">
+            <Avatar className="h-24 w-24 ring-2 dark:ring-primary/50 light:ring-[#1078a7] dark:ring-offset-gray-950 light:ring-offset-white ring-offset-2">
+              <AvatarImage src={profile.avatar_url || undefined} />
+              <AvatarFallback className="text-2xl dark:bg-primary/10 light:bg-[#1078a7]/10 dark:text-primary light:text-[#1078a7]">
+                {profile.first_name?.[0] || ""}
+                {profile.last_name?.[0] || ""}
+              </AvatarFallback>
+            </Avatar>
 
-              <div className="flex-1 text-center sm:text-left">
-                <div className="flex flex-col items-center sm:items-start gap-2 mb-2">
-                  <CardTitle className="text-2xl font-medium dark:text-white light:text-gray-800">{fullName || "Anonymous User"}</CardTitle>
+            <div className="flex-1 text-center sm:text-left">
+              <div className="flex flex-col items-center sm:items-start gap-2 mb-2">
+                <h2 className="text-2xl font-medium dark:text-white light:text-gray-800">{fullName || "Anonymous User"}</h2>
 
-                  <Badge
-                    variant={statusBadgeProps.variant}
-                    className={`${statusBadgeProps.className} px-2 py-0.5 mx-auto sm:mx-0`}
-                  >
-                    {statusBadgeProps.icon}
-                    {statusBadgeProps.label}
-                  </Badge>
-                </div>
+                <Badge
+                  variant={statusBadgeProps.variant}
+                  className={`${statusBadgeProps.className} px-2 py-0.5 mx-auto sm:mx-0`}
+                >
+                  {statusBadgeProps.icon}
+                  {statusBadgeProps.label}
+                </Badge>
+              </div>
 
-                <CardDescription className="dark:text-gray-400 light:text-gray-600">
-                  <div className="flex items-center justify-center sm:justify-start gap-1.5">
-                    <Calendar className="h-3.5 w-3.5 dark:text-primary light:text-[#1078a7]" />
-                    <span>
-                      Joined{" "}
-                      {new Date(profile.created_at).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "long",
-                      })}
-                    </span>
-                  </div>
-                </CardDescription>
-
-                <div className="mt-4 flex flex-wrap gap-4 justify-center sm:justify-start">
-                  {profile.address && (
-                    <div className="flex items-center gap-1.5 text-sm dark:text-gray-400 light:text-gray-600">
-                      <MapPin className="h-3.5 w-3.5 flex-shrink-0 dark:text-primary light:text-[#1078a7]" />
-                      <span className="truncate">{profile.address}</span>
-                    </div>
-                  )}
-
-                  {profile.phone && (
-                    <div className="flex items-center gap-1.5 text-sm dark:text-gray-400 light:text-gray-600">
-                      <Phone className="h-3.5 w-3.5 flex-shrink-0 dark:text-primary light:text-[#1078a7]" />
-                      <span>{profile.phone}</span>
-                    </div>
-                  )}
+              <div className="dark:text-gray-400 light:text-gray-600">
+                <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 dark:text-primary light:text-[#1078a7]" />
+                  <span>
+                    Joined{" "}
+                    {new Date(profile.created_at).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "long",
+                    })}
+                  </span>
                 </div>
               </div>
 
-              <div className="flex-shrink-0 flex flex-col gap-2 mt-4 sm:mt-0">
-                {isCurrentUser ? (
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate("/profile")}
-                    className="dark:border-primary/50 dark:text-primary dark:hover:bg-primary/10 light:border-[#1078a7] light:text-[#1078a7] light:hover:bg-[#1078a7]/10"
-                  >
-                    <User className="h-4 w-4 mr-2 dark:text-primary light:text-[#1078a7]" />
-                    Edit Profile
-                  </Button>
-                ) : (
-                  <Button
-                    className="dark:bg-primary dark:hover:bg-primary/90 light:bg-[#1078a7] light:hover:bg-[#1078a7]/90 text-white"
-                    onClick={() => window.open(`https://wa.me/${profile.phone?.replace(/\D/g, "")}`, "_blank")}
-                  >
-                    <WhatsApp className="h-4 w-4 mr-2" />
-                    WhatsApp
-                  </Button>
+              <div className="mt-4 flex flex-wrap gap-4 justify-center sm:justify-start">
+                {profile.address && (
+                  <div className="flex items-center gap-1.5 text-sm dark:text-gray-400 light:text-gray-600">
+                    <MapPin className="h-3.5 w-3.5 flex-shrink-0 dark:text-primary light:text-[#1078a7]" />
+                    <span className="truncate">{profile.address}</span>
+                  </div>
+                )}
+
+                {profile.phone && (
+                  <div className="flex items-center gap-1.5 text-sm dark:text-gray-400 light:text-gray-600">
+                    <Phone className="h-3.5 w-3.5 flex-shrink-0 dark:text-primary light:text-[#1078a7]" />
+                    <span>{profile.phone}</span>
+                  </div>
                 )}
               </div>
             </div>
-          </CardHeader>
-        </Card>
+
+            <div className="flex-shrink-0 flex flex-col gap-2 mt-4 sm:mt-0">
+              {isCurrentUser ? (
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/profile")}
+                  className="dark:border-primary/50 dark:text-primary dark:hover:bg-primary/10 light:border-[#1078a7] light:text-[#1078a7] light:hover:bg-[#1078a7]/10"
+                >
+                  <User className="h-4 w-4 mr-2 dark:text-primary light:text-[#1078a7]" />
+                  Edit Profile
+                </Button>
+              ) : (
+                <Button
+                  className="dark:bg-primary dark:hover:bg-primary/90 light:bg-[#1078a7] light:hover:bg-[#1078a7]/90 text-white"
+                  onClick={() => window.open(`https://wa.me/${profile.phone?.replace(/\D/g, "")}`, "_blank")}
+                >
+                  <WhatsApp className="h-4 w-4 mr-2" />
+                  WhatsApp
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
 
         <Tabs defaultValue="listings" className="space-y-6">
           <TabsList className="w-full sm:w-auto border-b dark:border-primary/30 light:border-[#1078a7]/30 rounded-none p-0 h-auto bg-transparent space-x-8">

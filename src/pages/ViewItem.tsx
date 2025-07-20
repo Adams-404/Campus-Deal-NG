@@ -64,6 +64,8 @@ export default function ViewItem() {
   const [deleteReason, setDeleteReason] = useState("");
   const { hideMessageTips } = useSettings();
   const [showMessageSafetyTips, setShowMessageSafetyTips] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleItemUpdated = async () => {
     if (!id) return;
@@ -114,6 +116,78 @@ export default function ViewItem() {
       toast.error(error.message);
     }
   };
+
+  const checkIfSaved = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('saved_items')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('item_id', id)
+        .maybeSingle();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error checking saved status:', error);
+        return;
+      }
+
+      setIsSaved(!!data);
+    } catch (error) {
+      console.error('Error in checkIfSaved:', error);
+    }
+  };
+
+  const handleSaveItem = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      setIsSaving(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error('Please sign in to save items');
+        return;
+      }
+
+      if (isSaved) {
+        // Remove from saved items
+        const { error } = await supabase
+          .from('saved_items')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('item_id', id);
+
+        if (error) throw error;
+        setIsSaved(false);
+        toast.success('Item removed from saved items');
+      } else {
+        // Add to saved items
+        const { error } = await supabase
+          .from('saved_items')
+          .insert({
+            user_id: user.id,
+            item_id: id
+          });
+
+        if (error) throw error;
+        setIsSaved(true);
+        toast.success('Item saved successfully');
+      }
+    } catch (error: any) {
+      console.error('Error saving item:', error);
+      toast.error(error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      checkIfSaved();
+    }
+  }, [id]);
 
   useEffect(() => {
     const fetchItem = async () => {
@@ -463,9 +537,16 @@ export default function ViewItem() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-10 w-10 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
+                  onClick={handleSaveItem}
+                  disabled={isSaving}
+                  className={cn(
+                    "h-10 w-10 rounded-full transition-all",
+                    isSaved 
+                      ? "bg-red-500/10 text-red-500 hover:bg-red-500/20 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20" 
+                      : "bg-primary/10 text-primary hover:bg-primary/20 dark:bg-primary/10 dark:text-primary dark:hover:bg-primary/20"
+                  )}
                 >
-                  <Heart className="h-5 w-5" />
+                  <Heart className={cn("h-5 w-5", isSaved ? "fill-current" : "")} />
                 </Button>
               </div>
 
