@@ -470,7 +470,26 @@ export default function ViewItem() {
               </div>
 
               <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
+                <div 
+                  className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const sellerId = item.seller_id;
+                    
+                    if (!sellerId) {
+                      return;
+                    }
+                    
+                    const { data: { user } } = await supabase.auth.getUser();
+                    const currentUserId = user?.id;
+            
+                    if (sellerId === currentUserId) {
+                      navigate('/profile');
+                    } else {
+                      navigate(`/user/${sellerId}`);
+                    }
+                  }}
+                >
                   <Avatar className="w-10 h-10">
                     <AvatarImage src={item.seller?.avatar_url} />
                     <AvatarFallback>
