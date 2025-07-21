@@ -176,13 +176,6 @@ export default function Settings() {
           href: "/about",
           iconColor: "text-cyan-500",
           bgColor: "bg-cyan-500/10"
-        },
-        {
-          icon: Share2,
-          label: "Share App",
-          href: "/share",
-          iconColor: "text-orange-500",
-          bgColor: "bg-orange-500/10"
         }
       ]
     }
