@@ -36,7 +36,7 @@ const features = [
 const team = [
   {
     name: "Muhammad Aliyu",
-    role: "Lead Developer & Founder",
+    role: "Founder and CEO",
     image: "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/sign/team/Me.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0ZWFtL01lLnBuZyIsImlhdCI6MTc0MDU3NDcxNSwiZXhwIjoyMDU1OTM0NzE1fQ.Zkrk-GmLhoG1wlNdlk---nj4Q9J-kzN5KognS4VLcgo",
     social: {
       github: "https://github.com/Adams-404",
@@ -46,6 +46,20 @@ const team = [
       facebook: "https://web.facebook.com/muhammad.adamualiyu.311/",
       whatsapp: "09067063781",
       email: "muhammadadamualiyu33@gmail.com"
+    }
+  },
+  {
+    name: "Muhammad Muhammad Tukur",
+    role: "Co-Founder",
+    image: "",
+    social: {
+      github: "#",
+      twitter: "#",
+      linkedin: "#",
+      instagram: "#",
+      facebook: "#",
+      whatsapp: "",
+      email: ""
     }
   }
 ];
@@ -70,7 +84,7 @@ export default function About() {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-lg font-semibold flex-1 text-center">About Tradezy</h1>
+            <h1 className="text-lg font-semibold flex-1 text-center">About Campus Deal</h1>
             <div className="w-9" /> {/* Spacer for centering */}
           </div>
           <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
@@ -87,9 +101,7 @@ export default function About() {
                 <h2 className="text-lg font-semibold">Our Mission</h2>
               </div>
               <p className="text-gray-400">
-                Tradezy aims to create a safe and efficient marketplace for the university
-                community. We're committed to making buying and selling within the campus
-                easy, secure, and sustainable.
+                Campus Deal is the premier marketplace for the university community, connecting students and faculty to buy and sell items in a secure and convenient way. Our platform is designed specifically for campus life, making transactions simple and trustworthy.
               </p>
             </div>
 
@@ -116,7 +128,7 @@ export default function About() {
             <div className="mb-12">
               <div className="flex items-center gap-3 mb-6">
                 <Users className="w-5 h-5 text-cyan-500" />
-                <h2 className="text-lg font-semibold">Meet the Team</h2>
+                <h2 className="text-lg font-semibold">Meet the Founders</h2>
               </div>
               <div className="grid grid-cols-1 gap-6">
                 {team.map((member, index) => (
@@ -130,7 +142,7 @@ export default function About() {
                           <img 
                             src={member.image} 
                             alt={member.name}
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-primary">
@@ -225,7 +237,7 @@ export default function About() {
             {/* Version */}
             <div className="mt-12 text-center text-sm text-gray-400">
               <p>Version 1.0.0</p>
-              <p className="mt-1"> 2025 Tradezy. All rights reserved.</p>
+              <p className="mt-1"> 2025 Campus Deal. All rights reserved.</p>
             </div>
           </div>
         </PageTransition>
