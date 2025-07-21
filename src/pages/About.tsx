@@ -137,12 +137,12 @@ export default function About() {
                     className="bg-secondary/50 rounded-lg border border-white/10 p-6"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="relative w-20 h-20 rounded-full overflow-hidden bg-primary/10">
+                      <div className="relative w-24 h-24 rounded-full overflow-hidden bg-primary/10 flex-shrink-0">
                         {member.image ? (
                           <img 
                             src={member.image} 
                             alt={member.name}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover scale-110"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-primary">
