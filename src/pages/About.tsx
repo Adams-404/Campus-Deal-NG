@@ -37,7 +37,7 @@ const team = [
   {
     name: "Muhammad Aliyu",
     role: "Founder and CEO",
-    image: "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/sign/team/Me.png?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1cmwiOiJ0ZWFtL01lLnBuZyIsImlhdCI6MTc0MDU3NDcxNSwiZXhwIjoyMDU1OTM0NzE1fQ.Zkrk-GmLhoG1wlNdlk---nj4Q9J-kzN5KognS4VLcgo",
+    image: "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/sign/team/Muhammad-Adamu.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9lN2M5ZWEwNS1hZDNhLTQwYjgtODQ0Yy0yODJhYTNhMTVjYTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ0ZWFtL011aGFtbWFkLUFkYW11LnBuZyIsImlhdCI6MTc1MzEzNDI5NCwiZXhwIjo5MTMyNTU4Mjk0fQ.yy8YwgSWm6QW7OLLVMV2_3u4N_AWOko0mSa6Iw4tkF8",
     social: {
       github: "https://github.com/Adams-404",
       twitter: "https://x.com/_Adam_Alee",
@@ -51,7 +51,7 @@ const team = [
   {
     name: "Muhammad Muhammad Tukur",
     role: "Co-Founder",
-    image: "",
+    image: "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/sign/team/MMT.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9lN2M5ZWEwNS1hZDNhLTQwYjgtODQ0Yy0yODJhYTNhMTVjYTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ0ZWFtL01NVC5qcGciLCJpYXQiOjE3NTMxMzQ1NjQsImV4cCI6OTEzMjU1ODU2NH0.Ghn5vdTck_oW-qgLHRXfFcQphxXPVE441RvLwOjJ_CE",
     social: {
       github: "#",
       twitter: "#",
