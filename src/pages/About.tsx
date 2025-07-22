@@ -48,20 +48,20 @@ const team = [
       email: "muhammadadamualiyu33@gmail.com"
     }
   },
-  {
-    name: "Muhammad Muhammad Tukur",
-    role: "Co-Founder",
-    image: "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/sign/team/MMT.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9lN2M5ZWEwNS1hZDNhLTQwYjgtODQ0Yy0yODJhYTNhMTVjYTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ0ZWFtL01NVC5qcGciLCJpYXQiOjE3NTMxMzQ1NjQsImV4cCI6OTEzMjU1ODU2NH0.Ghn5vdTck_oW-qgLHRXfFcQphxXPVE441RvLwOjJ_CE",
-    social: {
-      github: "https://github.com/mmtukut",
-      twitter: "#",
-      linkedin: "https://www.linkedin.com/in/mmtukurofficial/",
-      instagram: "https://www.instagram.com/mmtukurofficial/",
-      facebook: "#",
-      whatsapp: "",
-      email: ""
-    }
-  }
+  // {
+  //   name: "Muhammad Muhammad Tukur",
+  //   role: "Co-Founder",
+  //   image: "https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/sign/team/MMT.jpg?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9lN2M5ZWEwNS1hZDNhLTQwYjgtODQ0Yy0yODJhYTNhMTVjYTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ0ZWFtL01NVC5qcGciLCJpYXQiOjE3NTMxMzQ1NjQsImV4cCI6OTEzMjU1ODU2NH0.Ghn5vdTck_oW-qgLHRXfFcQphxXPVE441RvLwOjJ_CE",
+  //   social: {
+  //     github: "https://github.com/mmtukut",
+  //     twitter: "#",
+  //     linkedin: "https://www.linkedin.com/in/mmtukurofficial/",
+  //     instagram: "https://www.instagram.com/mmtukurofficial/",
+  //     facebook: "#",
+  //     whatsapp: "",
+  //     email: ""
+  //   }
+  // }
 ];
 
 export default function About() {
