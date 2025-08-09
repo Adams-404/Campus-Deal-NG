@@ -1,18 +1,19 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+// Minimal types to avoid @vercel/node types dependency during lint
+type VercelRequest = {
+  method?: string;
+  headers: Record<string, any>;
+  body?: any;
+};
+type VercelResponse = {
+  status: (code: number) => VercelResponse;
+  json: (body: any) => void;
+};
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
 // Environment
-const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
 const FROM_EMAIL = process.env.NOTIFICATIONS_FROM_EMAIL || 'GSU Market <no-reply@example.com>';
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const WEBHOOK_SECRET = process.env.NOTIFICATIONS_WEBHOOK_SECRET || '';
-
-const resend = new Resend(RESEND_API_KEY);
-const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false }
-});
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -42,6 +43,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (record.is_read === true) {
       return res.status(200).json({ ok: true, skipped: 'Already read' });
     }
+
+    // Initialize clients lazily (prevents crashes on misconfigured GET checks)
+    const RESEND_API_KEY = process.env.RESEND_API_KEY || '';
+    const SUPABASE_URL = process.env.SUPABASE_URL || '';
+    const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+    const resend = new Resend(RESEND_API_KEY);
+    const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false }
+    });
 
     // Fetch user email via Admin API
     const userId: string = record.user_id;
