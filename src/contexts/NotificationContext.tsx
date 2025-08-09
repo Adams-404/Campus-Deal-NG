@@ -1,7 +1,8 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+// emailjs removed; using server-side Resend via API route
 
 interface NotificationContextType {
   isEnabled: boolean;
@@ -21,7 +22,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [unreadMessagesByUser, setUnreadMessagesByUser] = useState<Record<string, number>>({});
+  const sentEmailIdsRef = useRef<Set<string>>(new Set());
+
+  const emailEnabled = Boolean(import.meta.env.VITE_ENABLE_NOTIFICATION_EMAILS === 'true');
 
   useEffect(() => {
     // Check if push notifications are supported
@@ -40,11 +45,35 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
+        setUserEmail(user.email ?? null);
       }
     };
 
     getUserId();
   }, []);
+
+  const sendNotificationEmail = async (notification: any) => {
+    if (!emailEnabled || !userEmail) return;
+    const id = notification?.id as string | undefined;
+    if (!id || sentEmailIdsRef.current.has(id)) return;
+    sentEmailIdsRef.current.add(id);
+
+    try {
+      await fetch('/api/send-notification-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: userEmail,
+          subject: notification?.title ?? 'New notification',
+          message: notification?.content ?? '',
+          type: notification?.type ?? 'info',
+          created_at: notification?.created_at ?? new Date().toISOString(),
+        }),
+      });
+    } catch (e) {
+      // Silently ignore email failures in client
+    }
+  };
 
   // Fetch unread notification count
   useEffect(() => {
@@ -80,9 +109,13 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         schema: 'public',
         table: 'notifications',
         filter: `user_id=eq.${userId}`
-      }, () => {
+      }, (payload) => {
         // Refetch the count when notifications change
         fetchUnreadCount();
+        // On INSERT, optionally send email with content
+        if (payload.eventType === 'INSERT' && (payload.new as any)?.is_read === false) {
+          sendNotificationEmail(payload.new);
+        }
       })
       .subscribe();
 
