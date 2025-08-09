@@ -172,7 +172,7 @@ export const Navbar = () => {
         .from("notifications")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
-        .eq("read", false)
+        .eq("is_read", false)
         .then((res: any) => {
           setUnreadNotificationsCount(res?.count || 0)
           return res
@@ -184,6 +184,46 @@ export const Navbar = () => {
     }
 
     fetchUnreadCount()
+  }, [user])
+
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('navbar-notifications')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`
+      }, (payload: any) => {
+        try {
+          if (payload.eventType === 'INSERT') {
+            if (payload?.new && payload.new.is_read === false) {
+              setUnreadNotificationsCount((c) => c + 1);
+            }
+          } else if (payload.eventType === 'UPDATE') {
+            const wasUnread = payload?.old && payload.old.is_read === false;
+            const isUnread = payload?.new && payload.new.is_read === false;
+            if (wasUnread && !isUnread) {
+              setUnreadNotificationsCount((c) => Math.max(0, c - 1));
+            } else if (!wasUnread && isUnread) {
+              setUnreadNotificationsCount((c) => c + 1);
+            }
+          } else if (payload.eventType === 'DELETE') {
+            if (payload?.old && payload.old.is_read === false) {
+              setUnreadNotificationsCount((c) => Math.max(0, c - 1));
+            }
+          }
+        } catch (_) {
+          // no-op
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user])
 
   useEffect(() => {
@@ -349,11 +389,14 @@ export const Navbar = () => {
                           variant="ghost"
                           size="icon"
                           className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
+                          aria-label={unreadNotificationsCount > 0 ? `${unreadNotificationsCount} unread notifications` : 'Notifications'}
                         >
                           <Bell className="h-4 w-4 text-primary" />
                         </Button>
                         {unreadNotificationsCount > 0 && (
-                          <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+                          <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 text-center font-medium pointer-events-none select-none">
+                            {unreadNotificationsCount > 99 ? '99+' : unreadNotificationsCount}
+                          </span>
                         )}
                       </div>
                     </Link>

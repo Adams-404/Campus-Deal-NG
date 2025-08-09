@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Bell, CheckCircle, Info, XCircle, ArrowLeft } from 'lucide-react';
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Bell, CheckCircle, Info, XCircle, ArrowLeft, Headset } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { PageTransition } from '@/components/PageTransition';
 
 interface Notification {
   id: string;
@@ -131,13 +131,13 @@ const NotificationsPage = () => {
   const getIcon = (type: string) => {
     switch (type) {
       case 'success':
-        return <CheckCircle className="h-5 w-5 text-blue-700" />;
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'info':
-        return <Info className="h-5 w-5 text-blue-700" />;
+        return <Info className="h-5 w-5 text-primary" />;
       case 'error':
-        return <XCircle className="h-5 w-5 text-blue-700" />;
+        return <XCircle className="h-5 w-5 text-red-500" />;
       default:
-        return <Bell className="h-5 w-5 text-blue-700" />;
+        return <Bell className="h-5 w-5 text-primary" />;
     }
   };
 
@@ -150,55 +150,70 @@ const NotificationsPage = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-black/60 backdrop-blur-sm border-b border-white/10">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6">
-          <div className="h-16 flex items-center justify-center relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="absolute left-0 h-9 w-9 rounded-full bg-primary/10 text-primary hover:bg-primary/20"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-xl font-semibold">Notifications</h1>
+    <div className="bg-background min-h-screen">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+        <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="w-10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => navigate(-1)}
+                className="text-primary lg:hidden"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </div>
+            <h1 className="text-lg font-semibold absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">Notifications</h1>
+            <div className="w-10 flex justify-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/support')}
+                className="text-[#1078a7] hover:text-[#1078a7]/80 bg-white/90 dark:bg-transparent shadow-sm"
+              >
+                <Headset className="h-6 w-6" />
+              </Button>
+            </div>
           </div>
+          <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
         </div>
       </div>
 
-      <main className="max-w-3xl mx-auto px-4 sm:px-6">
-        <div className="pt-24 pb-32">
-          <ScrollArea className="h-[calc(100vh-180px)]">
-            <div className="divide-y divide-gray-800">
-              {notifications.length > 0 ? (
-                notifications.map((notification) => (
+      <main className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300">
+        <PageTransition>
+          <div className="pt-24 pb-24 space-y-6">
+            {notifications.length > 0 ? (
+              <div className="space-y-3">
+                {notifications.map((notification) => (
                   <div
                     key={notification.id}
-                    className="p-4 hover:bg-gray-900 transition-colors"
+                    className="rounded-lg p-4 lg:bg-background/5 lg:border lg:border-white/10 hover:bg-white/5 transition-colors"
                   >
-                    <div className="flex items-start space-x-3">
+                    <div className="flex items-start gap-3">
                       <div className="mt-1">
                         {getIcon(notification.type)}
                       </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="font-medium text-sm">{notification.title}</p>
-                            <p className="text-sm text-gray-300 mt-1">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate">{notification.title}</p>
+                            <p className="text-sm text-muted-foreground mt-1 break-words leading-relaxed">
                               {notification.content}
                             </p>
                           </div>
                           {!notification.is_read && (
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={() => markAsRead(notification.id)}
-                              className="text-xs text-blue-400 hover:underline focus:outline-none"
+                              className="text-blue-500 hover:text-blue-400 hover:bg-blue-500/10"
                             >
                               Mark as Read
-                            </button>
+                            </Button>
                           )}
                         </div>
-                        <div className="text-xs text-gray-500 mt-2">
+                        <div className="text-xs text-muted-foreground mt-2">
                           {formatDistanceToNow(new Date(notification.created_at), {
                             addSuffix: true,
                           })}
@@ -206,13 +221,19 @@ const NotificationsPage = () => {
                       </div>
                     </div>
                   </div>
-                ))
-              ) : (
-                <div className="p-4 text-center text-gray-500">No notifications</div>
-              )}
-            </div>
-          </ScrollArea>
-        </div>
+                ))}
+              </div>
+            ) : (
+              <div className="py-16 text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-3">
+                  <Bell className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-base font-semibold mb-1">You're all caught up</h3>
+                <p className="text-sm text-muted-foreground">No notifications at the moment</p>
+              </div>
+            )}
+          </div>
+        </PageTransition>
       </main>
     </div>
   );
