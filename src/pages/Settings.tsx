@@ -123,6 +123,13 @@ export default function Settings() {
           bgColor: "bg-blue-500/10"
         },
         {
+          icon: Shield,
+          label: "Change Password",
+          href: "/settings/reset-password",
+          iconColor: "text-orange-500",
+          bgColor: "bg-orange-500/10"
+        },
+        {
           icon: Users,
           label: "Invite Friends",
           href: "/invite-friends",

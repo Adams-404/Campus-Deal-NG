@@ -48,6 +48,7 @@ import LazyViewItem from "./pages/LazyViewItem";
 import LazySettings from "./components/LazySettings";
 import LazySavedItems from "./components/LazySavedItems";
 import LazyInviteFriends from "./components/LazyInviteFriends";
+import SettingsChangePassword from "./pages/SettingsChangePassword";
 import { useDeviceType } from "./hooks/use-mobile";
 import DeliveryCoordinator from "./pages/DeliveryCoordinator";
 import Feedback from "./pages/Feedback";
@@ -254,6 +255,7 @@ const AnimatedRoutes = () => {
               <Route path="/user/:userId" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
               <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
               <Route path="/settings" element={<ProtectedRoute allowGuest><LazySettings /></ProtectedRoute>} />
+              <Route path="/settings/reset-password" element={<ProtectedRoute><SettingsChangePassword /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><LazySavedItems /></ProtectedRoute>} />
               <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
               <Route path="/invite-friends" element={<ProtectedRoute><LazyInviteFriends /></ProtectedRoute>} />

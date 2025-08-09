@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Lock, Loader2, CheckCircle } from "lucide-react";
+import { Lock, Loader2, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { motion } from "framer-motion";
 
 const ResetPassword = () => {
@@ -15,6 +15,8 @@ const ResetPassword = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -142,14 +144,22 @@ const ResetPassword = () => {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                 <Input
                   id="password"
-                  type="password"
+                  type={showNew ? "text" : "password"}
                   placeholder="Enter your new password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 bg-gray-900/50 border-gray-800 focus:border-blue-500/50 focus:ring-blue-500/20 h-11 text-sm w-full"
+                  className="pl-10 pr-10 bg-gray-900/50 border-gray-800 focus:border-blue-500/50 focus:ring-blue-500/20 h-11 text-sm w-full"
                   required
                   minLength={8}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowNew((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                  aria-label={showNew ? "Hide password" : "Show password"}
+                >
+                  {showNew ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
 
@@ -161,14 +171,22 @@ const ResetPassword = () => {
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
                 <Input
                   id="confirmPassword"
-                  type="password"
+                  type={showConfirm ? "text" : "password"}
                   placeholder="Confirm your new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pl-10 bg-gray-900/50 border-gray-800 focus:border-blue-500/50 focus:ring-blue-500/20 h-11 text-sm w-full"
+                  className="pl-10 pr-10 bg-gray-900/50 border-gray-800 focus:border-blue-500/50 focus:ring-blue-500/20 h-11 text-sm w-full"
                   required
                   minLength={8}
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                  aria-label={showConfirm ? "Hide password" : "Show password"}
+                >
+                  {showConfirm ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
 
