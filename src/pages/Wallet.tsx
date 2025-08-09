@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Wallet as WalletIcon, CreditCard, DollarSign, TrendingUp, Lock, ArrowRight, Sparkles, Zap, Shield, Gift, Star, Users, GraduationCap, CheckCircle, ArrowLeft } from "lucide-react";
+import { Wallet as WalletIcon, CreditCard, DollarSign, TrendingUp, Lock, ArrowRight, Sparkles, Zap, Shield, Gift, Star, Users, GraduationCap, CheckCircle, ArrowLeft, Headset } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
+import { PageTransition } from "@/components/PageTransition";
 
 interface WalletFeature {
   id: string;
@@ -111,30 +112,38 @@ export default function Wallet() {
 
   return (
     <div className="bg-background min-h-screen">
-      {/* Navbar */}
-      <div className={cn(
-        "fixed top-0 z-50 backdrop-blur-md transition-all duration-300",
-        theme === 'light'
-          ? isMobile 
-            ? "w-full bg-white/80 border-b border-gray-200" 
-            : "left-[300px] right-0 bg-white/80 border-b border-gray-200"
-          : isMobile 
-            ? "w-full bg-secondary/80 border-b border-white/10" 
-            : "left-[300px] right-0 bg-black/80 border-b border-white/10"
-      )}>
-        <div className="h-16 flex items-center px-4 sm:px-6">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            className="group flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-0.5 transition-transform" />
-            <span>Back</span>
-          </Button>
+      {/* Header - match app aesthetics (like Settings) */}
+      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+        <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="w-10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={handleBack}
+                className="text-primary lg:hidden"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            </div>
+            <h1 className="text-lg font-semibold absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">Wallet</h1>
+            <div className="w-10 flex justify-end">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/support')}
+                className="text-[#1078a7] hover:text-[#1078a7]/80 bg-white/90 dark:bg-transparent shadow-sm"
+              >
+                <Headset className="h-6 w-6" />
+              </Button>
+            </div>
+          </div>
+          <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
         </div>
       </div>
 
-      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300">
+      <main className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300">
+        <PageTransition>
         <div className="pt-24 pb-16 space-y-8">
         {/* Header */}
         <motion.div
@@ -159,28 +168,27 @@ export default function Wallet() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <Card className="relative overflow-hidden border-2 border-primary/20 shadow-lg bg-gradient-to-br from-primary/5 via-primary/10 to-primary/5 dark:border-white/10">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-50" />
+          <Card className="relative overflow-hidden lg:bg-background/5 lg:rounded-xl lg:border lg:border-white/10 lg:shadow-sm">
             <CardHeader className="relative pb-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-1">
-                  <CardTitle className="text-xl font-semibold text-muted-foreground">Available Balance</CardTitle>
+                  <CardTitle className="text-sm font-medium text-gray-600">Available Balance</CardTitle>
                   <div className="text-4xl font-bold text-foreground">
                     ₦{balance.toLocaleString()}
                   </div>
                 </div>
-                <div className="p-4 bg-primary/10 rounded-2xl">
-                  <WalletIcon className="w-8 h-8 text-primary" />
+                <div className="p-3 bg-primary/10 rounded-xl border border-white/10">
+                  <WalletIcon className="w-6 h-6 text-primary" />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="relative pt-0">
               <div className="flex items-center gap-3">
-                <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+                <Badge variant="secondary" className="bg-green-500/10 text-green-500 border-green-500/20">
                   <Shield className="w-3 h-3 mr-1" />
                   Secure
                 </Badge>
-                <Badge variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">
                   <Zap className="w-3 h-3 mr-1" />
                   Instant
                 </Badge>
@@ -216,10 +224,10 @@ export default function Wallet() {
                 className="cursor-pointer group"
               >
                 <Card className={cn(
-                  "relative overflow-hidden transition-all duration-300 border-2 shadow-sm hover:shadow-md",
+                  "relative overflow-hidden transition-all duration-300 lg:bg-background/5 lg:border lg:border-white/10 hover:shadow-sm",
                   feature.status === 'available' 
-                    ? "bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 dark:border-white/10" 
-                    : "bg-card/50 border-muted/30 dark:border-white/5"
+                    ? "" 
+                    : "bg-card/50"
                 )}>
                   {feature.status !== 'available' && (
                     <motion.div
@@ -244,10 +252,9 @@ export default function Wallet() {
                             : "text-muted-foreground"
                         )} />
                       </div>
-                      {feature.status === 'available' && (
+                      {feature.status === 'available' ? (
                         <CheckCircle className="w-5 h-5 text-green-500" />
-                      )}
-                      {feature.status !== 'available' && (
+                      ) : (
                         <Lock className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
@@ -303,9 +310,9 @@ export default function Wallet() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary/5 via-primary/10 to-primary/5 border-2 border-primary/20 p-6 sm:p-8 mt-4"
+          className="relative overflow-hidden rounded-2xl lg:bg-background/5 border lg:border-white/10 p-6 sm:p-8 mt-4"
         >
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-30" />
+          <div className="absolute inset-0 pointer-events-none" />
           <div className="relative text-center space-y-6">
             <motion.div
               animate={{ 
@@ -316,7 +323,7 @@ export default function Wallet() {
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
-              className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium"
+              className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium"
             >
               <Sparkles className="w-4 h-4" />
               <span>Coming Soon</span>
@@ -346,6 +353,7 @@ export default function Wallet() {
           </div>
         </motion.div>
         </div>
+        </PageTransition>
       </main>
     </div>
   );
