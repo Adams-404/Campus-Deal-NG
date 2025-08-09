@@ -17,12 +17,13 @@ import {
   Monitor,
   Pen,
   MoreHorizontal,
-  Filter
+  Filter,
+  LogOut
 } from "lucide-react"
 import { Button } from "./ui/button"
 import { useState, useEffect, useRef } from "react"
 import { cn } from "@/lib/utils"
-import { Link, useLocation } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { useSearch } from "@/contexts/SearchContext"
@@ -43,6 +44,16 @@ import {
 import { Skeleton } from './ui/skeleton'
 import { useDeviceType } from "../hooks/use-mobile"
 import { useTheme } from "../contexts/ThemeContext"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const NavbarSkeleton = () => {
   const deviceType = useDeviceType();
@@ -97,8 +108,11 @@ export const Navbar = () => {
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
   const [isCategoryOpen, setIsCategoryOpen] = useState(false)
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const deviceType = useDeviceType();
   const location = useLocation();
+  const navigate = useNavigate();
   const { theme } = useTheme();
   
   // Only show navbar on home page for desktop view
@@ -154,14 +168,18 @@ export const Navbar = () => {
     const fetchUnreadCount = async () => {
       if (!user) return
 
-      const { count, error } = await supabase
+      const { error } = await (supabase as any)
         .from("notifications")
-        .select("*", { count: "exact", head: true })
+        .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
         .eq("read", false)
+        .then((res: any) => {
+          setUnreadNotificationsCount(res?.count || 0)
+          return res
+        })
 
-      if (!error) {
-        setUnreadNotificationsCount(count || 0)
+      if (error) {
+        // noop
       }
     }
 
@@ -244,6 +262,7 @@ export const Navbar = () => {
   }
   
   return (
+    <>
     <nav className={cn(
       "fixed top-0 z-50 backdrop-blur-md",
       theme === 'light'
@@ -339,26 +358,70 @@ export const Navbar = () => {
                       </div>
                     </Link>
 
-                    {/* Profile Link - only show on mobile, as desktop has this in sidenav */}
+                    {/* Mobile-only Profile Menu (Profile, Wallet, Logout) */}
                     {isMobile && (
-                      <Link to="/profile">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
-                        >
-                          {profile?.avatar_url ? (
-                            <Avatar className="h-7 w-7">
-                              <AvatarImage src={profile.avatar_url} alt="Profile" />
+                      <Popover open={isProfileMenuOpen} onOpenChange={setIsProfileMenuOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8 rounded-full bg-primary/10 border-2 border-primary/20 hover:bg-primary/20"
+                            aria-label="Open user menu"
+                          >
+                            {profile?.avatar_url ? (
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={profile.avatar_url} alt="Profile" />
+                                <AvatarFallback>
+                                  <User className="h-4 w-4 text-primary" />
+                                </AvatarFallback>
+                              </Avatar>
+                            ) : (
+                              <User className="h-4 w-4 text-primary" />
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent side="bottom" align="end" sideOffset={14} className="w-56 p-2 bg-background/95 backdrop-blur-lg border border-white/10 rounded-xl shadow-2xl">
+                          <div className="px-3 py-2 mb-1 flex items-center gap-3 rounded-md bg-secondary/40 border border-white/5">
+                            <Avatar className="h-8 w-8">
+                              {profile?.avatar_url ? (
+                                <AvatarImage src={profile.avatar_url} alt="Profile" />
+                              ) : null}
                               <AvatarFallback>
                                 <User className="h-4 w-4 text-primary" />
                               </AvatarFallback>
                             </Avatar>
-                          ) : (
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium">{profile?.first_name || 'Account'}</div>
+                              <div className="text-xs text-muted-foreground truncate" title={user?.email || ''}>{user?.email}</div>
+                            </div>
+                          </div>
+                          <button
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-primary/10 text-left"
+                            onClick={() => { setIsProfileMenuOpen(false); navigate('/profile'); }}
+                          >
                             <User className="h-4 w-4 text-primary" />
-                          )}
-                        </Button>
-                      </Link>
+                            <span className="text-sm">Profile</span>
+                          </button>
+                          <button
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-primary/10 text-left"
+                            onClick={() => { setIsProfileMenuOpen(false); navigate('/wallet'); }}
+                          >
+                            <Wallet className="h-4 w-4 text-primary" />
+                            <span className="text-sm">Wallet</span>
+                          </button>
+                          <div className="my-1 h-px bg-white/10" />
+                          <button
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-red-500/10 text-left"
+                            onClick={() => {
+                              setIsProfileMenuOpen(false);
+                              setShowLogoutDialog(true);
+                            }}
+                          >
+                            <LogOut className="h-4 w-4 text-red-500" />
+                            <span className="text-sm text-red-500">Logout</span>
+                          </button>
+                        </PopoverContent>
+                      </Popover>
                     )}
                   </>
                 ) : (
@@ -378,5 +441,32 @@ export const Navbar = () => {
           </div>
         </div>
       </nav>
+      <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign out?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will need to sign in again to access your account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-500 hover:bg-red-600"
+              onClick={async () => {
+                try {
+                  await supabase.auth.signOut();
+                } finally {
+                  setShowLogoutDialog(false);
+                  navigate('/auth/signin');
+                }
+              }}
+            >
+              Logout
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
     )
 }
