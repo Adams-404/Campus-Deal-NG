@@ -24,7 +24,10 @@ import {
   ArrowLeft,
   Headphones,
   Headset,
-  Users
+  Users,
+  Lock,
+  LayoutDashboard,
+  FileText
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -123,7 +126,7 @@ export default function Settings() {
           bgColor: "bg-blue-500/10"
         },
         {
-          icon: Shield,
+          icon: Lock,
           label: "Change Password",
           href: "/settings/reset-password",
           iconColor: "text-orange-500",
@@ -137,7 +140,7 @@ export default function Settings() {
           bgColor: "bg-indigo-500/10"
         },
         ...(isAdmin ? [{
-          icon: Shield,
+          icon: LayoutDashboard,
           label: "Admin Dashboard",
           href: "/admin",
           iconColor: "text-purple-500",
@@ -164,7 +167,7 @@ export default function Settings() {
           bgColor: "bg-green-500/10"
         },
         {
-          icon: Shield,
+          icon: FileText,
           label: "Privacy Policy",
           href: "/privacy",
           iconColor: "text-yellow-500",
