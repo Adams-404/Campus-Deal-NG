@@ -11,9 +11,15 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Debug logging
+  console.log('Received headers:', req.headers);
+  console.log('Expected secret:', process.env.NOTIFICATIONS_WEBHOOK_SECRET);
+  console.log('Received secret:', req.headers['x-webhook-secret']);
+
   // Verify webhook secret
   const secret = req.headers['x-webhook-secret'];
   if (secret !== process.env.NOTIFICATIONS_WEBHOOK_SECRET) {
+    console.log('Secret mismatch!');
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
