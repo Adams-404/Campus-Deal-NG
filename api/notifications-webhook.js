@@ -1,21 +1,9 @@
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
 
-// Minimal types for Vercel API routes
-type VercelRequest = {
-  method?: string;
-  headers: Record<string, any>;
-  body?: any;
-};
-
-type VercelResponse = {
-  status: (code: number) => VercelResponse;
-  json: (body: any) => void;
-};
-
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   if (req.method === 'GET') {
     return res.status(200).json({ ok: true, message: 'Notifications webhook is up' });
   }
@@ -38,8 +26,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // Initialize Supabase with service role key
     const supabaseAdmin = createClient(
-      process.env.SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
     // Fetch user email
@@ -53,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Send email via Resend
     try {
       await resend.emails.send({
-        from: process.env.NOTIFICATIONS_FROM_EMAIL!,
+        from: process.env.NOTIFICATIONS_FROM_EMAIL,
         to: toEmail,
         subject: notification.title || 'New Notification',
         html: `<p>${notification.content}</p>`,
@@ -67,5 +55,3 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   return res.status(200).json({ message: 'No action taken' });
 }
-
-
