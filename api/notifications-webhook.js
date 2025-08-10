@@ -103,7 +103,189 @@ export default async function handler(req, res) {
         from: process.env.NOTIFICATIONS_FROM_EMAIL,
         to: toEmail,
         subject: notification.title || 'New Notification',
-        html: `<p>${notification.content}</p>`,
+        html: `
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>CampusDeal Notification</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                margin: 0;
+                padding: 0;
+                background-color: #f8fafc;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background-color: #ffffff;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                overflow: hidden;
+              }
+              .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 32px 24px;
+                text-align: center;
+                color: white;
+              }
+              .logo {
+                font-size: 28px;
+                font-weight: bold;
+                margin-bottom: 8px;
+                letter-spacing: -0.5px;
+              }
+              .tagline {
+                font-size: 14px;
+                opacity: 0.9;
+                font-weight: 300;
+              }
+              .content {
+                padding: 32px 24px;
+              }
+              .notification-title {
+                font-size: 20px;
+                font-weight: 600;
+                color: #1f2937;
+                margin-bottom: 16px;
+                text-align: center;
+              }
+              .notification-message {
+                background-color: #f8fafc;
+                border-left: 4px solid #667eea;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 24px 0;
+                font-size: 16px;
+                line-height: 1.7;
+                color: #374151;
+              }
+              .item-details {
+                background-color: #f0f9ff;
+                border: 1px solid #e0f2fe;
+                border-radius: 8px;
+                padding: 16px;
+                margin: 20px 0;
+              }
+              .item-title {
+                font-weight: 600;
+                color: #0369a1;
+                margin-bottom: 8px;
+              }
+              .reason {
+                background-color: #fef3c7;
+                border: 1px solid #fde68a;
+                border-radius: 6px;
+                padding: 12px;
+                margin: 16px 0;
+                color: #92400e;
+              }
+              .reason-label {
+                font-weight: 600;
+                margin-bottom: 4px;
+              }
+              .footer {
+                background-color: #f8fafc;
+                padding: 24px;
+                text-align: center;
+                border-top: 1px solid #e5e7eb;
+              }
+              .footer-text {
+                font-size: 14px;
+                color: #6b7280;
+                margin-bottom: 16px;
+              }
+              .social-links {
+                margin-top: 16px;
+              }
+              .social-links a {
+                display: inline-block;
+                margin: 0 8px;
+                color: #667eea;
+                text-decoration: none;
+                font-weight: 500;
+              }
+              .cta-button {
+                display: inline-block;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 8px;
+                font-weight: 600;
+                margin: 20px 0;
+                transition: transform 0.2s ease;
+              }
+              .cta-button:hover {
+                transform: translateY(-1px);
+              }
+              .timestamp {
+                text-align: center;
+                font-size: 12px;
+                color: #9ca3af;
+                margin-top: 16px;
+                font-style: italic;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <div class="logo">🏪 CampusDeal</div>
+                <div class="tagline">Your Campus Marketplace</div>
+              </div>
+              
+              <div class="content">
+                <div class="notification-title">${notification.title}</div>
+                
+                <div class="notification-message">
+                  ${notification.content}
+                </div>
+                
+                ${notification.content.includes('Reason:') ? `
+                  <div class="reason">
+                    <div class="reason-label">📝 Admin Note:</div>
+                    <div>${notification.content.split('Reason:')[1]}</div>
+                  </div>
+                ` : ''}
+                
+                <div style="text-align: center;">
+                  <a href="https://campusdeal.ng" class="cta-button">
+                    🏠 Visit CampusDeal
+                  </a>
+                </div>
+                
+                <div class="timestamp">
+                  Sent on ${new Date().toLocaleString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </div>
+              </div>
+              
+              <div class="footer">
+                <div class="footer-text">
+                  This is an automated notification from CampusDeal.<br>
+                  Please do not reply to this email.
+                </div>
+                <div class="social-links">
+                  <a href="https://campusdeal.ng">Website</a> |
+                  <a href="mailto:support@campusdeal.ng">Support</a> |
+                  <a href="https://campusdeal.ng/help">Help Center</a>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
       });
       return res.status(200).json({ ok: true });
     } catch (error) {
