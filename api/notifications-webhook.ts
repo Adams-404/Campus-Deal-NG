@@ -1,3 +1,6 @@
+import { Resend } from 'resend';
+import { createClient } from '@supabase/supabase-js';
+
 // Minimal types for Vercel API routes
 type VercelRequest = {
   method?: string;
@@ -9,9 +12,6 @@ type VercelResponse = {
   status: (code: number) => VercelResponse;
   json: (body: any) => void;
 };
-
-import { Resend } from 'resend';
-import { createClient } from '@supabase/supabase-js';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
