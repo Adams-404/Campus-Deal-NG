@@ -295,8 +295,20 @@ export default function ViewItem() {
           return;
         }
 
-        // Note: Notification is handled by PostsTab.tsx to prevent duplicates
-        toast.success('Item deleted successfully');
+        // Create notification with delete reason (this is the one we want to keep)
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: item.seller_id,
+            type: 'admin_action',
+            title: 'Your listing has been removed',
+            content: `Your listing "${item.title}" has been completely removed by an administrator. Reason: ${deleteReason}`,
+            metadata: { item_id: id, item_title: item.title },
+            created_at: new Date().toISOString(),
+            is_read: false,
+          });
+
+        toast.success('Item deleted successfully and seller notified');
         navigate('/admin');
         return;
       }

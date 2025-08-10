@@ -36,25 +36,57 @@ export default async function handler(req, res) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    // Check for duplicate notifications to prevent spam
+    // Smart deduplication: Keep notifications WITH reason, remove duplicates WITHOUT reason
     const { data: existingNotifications, error: duplicateCheckError } = await supabaseAdmin
       .from('notifications')
-      .select('id, created_at')
+      .select('id, content, created_at')
       .eq('user_id', userId)
       .eq('title', notification.title)
       .eq('type', notification.type)
       .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // Last 5 minutes
-      .limit(1);
+      .order('created_at', { ascending: false });
 
     if (duplicateCheckError) {
       console.error('Error checking for duplicates:', duplicateCheckError);
       return res.status(500).json({ error: 'Failed to check for duplicates' });
     }
 
-    // If a similar notification was created in the last 5 minutes, skip sending email
-    if (existingNotifications && existingNotifications.length > 0) {
-      console.log('Duplicate notification detected, skipping email send');
-      return res.status(200).json({ message: 'Duplicate notification, email skipped' });
+    // If we have multiple notifications, keep the one WITH reason and remove duplicates WITHOUT reason
+    if (existingNotifications && existingNotifications.length > 1) {
+      console.log('Multiple notifications detected, cleaning up duplicates...');
+      
+      // Find the notification WITH reason
+      const notificationWithReason = existingNotifications.find(n => 
+        n.content && n.content.includes('Reason:')
+      );
+      
+      // Find notifications WITHOUT reason (duplicates to remove)
+      const duplicatesWithoutReason = existingNotifications.filter(n => 
+        !n.content || !n.content.includes('Reason:')
+      );
+      
+      // Remove duplicate notifications WITHOUT reason
+      if (duplicatesWithoutReason.length > 0) {
+        const duplicateIds = duplicatesWithoutReason.map(n => n.id);
+        const { error: deleteError } = await supabaseAdmin
+          .from('notifications')
+          .delete()
+          .in('id', duplicateIds);
+          
+        if (deleteError) {
+          console.error('Error removing duplicate notifications:', deleteError);
+        } else {
+          console.log(`Removed ${duplicatesWithoutReason.length} duplicate notifications`);
+        }
+      }
+      
+      // Only send email if this is the notification WITH reason
+      if (notification.content && notification.content.includes('Reason:')) {
+        console.log('Sending email for notification WITH reason');
+      } else {
+        console.log('Skipping email for notification WITHOUT reason');
+        return res.status(200).json({ message: 'Duplicate notification without reason, email skipped' });
+      }
     }
 
     // Fetch user email
