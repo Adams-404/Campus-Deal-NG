@@ -20,15 +20,333 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const html = `
-      <div style="font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; line-height: 1.5; color: #0A0A0A;">
-        <h2 style="margin: 0 0 12px;">You have a new notification</h2>
-        <p style="margin: 0 0 4px;"><strong>Subject:</strong> ${subject}</p>
-        ${type ? `<p style="margin: 0 0 4px;"><strong>Type:</strong> ${type}</p>` : ''}
-        ${created_at ? `<p style="margin: 0 0 12px;"><strong>Time:</strong> ${new Date(created_at).toLocaleString()}</p>` : ''}
-        <div style="padding: 12px; background: #F6F9FC; border-radius: 8px;">
-          ${message ? message.replace(/\n/g, '<br/>') : ''}
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Campus Deal Notification</title>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #1f2937;
+            background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+          }
+          
+          .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            border: 1px solid rgba(30, 174, 219, 0.1);
+          }
+          
+          .header {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #1e40af 100%);
+            padding: 40px 32px;
+            text-align: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+          }
+          
+          .logo-container {
+            position: relative;
+            z-index: 1;
+            margin-bottom: 16px;
+          }
+          
+          .logo {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+          }
+          
+          .brand-name {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: -0.025em;
+            background: linear-gradient(135deg, #ffffff, #e0f2fe);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+          }
+          
+          .tagline {
+            font-size: 16px;
+            font-weight: 400;
+            opacity: 0.9;
+            color: #e0f2fe;
+          }
+          
+          .content {
+            padding: 40px 32px;
+            background: #ffffff;
+          }
+          
+          .notification-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 24px;
+            text-align: center;
+            line-height: 1.3;
+          }
+          
+          .notification-message {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            border-left: 4px solid #1e40af;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 24px 0;
+            font-size: 16px;
+            line-height: 1.7;
+            color: #374151;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          }
+          
+          .reason {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 24px 0;
+            color: #92400e;
+            box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1);
+          }
+          
+          .reason-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #d97706;
+          }
+          
+          .cta-section {
+            text-align: center;
+            margin: 32px 0;
+          }
+          
+          .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            padding: 16px 32px;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px -5px rgba(30, 64, 175, 0.3);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+          }
+          
+          .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 40px -10px rgba(30, 64, 175, 0.4);
+          }
+          
+          .cta-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+          }
+          
+          .cta-button:hover::before {
+            left: 100%;
+          }
+          
+          .timestamp {
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 24px;
+            font-style: italic;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+          }
+          
+          .footer {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            padding: 32px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+          }
+          
+          .footer-text {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 20px;
+            line-height: 1.6;
+          }
+          
+          .social-links {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+          }
+          
+          .social-links a {
+            color: #1e40af;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            background: rgba(30, 64, 175, 0.05);
+            border: 1px solid rgba(30, 64, 175, 0.1);
+          }
+          
+          .social-links a:hover {
+            background: rgba(30, 64, 175, 0.1);
+            border-color: rgba(30, 64, 175, 0.2);
+            transform: translateY(-1px);
+          }
+          
+          .divider {
+            width: 1px;
+            height: 20px;
+            background: #d1d5db;
+            margin: 0 12px;
+          }
+          
+          @media (max-width: 600px) {
+            body {
+              padding: 10px;
+            }
+            
+            .email-container {
+              border-radius: 12px;
+            }
+            
+            .header {
+              padding: 32px 24px;
+            }
+            
+            .content {
+              padding: 32px 24px;
+            }
+            
+            .brand-name {
+              font-size: 24px;
+            }
+            
+            .notification-title {
+              font-size: 20px;
+            }
+            
+            .social-links {
+              flex-direction: column;
+              gap: 12px;
+            }
+            
+            .divider {
+              display: none;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="email-container">
+          <div class="header">
+            <div class="logo-container">
+              <div class="logo">🏪</div>
+              <div class="brand-name">Campus Deal</div>
+              <div class="tagline">Your Campus Marketplace</div>
+            </div>
+          </div>
+          
+          <div class="content">
+            <div class="notification-title">${subject}</div>
+            
+            <div class="notification-message">
+              ${message}
+            </div>
+            
+            <div class="cta-section">
+              <a href="https://campusdeal.ng" class="cta-button">
+                 Visit Campus Deal
+              </a>
+            </div>
+            
+            <div class="timestamp">
+              Sent on ${new Date().toLocaleString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}
+            </div>
+          </div>
+          
+          <div class="footer">
+            <div class="footer-text">
+              This is an automated notification from Campus Deal.<br>
+              Please do not reply to this email. For support, visit our help center.
+            </div>
+            <div class="social-links">
+              <a href="https://campusdeal.ng">Website</a>
+              <div class="divider"></div>
+              <a href="mailto:support@campusdeal.ng">Support</a>
+              <div class="divider"></div>
+              <a href="https://campusdeal.ng/help">Help Center</a>
+            </div>
+          </div>
         </div>
-      </div>
+      </body>
+      </html>
     `;
 
     const { data, error } = await resend.emails.send({
