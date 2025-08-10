@@ -16,6 +16,9 @@ const FROM_EMAIL = process.env.NOTIFICATIONS_FROM_EMAIL || 'GSU Market <no-reply
 const WEBHOOK_SECRET = process.env.NOTIFICATIONS_WEBHOOK_SECRET || '';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  if (req.method === 'GET') {
+    return res.status(200).json({ ok: true, message: 'Notifications webhook is up' });
+  }
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
