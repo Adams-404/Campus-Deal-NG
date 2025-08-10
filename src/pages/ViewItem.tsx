@@ -295,20 +295,8 @@ export default function ViewItem() {
           return;
         }
 
-        // Create notification with delete reason
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: item.seller_id,
-            type: 'admin_action',
-            title: 'Your listing has been removed',
-            content: `Your listing "${item.title}" has been completely removed by an administrator. Reason: ${deleteReason}`,
-            metadata: { item_id: id, item_title: item.title },
-            created_at: new Date().toISOString(),
-            is_read: false,
-          });
-
-        toast.success('Item deleted successfully and seller notified');
+        // Note: Notification is handled by PostsTab.tsx to prevent duplicates
+        toast.success('Item deleted successfully');
         navigate('/admin');
         return;
       }
@@ -327,19 +315,7 @@ export default function ViewItem() {
           return;
         }
 
-        // Create notification for the owner
-        await supabase
-          .from('notifications')
-          .insert({
-            user_id: user.id,
-            type: 'admin_action',
-            title: 'Your listing has been removed',
-            content: `Your listing "${item.title}" has been completely removed.`,
-            metadata: { item_id: id, item_title: item.title },
-            created_at: new Date().toISOString(),
-            is_read: false,
-          });
-
+        // Note: No notification needed for user deleting their own item
         toast.success('Item deleted successfully');
         navigate('/my-listings');
       } else {

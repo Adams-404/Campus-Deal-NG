@@ -36,6 +36,27 @@ export default async function handler(req, res) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
+    // Check for duplicate notifications to prevent spam
+    const { data: existingNotifications, error: duplicateCheckError } = await supabaseAdmin
+      .from('notifications')
+      .select('id, created_at')
+      .eq('user_id', userId)
+      .eq('title', notification.title)
+      .eq('type', notification.type)
+      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // Last 5 minutes
+      .limit(1);
+
+    if (duplicateCheckError) {
+      console.error('Error checking for duplicates:', duplicateCheckError);
+      return res.status(500).json({ error: 'Failed to check for duplicates' });
+    }
+
+    // If a similar notification was created in the last 5 minutes, skip sending email
+    if (existingNotifications && existingNotifications.length > 0) {
+      console.log('Duplicate notification detected, skipping email send');
+      return res.status(200).json({ message: 'Duplicate notification, email skipped' });
+    }
+
     // Fetch user email
     const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserById(userId);
     if (userError || !userData?.user?.email) {
