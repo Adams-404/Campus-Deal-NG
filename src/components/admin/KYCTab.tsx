@@ -19,6 +19,7 @@ export function KYCTab() {
   const [selectedDocument, setSelectedDocument] = useState<KYCDocument | null>(null);
   const [isViewerOpen, setIsViewerOpen] = useState(false);
   const [adminNotes, setAdminNotes] = useState("");
+  const [showNotes, setShowNotes] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [activeTab, setActiveTab] = useState<KycStatus | 'all'>('all');
 
@@ -145,11 +146,12 @@ export function KYCTab() {
         )
       );
       
+      const notesToSend = status === 'verified' ? '' : adminNotes;
       const result = await updateKYCStatus(
         selectedDocument.id,
         selectedDocument.user_id,
         status,
-        adminNotes
+        notesToSend
       );
       
       if (result.success) {
@@ -165,6 +167,7 @@ export function KYCTab() {
         // Close the viewer after a short delay
         setTimeout(() => {
           setIsViewerOpen(false);
+          setShowNotes(false);
         }, 500);
       } else {
         console.error('KYC status update failed:', result.error);
@@ -318,26 +321,38 @@ export function KYCTab() {
                 </CardContent>
               </Card>
 
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Admin Notes</h3>
-                <Textarea
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  placeholder="Add notes about this document (will be visible to the user)"
-                  rows={3}
-                />
-              </div>
+              {showNotes && (
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Admin Notes (required for rejection)</h3>
+                  <Textarea
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    placeholder="Add notes about this document (will be visible to the user)"
+                    rows={3}
+                  />
+                </div>
+              )}
 
               {(selectedDocument.status === 'pending' || selectedDocument.status === 'processing') && (
                 <div className="flex justify-end gap-3">
                   <Button
                     variant="outline"
                     className="bg-red-500/10 text-red-600 border-red-500/20 hover:bg-red-500/20"
-                    onClick={() => handleStatusUpdate('rejected')}
+                    onClick={() => {
+                      if (!showNotes) {
+                        setShowNotes(true);
+                        return;
+                      }
+                      if (!adminNotes.trim()) {
+                        toast.error('Please add a reason for rejection');
+                        return;
+                      }
+                      handleStatusUpdate('rejected');
+                    }}
                     disabled={updatingStatus}
                   >
                     <X className="h-4 w-4 mr-1" />
-                    Reject
+                    {showNotes ? 'Submit Rejection' : 'Reject'}
                   </Button>
                   
                   <Button

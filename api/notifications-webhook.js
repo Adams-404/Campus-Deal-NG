@@ -59,8 +59,13 @@ export default async function handler(req, res) {
       }
 
       if (kycGroup && kycGroup.length > 0) {
-        // Prefer the one that includes a Reason (admin note) if any
-        const preferred = kycGroup.find(n => n.content && n.content.includes('Reason:')) || kycGroup[0];
+        // For verified, prefer the message WITHOUT a Reason. For others, prefer WITH a Reason.
+        let preferred;
+        if (String(kycStatus) === 'verified') {
+          preferred = kycGroup.find(n => !n.content || !n.content.includes('Reason:')) || kycGroup[0];
+        } else {
+          preferred = kycGroup.find(n => n.content && n.content.includes('Reason:')) || kycGroup[0];
+        }
 
         // If this insert is not the preferred one, skip sending email
         if (preferred.id !== notification.id) {
