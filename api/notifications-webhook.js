@@ -144,48 +144,69 @@ export default async function handler(req, res) {
               .logo img { width:100%; height:100%; object-fit:contain; display:block; }
               .brand { margin-top:8px; font-weight:700; font-size:16px; color:#111827; }
               .content { padding:20px; }
-              .title { font-size:18px; font-weight:600; margin:0 0 12px 0; color:#111827; }
-              .message { font-size:14px; line-height:1.6; color:#374151; white-space:pre-wrap; }
-              .reason { margin-top:12px; padding:12px; border:1px solid #e5e7eb; border-radius:8px; background:#fafafa; }
+              .greeting { font-size: 15px; color: #4b5563; margin-bottom: 12px; }
+              .title { font-size:20px; font-weight:600; margin:0 0 16px 0; color:#111827; }
+              .message { font-size:15px; line-height:1.6; color:#374151; white-space:pre-wrap; }
+              .reason { margin-top:16px; padding:12px; border:1px solid #e5e7eb; border-radius:8px; background:#fafafa; }
               .reason-label { font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; font-weight:600; }
-              .signature { margin-top:16px; padding-top:12px; border-top:1px solid #f3f4f6; display:flex; align-items:center; gap:10px; }
-              .avatar { width:28px; height:28px; border-radius:9999px; overflow:hidden; background:#f3f4f6; border:1px solid #e5e7eb; }
+              .signature { margin-top:20px; display:flex; align-items:center; gap:12px; }
+              .avatar { width:40px; height:40px; border-radius:9999px; overflow:hidden; background:#f3f4f6; border:1px solid #e5e7eb; }
               .avatar img { width:100%; height:100%; object-fit:cover; display:block; }
-              .admin-name { font-size:13px; font-weight:600; color:#111827; }
-              .badge { font-size:11px; padding:2px 6px; border:1px solid #d1d5db; border-radius:9999px; color:#374151; background:#ffffff; }
-              .actions { margin-top:16px; }
-              .actions a { font-size:13px; color:#111827; text-decoration:none; border-bottom:1px solid #e5e7eb; padding-bottom:1px; }
-              .footer { padding:16px; border-top:1px solid #f3f4f6; text-align:center; color:#6b7280; font-size:12px; }
+              .admin-info { line-height:1.4; }
+              .admin-name { font-size:15px; font-weight:600; color:#111827; }
+              .admin-role { font-size:13px; color:#6b7280; }
+              .actions { margin-top:24px; }
+              .actions a { font-size:14px; color:#1078a7; text-decoration:none; font-weight:500; }
+              .footer { padding:20px; border-top:1px solid #f3f4f6; text-align:center; color:#6b7280; font-size:12px; }
               .footer a { color:#6b7280; text-decoration:none; }
               .sep { margin:0 8px; color:#d1d5db; }
-              a { color:#111827; }
+              a { color:#111827; transition:color 0.15s; }
+              a:hover { color:#0d5d82; }
               @media (max-width:640px){ body{ padding:12px } .content{ padding:16px } }
             </style>
           </head>
           <body>
             <div class="container">
               <div class="header">
-                <span class="logo"><img src="https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/logo/logo_no_background.png" alt="Logo" /></span>
+                <div class="logo">
+                  <img src="https://campusdeal.ng/logo.png" alt="Campus Deal Logo" />
+                </div>
                 <div class="brand">Campus Deal</div>
               </div>
               <div class="content">
+                ${(() => {
+                  const now = new Date();
+                  const hour = now.getHours();
+                  let greeting = 'Hello';
+                  if (hour < 12) greeting = 'Good morning';
+                  else if (hour < 18) greeting = 'Good afternoon';
+                  else greeting = 'Good evening';
+                  return `<div class="greeting">${greeting},</div>`;
+                })()}
                 <h1 class="title">${notification.title}</h1>
-                <div class="message">${notification.content.replace(/Reason:.*/i, '').trim()}</div>
+                <div class="message">${notification.content.replace(/\n/g, '<br>')}</div>
                 ${notification.content.includes('Reason:') ? `
                   <div class="reason">
-                    <div class="reason-label">Reason</div>
-                    <div>${notification.content.split('Reason:')[1].trim()}</div>
+                    <div class="reason-label">Note</div>
+                    <div class="message">${notification.content.split('Reason:')[1].trim()}</div>
                   </div>
                 ` : ''}
                 ${notification.metadata && notification.metadata.category === 'admin_message' ? `
                   <div class="signature">
-                    <span class="avatar">${notification.metadata.admin_avatar_url ? `<img src="${notification.metadata.admin_avatar_url}" alt="Admin" />` : ''}</span>
-                    <span class="admin-name">${notification.metadata.admin_name || 'Admin Team'}</span>
-                    <span class="badge">Admin</span>
+                    <div class="avatar">
+                      ${notification.metadata.admin_avatar_url ? 
+                        `<img src="${notification.metadata.admin_avatar_url}" alt="${notification.metadata.admin_name || 'Admin'}" />` : 
+                        '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="#9CA3AF"/><path d="M12 14.5C6.99 14.5 3 18.49 3 23.5C3 23.78 3.22 24 3.5 24H20.5C20.78 24 21 23.78 21 23.5C21 18.49 17.01 14.5 12 14.5Z" fill="#9CA3AF"/></svg>'
+                      }
+                    </div>
+                    <div class="admin-info">
+                      <div class="admin-name">${notification.metadata.admin_name || 'Admin Team'}</div>
+                      <div class="admin-role">Campus Deal Support</div>
+                    </div>
                   </div>
                 ` : ''}
                 <div class="actions">
-                  <a href="https://campusdeal.ng">Open Campus Deal</a>
+                  <a href="https://campusdeal.ng">Open in App →</a>
                 </div>
               </div>
               <div class="footer">
