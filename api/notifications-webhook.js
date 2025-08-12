@@ -135,330 +135,66 @@ export default async function handler(req, res) {
           <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Campus Deal Notification</title>
+            <title>Notification</title>
             <style>
-              @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-              
-              * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-              }
-              
-              body {
-                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-                line-height: 1.6;
-                color: #1f2937;
-                background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 100%);
-                margin: 0;
-                padding: 20px;
-                min-height: 100vh;
-              }
-              
-              .email-container {
-                max-width: 600px;
-                margin: 0 auto;
-                background: #ffffff;
-                border-radius: 16px;
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-                overflow: hidden;
-                border: 1px solid rgba(30, 174, 219, 0.1);
-              }
-              
-              .header {
-                background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #1e40af 100%);
-                padding: 40px 32px;
-                text-align: center;
-                color: white;
-                position: relative;
-                overflow: hidden;
-              }
-              
-              .header::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-                opacity: 0.3;
-              }
-              
-              .logo-container {
-                position: relative;
-                z-index: 1;
-                margin-bottom: 16px;
-              }
-              
-              .logo {
-                width: 100px;
-                height: 100px;
-                display: inline-block;
-                margin-bottom: 16px;
-                border-radius: 16px;
-                background: rgba(255, 255, 255, 0.15);
-                border: 1px solid rgba(255, 255, 255, 0.2);
-                overflow: hidden;
-              }
-              .logo img {
-                width: 100%;
-                height: 100%;
-                object-fit: contain;
-              
-              .tagline {
-                font-size: 16px;
-                font-weight: 400;
-                opacity: 0.9;
-                color: #e0f2fe;
-              }
-              
-              .content {
-                padding: 40px 32px;
-                background: #ffffff;
-              }
-              
-              .notification-title {
-                font-size: 24px;
-                font-weight: 600;
-                color: #1e293b;
-                margin-bottom: 24px;
-                text-align: center;
-                line-height: 1.3;
-              }
-              
-              .notification-message {
-                background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-                border-left: 4px solid #1e40af;
-                padding: 24px;
-                border-radius: 12px;
-                margin: 24px 0;
-                font-size: 16px;
-                line-height: 1.7;
-                color: #374151;
-                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-              }
-              
-              .reason {
-                background: linear-gradient(135deg, #fef3c7, #fde68a);
-                border: 1px solid #f59e0b;
-                border-radius: 12px;
-                padding: 20px;
-                margin: 24px 0;
-                color: #92400e;
-                box-shadow: 0 4px 6px -1px rgba(245, 158, 11, 0.1);
-              }
-              
-              .reason-label {
-                font-weight: 600;
-                margin-bottom: 8px;
-                font-size: 14px;
-                text-transform: uppercase;
-                letter-spacing: 0.05em;
-                color: #d97706;
-              }
-              
-              .cta-section {
-                text-align: center;
-                margin: 32px 0;
-              }
-              
-              .cta-button {
-                display: inline-block;
-                background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
-                color: white;
-                padding: 16px 32px;
-                text-decoration: none;
-                border-radius: 12px;
-                font-weight: 600;
-                font-size: 16px;
-                transition: all 0.3s ease;
-                box-shadow: 0 10px 25px -5px rgba(30, 64, 175, 0.3);
-                border: none;
-                cursor: pointer;
-                position: relative;
-                overflow: hidden;
-              }
-              
-              .cta-button:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 20px 40px -10px rgba(30, 64, 175, 0.4);
-              }
-              
-              .cta-button::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: -100%;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-                transition: left 0.5s;
-              }
-              
-              .cta-button:hover::before {
-                left: 100%;
-              }
-              
-              .timestamp {
-                text-align: center;
-                font-size: 14px;
-                color: #6b7280;
-                margin-top: 24px;
-                font-style: italic;
-                padding: 16px;
-                background: #f9fafb;
-                border-radius: 8px;
-                border: 1px solid #e5e7eb;
-              }
-              
-              .footer {
-                background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-                padding: 32px;
-                text-align: center;
-                border-top: 1px solid #e5e7eb;
-              }
-              
-              .footer-text {
-                font-size: 14px;
-                color: #6b7280;
-                margin-bottom: 20px;
-                line-height: 1.6;
-              }
-              
-              .social-links {
-                margin-top: 20px;
-                display: flex;
-                justify-content: center;
-                gap: 24px;
-                flex-wrap: wrap;
-              }
-              
-              .social-links a {
-                color: #1e40af;
-                text-decoration: none;
-                font-weight: 500;
-                font-size: 14px;
-                padding: 8px 16px;
-                border-radius: 8px;
-                transition: all 0.2s ease;
-                background: rgba(30, 64, 175, 0.05);
-                border: 1px solid rgba(30, 64, 175, 0.1);
-              }
-              
-              .social-links a:hover {
-                background: rgba(30, 64, 175, 0.1);
-                border-color: rgba(30, 64, 175, 0.2);
-                transform: translateY(-1px);
-              }
-              
-              .divider {
-                width: 1px;
-                height: 20px;
-                background: #d1d5db;
-                margin: 0 12px;
-              }
-              
-              @media (max-width: 600px) {
-                body {
-                  padding: 10px;
-                }
-                
-                .email-container {
-                  border-radius: 12px;
-                }
-                
-                .header {
-                  padding: 32px 24px;
-                }
-                
-                .content {
-                  padding: 32px 24px;
-                }
-                
-                .brand-name {
-                  font-size: 24px;
-                }
-                
-                .notification-title {
-                  font-size: 20px;
-                }
-                
-                .social-links {
-                  flex-direction: column;
-                  gap: 12px;
-                }
-                
-                .divider {
-                  display: none;
-                }
-              }
+              body { margin:0; padding:24px; background:#f6f7f9; font-family: -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Inter,Helvetica,Arial,sans-serif; color:#111827; }
+              .container { max-width:600px; margin:0 auto; background:#ffffff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; }
+              .header { padding:20px; text-align:center; border-bottom:1px solid #f0f0f0; }
+              .logo { width:64px; height:64px; border-radius:12px; overflow:hidden; display:inline-block; background:#ffffff; border:1px solid #e5e7eb; }
+              .logo img { width:100%; height:100%; object-fit:contain; display:block; }
+              .brand { margin-top:8px; font-weight:700; font-size:16px; color:#111827; }
+              .content { padding:20px; }
+              .title { font-size:18px; font-weight:600; margin:0 0 12px 0; color:#111827; }
+              .message { font-size:14px; line-height:1.6; color:#374151; white-space:pre-wrap; }
+              .reason { margin-top:12px; padding:12px; border:1px solid #e5e7eb; border-radius:8px; background:#fafafa; }
+              .reason-label { font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; font-weight:600; }
+              .signature { margin-top:16px; padding-top:12px; border-top:1px solid #f3f4f6; display:flex; align-items:center; gap:10px; }
+              .avatar { width:28px; height:28px; border-radius:9999px; overflow:hidden; background:#f3f4f6; border:1px solid #e5e7eb; }
+              .avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+              .admin-name { font-size:13px; font-weight:600; color:#111827; }
+              .badge { font-size:11px; padding:2px 6px; border:1px solid #d1d5db; border-radius:9999px; color:#374151; background:#ffffff; }
+              .actions { margin-top:16px; }
+              .actions a { font-size:13px; color:#111827; text-decoration:none; border-bottom:1px solid #e5e7eb; padding-bottom:1px; }
+              .footer { padding:16px; border-top:1px solid #f3f4f6; text-align:center; color:#6b7280; font-size:12px; }
+              .footer a { color:#6b7280; text-decoration:none; }
+              .sep { margin:0 8px; color:#d1d5db; }
+              a { color:#111827; }
+              @media (max-width:640px){ body{ padding:12px } .content{ padding:16px } }
             </style>
           </head>
           <body>
-            <div class="email-container">
+            <div class="container">
               <div class="header">
-                <div class="logo-container">
-                  <div class="logo">
-                    <img src="https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/logo/logo_no_background.png" alt="Campus Deal logo" />
-                  </div>
-                  <div class="brand-name">Campus Deal</div>
-                  <div class="tagline">Your Campus Marketplace</div>
-                </div>
+                <span class="logo"><img src="https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/logo/logo_no_background.png" alt="Logo" /></span>
+                <div class="brand">Campus Deal</div>
               </div>
-              
               <div class="content">
-                <div class="notification-title">${notification.title}</div>
-                
-                <div class="notification-message">
-                  ${notification.content.replace(/Reason:.*/i, '').trim()}
-                </div>
-                
+                <h1 class="title">${notification.title}</h1>
+                <div class="message">${notification.content.replace(/Reason:.*/i, '').trim()}</div>
                 ${notification.content.includes('Reason:') ? `
                   <div class="reason">
-                    <div class="reason-label">Reason:</div>
+                    <div class="reason-label">Reason</div>
                     <div>${notification.content.split('Reason:')[1].trim()}</div>
                   </div>
                 ` : ''}
-
                 ${notification.metadata && notification.metadata.category === 'admin_message' ? `
-                  <div class="admin-signature">
-                    <div class="admin-avatar">
-                      ${notification.metadata.admin_avatar_url ? `<img src="${notification.metadata.admin_avatar_url}" alt="Admin" />` : ''}
-                    </div>
-                    <div class="admin-name">${notification.metadata.admin_name || 'Admin Team'}</div>
-                    <span class="admin-badge">Admin</span>
+                  <div class="signature">
+                    <span class="avatar">${notification.metadata.admin_avatar_url ? `<img src="${notification.metadata.admin_avatar_url}" alt="Admin" />` : ''}</span>
+                    <span class="admin-name">${notification.metadata.admin_name || 'Admin Team'}</span>
+                    <span class="badge">Admin</span>
                   </div>
                 ` : ''}
-                
-                <div class="cta-section">
-                  <a href="https://campusdeal.ng" class="cta-button">
-                    🏠 Visit Campus Deal
-                  </a>
-                </div>
-                
-                <div class="timestamp">
-                  Sent on ${new Date().toLocaleString('en-US', {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
+                <div class="actions">
+                  <a href="https://campusdeal.ng">Open Campus Deal</a>
                 </div>
               </div>
-              
               <div class="footer">
-                <div class="footer-text">
-                  This is an automated notification from Campus Deal.<br>
-                  Please do not reply to this email. For support, visit our help center.
-                </div>
-                <div class="social-links">
+                <div>This is an automated notification from Campus Deal.</div>
+                <div style="margin-top:8px;">
                   <a href="https://campusdeal.ng">Website</a>
-                  <div class="divider"></div>
+                  <span class="sep">•</span>
                   <a href="mailto:support@campusdeal.ng">Support</a>
-                  <div class="divider"></div>
+                  <span class="sep">•</span>
                   <a href="https://campusdeal.ng/help">Help Center</a>
                 </div>
               </div>
