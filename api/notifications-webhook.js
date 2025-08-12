@@ -35,34 +35,80 @@ export default async function handler(req, res) {
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
-    const { data: existingNotifications, error: duplicateCheckError } = await supabaseAdmin
-      .from('notifications')
-      .select('id, content, created_at')
-      .eq('user_id', userId)
-      .eq('title', notification.title)
-      .eq('type', notification.type)
-      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
-      .order('created_at', { ascending: false });
+    // KYC-specific coalescing: if this is a KYC notification, group by document/status regardless of title
+    const isKyc = notification?.type === 'admin_action' && (
+      notification?.metadata?.category === 'kyc'
+    );
+    const docId = notification?.metadata?.document_id || null;
+    const kycStatus = notification?.metadata?.status || null;
 
-    if (duplicateCheckError) {
-      console.error('Error checking for duplicates:', duplicateCheckError);
-      return res.status(500).json({ error: 'Failed to check for duplicates' });
-    }
+    if (isKyc && docId && kycStatus) {
+      const { data: kycGroup, error: kycGroupErr } = await supabaseAdmin
+        .from('notifications')
+        .select('id, content, created_at')
+        .eq('user_id', userId)
+        .eq('type', notification.type)
+        .filter('metadata->>document_id', 'eq', docId)
+        .filter('metadata->>status', 'eq', String(kycStatus))
+        .gte('created_at', new Date(Date.now() - 10 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false });
 
-    if (existingNotifications && existingNotifications.length > 1) {
-      const duplicatesWithoutReason = existingNotifications.filter(n => 
-        !n.content || !n.content.includes('Reason:')
-      );
-      if (duplicatesWithoutReason.length > 0) {
-        const duplicateIds = duplicatesWithoutReason.map(n => n.id);
-        const { error: deleteError } = await supabaseAdmin
-          .from('notifications')
-          .delete()
-          .in('id', duplicateIds);
-        if (deleteError) console.error('Error removing duplicate notifications:', deleteError);
+      if (kycGroupErr) {
+        console.error('Error checking KYC group duplicates:', kycGroupErr);
+        return res.status(500).json({ error: 'Failed to check for KYC duplicates' });
       }
-      if (!notification.content.includes('Reason:')) {
-        return res.status(200).json({ message: 'Duplicate notification without reason, email skipped' });
+
+      if (kycGroup && kycGroup.length > 0) {
+        // Prefer the one that includes a Reason (admin note) if any
+        const preferred = kycGroup.find(n => n.content && n.content.includes('Reason:')) || kycGroup[0];
+
+        // If this insert is not the preferred one, skip sending email
+        if (preferred.id !== notification.id) {
+          // Optionally clean up older non-preferred duplicates to keep inbox clean
+          const toDelete = kycGroup
+            .filter(n => n.id !== preferred.id)
+            .map(n => n.id);
+          if (toDelete.length > 0) {
+            const { error: delErr } = await supabaseAdmin
+              .from('notifications')
+              .delete()
+              .in('id', toDelete);
+            if (delErr) console.error('Error removing duplicate KYC notifications:', delErr);
+          }
+          return res.status(200).json({ message: 'Non-preferred KYC duplicate skipped' });
+        }
+      }
+    } else {
+      // Default duplicate handling (non-KYC): check same title+type within a short window
+      const { data: existingNotifications, error: duplicateCheckError } = await supabaseAdmin
+        .from('notifications')
+        .select('id, content, created_at')
+        .eq('user_id', userId)
+        .eq('title', notification.title)
+        .eq('type', notification.type)
+        .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
+        .order('created_at', { ascending: false });
+
+      if (duplicateCheckError) {
+        console.error('Error checking for duplicates:', duplicateCheckError);
+        return res.status(500).json({ error: 'Failed to check for duplicates' });
+      }
+
+      if (existingNotifications && existingNotifications.length > 1) {
+        const duplicatesWithoutReason = existingNotifications.filter(n => 
+          !n.content || !n.content.includes('Reason:')
+        );
+        if (duplicatesWithoutReason.length > 0) {
+          const duplicateIds = duplicatesWithoutReason.map(n => n.id);
+          const { error: deleteError } = await supabaseAdmin
+            .from('notifications')
+            .delete()
+            .in('id', duplicateIds);
+          if (deleteError) console.error('Error removing duplicate notifications:', deleteError);
+        }
+        if (!notification.content.includes('Reason:')) {
+          return res.status(200).json({ message: 'Duplicate notification without reason, email skipped' });
+        }
       }
     }
 
