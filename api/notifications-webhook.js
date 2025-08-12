@@ -205,20 +205,6 @@ export default async function handler(req, res) {
                 width: 100%;
                 height: 100%;
                 object-fit: contain;
-                display: block;
-                background: #ffffff;
-              }
-              
-              .brand-name {
-                font-size: 28px;
-                font-weight: 700;
-                margin-bottom: 8px;
-                letter-spacing: -0.025em;
-                background: linear-gradient(135deg, #ffffff, #e0f2fe);
-                -webkit-background-clip: text;
-                background-clip: text;
-                -webkit-text-fill-color: transparent;
-              }
               
               .tagline {
                 font-size: 16px;
@@ -432,6 +418,16 @@ export default async function handler(req, res) {
                   <div class="reason">
                     <div class="reason-label">Reason:</div>
                     <div>${notification.content.split('Reason:')[1].trim()}</div>
+                  </div>
+                ` : ''}
+
+                ${notification.metadata && notification.metadata.category === 'admin_message' ? `
+                  <div class="admin-signature">
+                    <div class="admin-avatar">
+                      ${notification.metadata.admin_avatar_url ? `<img src="${notification.metadata.admin_avatar_url}" alt="Admin" />` : ''}
+                    </div>
+                    <div class="admin-name">${notification.metadata.admin_name || 'Admin Team'}</div>
+                    <span class="admin-badge">Admin</span>
                   </div>
                 ` : ''}
                 

@@ -6,6 +6,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { PageTransition } from '@/components/PageTransition';
+import { Badge } from '@/components/ui/badge';
 
 interface Notification {
   id: string;
@@ -14,6 +15,7 @@ interface Notification {
   type: string;
   is_read: boolean;
   created_at: string;
+  metadata?: any;
 }
 
 const NotificationsPage = () => {
@@ -195,10 +197,25 @@ const NotificationsPage = () => {
                         {getIcon(notification.type)}
                       </div>
                       <div className="flex-1 min-w-0">
+                        {notification.metadata?.category === 'admin_message' && (
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="h-8 w-8 rounded-full overflow-hidden bg-secondary flex items-center justify-center border border-[#1078a7]">
+                              {notification.metadata?.admin_avatar_url ? (
+                                <img src={notification.metadata.admin_avatar_url} alt="Admin" className="h-full w-full object-cover" />
+                              ) : (
+                                <div className="text-xs text-muted-foreground">A</div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">{notification.metadata?.admin_name || 'Admin Team'}</span>
+                              <Badge variant="outline" className="border-2 border-[#1078a7] text-[#1078a7] bg-white/90 shadow-sm">Admin</Badge>
+                            </div>
+                          </div>
+                        )}
                         <div className="flex items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="font-medium text-sm truncate">{notification.title}</p>
-                            <p className="text-sm text-muted-foreground mt-1 break-words leading-relaxed">
+                            <p className="text-sm text-muted-foreground mt-1 break-words leading-relaxed emoji-container">
                               {notification.content}
                             </p>
                           </div>
