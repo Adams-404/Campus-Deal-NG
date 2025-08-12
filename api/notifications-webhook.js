@@ -192,18 +192,21 @@ export default async function handler(req, res) {
               }
               
               .logo {
-                width: 80px;
-                height: 80px;
-                background: rgba(255, 255, 255, 0.15);
-                border-radius: 20px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                font-size: 32px;
-                font-weight: 700;
+                width: 100px;
+                height: 100px;
+                display: inline-block;
                 margin-bottom: 16px;
-                backdrop-filter: blur(10px);
+                border-radius: 16px;
+                background: rgba(255, 255, 255, 0.15);
                 border: 1px solid rgba(255, 255, 255, 0.2);
+                overflow: hidden;
+              }
+              .logo img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                display: block;
+                background: #ffffff;
               }
               
               .brand-name {
@@ -410,7 +413,9 @@ export default async function handler(req, res) {
             <div class="email-container">
               <div class="header">
                 <div class="logo-container">
-                  <div class="logo">🏪</div>
+                  <div class="logo">
+                    <img src="https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/public/logo/logo_no_background.png" alt="Campus Deal logo" />
+                  </div>
                   <div class="brand-name">Campus Deal</div>
                   <div class="tagline">Your Campus Marketplace</div>
                 </div>
@@ -425,7 +430,7 @@ export default async function handler(req, res) {
                 
                 ${notification.content.includes('Reason:') ? `
                   <div class="reason">
-                    <div class="reason-label">Reason for deletion:</div>
+                    <div class="reason-label">Reason:</div>
                     <div>${notification.content.split('Reason:')[1].trim()}</div>
                   </div>
                 ` : ''}
