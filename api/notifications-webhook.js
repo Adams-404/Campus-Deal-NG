@@ -144,17 +144,17 @@ export default async function handler(req, res) {
               .logo img { width:100%; height:100%; object-fit:contain; display:block; }
               .brand { margin-top:8px; font-weight:700; font-size:16px; color:#111827; }
               .content { padding:20px; }
-              .greeting { font-size: 15px; color: #4b5563; margin-bottom: 12px; }
-              .title { font-size:20px; font-weight:600; margin:0 0 16px 0; color:#111827; }
+              .title { font-size:20px; font-weight:600; margin:0 0 8px 0; color:#111827; }
+              .greeting { font-size: 15px; color: #4b5563; margin-bottom: 20px; }
               .message { font-size:15px; line-height:1.6; color:#374151; white-space:pre-wrap; }
               .reason { margin-top:16px; padding:12px; border:1px solid #e5e7eb; border-radius:8px; background:#fafafa; }
               .reason-label { font-size:12px; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; font-weight:600; }
-              .signature { margin-top:20px; display:flex; align-items:center; gap:12px; }
+              .signature { margin-top:24px; display:flex; align-items:center; gap:16px; padding:12px; background:#f9fafb; border-radius:8px; border:1px solid #e5e7eb; }
               .avatar { width:40px; height:40px; border-radius:9999px; overflow:hidden; background:#f3f4f6; border:1px solid #e5e7eb; }
               .avatar img { width:100%; height:100%; object-fit:cover; display:block; }
               .admin-info { line-height:1.4; }
-              .admin-name { font-size:15px; font-weight:600; color:#111827; }
-              .admin-role { font-size:13px; color:#6b7280; }
+              .admin-name { font-size:14px; font-weight:600; color:#111827; }
+              .admin-role { font-size:12px; color:#6b7280; margin-top:2px; }
               .actions { margin-top:24px; }
               .actions a { font-size:14px; color:#1078a7; text-decoration:none; font-weight:500; }
               .footer { padding:20px; border-top:1px solid #f3f4f6; text-align:center; color:#6b7280; font-size:12px; }
@@ -174,6 +174,7 @@ export default async function handler(req, res) {
                 <div class="brand">Campus Deal</div>
               </div>
               <div class="content">
+                <h1 class="title">${notification.title}</h1>
                 ${(() => {
                   const now = new Date();
                   const hour = now.getHours();
@@ -183,7 +184,6 @@ export default async function handler(req, res) {
                   else greeting = 'Good evening';
                   return `<div class="greeting">${greeting},</div>`;
                 })()}
-                <h1 class="title">${notification.title}</h1>
                 <div class="message">${notification.content.replace(/\n/g, '<br>')}</div>
                 ${notification.content.includes('Reason:') ? `
                   <div class="reason">
