@@ -165,7 +165,24 @@ export default function AdminMessagesTab({ users }: AdminMessagesTabProps) {
                   <UsersIcon className="h-4 w-4" />
                   Recipients
                 </div>
-                <Badge variant="outline">{selectedIds.length} selected</Badge>
+                <div className="flex items-center gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      // Get up to 50 random user IDs from filtered users
+                      const shuffled = [...filteredUsers].sort(() => 0.5 - Math.random());
+                      const random50 = shuffled.slice(0, 50).map(u => u.id);
+                      setSelectedIds(random50);
+                    }}
+                    disabled={filteredUsers.length === 0}
+                    className="text-xs h-8"
+                  >
+                    Select Random 50
+                  </Button>
+                  <Badge variant="outline">{selectedIds.length} selected</Badge>
+                </div>
               </div>
               <Input
                 placeholder="Search users"
