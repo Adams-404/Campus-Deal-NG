@@ -1,7 +1,55 @@
 import { Resend } from 'resend';
 import { createClient } from '@supabase/supabase-js';
+import pLimit from 'p-limit';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Rate limiter for Resend API (2 requests per second)
+const emailRateLimit = pLimit(2);
+let lastEmailTime = 0;
+const MIN_EMAIL_INTERVAL = 500; // ms (2 requests per second = 1 every 500ms)
+
+// Queue for email sends
+const emailQueue = [];
+let isProcessingQueue = false;
+
+// Process email queue with rate limiting
+async function processEmailQueue() {
+  if (isProcessingQueue || emailQueue.length === 0) return;
+  
+  isProcessingQueue = true;
+  
+  while (emailQueue.length > 0) {
+    const now = Date.now();
+    const timeSinceLastEmail = now - lastEmailTime;
+    const waitTime = Math.max(0, MIN_EMAIL_INTERVAL - timeSinceLastEmail);
+    
+    if (waitTime > 0) {
+      await new Promise(resolve => setTimeout(resolve, waitTime));
+    }
+    
+    const { emailData, resolve, reject } = emailQueue.shift();
+    
+    try {
+      const result = await emailRateLimit(() => resend.emails.send(emailData));
+      lastEmailTime = Date.now();
+      resolve(result);
+    } catch (error) {
+      console.error('Error sending email:', error);
+      reject(error);
+    }
+  }
+  
+  isProcessingQueue = false;
+}
+
+// Add email to queue and process queue
+function sendEmailWithRateLimit(emailData) {
+  return new Promise((resolve, reject) => {
+    emailQueue.push({ emailData, resolve, reject });
+    processEmailQueue().catch(console.error);
+  });
+}
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
@@ -125,7 +173,7 @@ export default async function handler(req, res) {
     const toEmail = userData.user.email;
 
     try {
-      await resend.emails.send({
+      await sendEmailWithRateLimit({
         from: process.env.NOTIFICATIONS_FROM_EMAIL,
         to: toEmail,
         subject: notification.title || 'New Notification from Campus Deal',
