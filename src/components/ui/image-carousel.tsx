@@ -12,6 +12,7 @@ interface ImageCarouselProps {
   aspectRatio?: "square" | "video" | "wide" | "vertical";
   navClassName?: string;
   imageCountClassName?: string;
+  fetchPriority?: 'high' | 'low' | 'auto';
 }
 
 export const ImageCarousel: React.FC<ImageCarouselProps> = ({
@@ -21,7 +22,8 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
   className,
   aspectRatio = "video",
   navClassName,
-  imageCountClassName
+  imageCountClassName,
+  fetchPriority = 'auto'
 }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   
@@ -71,7 +73,14 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
             src={image}
             alt={`Item image ${index + 1}`}
             className="h-full w-full object-cover"
-            loading="lazy"
+            loading={index === 0 ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={index === 0 ? "high" : "auto"}
+            onError={(e) => {
+              // Fallback to placeholder on error
+              const target = e.target as HTMLImageElement;
+              target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YWFhYSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlPC90ZXh0Pjwvc3ZnPg==';
+            }}
           />
         </div>
       ))}

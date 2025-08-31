@@ -2,7 +2,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export const ProductCardSkeleton = () => {
   return (
-    <div className="bg-secondary rounded-lg border border-white/10 overflow-hidden animate-fadeIn">
+    <div
+      className={
+        "rounded-lg border overflow-hidden animate-fadeIn " +
+        "backdrop-blur-md " +
+        "" +
+        "bg-white/80 border-gray-200 dark:bg-black/60 dark:border-white/10"
+      }
+    >
       <div className="relative aspect-square">
         <Skeleton className="absolute inset-0" />
       </div>
@@ -16,4 +23,4 @@ export const ProductCardSkeleton = () => {
       </div>
     </div>
   );
-}; 
+};

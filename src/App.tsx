@@ -7,55 +7,59 @@ import { AnimatePresence } from "framer-motion";
 import { Navbar } from "@/components/Navbar";
 import { BottomNav } from "@/components/BottomNav";
 import { DesktopSideNav } from "@/components/DesktopSideNav";
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, lazy } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { trackPageView } from "@/utils/analytics";
 import { initializeGemini } from "@/services/nlpService";
-import Index from "./pages/Index";
-import Messages from "./pages/Messages";
-import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
-import NotFound from "./pages/NotFound";
-import SavedItems from "./pages/SavedItems";
-import Help from "./pages/Help";
-import Privacy from "./pages/Privacy";
-import About from "./pages/About";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Share from "./pages/Share";
 import { NotificationProvider } from "./contexts/NotificationContext";
-import AuthLayout from "./components/AuthLayout";
-import SignIn from "./pages/auth/SignIn";
-import SignUp from "./pages/auth/SignUp";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import EmailVerification from "./pages/auth/EmailVerification";
-import EmailConfirmed from "./pages/auth/EmailConfirmed";
+import { SearchProvider } from "./contexts/SearchContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
-import Admin from "./pages/Admin";
-import MyListings from "./pages/MyListings";
-import UserProfile from "./pages/UserProfile";
-import Wallet from "./pages/Wallet";
-import { SearchProvider } from "./contexts/SearchContext";
-import NotificationsPage from "./pages/NotificationsPage";
-import CategoryPage from "./pages/CategoryPage";
-import SafetyTipsDialog from "./components/SafetyTipsDialog";
-import Support from "./pages/Support";
-import LazyHomepage from "./pages/LazyHomepage";
-import LazyViewItem from "./pages/LazyViewItem";
-import LazySettings from "./components/LazySettings";
-import LazySavedItems from "./components/LazySavedItems";
-import LazyInviteFriends from "./components/LazyInviteFriends";
-import SettingsChangePassword from "./pages/SettingsChangePassword";
 import { useDeviceType } from "./hooks/use-mobile";
-import DeliveryCoordinator from "./pages/DeliveryCoordinator";
-import Feedback from "./pages/Feedback";
-import Leaderboard from "./pages/Leaderboard";
-import InviteFriends from "./pages/InviteFriends";
 import { usePWATheme } from "./hooks/usePWATheme";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import { PerformanceMonitor } from "./components/PerformanceMonitor";
+
+
+// Lazy load all major components and pages for better performance
+const Index = lazy(() => import("./pages/Index"));
+const Messages = lazy(() => import("./pages/Messages"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Settings = lazy(() => import("./pages/Settings"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const SavedItems = lazy(() => import("./pages/SavedItems"));
+const Help = lazy(() => import("./pages/Help"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const About = lazy(() => import("./pages/About"));
+const Share = lazy(() => import("./pages/Share"));
+const AuthLayout = lazy(() => import("./components/AuthLayout"));
+const SignIn = lazy(() => import("./pages/auth/SignIn"));
+const SignUp = lazy(() => import("./pages/auth/SignUp"));
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const EmailVerification = lazy(() => import("./pages/auth/EmailVerification"));
+const EmailConfirmed = lazy(() => import("./pages/auth/EmailConfirmed"));
+const Admin = lazy(() => import("./pages/Admin"));
+const MyListings = lazy(() => import("./pages/MyListings"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Wallet = lazy(() => import("./pages/Wallet"));
+const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
+const CategoryPage = lazy(() => import("./pages/CategoryPage"));
+const SafetyTipsDialog = lazy(() => import("./components/SafetyTipsDialog"));
+const Support = lazy(() => import("./pages/Support"));
+const LazyHomepage = lazy(() => import("./pages/LazyHomepage"));
+const LazyViewItem = lazy(() => import("./pages/LazyViewItem"));
+const LazySettings = lazy(() => import("./components/LazySettings"));
+const LazySavedItems = lazy(() => import("./components/LazySavedItems"));
+const LazyInviteFriends = lazy(() => import("./components/LazyInviteFriends"));
+const SettingsChangePassword = lazy(() => import("./pages/SettingsChangePassword"));
+const DeliveryCoordinator = lazy(() => import("./pages/DeliveryCoordinator"));
+const Feedback = lazy(() => import("./pages/Feedback"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const InviteFriends = lazy(() => import("./pages/InviteFriends"));
 
 // Create a single query client instance outside of the component with better caching
 const queryClient = new QueryClient({
@@ -307,6 +311,7 @@ const App = () => {
                   <AnimatedRoutes />
                   <Toaster />
                   <Sonner />
+                  {import.meta.env.DEV && <PerformanceMonitor />}
                 </BrowserRouter>
               </TooltipProvider>
             </SearchProvider>

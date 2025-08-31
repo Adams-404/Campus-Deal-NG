@@ -38,6 +38,7 @@ export const DesktopSideNav = () => {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
   const { hideSellTips } = useSettings();
@@ -49,34 +50,41 @@ export const DesktopSideNav = () => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
-      
       if (user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-          
-        setUserProfile(profile);
+        setProfileLoading(true);
+        try {
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          if (error) {
+            console.error('Error fetching profile:', error);
+            setUserProfile({ id: user.id, first_name: 'User' });
+          } else {
+            setUserProfile(profile);
+          }
+        } catch (error) {
+          console.error('Error fetching profile:', error);
+          setUserProfile({ id: user.id, first_name: 'User' });
+        } finally {
+          setProfileLoading(false);
+        }
+      } else {
+        setProfileLoading(false);
       }
     };
-    
     checkUser();
-    
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
     });
-
     return () => {
       subscription.unsubscribe();
     };
   }, []);
 
-  // If there's no user, don't render the navigation
-  if (!user) {
-    return null;
-  }
+  // Always render the sidebar, even if user is not loaded yet, to avoid delayed appearance
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -168,8 +176,8 @@ export const DesktopSideNav = () => {
               
               {/* Bottom navigation items - Profile, Delivery, Settings */}
               {navItems.slice(3).map((item) => {
-                // Skip desktop-only items on non-desktop devices
-                if (item.desktopOnly && deviceType === 'mobile') return null;
+                // Only render desktopOnly items on desktop (deviceType is never 'mobile' here)
+                if (item.desktopOnly && deviceType !== 'desktop') return null;
                 return <SideNavItem key={item.label} item={item} theme={theme} />;
               })}
             </div>
@@ -180,7 +188,12 @@ export const DesktopSideNav = () => {
             "mt-auto pt-2 px-4 pb-2",
             theme === 'light' ? "border-t border-gray-200" : "border-t border-white/10"
           )}>
-            <UserProfileSection userProfile={userProfile} user={user} theme={theme} />
+            <UserProfileSection 
+              userProfile={userProfile} 
+              user={user} 
+              theme={theme} 
+              isLoading={profileLoading}
+            />
             <div className="mt-4 relative z-10 w-full">
               <LogoutButton onClick={() => setShowLogoutDialog(true)} theme={theme} />
             </div>

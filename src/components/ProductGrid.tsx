@@ -71,17 +71,10 @@ interface ProductGridProps {
 }
 
 export const ProductGrid = ({ items = SAMPLE_PRODUCTS, title = "Featured Listings" }: ProductGridProps) => {
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [products, setProducts] = useState(items);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
+  // Remove artificial loading delay - only show loading when actually fetching data
   useEffect(() => {
     setProducts(items);
   }, [items]);

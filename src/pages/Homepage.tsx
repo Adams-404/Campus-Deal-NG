@@ -1,9 +1,9 @@
 import { ProductGrid } from "@/components/ProductGrid";
 import { PageTransition } from "@/components/PageTransition";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo, useRef } from "react";
 import { toast } from "sonner";
-import { useScrollPosition } from "@/hooks/useScrollPosition";
+// import { useScrollPosition } from "@/hooks/useScrollPosition";
 import { supabase } from "@/integrations/supabase/client";
 import { ProductCard } from "@/components/ProductCard";
 import { useSearch } from "@/contexts/SearchContext";
@@ -13,6 +13,19 @@ import { useDeviceType } from "@/hooks/use-mobile";
 import { EmptySearchSuggestions } from "@/components/EmptySearchSuggestions";
 import { SearchHistoryAndSuggestions } from "@/components/SearchHistoryAndSuggestions";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useItems } from "@/hooks/useItems";
+
+// Preload critical images for better LCP
+const preloadCriticalImages = (images: string[]) => {
+  if (images.length > 0) {
+    const link = document.createElement('link');
+    link.rel = 'preload';
+    link.as = 'image';
+    link.href = images[0];
+    link.fetchPriority = 'high';
+    document.head.appendChild(link);
+  }
+};
 
 type ItemCondition = 'new' | 'like_new' | 'good' | 'fair' | 'poor';
 
@@ -30,10 +43,10 @@ interface Item {
     last_name?: string;
     avatar_url?: string;
   };
-  featured?: boolean; // Made optional since it's not always present in the database
+  featured?: boolean;
   description?: string;
-  condition?: ItemCondition; // Used for NLP filtering
-  status?: string; // Add status field to match database schema
+  condition?: ItemCondition;
+  status?: string;
 }
 
 const shuffleArray = (array: any[]) => {
@@ -45,9 +58,13 @@ const shuffleArray = (array: any[]) => {
   return newArray;
 };
 
+const HOMEPAGE_CACHE_KEY = 'homepage_cache_v1';
+const HOMEPAGE_SCROLL_KEY = 'homepage_scroll_v1';
+const HOMEPAGE_TIMESTAMP_KEY = 'homepage_time_v1';
+const HOMEPAGE_SEED_KEY = 'homepage_seed_v1';
+
 const Homepage = () => {
-  const [items, setItems] = useState<Item[]>([]);
-  const [loading, setLoading] = useState(true);
+
   const { 
     searchQuery, 
     selectedCategories, 
@@ -64,210 +81,82 @@ const Homepage = () => {
   const deviceType = useDeviceType();
   const { theme } = useTheme();
 
-  const fetchItems = async () => {
-    try {
-      setLoading(true);
-      
-      console.log('Fetching items with params:', {
-        searchQuery,
-        selectedCategories,
-        searchParams,
-        sortBy
-      });
-      
-      // Start building the query
-      let query = supabase
-        .from('items')
-        .select(`
-          *,
-          item_images (
-            image_url
-          ),
-          profiles:seller_id (
-            id,
-            first_name,
-            last_name,
-            avatar_url
-          )
-        `)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
+  // Generate a random seed for each page load to ensure different shuffling
+  const [randomSeed, setRandomSeed] = useState(() => Math.random());
 
-      // Handle search query if it exists and we don't have searchParams
-      if (searchQuery && (!searchParams.keywords || searchParams.keywords.length === 0)) {
-        const searchTerms = searchQuery.toLowerCase().split(' ').filter(term => term.length > 2);
-        if (searchTerms.length > 0) {
-          const searchConditions = searchTerms.flatMap(term => [
-            `title.ilike.%${term}%`,
-            `description.ilike.%${term}%`,
-            `category.ilike.%${term}%`
-          ]).filter(Boolean);
-          
-          if (searchConditions.length > 0) {
-            query = query.or(searchConditions.join(','));
-          }
-        }
-      }
+  // For caching homepage data, scroll, and seed
+  const [cachedItems, setCachedItems] = useState<Item[] | null>(null);
+  const [cachedTime, setCachedTime] = useState<number | null>(null);
+  const [cachedSeed, setCachedSeed] = useState<number | null>(null);
+  const scrollRestored = useRef(false);
 
-      // Apply category filter if categories are selected or if a category was detected in search
-      const categoriesToSearch = [
-        ...selectedCategories,
-        ...(searchParams.category ? [searchParams.category] : [])
-      ].filter((v, i, a) => v && a.indexOf(v) === i); // Remove duplicates and empty values
+  // Use optimized hook for data fetching
+  const { data: items = [], isLoading, error, refetch } = useItems({
+    searchQuery,
+    selectedCategories,
+    searchParams,
+    sortBy,
+    shuffle: true, // Enable shuffling for homepage randomness
+    randomSeed // Pass random seed for consistent but different shuffling per page load
+  });
 
-      console.log('Categories to search:', categoriesToSearch);
-      
-      if (categoriesToSearch.length > 0) {
-        console.log('Applying category filter:', categoriesToSearch);
-        // Create an array of OR conditions for each category
-        const categoryConditions = categoriesToSearch.flatMap(cat => {
-          if (!cat) return [];
-          return [
-            `category.ilike.%${cat}%`,
-            `title.ilike.%${cat}%`,
-            `description.ilike.%${cat}%`
-          ];
-        }).filter(Boolean);
-        
-        if (categoryConditions.length > 0) {
-          query = query.or(categoryConditions.join(','));
-        } else {
-          console.warn('No valid category conditions to apply');
-        }
-      } else {
-        console.log('No categories to filter by');
-      }
-
-      // Apply price range filter
-      if (searchParams.priceRange) {
-        const { min, max } = searchParams.priceRange;
-        console.log('Applying price range:', { min, max });
-        
-        if (min !== undefined) {
-          query = query.gte('price', min);
-        }
-        if (max !== undefined) {
-          query = query.lte('price', max);
-        }
-      }
-
-      // Apply condition filter
-      const validConditions: ItemCondition[] = ['new', 'like_new', 'good', 'fair', 'poor'];
-      if (searchParams.condition && validConditions.includes(searchParams.condition as ItemCondition)) {
-        console.log('Applying condition filter:', searchParams.condition);
-        query = query.eq('condition', searchParams.condition as ItemCondition);
-      }
-
-      // Always apply keyword search if we have keywords
-      // This ensures exact matches are always found
-      if (searchParams.keywords && searchParams.keywords.length > 0) {
-        console.log('Applying keyword search:', searchParams.keywords);
-        
-        // Create search conditions for each keyword
-        const keywordConditions = searchParams.keywords.flatMap(keyword => {
-          if (!keyword || keyword.length < 1) return [];
-          const trimmedKeyword = keyword.trim();
-          if (!trimmedKeyword) return [];
-          
-          // First try exact match (case insensitive)
-          // Then try partial match with higher weight
-          return [
-            `title.ilike.${trimmedKeyword}`,  // Exact match first
-            `title.ilike.%${trimmedKeyword}%`,  // Then partial match
-            `description.ilike.%${trimmedKeyword}%`,
-            `category.ilike.%${trimmedKeyword}%`
-          ];
-        }).filter(Boolean);
-        
-        console.log('Generated keyword conditions:', keywordConditions);
-        
-        // Only apply if we have valid conditions
-        if (keywordConditions.length > 0) {
-          console.log('Applying keyword conditions:', keywordConditions);
-          query = query.or(keywordConditions.join(','));
-        } else {
-          console.warn('No valid keyword conditions to apply');
-        }
-      } else if (searchParams.keywords?.length > 0) {
-        console.log('Skipping keyword search as categories are being used');
-      } else {
-        console.log('No keywords to search for');
-      }
-      
-      // Log the actual SQL query for debugging
-      console.log('Generated SQL query:', query);
-      console.log('Query parameters:', {
-        categories: categoriesToSearch,
-        keywords: searchParams.keywords,
-        priceRange: searchParams.priceRange,
-        condition: searchParams.condition,
-        sortBy
-      });
-
-      console.log('Executing query...');
-      const { data: itemsData, error: itemsError, count } = await query;
-
-      console.log('Query results:', { itemsData, itemsError });
-
-      if (itemsError) {
-        console.error('Error fetching items:', itemsError);
-        throw itemsError;
-      }
-
-      if (!itemsData) {
-        console.log('No data returned from query');
-        setItems([]);
-        return;
-      }
-
-      // Format items with their images and seller information
-      let formattedItems = itemsData.map(item => {
-        const images = item.item_images || [];
-        const allImages = images.map(img => img.image_url);
-        const seller = item.profiles;
-
-        // Create a safe seller object with fallback values
-        const safeSeller = {
-          id: seller?.id || 'unknown',
-          first_name: seller?.first_name || 'Anonymous',
-          last_name: seller?.last_name || '',
-          avatar_url: seller?.avatar_url || undefined,
-          full_name: seller?.first_name && seller?.last_name
-            ? `${seller.first_name} ${seller.last_name}`
-            : seller?.first_name || seller?.last_name || 'Anonymous'
-        };
-
-        // Create the formatted item with all required fields
-        const formattedItem: Item = {
-          id: item.id,
-          title: item.title,
-          price: item.price,
-          category: item.category,
-          condition: item.condition,
-          created_at: item.created_at,
-          status: item.status || 'active',
-          images: allImages,
-          seller: safeSeller,
-          description: item.description
-        };
-
-        return formattedItem;
-      }).filter(item => item.images.length > 0);
-
-      // Shuffle all items before setting state
-      formattedItems = shuffleArray(formattedItems);
-      setItems(formattedItems);
-    } catch (error: any) {
-      console.error('Error fetching items:', error);
-      toast.error(error.message || "Failed to fetch items");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Handle errors
   useEffect(() => {
-    fetchItems();
+    if (error) {
+      toast.error("Failed to fetch items");
+      console.error('Error fetching items:', error);
+    }
+  }, [error]);
 
+  // Restore homepage cache and scroll if available and <30s old
+  useEffect(() => {
+    const cache = sessionStorage.getItem(HOMEPAGE_CACHE_KEY);
+    const scroll = sessionStorage.getItem(HOMEPAGE_SCROLL_KEY);
+    const time = sessionStorage.getItem(HOMEPAGE_TIMESTAMP_KEY);
+    const seed = sessionStorage.getItem(HOMEPAGE_SEED_KEY);
+    if (cache && time && seed) {
+      const age = Date.now() - Number(time);
+      if (age < 30000) {
+        try {
+          setCachedItems(JSON.parse(cache));
+          setCachedTime(Number(time));
+          setCachedSeed(Number(seed));
+          setRandomSeed(Number(seed));
+          // Restore scroll after DOM paint
+          setTimeout(() => {
+            if (scroll && !scrollRestored.current) {
+              window.scrollTo({ top: Number(scroll), behavior: 'auto' });
+              scrollRestored.current = true;
+            }
+          }, 0);
+        } catch {}
+      } else {
+        // Expired, clear cache
+        sessionStorage.removeItem(HOMEPAGE_CACHE_KEY);
+        sessionStorage.removeItem(HOMEPAGE_SCROLL_KEY);
+        sessionStorage.removeItem(HOMEPAGE_TIMESTAMP_KEY);
+        sessionStorage.removeItem(HOMEPAGE_SEED_KEY);
+      }
+    }
+    // eslint-disable-next-line
+  }, []);
+
+  // Save homepage cache and scroll on unmount
+  useEffect(() => {
+    return () => {
+      // Only cache if not searching (searchQuery empty)
+      if (!searchQuery && items.length > 0) {
+        sessionStorage.setItem(HOMEPAGE_CACHE_KEY, JSON.stringify(items));
+        sessionStorage.setItem(HOMEPAGE_SCROLL_KEY, String(window.scrollY));
+        sessionStorage.setItem(HOMEPAGE_TIMESTAMP_KEY, String(Date.now()));
+        sessionStorage.setItem(HOMEPAGE_SEED_KEY, String(randomSeed));
+      }
+    };
+    // eslint-disable-next-line
+  }, [items, searchQuery, randomSeed]);
+
+  // Set up real-time updates
+  useEffect(() => {
     const channel = supabase
       .channel('items_channel')
       .on(
@@ -278,7 +167,10 @@ const Homepage = () => {
           table: 'items'
         },
         () => {
-          fetchItems();
+          // Only refetch if we're not already loading
+          if (!isLoading) {
+            refetch();
+          }
         }
       )
       .subscribe();
@@ -286,18 +178,36 @@ const Homepage = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedCategories, sortBy, searchParams, searchQuery]);
+  }, [isLoading, refetch]);
+
+  // Preload critical images for better LCP
+  useEffect(() => {
+    if (items.length > 0) {
+      // Preload first few featured images
+      const featuredImages = items
+        .filter(item => item.featured)
+        .slice(0, 3)
+        .flatMap(item => item.images.slice(0, 1));
+      
+      featuredImages.forEach(imageUrl => {
+        preloadCriticalImages([imageUrl]);
+      });
+    }
+  }, [items]);
 
   const handleRefresh = useCallback(async () => {
-    await fetchItems();
+    await refetch();
     toast.success("Content refreshed");
-  }, []);
+  }, [refetch]);
+
+  // Use cached items if available and not searching
+  const homepageItems = (!searchQuery && cachedItems) ? cachedItems : items;
 
   // Group items by category with shuffling
   const groupedItems = useMemo(() => {
     const groups: Record<string, Item[]> = {};
     // Shuffle the order of items before grouping
-    const shuffledItems = shuffleArray([...items]);
+    const shuffledItems = shuffleArray([...homepageItems]);
     shuffledItems.forEach(item => {
       if (!groups[item.category]) {
         groups[item.category] = [];
@@ -311,13 +221,13 @@ const Homepage = () => {
       shuffledGroups[category] = groups[category];
     });
     return shuffledGroups;
-  }, [items]);
+  }, [homepageItems]);
 
   // Find featured items
   const featuredItems = useMemo(() => {
     // For demo purposes, just consider the first few items as featured
-    return items.slice(0, 3);
-  }, [items]);
+    return homepageItems.slice(0, 3);
+  }, [homepageItems]);
 
   // Handler for search suggestions
   const handleSuggestionClick = (suggestion: string) => {
@@ -388,19 +298,17 @@ const Homepage = () => {
   const filteredItems = useMemo(() => {
     // If we have search params from the context, let the server handle the filtering
     if (searchParams.keywords?.length || searchParams.priceRange || searchParams.condition) {
-      return items;
+      return homepageItems;
     }
-    
     // Only do client-side filtering if we have a search query
-    if (!searchQuery) return items;
-    
+    if (!searchQuery) return homepageItems;
     const query = searchQuery.toLowerCase();
-    return items.filter(item => 
+    return homepageItems.filter(item => 
       item.title.toLowerCase().includes(query) ||
       item.description?.toLowerCase().includes(query) ||
       item.category?.toLowerCase().includes(query)
     );
-  }, [items, searchQuery, searchParams]);
+  }, [homepageItems, searchQuery, searchParams]);
 
   // Determine grid columns based on device type
   const getGridCols = () => {
@@ -427,12 +335,14 @@ const Homepage = () => {
     }
   };
 
+
+
   return (
     <div className="min-h-screen bg-background text-foreground w-full">
       <main className={`mx-auto ${getContainerPadding()} ${deviceType !== 'mobile' ? 'w-full' : ''}`}>
         <PullToRefresh onRefresh={handleRefresh}>
           <PageTransition>
-            {loading ? (
+            {isLoading ? (
               <div className="flex justify-center items-center h-[calc(100vh-200px)]">
                 <Loader2 className="h-8 w-8 animate-spin" />
               </div>
@@ -447,7 +357,7 @@ const Homepage = () => {
                 </div>
                 
                 {searchQuery ? (
-                  loading ? (
+                  isLoading ? (
                     <div className="flex justify-center items-center py-10">
                       <Loader2 className="h-8 w-8 animate-spin" />
                     </div>

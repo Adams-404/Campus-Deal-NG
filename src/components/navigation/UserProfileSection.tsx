@@ -7,9 +7,39 @@ interface UserProfileSectionProps {
   userProfile: any;
   user: any;
   theme: string;
+  isLoading?: boolean;
 }
 
-export const UserProfileSection = ({ userProfile, user, theme }: UserProfileSectionProps) => {
+export const UserProfileSection = ({ userProfile, user, theme, isLoading = false }: UserProfileSectionProps) => {
+  if (isLoading) {
+    // Use a semi-transparent background similar to header/bottomnav
+    return (
+      <div className={cn(
+        "group relative flex items-center gap-3 w-full px-4 py-2 rounded-xl",
+        theme === 'light'
+          ? 'bg-white/80 backdrop-blur-md border border-gray-200'
+          : 'bg-black/60 backdrop-blur-md border border-white/10'
+      )}>
+        <div className="relative">
+          <div className={cn(
+            "h-10 w-10 rounded-full flex items-center justify-center",
+            theme === 'light' ? 'bg-white/60' : 'bg-neutral-800/60'
+          )}>
+            <div className="flex space-x-1">
+              <div className={cn("w-1.5 h-1.5 rounded-full animate-bounce", theme === 'light' ? 'bg-primary/40' : 'bg-primary/60')} style={{ animationDelay: '0ms' }}></div>
+              <div className={cn("w-1.5 h-1.5 rounded-full animate-bounce", theme === 'light' ? 'bg-primary/40' : 'bg-primary/60')} style={{ animationDelay: '150ms' }}></div>
+              <div className={cn("w-1.5 h-1.5 rounded-full animate-bounce", theme === 'light' ? 'bg-primary/40' : 'bg-primary/60')} style={{ animationDelay: '300ms' }}></div>
+            </div>
+          </div>
+        </div>
+        <div className="flex-1 space-y-2">
+          <div className={cn("h-4 rounded w-24", theme === 'light' ? 'bg-primary/10' : 'bg-primary/20')} />
+          <div className={cn("h-3 rounded w-32", theme === 'light' ? 'bg-primary/10' : 'bg-primary/20')} />
+        </div>
+      </div>
+    );
+  }
+
   if (!userProfile) return null;
   
   return (

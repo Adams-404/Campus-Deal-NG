@@ -143,8 +143,6 @@ export function SearchProvider({ children }: { children: ReactNode }) {
         if (params.sortBy) {
           console.log('Setting sort by from Gemini:', params.sortBy);
           setSortBy(params.sortBy);
-        } else {
-          console.log('No sort by found in Gemini response');
         }
       } catch (error) {
         console.error('Error processing query with NLP:', error);
@@ -156,10 +154,10 @@ export function SearchProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Debounce processing to avoid too many API calls
+    // Increase debounce time and add proper throttling to reduce API calls
     const timer = setTimeout(() => {
       processQuery();
-    }, 500);
+    }, 1000); // Increased from 500ms to 1000ms
 
     return () => clearTimeout(timer);
   }, [searchQuery, useNLP]);
