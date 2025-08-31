@@ -49,10 +49,21 @@ interface Item {
   status?: string;
 }
 
-const shuffleArray = (array: any[]) => {
+// Deterministic shuffle with optional seed (copied from useItems)
+const shuffleArray = (array: any[], seed?: number) => {
   const newArray = [...array];
+  const random = seed ? (() => {
+    let m = 0x80000000;
+    let a = 1103515245;
+    let c = 12345;
+    let state = seed ? seed : Math.floor(Math.random() * (m - 1));
+    return () => {
+      state = (a * state + c) % m;
+      return state / (m - 1);
+    };
+  })() : Math.random;
   for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(random() * (i + 1));
     [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
   }
   return newArray;
@@ -84,76 +95,20 @@ const Homepage = () => {
   // Generate a random seed for each page load to ensure different shuffling
   const [randomSeed, setRandomSeed] = useState(() => Math.random());
 
-  // For caching homepage data, scroll, and seed
-  const [cachedItems, setCachedItems] = useState<Item[] | null>(null);
-  const [cachedTime, setCachedTime] = useState<number | null>(null);
-  const [cachedSeed, setCachedSeed] = useState<number | null>(null);
-  const scrollRestored = useRef(false);
-
-  // Use optimized hook for data fetching
-  const { data: items = [], isLoading, error, refetch } = useItems({
+  // Only keep randomSeed for shuffling
+      // Use optimized hook for data fetching
+  const { data: items = [], isLoading, error, refetch, isFetching } = useItems({
     searchQuery,
     selectedCategories,
     searchParams,
     sortBy,
-    shuffle: true, // Enable shuffling for homepage randomness
-    randomSeed // Pass random seed for consistent but different shuffling per page load
+    shuffle: true,
+    randomSeed
   });
 
-  // Handle errors
-  useEffect(() => {
-    if (error) {
-      toast.error("Failed to fetch items");
-      console.error('Error fetching items:', error);
-    }
-  }, [error]);
+  const homepageItems = items;
 
-  // Restore homepage cache and scroll if available and <30s old
-  useEffect(() => {
-    const cache = sessionStorage.getItem(HOMEPAGE_CACHE_KEY);
-    const scroll = sessionStorage.getItem(HOMEPAGE_SCROLL_KEY);
-    const time = sessionStorage.getItem(HOMEPAGE_TIMESTAMP_KEY);
-    const seed = sessionStorage.getItem(HOMEPAGE_SEED_KEY);
-    if (cache && time && seed) {
-      const age = Date.now() - Number(time);
-      if (age < 30000) {
-        try {
-          setCachedItems(JSON.parse(cache));
-          setCachedTime(Number(time));
-          setCachedSeed(Number(seed));
-          setRandomSeed(Number(seed));
-          // Restore scroll after DOM paint
-          setTimeout(() => {
-            if (scroll && !scrollRestored.current) {
-              window.scrollTo({ top: Number(scroll), behavior: 'auto' });
-              scrollRestored.current = true;
-            }
-          }, 0);
-        } catch {}
-      } else {
-        // Expired, clear cache
-        sessionStorage.removeItem(HOMEPAGE_CACHE_KEY);
-        sessionStorage.removeItem(HOMEPAGE_SCROLL_KEY);
-        sessionStorage.removeItem(HOMEPAGE_TIMESTAMP_KEY);
-        sessionStorage.removeItem(HOMEPAGE_SEED_KEY);
-      }
-    }
-    // eslint-disable-next-line
-  }, []);
-
-  // Save homepage cache and scroll on unmount
-  useEffect(() => {
-    return () => {
-      // Only cache if not searching (searchQuery empty)
-      if (!searchQuery && items.length > 0) {
-        sessionStorage.setItem(HOMEPAGE_CACHE_KEY, JSON.stringify(items));
-        sessionStorage.setItem(HOMEPAGE_SCROLL_KEY, String(window.scrollY));
-        sessionStorage.setItem(HOMEPAGE_TIMESTAMP_KEY, String(Date.now()));
-        sessionStorage.setItem(HOMEPAGE_SEED_KEY, String(randomSeed));
-      }
-    };
-    // eslint-disable-next-line
-  }, [items, searchQuery, randomSeed]);
+  // No cache or skip logic
 
   // Set up real-time updates
   useEffect(() => {
@@ -195,19 +150,16 @@ const Homepage = () => {
     }
   }, [items]);
 
-  const handleRefresh = useCallback(async () => {
-    await refetch();
-    toast.success("Content refreshed");
-  }, [refetch]);
+  // No manual refresh logic
 
-  // Use cached items if available and not searching
-  const homepageItems = (!searchQuery && cachedItems) ? cachedItems : items;
+  // Use displayItems everywhere instead of homepageItems
+  // homepageItems already declared above
 
   // Group items by category with shuffling
   const groupedItems = useMemo(() => {
     const groups: Record<string, Item[]> = {};
     // Shuffle the order of items before grouping
-    const shuffledItems = shuffleArray([...homepageItems]);
+    const shuffledItems = shuffleArray([...homepageItems], randomSeed);
     shuffledItems.forEach(item => {
       if (!groups[item.category]) {
         groups[item.category] = [];
@@ -215,13 +167,13 @@ const Homepage = () => {
       groups[item.category].push(item);
     });
     // Shuffle the order of categories
-    const shuffledCategories = shuffleArray(Object.keys(groups));
+    const shuffledCategories = shuffleArray(Object.keys(groups), randomSeed);
     const shuffledGroups: Record<string, Item[]> = {};
     shuffledCategories.forEach(category => {
       shuffledGroups[category] = groups[category];
     });
     return shuffledGroups;
-  }, [homepageItems]);
+  }, [homepageItems, randomSeed]);
 
   // Find featured items
   const featuredItems = useMemo(() => {
@@ -340,7 +292,11 @@ const Homepage = () => {
   return (
     <div className="min-h-screen bg-background text-foreground w-full">
       <main className={`mx-auto ${getContainerPadding()} ${deviceType !== 'mobile' ? 'w-full' : ''}`}>
-        <PullToRefresh onRefresh={handleRefresh}>
+        <PullToRefresh onRefresh={async () => {
+          setRandomSeed(Math.random());
+          await refetch();
+          toast.success('Homepage refreshed!');
+        }}>
           <PageTransition>
             {isLoading ? (
               <div className="flex justify-center items-center h-[calc(100vh-200px)]">
