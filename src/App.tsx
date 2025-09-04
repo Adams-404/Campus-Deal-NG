@@ -313,16 +313,16 @@ const App = () => {
         <SettingsProvider>
           <NotificationProvider>
             <SearchProvider>
-              <AppModeProvider>
-                <TooltipProvider>
-                  <BrowserRouter>
+              <BrowserRouter>
+                <AppModeProvider>
+                  <TooltipProvider>
                     <AnimatedRoutes />
                     <Toaster />
                     <Sonner />
                     {import.meta.env.DEV && <PerformanceMonitor />}
-                  </BrowserRouter>
-                </TooltipProvider>
-              </AppModeProvider>
+                  </TooltipProvider>
+                </AppModeProvider>
+              </BrowserRouter>
             </SearchProvider>
           </NotificationProvider>
         </SettingsProvider>

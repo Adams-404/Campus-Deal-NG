@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 type AppMode = 'marketplace' | 'gigs';
 
@@ -13,6 +14,7 @@ const AppModeContext = createContext<AppModeContextType | undefined>(undefined);
 
 export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentMode, setCurrentMode] = useState<AppMode>('marketplace');
+  const navigate = useNavigate();
 
   // Detect mode from URL
   useEffect(() => {
@@ -29,12 +31,12 @@ export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const path = window.location.pathname;
     if (currentMode === 'gigs' && !path.startsWith('/gigs')) {
       if (path === '/home' || path === '/') {
-        window.history.pushState({}, '', '/gigs');
+        navigate('/gigs', { replace: true });
       }
     } else if (currentMode === 'marketplace' && path.startsWith('/gigs') && !path.includes('/gigs/')) {
-      window.history.pushState({}, '', '/home');
+      navigate('/home', { replace: true });
     }
-  }, [currentMode]);
+  }, [currentMode, navigate]);
 
   const value = {
     currentMode,
