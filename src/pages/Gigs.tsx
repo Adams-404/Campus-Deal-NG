@@ -11,7 +11,9 @@ import { CreateGigModal } from "@/components/CreateGigModal";
 import { GigCard } from "@/components/GigCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
+
 import { PageTransition } from "@/components/PageTransition";
+import { Navbar } from "@/components/Navbar";
 
 interface Gig {
   id: string;
@@ -186,8 +188,12 @@ const Gigs = () => {
   );
 
   return (
-    <PageTransition>
-      <div className={`min-h-screen ${deviceType === 'mobile' ? 'pb-20' : 'ml-[300px]'} px-4 py-6`}>
+    <>
+      <Navbar />
+      <PageTransition>
+        <div
+          className={`min-h-screen ${deviceType === 'mobile' ? 'pb-20 pt-14' : 'ml-[300px] pt-14'} px-4 py-6`}
+        >
         <div className="max-w-7xl mx-auto">
           {/* Header */}
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-8">
@@ -312,8 +318,9 @@ const Gigs = () => {
             onGigCreated={fetchGigs}
           />
         )}
-      </div>
-    </PageTransition>
+        </div>
+      </PageTransition>
+    </>
   );
 };
 

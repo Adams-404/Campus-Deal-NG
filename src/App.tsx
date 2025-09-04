@@ -195,36 +195,43 @@ const AnimatedRoutes = () => {
   const shouldShowSideNav = user && deviceType !== 'mobile' && !isAuthPage;
   
   // Determine if we should show the header
+  const modeHomePaths = ['/home', '/gigs']; // Add more mode homepages if needed
   const shouldShowNavbar = (path: string) => {
-    // For mobile, always show navbar on home
-    if (deviceType === 'mobile' && path === '/home') return true;
-    
-    // For desktop, only show navbar on home
+    // Show navbar on all mode homepages and their subpages
+    const isModePage = modeHomePaths.some((modePath) => path === modePath || path.startsWith(modePath + '/'));
+
+    // For mobile, show navbar on all mode homepages and subpages
+    if (deviceType === 'mobile' && isModePage) return true;
+
+    // For desktop, only show navbar on mode homepages and subpages
     if (deviceType !== 'mobile') {
-      if (path === '/home') return true;
-      
+      if (isModePage) return true;
+
       // Don't show navbar on saved page for desktop specifically
       if (path === '/saved') return false;
-      
+
       // In other cases, no navbar for desktop
       return false;
     }
-    
+
     // Default case for mobile
-    return path === '/home';
+    return isModePage;
   };
   
   // Apply main content padding based on device and sidenav visibility
   const getContentClass = () => {
     const isHomePage = location.pathname === '/home';
-    
+    const isGigsPage = location.pathname.startsWith('/gigs');
+    const showNavbar = shouldShowNavbar(location.pathname);
     if (deviceType === 'mobile') {
       // No top padding for mobile to fix the spacing issue
       return isHomePage ? "pb-24" : "pb-24"; 
     } else if (shouldShowSideNav) {
-      return "ml-[300px]"; // Add left margin for desktop/tablet with sidenav
+      // Add left margin for desktop/tablet with sidenav, and top padding if navbar is visible
+      return showNavbar ? "ml-[300px] pt-14" : "ml-[300px]";
     } else {
-      return ""; // Default case
+      // Add top padding if navbar is visible
+      return showNavbar ? "pt-14" : "";
     }
   };
 

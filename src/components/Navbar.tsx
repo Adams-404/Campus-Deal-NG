@@ -116,8 +116,8 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
   
-  // Only show navbar on home page for desktop view
-  const shouldShowOnDesktop = location.pathname === '/home';
+  // Show navbar on home and gigs pages for desktop view
+  const shouldShowOnDesktop = location.pathname === '/home' || location.pathname === '/gigs';
 
   // Sample notifications - in a real app, you would fetch these from your backend
   const notifications = [
