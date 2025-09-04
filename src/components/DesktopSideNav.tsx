@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck, Wallet } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck, Wallet, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -110,6 +110,7 @@ export const DesktopSideNav = () => {
 
   const navItems = [
     { icon: Home, label: "Home", href: "/home" },
+    { icon: Briefcase, label: "Gigs", href: "/gigs" },
     { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
     { icon: Heart, label: "Saved", href: "/saved" },
     { icon: User, label: "Profile", href: "/profile" },
@@ -163,19 +164,19 @@ export const DesktopSideNav = () => {
           <nav className="flex-1 flex flex-col pt-5 px-2">
             {/* All navigation items with consistent spacing */}
             <div className="space-y-1.5">
-              {/* Home & Messages */}
-              {navItems.slice(0, 2).map((item) => (
+              {/* Home & Gigs & Messages */}
+              {navItems.slice(0, 3).map((item) => (
                 <SideNavItem key={item.label} item={item} theme={theme} />
               ))}
               
               {/* Saved item */}
-              <SideNavItem item={navItems[2]} theme={theme} />
+              <SideNavItem item={navItems[3]} theme={theme} />
               
               {/* Sell button - styled differently */}
               <SellButton item={sellItem} theme={theme} />
               
               {/* Bottom navigation items - Profile, Delivery, Settings */}
-              {navItems.slice(3).map((item) => {
+              {navItems.slice(4).map((item) => {
                 // Only render desktopOnly items on desktop (deviceType is never 'mobile' here)
                 if (item.desktopOnly && deviceType !== 'desktop') return null;
                 return <SideNavItem key={item.label} item={item} theme={theme} />;

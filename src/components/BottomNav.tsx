@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { SellModal } from "./SellModal";
@@ -62,7 +62,7 @@ export const BottomNav = () => {
 
   const navItems = [
     { icon: Home, label: "Home", href: "/home" },
-    { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages },
+    { icon: Briefcase, label: "Gigs", href: "/gigs" },
     { icon: Plus, label: "Sell", href: "#" },
     { icon: Heart, label: "Saved", href: "/saved" },
     { icon: Settings, label: "Settings", href: "/settings" },
@@ -104,7 +104,7 @@ export const BottomNav = () => {
                   location.pathname === item.href && "text-primary"
                 )}
               >
-                {item.hasNotification && (
+                {(item as any).hasNotification && (
                   <>
                     {totalUnreadMessages > 0 && (
                       <div className="absolute -right-2 -top-2">

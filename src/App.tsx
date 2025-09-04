@@ -60,6 +60,7 @@ const DeliveryCoordinator = lazy(() => import("./pages/DeliveryCoordinator"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const InviteFriends = lazy(() => import("./pages/InviteFriends"));
+const Gigs = lazy(() => import("./pages/Gigs"));
 
 // Create a single query client instance outside of the component with better caching
 const queryClient = new QueryClient({
@@ -261,6 +262,7 @@ const AnimatedRoutes = () => {
               <Route path="/settings" element={<ProtectedRoute allowGuest><LazySettings /></ProtectedRoute>} />
               <Route path="/settings/reset-password" element={<ProtectedRoute><SettingsChangePassword /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><LazySavedItems /></ProtectedRoute>} />
+              <Route path="/gigs" element={<ProtectedRoute allowGuest><Gigs /></ProtectedRoute>} />
               <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
               <Route path="/invite-friends" element={<ProtectedRoute><LazyInviteFriends /></ProtectedRoute>} />
               <Route path="/item/:id" element={<ProtectedRoute allowGuest><LazyViewItem /></ProtectedRoute>} />
