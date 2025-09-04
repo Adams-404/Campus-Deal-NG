@@ -197,25 +197,23 @@ const AnimatedRoutes = () => {
   // Determine if we should show the header
   const modeHomePaths = ['/home', '/gigs']; // Add more mode homepages if needed
   const shouldShowNavbar = (path: string) => {
-    // Show navbar on all mode homepages and their subpages
+    // Only show navbar on exact /home or /gigs route for mobile
+    if (deviceType === 'mobile') {
+      return path === '/home' || path === '/gigs';
+    }
+
+    // For desktop and tablet, show navbar on all mode homepages and subpages
     const isModePage = modeHomePaths.some((modePath) => path === modePath || path.startsWith(modePath + '/'));
-
-    // For mobile, show navbar on all mode homepages and subpages
-    if (deviceType === 'mobile' && isModePage) return true;
-
-    // For desktop, only show navbar on mode homepages and subpages
-    if (deviceType !== 'mobile') {
+    if (deviceType === 'desktop' || deviceType === 'tablet') {
       if (isModePage) return true;
-
-      // Don't show navbar on saved page for desktop specifically
+      // Don't show navbar on saved page for desktop/tablet specifically
       if (path === '/saved') return false;
-
-      // In other cases, no navbar for desktop
+      // In other cases, no navbar for desktop/tablet
       return false;
     }
 
     // Default case for mobile
-    return isModePage;
+    return false;
   };
   
   // Apply main content padding based on device and sidenav visibility
