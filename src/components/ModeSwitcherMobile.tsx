@@ -10,7 +10,7 @@ const MODES = [
   { key: 'gigs', label: 'Gigs', icon: Briefcase, color: 'text-green-500 bg-green-100', available: true },
   { key: 'events', label: 'Events', icon: CalendarDays, color: 'text-yellow-500 bg-yellow-100', available: false },
   { key: 'news', label: 'News', icon: Newspaper, color: 'text-red-500 bg-red-100', available: false },
-  { key: 'study', label: 'Study Resources', icon: BookOpen, color: 'text-indigo-500 bg-indigo-100', available: false },
+  { key: 'study', label: 'Study', icon: BookOpen, color: 'text-indigo-500 bg-indigo-100', available: false },
   { key: 'lostfound', label: 'Lost & Found', icon: Search, color: 'text-orange-500 bg-orange-100', available: false },
   { key: 'accommodation', label: 'Accommodation', icon: Home, color: 'text-teal-500 bg-teal-100', available: false },
 ];
