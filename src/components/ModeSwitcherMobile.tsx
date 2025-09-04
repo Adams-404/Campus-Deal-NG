@@ -11,8 +11,8 @@ const MODES = [
   { key: 'events', label: 'Events', icon: CalendarDays, color: 'text-yellow-500 bg-yellow-100', available: false },
   { key: 'news', label: 'News', icon: Newspaper, color: 'text-red-500 bg-red-100', available: false },
   { key: 'study', label: 'Study', icon: BookOpen, color: 'text-indigo-500 bg-indigo-100', available: false },
-  { key: 'lostfound', label: 'Lost & Found', icon: Search, color: 'text-orange-500 bg-orange-100', available: false },
-  { key: 'accommodation', label: 'Accommodation', icon: Home, color: 'text-teal-500 bg-teal-100', available: false },
+  { key: 'lostfound', label: 'Lost', icon: Search, color: 'text-orange-500 bg-orange-100', available: false },
+  { key: 'accommodation', label: 'Room', icon: Home, color: 'text-teal-500 bg-teal-100', available: false },
 ];
 
 function ModeSwitcherMobile() {
@@ -59,13 +59,13 @@ function ModeSwitcherMobile() {
       {open && (
         <div 
           ref={menuRef}
-          className="absolute left-0 mt-2.5 w-64 p-2 bg-background/95 backdrop-blur-lg border border-white/10 rounded-xl shadow-2xl z-50"
+          className="absolute left-0 mt-2.5 w-72 p-2 bg-background/95 backdrop-blur-lg border border-white/10 rounded-xl shadow-2xl z-50"
           style={{
             '--tw-backdrop-blur': 'blur(16px)',
             '--tw-bg-opacity': '0.95',
           } as React.CSSProperties}
         >
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {otherModes.map((mode) => {
               const Icon = mode.icon;
               return (
