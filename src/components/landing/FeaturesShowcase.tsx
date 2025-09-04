@@ -53,7 +53,7 @@ const FeatureShowcaseItem = ({
       src={mockupSrc} 
       alt={title} 
       className="w-full h-full object-cover object-center"
-      fetchPriority="high"
+  fetchpriority="high"
       decoding="async"
     />
   </div>

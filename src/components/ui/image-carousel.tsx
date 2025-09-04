@@ -75,7 +75,7 @@ export const ImageCarousel: React.FC<ImageCarouselProps> = ({
             className="h-full w-full object-cover"
             loading={index === 0 ? "eager" : "lazy"}
             decoding="async"
-            fetchPriority={index === 0 ? "high" : "auto"}
+            fetchpriority={index === 0 ? "high" : "auto"}
             onError={(e) => {
               // Fallback to placeholder on error
               const target = e.target as HTMLImageElement;

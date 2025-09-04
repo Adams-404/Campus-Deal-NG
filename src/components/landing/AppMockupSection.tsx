@@ -38,7 +38,7 @@ export const AppMockupSection = () => {
                   src={desktopScreen} 
                   alt="Campus Deal desktop interface" 
                   className="w-full h-full object-cover object-top"
-                  fetchPriority="high" 
+                  fetchpriority="high" 
                   decoding="async"
                 />
               </div>
@@ -74,7 +74,7 @@ export const AppMockupSection = () => {
                   src={mobileScreen} 
                   alt="Campus Deal mobile interface" 
                   className="w-full h-full object-cover object-center"
-                  fetchPriority="high"
+                  fetchpriority="high"
                   decoding="async"
                 />
               </div>
