@@ -1,3 +1,4 @@
+import ModeSwitcherMobile from './ModeSwitcherMobile';
 import type React from "react"
 import { 
   User,
@@ -323,11 +324,15 @@ export const Navbar = () => {
             {/* Search and User Icons */}
             <div className={`flex items-center ${isMobile ? 'w-full justify-between gap-4' : 'gap-8 w-full'}`}>
               {/* Search Input */}
+              {/* Mode Switcher Button (Mobile Only) */}
+              {isMobile && (
+                <ModeSwitcherMobile />
+              )}
               <div
                 className={cn("transition-all duration-300 ease-in-out relative", 
                   isSearchFocused 
                   ? "flex-1 max-w-2xl" 
-                  : isMobile ? "w-48 flex-1" : "w-[400px] lg:w-[480px]"
+                  : isMobile ? "w-36 flex-1" : "w-[400px] lg:w-[480px]"
                 ) + (!isMobile ? ' mr-8' : '')}
               >
                 {/* Using our new NLPSearchBar component */}
