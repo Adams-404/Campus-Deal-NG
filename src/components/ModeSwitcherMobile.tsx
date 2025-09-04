@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppMode } from '@/contexts/AppModeContext';
 import { Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,21 @@ const MODES = [
 function ModeSwitcherMobile() {
   const { currentMode, setCurrentMode } = useAppMode();
   const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Show all modes, but lock unavailable ones
   const otherModes = MODES.filter(m => m.key !== currentMode);
@@ -42,9 +57,15 @@ function ModeSwitcherMobile() {
         })()}
       </button>
       {open && (
-        <div className={cn( "absolute left-0 mt-2 w-64 rounded-xl shadow-lg backdrop-blur-md z-50 p-3 border border-primary border-[1.5px]", typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? "bg-secondary/90" : "bg-white/90" )}>
-
-          <div className="grid grid-cols-2 gap-3">
+        <div 
+          ref={menuRef}
+          className="absolute left-0 mt-2.5 w-64 p-2 bg-background/95 backdrop-blur-lg border border-white/10 rounded-xl shadow-2xl z-50"
+          style={{
+            '--tw-backdrop-blur': 'blur(16px)',
+            '--tw-bg-opacity': '0.95',
+          } as React.CSSProperties}
+        >
+          <div className="grid grid-cols-2 gap-2">
             {otherModes.map((mode) => {
               const Icon = mode.icon;
               return (
