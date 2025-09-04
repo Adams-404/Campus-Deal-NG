@@ -3,13 +3,16 @@ import { useAppMode } from '@/contexts/AppModeContext';
 import { Bell } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-import { ShoppingBag, Briefcase, Lock } from 'lucide-react';
+import { ShoppingBag, Briefcase, Lock, Newspaper, BookOpen, Search, Home, CalendarDays } from 'lucide-react';
 
 const MODES = [
-  { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag, available: true },
-  { key: 'gigs', label: 'Gigs', icon: Briefcase, available: true },
-  { key: 'services', label: 'Services', icon: Briefcase, available: false },
-  { key: 'events', label: 'Events', icon: Briefcase, available: false },
+  { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag, color: 'text-blue-500 bg-blue-100', available: true },
+  { key: 'gigs', label: 'Gigs', icon: Briefcase, color: 'text-green-500 bg-green-100', available: true },
+  { key: 'events', label: 'Events', icon: CalendarDays, color: 'text-yellow-500 bg-yellow-100', available: false },
+  { key: 'news', label: 'News', icon: Newspaper, color: 'text-red-500 bg-red-100', available: false },
+  { key: 'study', label: 'Study Resources', icon: BookOpen, color: 'text-indigo-500 bg-indigo-100', available: false },
+  { key: 'lostfound', label: 'Lost & Found', icon: Search, color: 'text-orange-500 bg-orange-100', available: false },
+  { key: 'accommodation', label: 'Accommodation', icon: Home, color: 'text-teal-500 bg-teal-100', available: false },
 ];
 
 function ModeSwitcherMobile() {
@@ -39,33 +42,40 @@ function ModeSwitcherMobile() {
         })()}
       </button>
       {open && (
-        <div className="absolute left-0 mt-2 w-40 rounded-lg shadow-lg bg-white dark:bg-gray-900 border border-primary/10 z-50">
-          {otherModes.map((mode) => {
-            const Icon = mode.icon;
-            return (
-              <button
-                key={mode.key}
-                className={cn(
-                  'w-full flex items-center gap-2 px-4 py-2 text-sm rounded-lg',
-                  mode.available
-                    ? 'hover:bg-primary/10 dark:hover:bg-primary/20 text-gray-900 dark:text-white'
-                    : 'opacity-50 cursor-not-allowed text-gray-400',
-                  'transition-colors duration-100',
-                )}
-                onClick={() => {
-                  if (mode.available) {
-                    setCurrentMode(mode.key as any);
-                    setOpen(false);
-                  }
-                }}
-                disabled={!mode.available}
-              >
-                <Icon className="h-4 w-4" />
-                {mode.label}
-                {!mode.available && <Lock className="h-3 w-3 ml-auto" />}
-              </button>
-            );
-          })}
+        <div className={cn( "absolute left-0 mt-2 w-64 rounded-xl shadow-lg backdrop-blur-md z-50 p-3 border border-primary border-[1.5px]", typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches ? "bg-secondary/90" : "bg-white/90" )}>
+
+          <div className="grid grid-cols-2 gap-3">
+            {otherModes.map((mode) => {
+              const Icon = mode.icon;
+              return (
+                <button
+                  key={mode.key}
+                  className={cn(
+                    'flex flex-col items-center justify-center gap-2 px-2 py-3 rounded-lg',
+                    mode.available
+                      ? 'hover:bg-primary/10 dark:hover:bg-primary/20 text-gray-900 dark:text-white'
+                      : 'opacity-50 cursor-not-allowed text-gray-400',
+                    'transition-colors duration-100',
+                  )}
+                  onClick={() => {
+                    if (mode.available) {
+                      setCurrentMode(mode.key as any);
+                      setOpen(false);
+                    }
+                  }}
+                  disabled={!mode.available}
+                >
+                  <span className={cn('rounded-full p-2', mode.color)}>
+                    <Icon className="h-6 w-6" />
+                  </span>
+                  <span className="text-xs font-medium text-center">
+                    {mode.label}
+                  </span>
+                  {!mode.available && <Lock className="h-3 w-3 mt-1" />}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>
