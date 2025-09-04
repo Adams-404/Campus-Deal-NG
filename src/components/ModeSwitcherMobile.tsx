@@ -59,11 +59,7 @@ function ModeSwitcherMobile() {
       {open && (
         <div 
           ref={menuRef}
-          className="absolute left-0 mt-2.5 w-72 p-2 bg-background/95 backdrop-blur-lg border border-white/10 rounded-xl shadow-2xl z-50"
-          style={{
-            '--tw-backdrop-blur': 'blur(16px)',
-            '--tw-bg-opacity': '0.95',
-          } as React.CSSProperties}
+          className="absolute left-0 mt-2.5 w-72 p-2 bg-black border border-white/10 rounded-xl shadow-2xl z-50"
         >
           <div className="grid grid-cols-3 gap-2">
             {otherModes.map((mode) => {
