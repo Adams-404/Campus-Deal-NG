@@ -6,13 +6,13 @@ import { cn } from '@/lib/utils';
 import { ShoppingBag, Briefcase, Lock, Newspaper, BookOpen, Search, Home, CalendarDays } from 'lucide-react';
 
 const MODES = [
-  { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag, color: 'text-blue-500 bg-blue-100', available: true },
-  { key: 'gigs', label: 'Gigs', icon: Briefcase, color: 'text-green-500 bg-green-100', available: true },
-  { key: 'events', label: 'Events', icon: CalendarDays, color: 'text-yellow-500 bg-yellow-100', available: false },
-  { key: 'news', label: 'News', icon: Newspaper, color: 'text-red-500 bg-red-100', available: false },
-  { key: 'study', label: 'Study', icon: BookOpen, color: 'text-indigo-500 bg-indigo-100', available: false },
-  { key: 'lostfound', label: 'Lost', icon: Search, color: 'text-orange-500 bg-orange-100', available: false },
-  { key: 'accommodation', label: 'Room', icon: Home, color: 'text-teal-500 bg-teal-100', available: false },
+  { key: 'marketplace', label: 'Marketplace', icon: ShoppingBag, color: 'text-green-500 bg-green-500/10', available: true },
+  { key: 'gigs', label: 'Gigs', icon: Briefcase, color: 'text-yellow-500 bg-yellow-500/10', available: true },
+  { key: 'events', label: 'Events', icon: CalendarDays, color: 'text-orange-500 bg-orange-500/10', available: false },
+  { key: 'news', label: 'News', icon: Newspaper, color: 'text-pink-500 bg-pink-500/10', available: false },
+  { key: 'study', label: 'Study', icon: BookOpen, color: 'text-red-500 bg-red-500/10', available: false },
+  { key: 'lostfound', label: 'Lost', icon: Search, color: 'text-green-500 bg-green-500/10', available: false },
+  { key: 'accommodation', label: 'Room', icon: Home, color: 'text-yellow-500 bg-yellow-500/10', available: false },
 ];
 
 function ModeSwitcherMobile() {
