@@ -1,13 +1,15 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck, Wallet, Briefcase } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck, Wallet, Briefcase, Search, UserCheck, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useDeviceType } from "../hooks/use-mobile";
 import { useSettings } from "../contexts/SettingsContext";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useAppMode } from "@/contexts/AppModeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { SellModal } from "./SellModal";
+import { CreateGigModal } from "./CreateGigModal";
 import SafetyTipsDialog from "./SafetyTipsDialog";
 import { motion } from "framer-motion";
 import { Button } from "./ui/button";
@@ -15,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { toast } from "sonner";
 import { useTheme } from "../contexts/ThemeContext";
+import { ModeToggle } from "./ModeToggle";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,7 +37,9 @@ import { LogoutButton } from "./navigation/LogoutButton";
 
 export const DesktopSideNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
+  const [isCreateGigModalOpen, setIsCreateGigModalOpen] = useState(false);
   const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
+  const [showGigSafetyTips, setShowGigSafetyTips] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -43,6 +48,7 @@ export const DesktopSideNav = () => {
   const navigate = useNavigate();
   const { hideSellTips } = useSettings();
   const { unreadMessagesByUser } = useNotifications();
+  const { currentMode, isMarketplace, isGigs } = useAppMode();
   const deviceType = useDeviceType();
   const { theme } = useTheme();
   
@@ -104,22 +110,43 @@ export const DesktopSideNav = () => {
     }
   };
 
+  const handleCreateGigClick = () => {
+    if (!hideSellTips) {
+      setShowGigSafetyTips(true);
+    } else {
+      setIsCreateGigModalOpen(true);
+    }
+  };
+
   // Calculate if there are any new messages
   const hasNewMessages = Object.keys(unreadMessagesByUser).length > 0;
   const totalUnreadMessages = Object.values(unreadMessagesByUser).reduce((a, b) => a + b, 0);
 
-  const navItems = [
+  // Navigation items based on current mode
+  const marketplaceNavItems = [
     { icon: Home, label: "Home", href: "/home" },
-    { icon: Briefcase, label: "Gigs", href: "/gigs" },
     { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
     { icon: Heart, label: "Saved", href: "/saved" },
     { icon: User, label: "Profile", href: "/profile" },
     { icon: Truck, label: "Delivery", href: "/delivery", desktopOnly: true },
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
+
+  const gigsNavItems = [
+    { icon: Search, label: "Browse Gigs", href: "/gigs" },
+    { icon: Briefcase, label: "My Gigs", href: "/gigs/my-gigs" },
+    { icon: UserCheck, label: "Applications", href: "/gigs/applications" },
+    { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
+    { icon: User, label: "Profile", href: "/profile" },
+    { icon: Settings, label: "Settings", href: "/settings" },
+  ];
+
+  const navItems = isMarketplace ? marketplaceNavItems : gigsNavItems;
   
-  // The sell item with onClick handler
-  const sellItem = { icon: Plus, label: "Sell", href: "#", onClick: handleSellClick };
+  // Action items based on mode
+  const sellItem = { icon: Plus, label: "Sell Item", href: "#", onClick: handleSellClick };
+  const createGigItem = { icon: Plus, label: "Create Gig", href: "#", onClick: handleCreateGigClick };
+  const actionItem = isMarketplace ? sellItem : createGigItem;
   
   // Don't show on mobile
   if (deviceType === 'mobile') {
@@ -141,11 +168,11 @@ export const DesktopSideNav = () => {
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
         <div className={cn(
-          "flex justify-center items-center px-6 h-20"
+          "flex flex-col items-center px-6 py-4 space-y-4"
         )}>
-          <Link to="/home" className="group relative flex items-center transition-all duration-300 hover:scale-105">
+          <Link to={isMarketplace ? "/home" : "/gigs"} className="group relative flex items-center transition-all duration-300 hover:scale-105">
             <motion.div 
-              className="h-14 overflow-hidden"
+              className="h-12 overflow-hidden"
               initial={{ y: 0 }}
               whileHover={{ y: -2 }}
               transition={{ duration: 0.3 }}
@@ -159,28 +186,26 @@ export const DesktopSideNav = () => {
               transition={{ duration: 0.3 }}
             />
           </Link>
+          
+          {/* Mode Toggle */}
+          <ModeToggle />
         </div>
         <div className="flex-1 flex flex-col justify-between min-h-0">
           <nav className="flex-1 flex flex-col pt-5 px-2">
             {/* All navigation items with consistent spacing */}
             <div className="space-y-1.5">
-              {/* Home & Gigs & Messages */}
-              {navItems.slice(0, 3).map((item) => (
+              {/* Main navigation items */}
+              {navItems.slice(0, -2).map((item) => (
                 <SideNavItem key={item.label} item={item} theme={theme} />
               ))}
               
-              {/* Saved item */}
-              <SideNavItem item={navItems[3]} theme={theme} />
+              {/* Action button - styled differently */}
+              <SellButton item={actionItem} theme={theme} />
               
-              {/* Sell button - styled differently */}
-              <SellButton item={sellItem} theme={theme} />
-              
-              {/* Bottom navigation items - Profile, Delivery, Settings */}
-              {navItems.slice(4).map((item) => {
-                // Only render desktopOnly items on desktop (deviceType is never 'mobile' here)
-                if (item.desktopOnly && deviceType !== 'desktop') return null;
-                return <SideNavItem key={item.label} item={item} theme={theme} />;
-              })}
+              {/* Bottom navigation items - Profile & Settings */}
+              {navItems.slice(-2).map((item) => (
+                <SideNavItem key={item.label} item={item} theme={theme} />
+              ))}
             </div>
           </nav>
           
@@ -211,7 +236,16 @@ export const DesktopSideNav = () => {
         }} 
         trigger="sell"
       />
+      <SafetyTipsDialog 
+        open={showGigSafetyTips} 
+        onClose={() => {
+          setShowGigSafetyTips(false);
+          setIsCreateGigModalOpen(true);
+        }} 
+        trigger="gig"
+      />
       <SellModal isOpen={isSellModalOpen} onClose={() => setIsSellModalOpen(false)} />
+      <CreateGigModal isOpen={isCreateGigModalOpen} onClose={() => setIsCreateGigModalOpen(false)} />
       
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
         <AlertDialogContent>

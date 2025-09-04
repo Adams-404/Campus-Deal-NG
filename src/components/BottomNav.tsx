@@ -1,8 +1,9 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings, Briefcase } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, Briefcase, Search, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { SellModal } from "./SellModal";
+import { CreateGigModal } from "./CreateGigModal";
 import { Link, useLocation } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,15 +12,19 @@ import SafetyTipsDialog from "./SafetyTipsDialog";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useDeviceType } from "../hooks/use-mobile";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAppMode } from "@/contexts/AppModeContext";
 
 export const BottomNav = () => {
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
+  const [isCreateGigModalOpen, setIsCreateGigModalOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [showSellSafetyTips, setShowSellSafetyTips] = useState(false);
+  const [showGigSafetyTips, setShowGigSafetyTips] = useState(false);
   const location = useLocation();
   const { toast } = useToast();
   const { hideSellTips } = useSettings();
   const { unreadMessagesByUser } = useNotifications();
+  const { isMarketplace, isGigs } = useAppMode();
   const deviceType = useDeviceType();
   const { theme } = useTheme();
   
@@ -60,13 +65,32 @@ export const BottomNav = () => {
     }
   };
 
-  const navItems = [
+  const handleCreateGigClick = () => {
+    if (!hideSellTips) {
+      setShowGigSafetyTips(true);
+    } else {
+      setIsCreateGigModalOpen(true);
+    }
+  };
+
+  // Navigation items based on current mode
+  const marketplaceNavItems = [
     { icon: Home, label: "Home", href: "/home" },
-    { icon: Briefcase, label: "Gigs", href: "/gigs" },
-    { icon: Plus, label: "Sell", href: "#" },
     { icon: Heart, label: "Saved", href: "/saved" },
+    { icon: Plus, label: "Sell", href: "#", onClick: handleSellClick },
+    { icon: MessageSquare, label: "Messages", href: "/messages" },
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
+
+  const gigsNavItems = [
+    { icon: Search, label: "Browse", href: "/gigs" },
+    { icon: Briefcase, label: "My Gigs", href: "/gigs/my-gigs" },
+    { icon: Plus, label: "Create", href: "#", onClick: handleCreateGigClick },
+    { icon: UserCheck, label: "Applied", href: "/gigs/applications" },
+    { icon: Settings, label: "Settings", href: "/settings" },
+  ];
+
+  const navItems = isMarketplace ? marketplaceNavItems : gigsNavItems;
 
   return (
     <>
@@ -81,7 +105,7 @@ export const BottomNav = () => {
             index === 2 ? (
               <button
                 key={item.label}
-                onClick={handleSellClick}
+                onClick={(item as any).onClick}
                 className={cn(
                   "flex flex-col items-center gap-1 relative",
                   "-mt-8"
@@ -104,7 +128,7 @@ export const BottomNav = () => {
                   location.pathname === item.href && "text-primary"
                 )}
               >
-                {(item as any).hasNotification && (
+                {item.href === "/messages" && hasNewMessages && (
                   <>
                     {totalUnreadMessages > 0 && (
                       <div className="absolute -right-2 -top-2">
@@ -141,8 +165,17 @@ export const BottomNav = () => {
         }} 
         trigger="sell"
       />
+      <SafetyTipsDialog 
+        open={showGigSafetyTips} 
+        onClose={() => {
+          setShowGigSafetyTips(false);
+          setIsCreateGigModalOpen(true);
+        }} 
+        trigger="gig"
+      />
       
       <SellModal isOpen={isSellModalOpen} onClose={() => setIsSellModalOpen(false)} />
+      <CreateGigModal isOpen={isCreateGigModalOpen} onClose={() => setIsCreateGigModalOpen(false)} />
     </>
   );
 };

@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/use-toast";
 interface CreateGigModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onGigCreated: () => void;
+  onGigCreated?: () => void;
 }
 
 const CATEGORIES = [
@@ -76,7 +76,7 @@ export const CreateGigModal = ({ isOpen, onClose, onGigCreated }: CreateGigModal
         description: "Your gig has been posted successfully!",
       });
       
-      onGigCreated();
+      onGigCreated?.();
       onClose();
       
       // Reset form

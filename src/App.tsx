@@ -16,6 +16,7 @@ import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { SearchProvider } from "./contexts/SearchContext";
+import { AppModeProvider } from "./contexts/AppModeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 import { useDeviceType } from "./hooks/use-mobile";
@@ -61,6 +62,8 @@ const Feedback = lazy(() => import("./pages/Feedback"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const InviteFriends = lazy(() => import("./pages/InviteFriends"));
 const Gigs = lazy(() => import("./pages/Gigs"));
+const MyGigs = lazy(() => import("./pages/gigs/MyGigs"));
+const Applications = lazy(() => import("./pages/gigs/Applications"));
 
 // Create a single query client instance outside of the component with better caching
 const queryClient = new QueryClient({
@@ -263,6 +266,8 @@ const AnimatedRoutes = () => {
               <Route path="/settings/reset-password" element={<ProtectedRoute><SettingsChangePassword /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><LazySavedItems /></ProtectedRoute>} />
               <Route path="/gigs" element={<ProtectedRoute allowGuest><Gigs /></ProtectedRoute>} />
+              <Route path="/gigs/my-gigs" element={<ProtectedRoute><MyGigs /></ProtectedRoute>} />
+              <Route path="/gigs/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
               <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
               <Route path="/invite-friends" element={<ProtectedRoute><LazyInviteFriends /></ProtectedRoute>} />
               <Route path="/item/:id" element={<ProtectedRoute allowGuest><LazyViewItem /></ProtectedRoute>} />
@@ -308,14 +313,16 @@ const App = () => {
         <SettingsProvider>
           <NotificationProvider>
             <SearchProvider>
-              <TooltipProvider>
-                <BrowserRouter>
-                  <AnimatedRoutes />
-                  <Toaster />
-                  <Sonner />
-                  {import.meta.env.DEV && <PerformanceMonitor />}
-                </BrowserRouter>
-              </TooltipProvider>
+              <AppModeProvider>
+                <TooltipProvider>
+                  <BrowserRouter>
+                    <AnimatedRoutes />
+                    <Toaster />
+                    <Sonner />
+                    {import.meta.env.DEV && <PerformanceMonitor />}
+                  </BrowserRouter>
+                </TooltipProvider>
+              </AppModeProvider>
             </SearchProvider>
           </NotificationProvider>
         </SettingsProvider>

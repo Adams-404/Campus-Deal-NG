@@ -10,7 +10,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 interface SafetyTipsDialogProps {
   open: boolean;
   onClose: () => void;
-  trigger?: 'app_open' | 'message_seller' | 'sell';
+  trigger?: 'app_open' | 'message_seller' | 'sell' | 'gig';
 }
 
 export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: SafetyTipsDialogProps) => {
@@ -73,6 +73,23 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
         icon: <MapPin className="h-5 w-5 text-green-500" />,
         title: "Meet Safely",
         content: "Choose public meeting spots on campus for exchanges."
+      }
+    ],
+    gig: [
+      {
+        icon: <UserCheck className="h-5 w-5 text-blue-500" />,
+        title: "Professional Service",
+        content: "Provide clear expectations and deliver quality service as promised."
+      },
+      {
+        icon: <CreditCard className="h-5 w-5 text-teal-500" />,
+        title: "Fair Pricing",
+        content: "Set reasonable prices and be transparent about any additional costs."
+      },
+      {
+        icon: <MapPin className="h-5 w-5 text-green-500" />,
+        title: "Safe Meetings",
+        content: "Meet clients in public spaces and bring a friend if needed."
       }
     ]
   }), []); // useMemo to prevent recalculation on every render
@@ -166,11 +183,13 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
                 onCheckedChange={(checked) => setDontShowAgain(checked === true)}
               />
               <label htmlFor="dont-show-again" className="text-sm text-gray-700 cursor-pointer">
-                {trigger === 'app_open' 
-                  ? "Don't show safety tips on startup" 
-                  : trigger === 'sell'
-                    ? "Don't show safety tips when selling"
-                    : "Don't show safety tips when messaging"}
+                  {trigger === 'app_open' 
+                    ? "Don't show safety tips on startup" 
+                    : trigger === 'sell'
+                      ? "Don't show safety tips when selling"
+                      : trigger === 'gig'
+                        ? "Don't show safety tips when creating gigs"
+                        : "Don't show safety tips when messaging"}
               </label>
             </div>
           )}

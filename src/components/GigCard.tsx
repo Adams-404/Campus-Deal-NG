@@ -24,9 +24,10 @@ interface Gig {
 
 interface GigCardProps {
   gig: Gig;
+  showActions?: boolean;
 }
 
-export const GigCard = ({ gig }: GigCardProps) => {
+export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
   const handleContact = () => {
     // TODO: Implement contact functionality
     console.log("Contacting user for gig:", gig.id);
