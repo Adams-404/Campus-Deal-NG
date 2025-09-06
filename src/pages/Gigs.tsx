@@ -66,7 +66,7 @@ const Gigs = () => {
           title: "Math Tutoring - Calculus & Algebra",
           description: "Experienced math tutor offering personalized sessions for students struggling with calculus and algebra. 4+ years experience.",
           category: "Tutoring",
-          price: 25,
+          price: 5000, // ~$3.50 USD equivalent
           location: "On Campus",
           duration: "1-2 hours",
           rating: 4.8,
@@ -83,7 +83,7 @@ const Gigs = () => {
           title: "Logo Design & Branding",
           description: "Professional logo design and brand identity packages for startups and small businesses. Quick turnaround guaranteed.",
           category: "Design & Creative",
-          price: 50,
+          price: 15000, // ~$10 USD equivalent
           location: "Remote",
           duration: "2-3 days",
           rating: 4.9,
@@ -100,7 +100,7 @@ const Gigs = () => {
           title: "Website Development",
           description: "Full-stack web development services. React, Node.js, databases. Portfolio available upon request.",
           category: "Tech & Programming",
-          price: 75,
+          price: 50000, // ~$35 USD equivalent
           location: "Remote/On Campus",
           duration: "1-2 weeks",
           rating: 4.7,
@@ -117,7 +117,7 @@ const Gigs = () => {
           title: "Campus Food Delivery",
           description: "Quick and reliable food delivery from any restaurant to your dorm or study location. Available evenings and weekends.",
           category: "Delivery & Moving",
-          price: 8,
+          price: 2000, // ~$1.50 USD equivalent
           location: "Campus Wide",
           duration: "30-45 mins",
           rating: 4.6,
