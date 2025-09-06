@@ -41,7 +41,7 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
             {gig.category}
           </Badge>
           <div className="text-right">
-            <div className="text-xl font-bold text-primary">${gig.price}</div>
+            <div className="text-xl font-bold text-primary">₦{gig.price.toLocaleString()}</div>
             <div className="text-xs text-muted-foreground">per service</div>
           </div>
         </div>
