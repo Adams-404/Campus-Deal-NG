@@ -152,10 +152,8 @@ const Gigs = () => {
     <>
       {isMainGigsPage && <Navbar />}
       <PageTransition>
-        <div
-          className={`min-h-screen ${deviceType === 'mobile' ? 'pb-20 pt-16' : 'ml-[300px] pt-14'} px-4 py-6`}
-        >
-        <div className="max-w-7xl mx-auto">
+        <div className={`min-h-screen ${deviceType === 'mobile' ? 'pb-20 pt-16' : 'pt-14'} bg-background`}>
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* ...existing code... */}
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
