@@ -73,7 +73,7 @@ const Gigs = () => {
           reviews_count: 24,
           tags: ["Math", "Calculus", "Algebra", "Homework Help"],
           user_id: "user1",
-          user_name: "Sarah Johnson",
+          user_name: "Adesuwa Adebayo",
           user_avatar: "",
           created_at: new Date().toISOString(),
           is_active: true
@@ -90,7 +90,7 @@ const Gigs = () => {
           reviews_count: 31,
           tags: ["Logo", "Branding", "Graphic Design", "Adobe"],
           user_id: "user2",
-          user_name: "Alex Chen",
+          user_name: "Chinedu Okafor",
           user_avatar: "",
           created_at: new Date().toISOString(),
           is_active: true
@@ -107,7 +107,7 @@ const Gigs = () => {
           reviews_count: 18,
           tags: ["React", "Node.js", "Full Stack", "Web Development"],
           user_id: "user3",
-          user_name: "Michael Rodriguez",
+          user_name: "Ibrahim Mohammed",
           user_avatar: "",
           created_at: new Date().toISOString(),
           is_active: true
@@ -124,7 +124,7 @@ const Gigs = () => {
           reviews_count: 67,
           tags: ["Food Delivery", "Quick", "Campus", "Flexible"],
           user_id: "user4",
-          user_name: "Emma Wilson",
+          user_name: "Amina Bello",
           user_avatar: "",
           created_at: new Date().toISOString(),
           is_active: true
