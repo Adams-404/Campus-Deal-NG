@@ -395,14 +395,14 @@ export default function Settings() {
                     </Button>
                     
                     <div className="mt-8 text-center">
-                      <p className="text-sm text-gray-400">Campus Deal v1.0.0</p>
+                      <p className="text-sm text-gray-400">Campus Deal v1.0.7</p>
                     </div>
                   </div>
                 </div>
               )}
               {!user && (
                 <div className="mt-8 text-center">
-                  <p className="text-sm text-gray-400">Campus Deal v1.0.0</p>
+                  <p className="text-sm text-gray-400">Campus Deal v1.0.7</p>
                 </div>
               )}
             </div>

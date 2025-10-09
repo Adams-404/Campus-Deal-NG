@@ -3,7 +3,7 @@
 
 ![Campus Deal](https://campusdeal.ng/logo.png)
 
-Campus Deal is a secure online marketplace designed for campus communities. Our platform enables anyone on campus to buy, sell, and trade items within their local community safely and efficiently!
+Campus Deal is a student-focused deals and marketplace platform designed to make campus life more affordable, connected, and opportunity-driven. It serves as a hub where students can access discounts, local offers, gigs, and a trusted marketplace—all verified to be exclusive to their university community.
 
 ## 🌐 Live Website
 
@@ -21,32 +21,40 @@ Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 
 ## 🎯 Purpose & Vision
 
-Campus Deal was created to address the challenges people face when trying to sell or purchase items on campus. We provide a centralized, secure platform that:
-
-- Connects buyers and sellers within campus communities
-- Ensures transactions happen between verified campus members
-- Eliminates the need for third-party marketplaces
-- Reduces scams and fraudulent activities
-- Promotes a circular economy within the campus
+Campus Deal was created to address the challenges people face when trying to sell or purchase items on campus. We provide a centralized, secure platform that connects students, local businesses, and peers through a single ecosystem that offers personalized deals, peer-to-peer buying/selling, and on-campus job opportunities.
 
 ## ✨ Key Features
 
+### 🎓 Student Verification
+- **Campus Affiliation**: Verify through student emails or IDs
+- **KYC Process**: Ensures all users are legitimate students
+- **Secure Access**: Only verified students can access the platform
+
+### 🛍️ Campus Marketplace
+- Buy, sell, or trade items within your campus community
+- Categories for textbooks, gadgets, dorm essentials, and more
+- Secure transactions with built-in trust features
+
+### 💼 Gig & Job Opportunities
+- Find on-campus and remote gigs
+- Post or discover student services like tutoring
+- Easy application and hiring process
+
+### 💰 Exclusive Deals & Discounts
+- Student-exclusive offers from local businesses
+- Curated discounts on food, services, and more
+- Personalized recommendations based on your campus
+
 ### 🔒 Security & Trust
 - **Verified Users**: All users must verify their campus affiliation
-- **KYC Process**: Know Your Customer verification ensures user authenticity
-- **Safety Tips**: Built-in safety guidelines for secure transactions
+- **Safety Tips**: Built-in guidelines for secure transactions
 - **Reporting System**: Flag suspicious listings or users
-
-### 🛍️ Shopping Experience
-- **Smart Categories**: Browse items by department, type, or price
-- **Advanced Search**: Find exactly what you need quickly
-- **Saved Items**: Bookmark items of interest for later viewing
-- **Smart Recommendations**: Discover relevant items based on your interests
+- **Real-time Moderation**: Active monitoring of all transactions
 
 ### 💬 Communication
 - **Direct Messaging**: Chat securely with sellers or buyers
-- **Notification System**: Get alerts for messages, offers, or status changes
-- **Real-time Updates**: See when messages are read or when listings change
+- **Notification System**: Get alerts for messages and updates
+- **Real-time Updates**: Stay informed about your listings and messages
 
 ### 📱 User Experience
 - **Responsive Design**: Optimized for all devices from mobile to desktop

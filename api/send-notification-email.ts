@@ -350,7 +350,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     `;
 
     const { data, error } = await resend.emails.send({
-      from: process.env.NOTIFICATIONS_FROM_EMAIL || 'GSU Market <no-reply@gsu-market.app>',
+      from: process.env.NOTIFICATIONS_FROM_EMAIL || 'Campus Deal <no-reply@campusdeal.ng>',
       to,
       subject,
       html,

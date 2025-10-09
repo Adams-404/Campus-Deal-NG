@@ -15,21 +15,48 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 
 const features = [
+  // Marketplace Features
   {
-    title: "Easy Listing",
-    description: "List your items in seconds with our intuitive interface"
+    title: "Campus Marketplace",
+    description: "Buy, sell, or trade items within your university community. From textbooks to electronics, find everything you need from fellow students."
   },
+  {
+    title: "Gig Economy Hub",
+    description: "Find or post on-campus jobs, internships, and freelance opportunities. Perfect for students looking to earn or hire talent."
+  },
+  {
+    title: "Student Verification",
+    description: "Secure platform where only verified students can participate, ensuring a trusted community for all transactions."
+  },
+  
+  // Communication & Safety
   {
     title: "Secure Messaging",
-    description: "Chat safely with buyers and sellers within the app"
+    description: "Built-in chat system to communicate safely with buyers, sellers, or gig employers without sharing personal contact info."
   },
   {
-    title: "Smart Categories",
-    description: "Find what you need quickly with organized categories"
+    title: "Safety First",
+    description: "Comprehensive safety tips and guidelines for secure transactions and interactions on campus."
+  },
+  
+  // Student Services
+  {
+    title: "Delivery Services",
+    description: "Campus-based delivery options to get your purchased items or food delivered right to your dorm."
   },
   {
-    title: "Local Community",
-    description: "Connect with students and faculty in your university"
+    title: "Saved Items",
+    description: "Keep track of items or gigs you're interested in and get notified about price drops or updates."
+  },
+  
+  // User Experience
+  {
+    title: "Smart Recommendations",
+    description: "Personalized suggestions based on your campus, interests, and past activities."
+  },
+  {
+    title: "User Profiles",
+    description: "Build your reputation with verified reviews and ratings from other students."
   }
 ];
 
@@ -94,15 +121,52 @@ export default function About() {
       <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
         <PageTransition>
           <div className="pt-24 pb-32 space-y-6">
-            {/* Mission */}
-            <div className="bg-secondary/50 rounded-lg border border-white/10 p-6 mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <Target className="w-5 h-5 text-cyan-500" />
-                <h2 className="text-lg font-semibold">Our Mission</h2>
+            {/* Mission & Vision */}
+            <div className="space-y-6">
+              <div className="bg-secondary/50 rounded-lg border border-white/10 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Target className="w-5 h-5 text-cyan-500" />
+                  <h2 className="text-lg font-semibold">Our Mission</h2>
+                </div>
+                <p className="text-gray-400 mb-4">
+                  Campus Deal connects students, local businesses, and peers through a single ecosystem that offers personalized deals, peer-to-peer buying/selling, and on-campus job opportunities. It's built to foster financial ease, entrepreneurship, and student collaboration while ensuring every user is a verified student.
+                </p>
+                <div className="p-4 bg-cyan-500/5 border border-cyan-500/20 rounded-lg">
+                  <h3 className="font-medium text-cyan-400 mb-2">🌍 Our Vision</h3>
+                  <p className="text-sm text-cyan-300">
+                    To become the go-to lifestyle and opportunity platform for students across Nigeria and Africa, making every campus a more connected, empowered, and financially sustainable ecosystem.
+                  </p>
+                </div>
               </div>
-              <p className="text-gray-400">
-                Campus Deal is the premier marketplace for the university community, connecting students and faculty to buy and sell items in a secure and convenient way. Our platform is designed specifically for campus life, making transactions simple and trustworthy.
-              </p>
+
+              {/* Protection & IP Strategy */}
+              <div className="bg-secondary/50 rounded-lg border border-white/10 p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-cyan-500">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                  <h2 className="text-lg font-semibold">Protection & IP Strategy</h2>
+                </div>
+                <div className="space-y-4">
+                  <p className="text-gray-400">
+                    Campus Deal implements cutting-edge verification methods and deal-matching algorithms that are at the core of our service, ensuring a secure and trusted platform for all users.
+                  </p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div className="p-4 bg-background/50 rounded-lg border border-cyan-500/20">
+                      <h3 className="font-medium text-foreground mb-2">🔒 Student Verification</h3>
+                      <p className="text-sm text-gray-400">
+                        Our proprietary verification system ensures only legitimate students can access platform features, maintaining a trusted community.
+                      </p>
+                    </div>
+                    <div className="p-4 bg-background/50 rounded-lg border border-cyan-500/20">
+                      <h3 className="font-medium text-foreground mb-2">💡 Smart Matching</h3>
+                      <p className="text-sm text-gray-400">
+                        Advanced algorithms power our contextual deal-matching, connecting students with the most relevant opportunities.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Features */}
@@ -115,10 +179,13 @@ export default function About() {
                 {features.map((feature, index) => (
                   <div
                     key={index}
-                    className="bg-secondary/50 rounded-lg border border-white/10 p-4"
+                    className="group bg-secondary/50 rounded-lg border border-white/10 p-4 hover:border-cyan-500/30 transition-colors hover:shadow-lg hover:-translate-y-0.5"
                   >
-                    <h3 className="font-medium mb-2">{feature.title}</h3>
-                    <p className="text-sm text-gray-400">{feature.description}</p>
+                    <h3 className="font-medium mb-2 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-500 flex-shrink-0"></span>
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-gray-400 pl-3.5">{feature.description}</p>
                   </div>
                 ))}
               </div>
@@ -236,7 +303,7 @@ export default function About() {
 
             {/* Version */}
             <div className="mt-12 text-center text-sm text-gray-400">
-              <p>Version 1.0.0</p>
+              <p>Version 1.0.7</p>
               <p className="mt-1"> 2025 Campus Deal. All rights reserved.</p>
             </div>
           </div>
