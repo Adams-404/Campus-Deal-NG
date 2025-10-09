@@ -1,19 +1,14 @@
 import { useEffect, useState } from "react";
 import { Search, Plus, MapPin, Clock, Star, Filter, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { useDeviceType } from "@/hooks/use-mobile";
 import { CreateGigModal } from "@/components/CreateGigModal";
 import { GigCard } from "@/components/GigCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-
 import { PageTransition } from "@/components/PageTransition";
-import { Navbar } from "@/components/Navbar";
+import { useLocation } from "react-router-dom";
 
 interface Gig {
   id: string;
@@ -39,21 +34,8 @@ const Gigs = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const deviceType = useDeviceType();
   const { toast } = useToast();
+  const location = useLocation();
   const user = null; // Replace with actual user logic if needed
-  // Routing
-  // Only show navbar if on main /gigs route
-  // Use react-router-dom's useLocation
-  // If not on /gigs exactly, don't show navbar
-  let locationPath = '';
-  try {
-    // Dynamically import useLocation to avoid SSR issues
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    locationPath = require('react-router-dom').useLocation().pathname;
-  } catch (e) {
-    // fallback for SSR or test
-    locationPath = window?.location?.pathname || '';
-  }
-  const isMainGigsPage = locationPath === '/gigs';
 
   useEffect(() => {
     const fetchGigs = async () => {
@@ -146,61 +128,63 @@ const Gigs = () => {
     fetchGigs();
   }, []);
 
-
-
   return (
-    <>
-      {isMainGigsPage && <Navbar />}
-      <PageTransition>
-        <div className={`min-h-screen ${deviceType === 'mobile' ? 'pb-20 pt-16' : 'pt-14'} bg-background`}>
-          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* ...existing code... */}
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="animate-pulse">
-                  <CardHeader>
-                    <div className="h-4 bg-muted rounded w-3/4"></div>
-                    <div className="h-3 bg-muted rounded w-1/2"></div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="h-3 bg-muted rounded"></div>
-                      <div className="h-3 bg-muted rounded w-2/3"></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : gigs.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-muted-foreground mb-4">
-                No gigs available at the moment
-              </div>
-              {user && (
-                <Button onClick={() => setIsCreateModalOpen(true)} variant="outline">
-                  Be the first to post a gig
-                </Button>
-              )}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {gigs.map((gig) => (
-                <GigCard key={gig.id} gig={gig} />
-              ))}
-            </div>
+    <PageTransition>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Available Gigs</h1>
+          {user && (
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Gig
+            </Button>
           )}
         </div>
+
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <Card key={i} className="animate-pulse p-4">
+                <div className="h-4 bg-muted rounded w-3/4 mb-2"></div>
+                <div className="h-3 bg-muted rounded w-1/2 mb-4"></div>
+                <div className="space-y-2">
+                  <div className="h-3 bg-muted rounded"></div>
+                  <div className="h-3 bg-muted rounded w-2/3"></div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        ) : gigs.length === 0 ? (
+          <div className="text-center py-12 border rounded-lg">
+            <div className="text-muted-foreground mb-4">
+              No gigs available at the moment
+            </div>
+            {user && (
+              <Button onClick={() => setIsCreateModalOpen(true)} variant="outline">
+                Be the first to post a gig
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {gigs.map((gig) => (
+              <GigCard key={gig.id} gig={gig} />
+            ))}
+          </div>
+        )}
+
         {isCreateModalOpen && (
           <CreateGigModal
             isOpen={isCreateModalOpen}
             onClose={() => setIsCreateModalOpen(false)}
-            onGigCreated={() => {}}
+            onGigCreated={() => {
+              // Refresh gigs after creation
+              fetchGigs();
+            }}
           />
         )}
       </div>
     </PageTransition>
-  </>
   );
 };
 

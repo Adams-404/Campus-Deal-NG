@@ -194,42 +194,35 @@ const AnimatedRoutes = () => {
   const isAuthPage = location.pathname.startsWith('/auth') || location.pathname === '/email-verification' || location.pathname === '/email-confirmed';
   const shouldShowSideNav = user && deviceType !== 'mobile' && !isAuthPage;
   
-  // Determine if we should show the header
-  const modeHomePaths = ['/home', '/gigs']; // Add more mode homepages if needed
+  // Define routes where navbar should be shown
   const shouldShowNavbar = (path: string) => {
-    // Only show navbar on exact /home or /gigs route for mobile
-    if (deviceType === 'mobile') {
-      return path === '/home' || path === '/gigs';
-    }
-
-    // For desktop and tablet, show navbar on all mode homepages and subpages
-    const isModePage = modeHomePaths.some((modePath) => path === modePath || path.startsWith(modePath + '/'));
-    if (deviceType === 'desktop' || deviceType === 'tablet') {
-      if (isModePage) return true;
-      // Don't show navbar on saved page for desktop/tablet specifically
-      if (path === '/saved') return false;
-      // In other cases, no navbar for desktop/tablet
-      return false;
-    }
-
-    // Default case for mobile
-    return false;
+    // Always show navbar on these main routes and their sub-routes
+    const mainRoutes = ['/home', '/gigs', '/messages', '/profile', '/saved', '/settings'];
+    
+    // Check if current path is a main route or a sub-route
+    const isMainRoute = mainRoutes.some(route => 
+      path === route || path.startsWith(route + '/')
+    );
+    
+    // For mobile, only show on exact main routes, for desktop/tablet show on all main routes and sub-routes
+    return deviceType === 'mobile' 
+      ? mainRoutes.includes(path)
+      : isMainRoute && path !== '/saved'; // Still hide on saved page for desktop/tablet
   };
   
   // Apply main content padding based on device and sidenav visibility
   const getContentClass = () => {
-    const isHomePage = location.pathname === '/home';
-    const isGigsPage = location.pathname.startsWith('/gigs');
-    const showNavbar = shouldShowNavbar(location.pathname);
+    const showNav = shouldShowNavbar(location.pathname);
+    
     if (deviceType === 'mobile') {
-      // No top padding for mobile to fix the spacing issue
-      return isHomePage ? "pb-24" : "pb-24"; 
+      // Add bottom padding to account for bottom nav
+      return 'pb-24';
     } else if (shouldShowSideNav) {
       // Add left margin for desktop/tablet with sidenav, and top padding if navbar is visible
-      return showNavbar ? "ml-[300px] pt-14" : "ml-[300px]";
+      return showNav ? "ml-[300px] pt-14" : "ml-[300px]";
     } else {
       // Add top padding if navbar is visible
-      return showNavbar ? "pt-14" : "";
+      return showNav ? "pt-14" : "";
     }
   };
 
