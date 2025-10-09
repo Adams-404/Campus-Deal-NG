@@ -134,7 +134,11 @@ const AnimatedRoutes = () => {
     "/admin", 
     "/notifications",
     "/support",
-    "/leaderboard"
+    "/leaderboard",
+    "/help",
+    "/privacy",
+    "/about",
+    "/feedback"
   ].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
   
   const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings } = useSettings();
