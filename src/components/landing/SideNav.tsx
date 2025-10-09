@@ -82,9 +82,9 @@ export const SideNav = ({ onClose, onNavigate }: SideNavProps) => {
           </nav>
 
           {/* Auth buttons */}
-          <div className="mt-auto space-y-4">
+          <div className="mt-auto">
             {authItems.map((item) => (
-              <Link key={item.label} to={item.href} onClick={onClose}>
+              <Link key={item.label} to={item.href} onClick={onClose} className="block mb-4 last:mb-0">
                 <Button 
                   variant={item.variant} 
                   className="w-full justify-start gap-2"
@@ -95,7 +95,7 @@ export const SideNav = ({ onClose, onNavigate }: SideNavProps) => {
               </Link>
             ))}
             
-            <Link to="/home" onClick={onClose}>
+            <Link to="/home" onClick={onClose} className="block mt-4">
               <Button 
                 variant="secondary" 
                 className="w-full justify-start gap-2"
