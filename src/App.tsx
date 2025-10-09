@@ -194,20 +194,10 @@ const AnimatedRoutes = () => {
   const isAuthPage = location.pathname.startsWith('/auth') || location.pathname === '/email-verification' || location.pathname === '/email-confirmed';
   const shouldShowSideNav = user && deviceType !== 'mobile' && !isAuthPage;
   
-  // Define routes where navbar should be shown
+  // Define routes where navbar should be shown - only on home and gigs pages
   const shouldShowNavbar = (path: string) => {
-    // Always show navbar on these main routes and their sub-routes
-    const mainRoutes = ['/home', '/gigs', '/messages', '/profile', '/saved', '/settings'];
-    
-    // Check if current path is a main route or a sub-route
-    const isMainRoute = mainRoutes.some(route => 
-      path === route || path.startsWith(route + '/')
-    );
-    
-    // For mobile, only show on exact main routes, for desktop/tablet show on all main routes and sub-routes
-    return deviceType === 'mobile' 
-      ? mainRoutes.includes(path)
-      : isMainRoute && path !== '/saved'; // Still hide on saved page for desktop/tablet
+    // Only show navbar on these exact routes
+    return ['/home', '/gigs'].includes(path);
   };
   
   // Apply main content padding based on device and sidenav visibility
