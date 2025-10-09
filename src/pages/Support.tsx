@@ -27,7 +27,7 @@ interface Message {
 const INITIAL_MESSAGE: Message = {
   id: "1",
   content:
-    "👋 Hi! I'm Tradie, your AI assistant for GSU Market Hub. I can help you with:\n\n• Using the marketplace\n• Account settings\n• Buying and selling\n• Safety tips\n• Technical support\n\nWhat can I help you with today?",
+    "👋 Hi! I'm Tradie, your AI assistant for Campus Deal. I can help you with:\n\n• Using the marketplace\n• Account settings\n• Buying and selling\n• Safety tips\n• Technical support\n\nWhat can I help you with today?",
   role: "assistant",
   timestamp: new Date(),
 }

@@ -48,7 +48,7 @@ export const SideNav = ({ onClose, onNavigate }: SideNavProps) => {
           <div className="flex items-center justify-between mb-8">
             <Link to="/" className="flex items-center">
               <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-blue-600">
-                GSU Market
+                Campus Deal
               </span>
             </Link>
             <button
@@ -107,7 +107,7 @@ export const SideNav = ({ onClose, onNavigate }: SideNavProps) => {
           </div>
           
           <div className="text-xs text-white/40 text-center pt-8">
-            © 2025 GSU Market. All rights reserved.
+            © 2025 Campus Deal. All rights reserved.
           </div>
         </div>
       </motion.div>

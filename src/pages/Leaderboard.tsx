@@ -122,7 +122,7 @@ const Leaderboard = () => {
               </div>
               <h2 className="text-2xl font-bold">Top Referrers</h2>
               <p className="text-muted-foreground">
-                See who's bringing the most new members to GSU Market
+                See who's bringing the most new members to Campus Deal
               </p>
             </div>
 

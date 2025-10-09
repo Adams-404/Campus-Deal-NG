@@ -135,7 +135,7 @@ export const OnboardingTutorial = ({ open, onClose }: OnboardingTutorialProps) =
       <DialogContent className="sm:max-w-lg p-0 rounded-lg"> 
         <DialogHeader className="p-6 pb-4"> {/* Add padding */}
           <DialogTitle className="text-2xl font-semibold text-center">
-            Welcome to GSU Market Hub!
+            Welcome to Campus Deal!
           </DialogTitle>
            <p className="text-sm text-muted-foreground text-center">A quick guide to get you started.</p>
           <div className="pt-4">

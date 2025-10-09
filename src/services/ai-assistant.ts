@@ -140,7 +140,7 @@ function formatItemResults(items: SearchResult[]): FormattedResults {
 }
 
 // App context that will be fed to the AI
-const APP_CONTEXT = `You are an AI assistant for Tradezy, a GSU Market Hub, a marketplace app for Gombe State University.
+const APP_CONTEXT = `You are an AI assistant for Campus Deal, a marketplace app for Gombe State University.
 The app has the following main features:
 
 1. Marketplace Features:

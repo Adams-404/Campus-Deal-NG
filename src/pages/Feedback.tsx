@@ -30,7 +30,7 @@ export default function Feedback() {
       console.log('Feedback submitted:', {
         name,
         email,
-        subject: subject || 'Feedback from GSU Market',
+        subject: subject || 'Feedback from Campus Deal',
         message
       });
       
@@ -93,7 +93,7 @@ export default function Feedback() {
               <div className="mb-6">
                 <h2 className="text-xl font-semibold mb-2">We Value Your Feedback</h2>
                 <p className="text-muted-foreground">
-                  Your feedback helps us improve GSU Market. Please let us know your thoughts, suggestions, or report any issues.
+                  Your feedback helps us improve Campus Deal. Please let us know your thoughts, suggestions, or report any issues.
                 </p>
               </div>
 

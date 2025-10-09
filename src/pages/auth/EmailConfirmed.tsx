@@ -156,7 +156,7 @@ const EmailConfirmed = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.7 }}
             >
-              Welcome to CampusDeal! Your account is now verified and ready to use.
+              Welcome to Campus Deal! Your account is now verified and ready to use.
             </motion.p>
           </div>
         </motion.div>
