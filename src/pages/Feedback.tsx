@@ -3,9 +3,10 @@ import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Send, Headset } from "lucide-react";
+import { ArrowLeft, Send, MessageSquare, Mail, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Feedback() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function Feedback() {
   const [message, setMessage] = useState("");
   const [subject, setSubject] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { theme } = useTheme();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,125 +59,120 @@ export default function Feedback() {
     <div className="bg-background">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
-        <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="w-10">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={() => navigate(-1)}
-                className="text-primary lg:hidden"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            </div>
-            <h1 className="text-lg font-semibold absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2">Feedback</h1>
-            <div className="w-10 flex justify-end">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate('/support')}
-                className="text-[#1078a7] hover:text-[#1078a7]/80 bg-white/90 dark:bg-transparent shadow-sm"
-              >
-                <Headset className="h-6 w-6" />
-              </Button>
-            </div>
+        <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
+          <div className="h-16 flex items-center justify-between gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="h-9 w-9 rounded-full bg-pink-500/10 text-pink-500 hover:bg-pink-500/20"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h1 className="text-lg font-semibold flex-1 text-center">Feedback</h1>
+            <div className="w-9" /> {/* Spacer for centering */}
           </div>
           <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
         </div>
       </div>
 
       {/* Main Content */}
-      <main className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300">
+      <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
         <PageTransition>
-          <div className="pt-24 pb-32 space-y-8 mx-auto max-w-3xl">
-            <div className="lg:bg-background/5 lg:rounded-xl lg:p-6 lg:border lg:border-white/10 lg:shadow-sm">
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold mb-2">We Value Your Feedback</h2>
-                <p className="text-muted-foreground">
-                  Your feedback helps us improve Campus Deal. Please let us know your thoughts, suggestions, or report any issues.
+          <div className="pt-24 pb-32 space-y-6">
+            <div className="space-y-6">
+              <div className="text-center mb-8">
+                <div className={`inline-flex items-center justify-center p-4 rounded-full ${theme === 'light' ? 'bg-pink-100' : 'bg-pink-500/10'} mb-4`}>
+                  <MessageCircle className="h-8 w-8 text-pink-500" />
+                </div>
+                <h2 className="text-2xl font-semibold text-foreground mb-2">We Value Your Feedback</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Your feedback helps us improve Campus Deal. Let us know your thoughts, suggestions, or report any issues.
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium mb-1">Name <span className="text-red-500">*</span></label>
-                    <Input
-                      id="name"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full border-2 border-[#1078a7] bg-white/90 dark:bg-black focus:ring-2 focus:ring-[#1078a7]/50 shadow-sm"
-                      placeholder="Your name"
-                      required
-                    />
+              <form onSubmit={handleSubmit} className="space-y-6 bg-card/50 dark:bg-card/5 rounded-xl p-6 border border-border/40 dark:border-white/10">
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label htmlFor="name" className="text-sm font-medium text-foreground">
+                        Name <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        id="name"
+                        type="text"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full bg-background border border-pink-200/50 hover:border-pink-300/50 focus-visible:ring-pink-500/20 focus-visible:ring-offset-0 transition-colors"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label htmlFor="email" className="text-sm font-medium text-foreground">
+                        Email <span className="text-red-500">*</span>
+                      </label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full bg-background border border-pink-200/50 hover:border-pink-300/50 focus-visible:ring-pink-500/20 focus-visible:ring-offset-0 transition-colors"
+                        required
+                      />
+                    </div>
                   </div>
-                  
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium mb-1">Email <span className="text-red-500">*</span></label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full border-2 border-[#1078a7] bg-white/90 dark:bg-black focus:ring-2 focus:ring-[#1078a7]/50 shadow-sm"
-                      placeholder="your.email@example.com"
-                      required
-                    />
-                  </div>
-                  
-                  <div>
-                    <label htmlFor="subject" className="block text-sm font-medium mb-1">Subject</label>
+
+                  <div className="space-y-2">
+                    <label htmlFor="subject" className="text-sm font-medium text-foreground">
+                      Subject
+                    </label>
                     <Input
                       id="subject"
+                      type="text"
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
-                      className="w-full border-2 border-[#1078a7] bg-white/90 dark:bg-black focus:ring-2 focus:ring-[#1078a7]/50 shadow-sm"
-                      placeholder="What's this about?"
+                      className="w-full bg-background border border-pink-200/50 hover:border-pink-300/50 focus-visible:ring-pink-500/20 focus-visible:ring-offset-0 transition-colors"
+                      placeholder="Briefly describe your feedback"
                     />
                   </div>
-                  
-                  <div>
-                    <label htmlFor="message" className="block text-sm font-medium mb-1">Message <span className="text-red-500">*</span></label>
+
+                  <div className="space-y-2">
+                    <label htmlFor="message" className="text-sm font-medium text-foreground">
+                      Message <span className="text-red-500">*</span>
+                    </label>
                     <Textarea
                       id="message"
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
-                      className="w-full min-h-[150px] border-2 border-[#1078a7] bg-white/90 dark:bg-black focus:ring-2 focus:ring-[#1078a7]/50 shadow-sm"
-                      placeholder="Tell us your thoughts, suggestions, or report any issues..."
+                      placeholder="Please provide as much detail as possible..."
+                      rows={5}
+                      className="w-full bg-background border border-pink-200/50 hover:border-pink-300/50 focus-visible:ring-pink-500/20 focus-visible:ring-offset-0 transition-colors"
                       required
                     />
                   </div>
-                </div>
-                
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="w-full md:w-auto bg-[#1078a7] hover:bg-[#1078a7]/90 text-white border-2 border-[#1078a7] shadow-sm flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="h-4 w-4" />
-                      Send Feedback
-                    </>
-                  )}
-                </Button>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4 pt-2">
+                    <p className="text-sm text-muted-foreground">
+                      We'll respond within 24-48 hours
+                    </p>
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting} 
+                      className="w-full sm:w-auto gap-2 bg-pink-500/10 hover:bg-pink-500/20 text-pink-500 border border-pink-300/50 hover:border-pink-400/50 backdrop-blur-sm"
+                    >
+                      {isSubmitting ? (
+                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                      {isSubmitting ? 'Sending...' : 'Send Feedback'}
+                    </Button>
+                  </div>
               </form>
-              
-              <div className="mt-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border-2 border-[#1078a7] shadow-sm">
-                <h3 className="text-sm font-medium mb-2">Contact Information</h3>
-                <p className="text-sm text-muted-foreground">You can also reach us directly at:</p>
-                <a 
-                  href="mailto:help.gsumarket@gmail.com" 
-                  className="text-[#1078a7] font-medium hover:underline block mt-1"
-                >
-                  help.gsumarket@gmail.com
-                </a>
+
+              <div className="text-center text-sm text-muted-foreground pt-6 mt-4">
+                <p>Need immediate help? <a href="mailto:support@campusdeal.ng" className="text-pink-500 hover:underline">Contact our support team</a></p>
               </div>
             </div>
           </div>
