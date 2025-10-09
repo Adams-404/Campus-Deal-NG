@@ -62,23 +62,23 @@ export default function Help() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
               <Button
                 variant="outline"
-                className="h-auto p-4 flex items-center gap-3 border-green-500/20 hover:bg-green-500/10"
-                onClick={() => window.location.href = 'mailto:muhammadadamualiyu33@gmail.com'}
+                className="h-auto p-4 flex flex-col items-center gap-2 border-green-500/20 hover:bg-green-500/10 text-center"
+                onClick={() => window.location.href = 'mailto:support@campusdeal.ng'}
               >
                 <Mail className="w-5 h-5 text-green-500" />
-                <div className="text-left">
+                <div>
                   <div className="font-medium">Email Support</div>
-                  <div className="text-sm text-muted-foreground">muhammadadamualiyu33@gmail.com</div>
+                  <div className="text-sm text-muted-foreground">support@campusdeal.ng</div>
                 </div>
               </Button>
 
               <Button
                 variant="outline"
-                className="h-auto p-4 flex items-center gap-3 border-green-500/20 hover:bg-green-500/10"
+                className="h-auto p-4 flex flex-col items-center gap-2 border-green-500/20 hover:bg-green-500/10 text-center"
                 onClick={() => window.location.href = 'https://wa.me/09067063781'}
               >
                 <MessageSquare className="w-5 h-5 text-green-500" />
-                <div className="text-left">
+                <div>
                   <div className="font-medium">WhatsApp</div>
                   <div className="text-sm text-muted-foreground">+234 906 706 3781</div>
                 </div>

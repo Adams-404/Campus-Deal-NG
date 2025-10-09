@@ -90,7 +90,7 @@ export default function Privacy() {
           <div className="pt-24 pb-32 space-y-6">
             <div className="prose prose-invert max-w-none mb-8">
               <p className="text-gray-400">
-                At Tradezy, we take your privacy seriously. This policy outlines how we collect,
+                At Campus Deal, we take your privacy seriously. This policy outlines how we collect,
                 use, and protect your personal information. By using our service, you agree to
                 the collection and use of information in accordance with this policy.
               </p>
