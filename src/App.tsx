@@ -196,7 +196,8 @@ const AnimatedRoutes = () => {
 
   // Determine if we should show the desktop sidenav
   const isAuthPage = location.pathname.startsWith('/auth') || location.pathname === '/email-verification' || location.pathname === '/email-confirmed';
-  const shouldShowSideNav = user && deviceType !== 'mobile' && !isAuthPage;
+  const isAdminPage = location.pathname.startsWith('/admin');
+  const shouldShowSideNav = user && deviceType !== 'mobile' && !isAuthPage && !isAdminPage;
   
   // Define routes where navbar should be shown - only on home and gigs pages
   const shouldShowNavbar = (path: string) => {

@@ -361,7 +361,7 @@ const Admin = () => {
                       <span className="sr-only">Open menu</span>
                     </Button>
                   </SheetTrigger>
-                  <SheetContent side="left" className="w-[280px] p-0">
+                  <SheetContent side="left" className="w-[280px] p-0 md:hidden">
                     <div className="border-b border-border p-4 flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <LayoutDashboard className="h-5 w-5 text-primary" />
@@ -389,10 +389,10 @@ const Admin = () => {
                           <Button
                             variant="ghost"
                             className="w-full justify-start px-0 py-2 h-10"
-                            onClick={() => navigate("/profile")}
+                            onClick={() => navigate("/settings")}
                           >
                             <ArrowLeft className="h-4 w-4 mr-2" />
-                            Back to Profile
+                            Back to Settings
                           </Button>
                         </div>
                       </div>
@@ -404,10 +404,10 @@ const Admin = () => {
                     variant="ghost"
                     size="sm"
                     className="flex items-center gap-2"
-                    onClick={() => navigate("/profile")}
+                    onClick={() => navigate("/settings")}
                   >
                     <ArrowLeft className="h-4 w-4" />
-                    Back to Profile
+                    Back to Settings
                   </Button>
                 </div>
               </div>
