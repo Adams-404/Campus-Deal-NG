@@ -39,6 +39,10 @@ import { toast } from 'sonner';
 
 export interface UsersTabProps {
   users: UserProfile[];
+  totalUsers: number;
+  currentPage: number;
+  usersPerPage: number;
+  onPageChange: (page: number) => void;
   onViewUserProfile: (userId: string) => void;
   onAdminAction: (user: UserProfile | null, action: 'add' | 'remove') => void;
 }
@@ -47,7 +51,15 @@ const isAdmin = (user: UserProfile) => {
   return user.roles?.some(role => role.role === 'admin') || false;
 };
 
-export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabProps) {
+export function UsersTab({ 
+  users, 
+  totalUsers, 
+  currentPage, 
+  usersPerPage, 
+  onPageChange, 
+  onViewUserProfile, 
+  onAdminAction 
+}: UsersTabProps) {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -57,20 +69,34 @@ export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabPr
   useEffect(() => {
     const profilesChannel = supabase
       .channel('users-tab-profiles-changes')
-      .on('postgres_changes', {
-        event: 'UPDATE',
-        schema: 'public',
-        table: 'profiles',
-        filter: 'kyc_status=eq.processing,kyc_status=eq.verified,kyc_status=eq.rejected,kyc_status=eq.pending'
-      }, (payload) => {
-        console.log('Profile update detected:', payload);
-        setUsersData(prevUsers => 
-          prevUsers.map(user => 
-            user.id === payload.new.id 
-              ? { ...user, kyc_status: payload.new.kyc_status } 
-              : user
-          )
-        );
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: 'kyc_status=eq.processing,kyc_status=eq.verified,kyc_status=eq.rejected,kyc_status=eq.pending'
+        },
+        (payload) => {
+          console.log('Profile update detected:', payload);
+          setUsersData(prevUsers => 
+            prevUsers.map(user => 
+              user.id === payload.new.id 
+                ? { ...user, kyc_status: payload.new.kyc_status } 
+                : user
+            )
+          );
+        }
+      )
+      .on(
+        'system',
+        { event: '*' },
+        (payload) => {
+          console.log('System event:', payload);
+        }
+      )
+      .on('broadcast', { event: 'test' }, (payload) => {
+        console.log('Broadcast received!', payload);
       })
       .on('error', (error) => {
         console.error('Profiles channel error:', error);
@@ -249,6 +275,54 @@ export function UsersTab({ users, onViewUserProfile, onAdminAction }: UsersTabPr
               )}
             </TableBody>
           </Table>
+        </div>
+        {/* Pagination */}
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+          <div className="text-sm text-muted-foreground">
+            Showing <span className="font-medium">
+              {Math.min((currentPage - 1) * usersPerPage + 1, totalUsers)}
+            </span> to{' '}
+            <span className="font-medium">
+              {Math.min(currentPage * usersPerPage, totalUsers)}
+            </span> of <span className="font-medium">{totalUsers}</span> users
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="h-8 w-8 p-0"
+            >
+              <span className="sr-only">Previous page</span>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Button>
+            {Array.from({ length: Math.ceil(totalUsers / usersPerPage) }, (_, i) => i + 1).map((page) => (
+              <Button
+                key={page}
+                variant={page === currentPage ? "default" : "outline"}
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => onPageChange(page)}
+              >
+                {page}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage * usersPerPage >= totalUsers}
+              className="h-8 w-8 p-0"
+            >
+              <span className="sr-only">Next page</span>
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

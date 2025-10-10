@@ -56,6 +56,22 @@ const Admin = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const navigate = useNavigate()
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const usersPerPage = 20;
+  const [totalUsers, setTotalUsers] = useState(users.length);
+  
+  // Update totalUsers when users array changes
+  useEffect(() => {
+    setTotalUsers(users.length);
+  }, [users]);
+
+  // Calculate paginated users
+  const paginatedUsers = React.useMemo(() => {
+    const startIndex = (currentPage - 1) * usersPerPage;
+    return users.slice(startIndex, startIndex + usersPerPage);
+  }, [users, currentPage]);
+
   // Fix the excessive type instantiation by memoizing the admin users filter
   const adminUsers = React.useMemo(() => {
     return users.filter(user => {
@@ -63,6 +79,13 @@ const Admin = () => {
       return user.roles.some(role => role.role === "admin");
     });
   }, [users]);
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Optional: Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const fetchData = async () => {
     setLoading(true)
@@ -479,7 +502,11 @@ const Admin = () => {
                       <div className="p-4 sm:p-6">
                         <TabsContent value="users" className="m-0 mt-2">
                           <UsersTab
-                            users={users}
+                            users={paginatedUsers}
+                            totalUsers={totalUsers}
+                            currentPage={currentPage}
+                            usersPerPage={usersPerPage}
+                            onPageChange={handlePageChange}
                             onViewUserProfile={handleViewUserProfile}
                             onAdminAction={handleAdminAction}
                           />
