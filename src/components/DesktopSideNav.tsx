@@ -144,8 +144,8 @@ export const DesktopSideNav = () => {
   const navItems = isMarketplace ? marketplaceNavItems : gigsNavItems;
   
   // Action items based on mode
-  const sellItem = { icon: Plus, label: "Sell Item", href: "#", onClick: handleSellClick };
-  const createGigItem = { icon: Plus, label: "Create Gig", href: "#", onClick: handleCreateGigClick };
+  const sellItem = { icon: Plus, label: "Sell", href: "#", onClick: handleSellClick };
+  const createGigItem = { icon: Plus, label: "Create", href: "#", onClick: handleCreateGigClick };
   const actionItem = isMarketplace ? sellItem : createGigItem;
   
   // Don't show on mobile
@@ -157,27 +157,27 @@ export const DesktopSideNav = () => {
     <>
       <motion.aside 
         className={cn(
-          "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col w-[300px] h-screen min-h-0 p-0 m-0 backdrop-blur-sm",
+          "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col w-[240px] min-h-0 p-0 m-0",
           theme === 'light' 
-            ? "border-r border-gray-200 bg-white/95 shadow-md" 
+            ? "border-r border-gray-200 bg-white/95 shadow-sm" 
             : "border-r border-white/10 bg-black"
         )}
-        style={{height: '100vh', top: 0, bottom: 0}}
+        style={{ height: '100vh' }}
         initial={{ x: -30, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
       >
         <div className={cn(
-          "flex flex-col items-center px-6 py-4 space-y-4"
+          "flex flex-col items-center px-4 py-3 space-y-3"
         )}>
           <Link to={isMarketplace ? "/home" : "/gigs"} className="group relative flex items-center transition-all duration-300 hover:scale-105">
             <motion.div 
-              className="h-12 overflow-hidden"
+              className="h-10 overflow-hidden"
               initial={{ y: 0 }}
               whileHover={{ y: -2 }}
               transition={{ duration: 0.3 }}
             >
-              <img src="/logo.png" alt="Campus Deal Logo" className="h-full object-contain" />
+              <img src="/logo.png" alt="Book'n'Campus Logo" className="h-full object-contain" />
             </motion.div>
             <motion.span 
               className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-[#16a34a] to-emerald-500 transition-all duration-300 group-hover:w-full"
@@ -187,32 +187,33 @@ export const DesktopSideNav = () => {
             />
           </Link>
           
-          {/* Mode Toggle */}
           <ModeToggle />
         </div>
-        <div className="flex-1 flex flex-col justify-between min-h-0">
-          <nav className="flex-1 flex flex-col pt-5 px-2">
-            {/* All navigation items with consistent spacing */}
-            <div className="space-y-1.5">
-              {/* Main navigation items */}
-              {navItems.slice(0, -2).map((item) => (
-                <SideNavItem key={item.label} item={item} theme={theme} />
-              ))}
+        
+        <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col">
+            <nav className="py-1 px-1">
+              <div className="space-y-0.5">
+                {navItems.slice(0, Math.ceil(navItems.length / 2)).map((item) => (
+                  <SideNavItem key={item.label} item={item} theme={theme} />
+                ))}
+              </div>
               
-              {/* Action button - styled differently */}
-              <SellButton item={actionItem} theme={theme} />
+              <div className="my-2">
+                <SellButton item={actionItem} theme={theme} />
+              </div>
               
-              {/* Bottom navigation items - Profile & Settings */}
-              {navItems.slice(-2).map((item) => (
-                <SideNavItem key={item.label} item={item} theme={theme} />
-              ))}
-            </div>
-          </nav>
+              <div className="space-y-0.5">
+                {navItems.slice(Math.ceil(navItems.length / 2)).map((item) => (
+                  <SideNavItem key={item.label} item={item} theme={theme} />
+                ))}
+              </div>
+            </nav>
+          </div>
           
-          {/* User profile and logout section */}
           <div className={cn(
-            "mt-auto pt-2 px-4 pb-2",
-            theme === 'light' ? "border-t border-gray-200" : "border-t border-white/10"
+            "border-t px-2 pt-0.5 pb-2",
+            theme === 'light' ? "border-gray-200" : "border-white/10"
           )}>
             <UserProfileSection 
               userProfile={userProfile} 
@@ -220,7 +221,7 @@ export const DesktopSideNav = () => {
               theme={theme} 
               isLoading={profileLoading}
             />
-            <div className="mt-4 relative z-10 w-full">
+            <div className="mt-1">
               <LogoutButton onClick={() => setShowLogoutDialog(true)} theme={theme} />
             </div>
           </div>
