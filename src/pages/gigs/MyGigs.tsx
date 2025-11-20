@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useGigs } from "@/hooks/useGigs";
 import { GigCard } from "@/components/GigCard";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, Filter } from "lucide-react";
@@ -10,36 +12,29 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 
 export default function MyGigs() {
-  const [gigs, setGigs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const { gigs, loading, refetch } = useGigs({ userId: userId || undefined });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { theme } = useTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchMyGigs();
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      } else {
+        navigate('/auth/signin');
+      }
+    };
+    getUser();
   }, []);
-
-  const fetchMyGigs = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    // TODO: Replace with actual database query when gigs table is created
-    const data: any[] = [];
-    const error = null;
-
-    if (error) {
-      console.error('Error fetching gigs:', error);
-    } else {
-      setGigs(data || []);
-    }
-    setLoading(false);
-  };
 
   const filteredGigs = gigs.filter(gig => {
     const matchesSearch = gig.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         gig.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (gig.description && gig.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === "all" || gig.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -63,7 +58,7 @@ export default function MyGigs() {
               Manage your posted gigs and track their performance
             </p>
           </div>
-          <Button 
+          <Button
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-2"
           >
@@ -111,8 +106,8 @@ export default function MyGigs() {
         ) : filteredGigs.length === 0 ? (
           <div className={cn(
             "text-center py-12 rounded-lg border-2 border-dashed",
-            theme === 'light' 
-              ? "border-gray-300 bg-gray-50" 
+            theme === 'light'
+              ? "border-gray-300 bg-gray-50"
               : "border-gray-600 bg-gray-800/50"
           )}>
             <h3 className={cn(
@@ -125,7 +120,7 @@ export default function MyGigs() {
               "text-sm mb-4",
               theme === 'light' ? "text-gray-600" : "text-gray-400"
             )}>
-              {searchTerm || statusFilter !== "all" 
+              {searchTerm || statusFilter !== "all"
                 ? "Try adjusting your search or filter criteria"
                 : "Create your first gig to start offering your services"
               }
@@ -146,10 +141,10 @@ export default function MyGigs() {
         )}
       </div>
 
-      <CreateGigModal 
-        isOpen={isCreateModalOpen} 
+      <CreateGigModal
+        isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onGigCreated={fetchMyGigs}
+        onGigCreated={refetch}
       />
     </div>
   );
