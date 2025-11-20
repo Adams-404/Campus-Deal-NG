@@ -187,18 +187,31 @@ export const updateGig = async (
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('You must be logged in');
 
-        // Update gig
-        const { data, error } = await supabase
+        // Check if user is admin
+        const { data: userRole } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', user.id)
+            .single();
+
+        const isAdmin = userRole?.role === 'admin';
+
+        // Prepare update query
+        let query = supabase
             .from('gigs')
             .update({
                 ...gigData,
                 images: undefined, // Remove images from update
                 updated_at: new Date().toISOString(),
             })
-            .eq('id', id)
-            .eq('user_id', user.id) // Ensure user owns the gig
-            .select()
-            .single();
+            .eq('id', id);
+
+        // If not admin, enforce ownership
+        if (!isAdmin) {
+            query = query.eq('user_id', user.id);
+        }
+
+        const { data, error } = await query.select().single();
 
         if (error) throw error;
 
@@ -243,12 +256,18 @@ export const deleteGig = async (id: string) => {
 
         const isAdmin = userRole?.role === 'admin';
 
-        // Soft delete (set status to 'deleted')
-        const { error } = await supabase
+        // Prepare delete query (soft delete)
+        let query = supabase
             .from('gigs')
             .update({ status: 'deleted', is_active: false })
-            .eq('id', id)
-            .or(`user_id.eq.${user.id}${isAdmin ? ',user_id.neq.null' : ''}`);
+            .eq('id', id);
+
+        // If not admin, enforce ownership
+        if (!isAdmin) {
+            query = query.eq('user_id', user.id);
+        }
+
+        const { error } = await query;
 
         if (error) throw error;
 
