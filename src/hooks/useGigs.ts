@@ -282,3 +282,47 @@ export const canDeleteGig = async (gigUserId: string): Promise<boolean> => {
         return false;
     }
 };
+
+// Hook for fetching gig applications
+export const useGigApplications = () => {
+    const [applications, setApplications] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchApplications = async () => {
+        try {
+            setLoading(true);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from('gig_applications')
+                .select(`
+          *,
+          gigs (*,
+            gig_images (image_url, is_primary),
+            profiles:user_id (id, first_name, last_name, avatar_url)
+          ),
+          profiles:applicant_id (id, first_name, last_name, avatar_url)
+        `)
+                .eq('applicant_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setApplications(data || []);
+        } catch (error: any) {
+            console.error('Error fetching applications:', error);
+            toast.error('Failed to load applications');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchApplications();
+    }, []);
+
+    return { applications, loading, refetch: fetchApplications };
+};

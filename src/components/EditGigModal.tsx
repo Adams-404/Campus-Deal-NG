@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { mockGigs } from "@/data/mockGigs";
+import { Gig } from "@/data/mockGigs";
+import { updateGig, fetchGigById } from "@/hooks/useGigs";
 import { X, Plus, Image as ImageIcon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,22 +56,33 @@ export const EditGigModal = ({ isOpen, onClose, onGigUpdated, gigId }: EditGigMo
     const { toast } = useToast();
 
     useEffect(() => {
-        if (isOpen && gigId) {
-            const gig = mockGigs.find(g => g.id === gigId);
-            if (gig) {
+        const loadGig = async () => {
+            if (!gigId) return;
+
+            const gigData = await fetchGigById(gigId);
+            if (gigData) {
                 setFormData({
-                    title: gig.title,
-                    description: gig.description,
-                    category: gig.category,
-                    price: gig.price.toString(),
-                    location: gig.location || "",
-                    duration: gig.duration || "",
-                    tags: gig.tags || []
+                    title: gigData.title,
+                    description: gigData.description || "",
+                    category: gigData.category,
+                    price: gigData.price.toString(),
+                    location: gigData.location || "",
+                    duration: gigData.duration || "",
+                    tags: gigData.tags || [],
                 });
-                setImages(gig.images || []);
+
+                // Load images from gig_images
+                if (gigData.gig_images) {
+                    const imageUrls = gigData.gig_images.map(img => img.image_url);
+                    setImages(imageUrls);
+                }
             }
+        };
+
+        if (isOpen) {
+            loadGig();
         }
-    }, [isOpen, gigId]);
+    }, [gigId, isOpen]);
 
     if (!isOpen) return null;
 
@@ -110,7 +122,6 @@ export const EditGigModal = ({ isOpen, onClose, onGigUpdated, gigId }: EditGigMo
         setIsSubmitting(true);
 
         try {
-            // Validate form
             if (!formData.title || !formData.description || !formData.category || !formData.price) {
                 toast({
                     title: "Error",
@@ -121,36 +132,32 @@ export const EditGigModal = ({ isOpen, onClose, onGigUpdated, gigId }: EditGigMo
                 return;
             }
 
-            // Find and update the gig in mockGigs
-            const gigIndex = mockGigs.findIndex(g => g.id === gigId);
-            if (gigIndex > -1) {
-                mockGigs[gigIndex] = {
-                    ...mockGigs[gigIndex],
-                    title: formData.title,
-                    description: formData.description,
-                    category: formData.category,
-                    price: Number(formData.price),
-                    location: formData.location,
-                    duration: formData.duration,
-                    tags: formData.tags,
-                    images: images
-                };
-
-                toast({
-                    title: "Success",
-                    description: "Your gig has been updated successfully!",
-                });
-
-                onGigUpdated?.();
-                onClose();
-            }
-        } catch (error) {
-            console.error("Error updating gig:", error);
-            toast({
-                title: "Error",
-                description: "Failed to update gig. Please try again.",
-                variant: "destructive"
+            await updateGig(gigId, {
+                title: formData.title,
+                description: formData.description,
+                category: formData.category,
+                price: Number(formData.price),
+                location: formData.location || undefined,
+                duration: formData.duration || undefined,
+                tags: formData.tags,
+                images: images,
             });
+
+            onGigUpdated?.();
+            onClose();
+
+            setFormData({
+                title: "",
+                description: "",
+                category: "",
+                price: "",
+                location: "",
+                duration: "",
+                tags: []
+            });
+            setImages([]);
+        } catch (error) {
+            console.error('Error updating gig:', error);
         } finally {
             setIsSubmitting(false);
         }

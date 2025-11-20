@@ -14,58 +14,158 @@ import {
     ArrowLeft,
     CheckCircle2,
     ShieldCheck,
-    Calendar
+    Calendar,
+    Trash2,
+    Edit
 } from "lucide-react";
-import { mockGigs, Gig } from "@/data/mockGigs";
+import { Gig } from "@/data/mockGigs";
 import { PageTransition } from "@/components/PageTransition";
 import { EditGigModal } from "@/components/EditGigModal";
+import { fetchGigById, deleteGig, canDeleteGig } from "@/hooks/useGigs";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const GigDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { toast } = useToast();
+    const { toast: toastFn } = useToast();
     const [gig, setGig] = useState<Gig | null>(null);
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [canDelete, setCanDelete] = useState(false);
 
     useEffect(() => {
-        // Simulate API fetch
-        const fetchGig = async () => {
+        const loadGig = async () => {
+            if (!id) return;
+
             setLoading(true);
-            await new Promise(resolve => setTimeout(resolve, 800));
-            const foundGig = mockGigs.find(g => g.id === id);
-            setGig(foundGig || null);
+            const gigData = await fetchGigById(id);
+            setGig(gigData);
             setLoading(false);
         };
-        fetchGig();
+
+        loadGig();
     }, [id]);
 
-    const handleContact = () => {
-        toast({
-            title: "Contact Request Sent",
-            description: `You've started a conversation with ${gig?.user_name}`,
-        });
+    useEffect(() => {
+        const checkPermissions = async () => {
+            if (gig) {
+                const canDel = await canDeleteGig(gig.user_id);
+                setCanDelete(canDel);
+            }
+        };
+        checkPermissions();
+    }, [gig]);
+
+    const handleContact = async () => {
+        if (!gig) return;
+
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                toast.error('Please sign in to contact the seller');
+                navigate('/auth/signin');
+                return;
+            }
+
+            if (user.id === gig.user_id) {
+                toast.error('You cannot contact yourself');
+                return;
+            }
+
+            // Check if conversation exists
+            const { data: existingConv } = await supabase
+                .from('conversations')
+                .select('id')
+                .or(`and(buyer_id.eq.${user.id},seller_id.eq.${gig.user_id}),and(buyer_id.eq.${gig.user_id},seller_id.eq.${user.id})`)
+                .limit(1)
+                .single();
+
+            if (existingConv) {
+                navigate(`/messages/${existingConv.id}`);
+                return;
+            }
+
+            // Create conversation
+            const { data: newConv, error } = await supabase
+                .from('conversations')
+                .insert({
+                    buyer_id: user.id,
+                    seller_id: gig.user_id,
+                    last_message: `Interested in: ${gig.title}`,
+                    last_message_at: new Date().toISOString(),
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            navigate(`/messages/${newConv.id}`);
+            toast.success('Conversation started!');
+        } catch (error: any) {
+            console.error('Error:', error);
+            toast.error('Failed to start conversation');
+        }
     };
 
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href);
-        toast({
+        toastFn({
             title: "Link Copied",
             description: "Gig link copied to clipboard",
         });
     };
 
+    const handleDelete = async () => {
+        if (!gig) return;
+
+        const confirmed = window.confirm('Are you sure you want to delete this gig?');
+        if (!confirmed) return;
+
+        try {
+            await deleteGig(gig.id);
+            navigate('/gigs');
+        } catch (error) {
+            console.error('Error deleting gig:', error);
+        }
+    };
+
     const nextImage = () => {
-        if (gig?.images && gig.images.length > 0) {
-            setSelectedImageIndex((prev) => (prev + 1) % gig.images!.length);
+        if (gig?.gig_images && gig.gig_images.length > 0) {
+            setSelectedImageIndex((prev) => (prev + 1) % gig.gig_images!.length);
         }
     };
 
     const prevImage = () => {
-        if (gig?.images && gig.images.length > 0) {
-            setSelectedImageIndex((prev) => (prev - 1 + gig.images!.length) % gig.images!.length);
+        if (gig?.gig_images && gig.gig_images.length > 0) {
+            setSelectedImageIndex((prev) => (prev - 1 + gig.gig_images!.length) % gig.gig_images!.length);
         }
+    };
+
+    const getUserName = () => {
+        if (!gig?.profiles) return 'Anonymous';
+        const { first_name, last_name } = gig.profiles;
+        if (first_name && last_name) return `${first_name} ${last_name}`;
+        if (first_name) return first_name;
+        return 'Anonymous';
+    };
+
+    const getInitials = () => {
+        const name = getUserName();
+        return name
+            .split(' ')
+            .map(n => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+    };
+
+    const refreshGig = async () => {
+        if (!id) return;
+        const gigData = await fetchGigById(id);
+        setGig(gigData);
     };
 
     if (loading) {
@@ -118,40 +218,21 @@ const GigDetails = () => {
                                         </h1>
                                     </div>
                                     <div className="flex gap-2">
-                                        {(gig.user_id === "current_user" || gig.user_name === "You") && (
+                                        {canDelete && (
                                             <>
                                                 <Button
                                                     variant="outline"
                                                     size="icon"
                                                     onClick={() => setIsEditModalOpen(true)}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                                                        <path d="m15 5 4 4" />
-                                                    </svg>
+                                                    <Edit className="h-4 w-4" />
                                                 </Button>
                                                 <Button
                                                     variant="outline"
                                                     size="icon"
-                                                    onClick={() => {
-                                                        if (confirm("Are you sure you want to delete this gig?")) {
-                                                            const index = mockGigs.findIndex(g => g.id === gig.id);
-                                                            if (index > -1) {
-                                                                mockGigs.splice(index, 1);
-                                                                toast({
-                                                                    title: "Gig Deleted",
-                                                                    description: "Your gig has been deleted successfully",
-                                                                });
-                                                                navigate('/gigs');
-                                                            }
-                                                        }
-                                                    }}
+                                                    onClick={handleDelete}
                                                 >
-                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                        <path d="M3 6h18" />
-                                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                                                    </svg>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
                                                 </Button>
                                             </>
                                         )}
@@ -180,18 +261,18 @@ const GigDetails = () => {
                                 <Separator className="my-6" />
 
                                 {/* Image Gallery with Carousel */}
-                                {gig.images && gig.images.length > 0 && (
+                                {gig.gig_images && gig.gig_images.length > 0 && (
                                     <div className="space-y-3 mb-6">
                                         {/* Main Image with Navigation */}
                                         <div className="relative group">
                                             <img
-                                                src={gig.images[selectedImageIndex]}
+                                                src={gig.gig_images[selectedImageIndex].image_url}
                                                 alt={`${gig.title} - Image ${selectedImageIndex + 1}`}
                                                 className="w-full h-64 md:h-80 object-cover rounded-lg"
                                             />
 
                                             {/* Navigation Arrows - Only show if more than 1 image */}
-                                            {gig.images.length > 1 && (
+                                            {gig.gig_images.length > 1 && (
                                                 <>
                                                     <Button
                                                         variant="secondary"
@@ -216,26 +297,26 @@ const GigDetails = () => {
 
                                                     {/* Image Counter */}
                                                     <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
-                                                        {selectedImageIndex + 1} / {gig.images.length}
+                                                        {selectedImageIndex + 1} / {gig.gig_images.length}
                                                     </div>
                                                 </>
                                             )}
                                         </div>
 
                                         {/* Thumbnail Navigation - Show all images */}
-                                        {gig.images.length > 1 && (
+                                        {gig.gig_images.length > 1 && (
                                             <div className="grid grid-cols-3 gap-2">
-                                                {gig.images.map((image, index) => (
+                                                {gig.gig_images.map((image, index) => (
                                                     <div
                                                         key={index}
                                                         className={`relative rounded-lg overflow-hidden cursor-pointer transition-all ${selectedImageIndex === index
-                                                                ? 'ring-2 ring-primary'
-                                                                : 'hover:opacity-80'
+                                                            ? 'ring-2 ring-primary'
+                                                            : 'hover:opacity-80'
                                                             }`}
                                                         onClick={() => setSelectedImageIndex(index)}
                                                     >
                                                         <img
-                                                            src={image}
+                                                            src={image.image_url}
                                                             alt={`${gig.title} thumbnail ${index + 1}`}
                                                             className="w-full h-24 object-cover"
                                                         />
@@ -300,15 +381,15 @@ const GigDetails = () => {
 
                                 <Separator className="my-6" />
 
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 cursor-pointer hover:opacity-80" onClick={() => navigate(`/user-profile/${gig.user_id}`)}>
                                     <Avatar className="h-12 w-12 border-2 border-background">
-                                        <AvatarImage src={gig.user_avatar} />
+                                        <AvatarImage src={gig.profiles?.avatar_url || undefined} />
                                         <AvatarFallback>
-                                            {gig.user_name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                            {getInitials()}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <div className="font-medium">{gig.user_name}</div>
+                                        <div className="font-medium">{getUserName()}</div>
                                         <div className="text-xs text-muted-foreground">
                                             Joined {new Date(gig.created_at).getFullYear()}
                                         </div>
@@ -337,11 +418,7 @@ const GigDetails = () => {
                     isOpen={isEditModalOpen}
                     onClose={() => setIsEditModalOpen(false)}
                     gigId={gig.id}
-                    onGigUpdated={() => {
-                        // Refresh gig data after update
-                        const updatedGig = mockGigs.find(g => g.id === id);
-                        setGig(updatedGig || null);
-                    }}
+                    onGigUpdated={refreshGig}
                 />
             )}
         </PageTransition>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { mockApplications } from "@/data/mockGigs";
+import { useGigApplications } from "@/hooks/useGigs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,24 +13,21 @@ import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
 export default function Applications() {
-  const [applications, setApplications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { applications, loading, refetch } = useGigApplications();
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const { theme } = useTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchApplications();
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/auth/signin');
+      }
+    };
+    checkUser();
   }, []);
-
-  const fetchApplications = async () => {
-    setLoading(true);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    setApplications(mockApplications);
-    setLoading(false);
-  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {

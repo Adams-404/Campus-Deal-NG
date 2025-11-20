@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { mockGigs } from "@/data/mockGigs";
+import { useGigs } from "@/hooks/useGigs";
 import { GigCard } from "@/components/GigCard";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, Filter } from "lucide-react";
@@ -11,35 +12,29 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 
 export default function MyGigs() {
-  const [gigs, setGigs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
+  const { gigs, loading, refetch } = useGigs({ userId: userId || undefined });
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const { theme } = useTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchMyGigs();
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      } else {
+        navigate('/auth/signin');
+      }
+    };
+    getUser();
   }, []);
-
-  const fetchMyGigs = async () => {
-    setLoading(true);
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Filter mock gigs to simulate "my gigs" (just taking the first two for demo)
-    const myMockGigs = mockGigs.slice(0, 2).map(gig => ({
-      ...gig,
-      status: gig.status || 'active'
-    }));
-
-    setGigs(myMockGigs);
-    setLoading(false);
-  };
 
   const filteredGigs = gigs.filter(gig => {
     const matchesSearch = gig.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      gig.description.toLowerCase().includes(searchTerm.toLowerCase());
+      (gig.description && gig.description.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesStatus = statusFilter === "all" || gig.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -149,7 +144,7 @@ export default function MyGigs() {
       <CreateGigModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onGigCreated={fetchMyGigs}
+        onGigCreated={refetch}
       />
     </div>
   );
