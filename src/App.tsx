@@ -62,6 +62,7 @@ const Feedback = lazy(() => import("./pages/Feedback"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const InviteFriends = lazy(() => import("./pages/InviteFriends"));
 const Gigs = lazy(() => import("./pages/Gigs"));
+const GigDetails = lazy(() => import("./pages/gigs/GigDetails"));
 const MyGigs = lazy(() => import("./pages/gigs/MyGigs"));
 const Applications = lazy(() => import("./pages/gigs/Applications"));
 
@@ -106,10 +107,10 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   }
 
   // Check if this is a password reset link by looking at URL hash or current path
-  const isPasswordResetFlow = location.pathname === '/auth/reset-password' || 
-                              location.hash.includes('type=recovery') || 
-                              location.hash.includes('access_token') ||
-                              window.location.hash.includes('type=recovery');
+  const isPasswordResetFlow = location.pathname === '/auth/reset-password' ||
+    location.hash.includes('type=recovery') ||
+    location.hash.includes('access_token') ||
+    window.location.hash.includes('type=recovery');
 
   // Don't redirect if user is on password reset flow
   if (user && !isPasswordResetFlow) {
@@ -121,17 +122,17 @@ const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
 const AnimatedRoutes = () => {
   const location = useLocation();
-  const showNav = location.pathname === '/home'; 
+  const showNav = location.pathname === '/home';
   const hideBottomNav = [
-    "/", 
-    "/auth", 
-    "/auth/signin", 
-    "/auth/signup", 
+    "/",
+    "/auth",
+    "/auth/signin",
+    "/auth/signup",
     "/auth/forgot-password",
     "/auth/reset-password",
     "/email-verification",
     "/email-confirmed",
-    "/admin", 
+    "/admin",
     "/notifications",
     "/support",
     "/leaderboard",
@@ -140,40 +141,40 @@ const AnimatedRoutes = () => {
     "/about",
     "/feedback"
   ].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
-  
+
   const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings } = useSettings();
   const [user, setUser] = useState<any>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
   const deviceType = useDeviceType();
-  
+
   // Initialize PWA theme adaptation
   usePWATheme();
-  
+
   // Track page views when route changes
   useEffect(() => {
     // Track page view with Google Analytics
     trackPageView(location.pathname);
   }, [location.pathname]);
-  
+
   useEffect(() => {
     const checkUserAndSettings = async () => {
       if (loadingSettings) {
-        return; 
+        return;
       }
 
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       setAuthLoaded(true);
-      
+
       if (user && !hideSafetyTips && location.pathname === '/home') {
-        if (!showSafetyTips) { 
-           setShowSafetyTips(true);
+        if (!showSafetyTips) {
+          setShowSafetyTips(true);
         }
       }
     };
-    
+
     checkUserAndSettings();
-    
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setAuthLoaded(true);
@@ -181,13 +182,13 @@ const AnimatedRoutes = () => {
 
     return () => subscription.unsubscribe();
   }, [location.pathname, hideSafetyTips, loadingSettings, showSafetyTips, setShowSafetyTips]);
-  
+
   useEffect(() => {
     if (location.pathname !== '/') {
       window.scrollTo(0, 0);
     }
   }, [location.pathname]);
-  
+
   const fallbackLoader = (
     <div className="flex items-center justify-center min-h-screen bg-background">
       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
@@ -198,17 +199,17 @@ const AnimatedRoutes = () => {
   const isAuthPage = location.pathname.startsWith('/auth') || location.pathname === '/email-verification' || location.pathname === '/email-confirmed';
   const isAdminPage = location.pathname.startsWith('/admin');
   const shouldShowSideNav = user && deviceType !== 'mobile' && !isAuthPage && !isAdminPage;
-  
+
   // Define routes where navbar should be shown - only on home and gigs pages
   const shouldShowNavbar = (path: string) => {
     // Only show navbar on these exact routes
     return ['/home', '/gigs'].includes(path);
   };
-  
+
   // Apply main content padding based on device and sidenav visibility
   const getContentClass = () => {
     const showNav = shouldShowNavbar(location.pathname);
-    
+
     if (deviceType === 'mobile') {
       // Add bottom padding to account for bottom nav
       return 'pb-24';
@@ -225,7 +226,7 @@ const AnimatedRoutes = () => {
     <div className="flex flex-col min-h-screen overflow-x-hidden bg-background">
       {shouldShowNavbar(location.pathname) && <Navbar />}
       {shouldShowSideNav && <DesktopSideNav />}
-      
+
       <main className={cn("flex-1", getContentClass())}>
         <AnimatePresence mode="wait">
           <Suspense fallback={fallbackLoader}>
@@ -259,6 +260,7 @@ const AnimatedRoutes = () => {
               <Route path="/settings/reset-password" element={<ProtectedRoute><SettingsChangePassword /></ProtectedRoute>} />
               <Route path="/saved" element={<ProtectedRoute><LazySavedItems /></ProtectedRoute>} />
               <Route path="/gigs" element={<ProtectedRoute allowGuest><Gigs /></ProtectedRoute>} />
+              <Route path="/gigs/:id" element={<ProtectedRoute allowGuest><GigDetails /></ProtectedRoute>} />
               <Route path="/gigs/my-gigs" element={<ProtectedRoute><MyGigs /></ProtectedRoute>} />
               <Route path="/gigs/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
               <Route path="/share" element={<ProtectedRoute><Share /></ProtectedRoute>} />
@@ -266,7 +268,7 @@ const AnimatedRoutes = () => {
               <Route path="/item/:id" element={<ProtectedRoute allowGuest><LazyViewItem /></ProtectedRoute>} />
               <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
-              
+
               {/* Delivery Coordinator route */}
               <Route path="/delivery" element={<ProtectedRoute><DeliveryCoordinator /></ProtectedRoute>} />
 
@@ -277,15 +279,15 @@ const AnimatedRoutes = () => {
           </Suspense>
         </AnimatePresence>
       </main>
-      
+
       {!hideBottomNav && deviceType === 'mobile' && authLoaded && <BottomNav />}
-      
-      <SafetyTipsDialog 
-        open={showSafetyTips} 
-        onClose={() => setShowSafetyTips(false)} 
+
+      <SafetyTipsDialog
+        open={showSafetyTips}
+        onClose={() => setShowSafetyTips(false)}
         trigger="app_open"
       />
-      
+
       <PWAInstallPrompt />
     </div>
   );

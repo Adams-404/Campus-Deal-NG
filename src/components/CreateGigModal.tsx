@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { X, Plus, Minus } from "lucide-react";
+import { mockGigs } from "@/data/mockGigs";
+import { X, Plus, Image as ImageIcon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,10 +49,42 @@ export const CreateGigModal = ({ isOpen, onClose, onGigCreated }: CreateGigModal
     tags: [] as string[]
   });
   const [newTag, setNewTag] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   if (!isOpen) return null;
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const remainingSlots = 3 - images.length;
+    if (remainingSlots <= 0) {
+      toast({
+        title: "Maximum images reached",
+        description: "You can only upload up to 3 images",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const filesToProcess = Array.from(files).slice(0, remainingSlots);
+
+    filesToProcess.forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImages(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,20 +98,42 @@ export const CreateGigModal = ({ isOpen, onClose, onGigCreated }: CreateGigModal
           description: "Please fill in all required fields",
           variant: "destructive"
         });
+        setIsSubmitting(false);
         return;
       }
 
-      // TODO: Submit to database when gigs table is created
-      console.log("Creating gig:", formData);
-      
+      // Create new gig object
+      const newGig = {
+        id: Math.random().toString(36).substr(2, 9),
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        price: Number(formData.price),
+        location: formData.location,
+        duration: formData.duration,
+        rating: 0,
+        reviews_count: 0,
+        tags: formData.tags,
+        user_id: "current_user", // Mock user ID
+        user_name: "You", // Mock user name
+        user_avatar: "",
+        created_at: new Date().toISOString(),
+        is_active: true,
+        images: images // Store images with the gig
+      };
+
+      // Add to mock data
+      // @ts-ignore
+      mockGigs.unshift(newGig);
+
       toast({
         title: "Success",
         description: "Your gig has been posted successfully!",
       });
-      
+
       onGigCreated?.();
       onClose();
-      
+
       // Reset form
       setFormData({
         title: "",
@@ -89,6 +144,7 @@ export const CreateGigModal = ({ isOpen, onClose, onGigCreated }: CreateGigModal
         duration: "",
         tags: []
       });
+      setImages([]);
     } catch (error) {
       console.error("Error creating gig:", error);
       toast({
@@ -169,6 +225,62 @@ export const CreateGigModal = ({ isOpen, onClose, onGigCreated }: CreateGigModal
             </div>
           </div>
 
+          {/* Image Upload Section */}
+          <div className="space-y-2">
+            <Label>Images (Optional, max 3)</Label>
+            <div className="space-y-3">
+              {images.length < 3 && (
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    id="image-upload"
+                  />
+                  <label htmlFor="image-upload">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => document.getElementById('image-upload')?.click()}
+                    >
+                      <ImageIcon className="mr-2 h-4 w-4" />
+                      Upload Images ({images.length}/3)
+                    </Button>
+                  </label>
+                </div>
+              )}
+
+              {images.length > 0 && (
+                <div className="grid grid-cols-3 gap-3">
+                  {images.map((image, index) => (
+                    <div key={index} className="relative group rounded-lg overflow-hidden border border-border">
+                      <img
+                        src={image}
+                        alt={`Upload ${index + 1}`}
+                        className="w-full h-24 object-cover"
+                      />
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        className="absolute top-1 right-1 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => removeImage(index)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Upload up to 3 images to showcase your gig
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="category">Category *</Label>
@@ -187,15 +299,14 @@ export const CreateGigModal = ({ isOpen, onClose, onGigCreated }: CreateGigModal
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="price">Price ($) *</Label>
+              <Label htmlFor="price">Price (₦) *</Label>
               <Input
                 id="price"
                 type="number"
-                placeholder="e.g., 25"
+                placeholder="e.g., 3500"
                 value={formData.price}
                 onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                 min="1"
-                max="1000"
                 required
               />
             </div>

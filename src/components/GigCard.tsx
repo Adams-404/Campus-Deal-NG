@@ -1,4 +1,5 @@
 import { Clock, MapPin, Star, MessageCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ interface Gig {
   user_avatar?: string;
   created_at: string;
   is_active: boolean;
+  images?: string[];
 }
 
 interface GigCardProps {
@@ -28,13 +30,18 @@ interface GigCardProps {
 }
 
 export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
+  const navigate = useNavigate();
+
   const handleContact = () => {
     // TODO: Implement contact functionality
     console.log("Contacting user for gig:", gig.id);
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 cursor-pointer border border-border">
+    <Card
+      className="group hover:shadow-lg transition-all duration-300 cursor-pointer border border-border flex flex-col h-full"
+      onClick={() => navigate(`/gigs/${gig.id}`)}
+    >
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start mb-2">
           <Badge variant="secondary" className="text-xs">
@@ -49,11 +56,20 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
           {gig.title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground line-clamp-3">
+      {gig.images && gig.images.length > 0 && (
+        <div className="px-6 pb-3">
+          <img
+            src={gig.images[0]}
+            alt={gig.title}
+            className="w-full h-48 object-cover rounded-lg"
+          />
+        </div>
+      )}
+      <CardContent className="space-y-4 flex-1 flex flex-col">
+        <p className="text-sm text-muted-foreground line-clamp-3 flex-1">
           {gig.description}
         </p>
-        
+
         <div className="flex flex-wrap gap-2">
           {gig.tags.slice(0, 3).map((tag) => (
             <Badge key={tag} variant="outline" className="text-xs">
@@ -67,7 +83,7 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
           )}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 mt-auto">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4" />
             <span>{gig.location}</span>
@@ -83,7 +99,7 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-border">
+        <div className="flex items-center justify-between pt-4 border-t border-border mt-4">
           <div className="flex items-center gap-2">
             <Avatar className="h-8 w-8">
               <AvatarImage src={gig.user_avatar} />
@@ -95,9 +111,12 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
               <div className="text-sm font-medium">{gig.user_name}</div>
             </div>
           </div>
-          <Button 
-            size="sm" 
-            onClick={handleContact}
+          <Button
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleContact();
+            }}
             className="gap-2"
           >
             <MessageCircle className="h-4 w-4" />

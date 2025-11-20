@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { mockGigs } from "@/data/mockGigs";
 import { GigCard } from "@/components/GigCard";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, Filter } from "lucide-react";
@@ -22,24 +23,23 @@ export default function MyGigs() {
   }, []);
 
   const fetchMyGigs = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    setLoading(true);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-    // TODO: Replace with actual database query when gigs table is created
-    const data: any[] = [];
-    const error = null;
+    // Filter mock gigs to simulate "my gigs" (just taking the first two for demo)
+    const myMockGigs = mockGigs.slice(0, 2).map(gig => ({
+      ...gig,
+      status: gig.status || 'active'
+    }));
 
-    if (error) {
-      console.error('Error fetching gigs:', error);
-    } else {
-      setGigs(data || []);
-    }
+    setGigs(myMockGigs);
     setLoading(false);
   };
 
   const filteredGigs = gigs.filter(gig => {
     const matchesSearch = gig.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         gig.description.toLowerCase().includes(searchTerm.toLowerCase());
+      gig.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || gig.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -63,7 +63,7 @@ export default function MyGigs() {
               Manage your posted gigs and track their performance
             </p>
           </div>
-          <Button 
+          <Button
             onClick={() => setIsCreateModalOpen(true)}
             className="flex items-center gap-2"
           >
@@ -111,8 +111,8 @@ export default function MyGigs() {
         ) : filteredGigs.length === 0 ? (
           <div className={cn(
             "text-center py-12 rounded-lg border-2 border-dashed",
-            theme === 'light' 
-              ? "border-gray-300 bg-gray-50" 
+            theme === 'light'
+              ? "border-gray-300 bg-gray-50"
               : "border-gray-600 bg-gray-800/50"
           )}>
             <h3 className={cn(
@@ -125,7 +125,7 @@ export default function MyGigs() {
               "text-sm mb-4",
               theme === 'light' ? "text-gray-600" : "text-gray-400"
             )}>
-              {searchTerm || statusFilter !== "all" 
+              {searchTerm || statusFilter !== "all"
                 ? "Try adjusting your search or filter criteria"
                 : "Create your first gig to start offering your services"
               }
@@ -146,8 +146,8 @@ export default function MyGigs() {
         )}
       </div>
 
-      <CreateGigModal 
-        isOpen={isCreateModalOpen} 
+      <CreateGigModal
+        isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onGigCreated={fetchMyGigs}
       />

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { mockApplications } from "@/data/mockGigs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,18 +23,11 @@ export default function Applications() {
   }, []);
 
   const fetchApplications = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    setLoading(true);
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 800));
 
-    // TODO: Replace with actual database query when gig_applications table is created
-    const data: any[] = [];
-    const error = null;
-
-    if (error) {
-      console.error('Error fetching applications:', error);
-    } else {
-      setApplications(data || []);
-    }
+    setApplications(mockApplications);
     setLoading(false);
   };
 
@@ -65,7 +59,7 @@ export default function Applications() {
 
   const filteredApplications = applications.filter(app => {
     const matchesSearch = app.gigs?.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.proposal.toLowerCase().includes(searchTerm.toLowerCase());
+      app.proposal.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || app.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -127,8 +121,8 @@ export default function Applications() {
         ) : filteredApplications.length === 0 ? (
           <div className={cn(
             "text-center py-12 rounded-lg border-2 border-dashed",
-            theme === 'light' 
-              ? "border-gray-300 bg-gray-50" 
+            theme === 'light'
+              ? "border-gray-300 bg-gray-50"
               : "border-gray-600 bg-gray-800/50"
           )}>
             <h3 className={cn(
@@ -141,7 +135,7 @@ export default function Applications() {
               "text-sm",
               theme === 'light' ? "text-gray-600" : "text-gray-400"
             )}>
-              {searchTerm || statusFilter !== "all" 
+              {searchTerm || statusFilter !== "all"
                 ? "Try adjusting your search or filter criteria"
                 : "Start applying to gigs to see them here"
               }
