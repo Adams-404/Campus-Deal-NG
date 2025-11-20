@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { mockGigs } from "@/data/mockGigs";
+import { createGig } from "@/hooks/useGigs";
 import { X, Plus, Image as ImageIcon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,35 +102,19 @@ export const CreateGigModal = ({ isOpen, onClose, onGigCreated }: CreateGigModal
         return;
       }
 
-      // Create new gig object
-      const newGig = {
-        id: Math.random().toString(36).substr(2, 9),
+      // Create gig using the helper function
+      await createGig({
         title: formData.title,
         description: formData.description,
         category: formData.category,
         price: Number(formData.price),
-        location: formData.location,
-        duration: formData.duration,
-        rating: 0,
-        reviews_count: 0,
+        location: formData.location || undefined,
+        duration: formData.duration || undefined,
         tags: formData.tags,
-        user_id: "current_user", // Mock user ID
-        user_name: "You", // Mock user name
-        user_avatar: "",
-        created_at: new Date().toISOString(),
-        is_active: true,
-        images: images // Store images with the gig
-      };
-
-      // Add to mock data
-      // @ts-ignore
-      mockGigs.unshift(newGig);
-
-      toast({
-        title: "Success",
-        description: "Your gig has been posted successfully!",
+        images: images,
       });
 
+      // Success handled by createGig function
       onGigCreated?.();
       onClose();
 
@@ -146,12 +130,8 @@ export const CreateGigModal = ({ isOpen, onClose, onGigCreated }: CreateGigModal
       });
       setImages([]);
     } catch (error) {
-      console.error("Error creating gig:", error);
-      toast({
-        title: "Error",
-        description: "Failed to create gig. Please try again.",
-        variant: "destructive"
-      });
+      // Error handled by createGig function
+      console.error('Error in handleSubmit:', error);
     } finally {
       setIsSubmitting(false);
     }

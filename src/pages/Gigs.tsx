@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { Search, Plus, MapPin, Clock, Star, Filter, ChevronDown } from "lucide-react";
+import { useState } from "react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { useDeviceType } from "@/hooks/use-mobile";
 import { CreateGigModal } from "@/components/CreateGigModal";
 import { GigCard } from "@/components/GigCard";
@@ -9,38 +9,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { PageTransition } from "@/components/PageTransition";
 import { useLocation } from "react-router-dom";
-
-import { mockGigs, Gig } from "@/data/mockGigs";
+import { useGigs } from "@/hooks/useGigs";
+import { useEffect, useState as useReactState } from "react";
 
 const Gigs = () => {
-  const [gigs, setGigs] = useState<Gig[]>([]);
-  const [loading, setLoading] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const { gigs, loading, refetch } = useGigs();
   const deviceType = useDeviceType();
   const { toast } = useToast();
   const location = useLocation();
-  const user = null; // Replace with actual user logic if needed
-
-  const fetchGigs = async () => {
-    try {
-      setLoading(true);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setGigs(mockGigs);
-    } catch (error) {
-      console.error("Error fetching gigs:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load gigs. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchGigs();
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    checkUser();
   }, []);
 
   return (
@@ -93,8 +78,7 @@ const Gigs = () => {
             isOpen={isCreateModalOpen}
             onClose={() => setIsCreateModalOpen(false)}
             onGigCreated={() => {
-              // Refresh gigs after creation
-              fetchGigs();
+              refetch();
             }}
           />
         )}
