@@ -24,7 +24,7 @@ import { toast } from "sonner";
 import { PageTransition } from "@/components/PageTransition";
 import { EditGigModal } from "@/components/EditGigModal";
 import { GigReviewModal } from "@/components/GigReviewModal";
-import { fetchGigById, deleteGig, canDeleteGig, useGigReviews, deleteReview } from "@/hooks/useGigs";
+import { fetchGigById, deleteGig, canDeleteGig, useGigReviews, deleteReview, applyToGig, useGigApplications } from "@/hooks/useGigs";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 
@@ -75,55 +75,40 @@ const GigDetails = () => {
         checkPermissions();
     }, [gig]);
 
-    const handleContact = async () => {
+    const { applications } = useGigApplications();
+    const hasApplied = applications.some(app => app.gig_id === id);
+
+    const handleApply = async () => {
         if (!gig) return;
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
 
             if (!user) {
-                toast.error('Please sign in to contact the seller');
+                toast.error('Please sign in to apply');
                 navigate('/auth/signin');
                 return;
             }
 
             if (user.id === gig.user_id) {
-                toast.error('You cannot contact yourself');
+                toast.error('You cannot apply to your own gig');
                 return;
             }
 
-            // Check if conversation exists
-            const { data: existingConv } = await supabase
-                .from('conversations')
-                .select('id')
-                .or(`and(buyer_id.eq.${user.id},seller_id.eq.${gig.user_id}),and(buyer_id.eq.${gig.user_id},seller_id.eq.${user.id})`)
-                .limit(1)
-                .single();
-
-            if (existingConv) {
-                navigate(`/messages/${existingConv.id}`);
+            if (hasApplied) {
+                toast.info('You have already applied to this gig');
+                navigate('/gigs/applications');
                 return;
             }
 
-            // Create conversation
-            const { data: newConv, error } = await supabase
-                .from('conversations')
-                .insert({
-                    buyer_id: user.id,
-                    seller_id: gig.user_id,
-                    last_message: `Interested in: ${gig.title}`,
-                    last_message_at: new Date().toISOString(),
-                })
-                .select()
-                .single();
+            // Create Application
+            await applyToGig(gig.id, `I'm interested in working on: ${gig.title}`);
 
-            if (error) throw error;
-
-            navigate(`/messages/${newConv.id}`);
-            toast.success('Conversation started!');
+            // Refresh to update hasApplied status
+            toast.success('Application submitted! The gig owner will review it.');
         } catch (error: any) {
             console.error('Error:', error);
-            toast.error('Failed to start conversation');
+            // Error is already shown by applyToGig
         }
     };
 
@@ -467,9 +452,9 @@ const GigDetails = () => {
                                 </div>
 
                                 <div className="space-y-3 mb-6">
-                                    <Button className="w-full" size="lg" onClick={handleContact}>
+                                    <Button className="w-full" size="lg" onClick={handleApply} disabled={hasApplied}>
                                         <MessageCircle className="mr-2 h-4 w-4" />
-                                        Contact Seller
+                                        {hasApplied ? 'Applied' : 'Apply Now'}
                                     </Button>
                                     <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                                         <ShieldCheck className="h-3 w-3" />

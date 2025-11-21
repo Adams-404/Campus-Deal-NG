@@ -302,7 +302,7 @@ export const canDeleteGig = async (gigUserId: string): Promise<boolean> => {
     }
 };
 
-// Hook for fetching gig applications
+// Hook for fetching gig applications (as applicant)
 export const useGigApplications = () => {
     const [applications, setApplications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -334,6 +334,50 @@ export const useGigApplications = () => {
         } catch (error: any) {
             console.error('Error fetching applications:', error);
             toast.error('Failed to load applications');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchApplications();
+    }, []);
+
+    return { applications, loading, refetch: fetchApplications };
+};
+
+// Hook for fetching applications received on your gigs (as gig owner)
+export const useReceivedApplications = () => {
+    const [applications, setApplications] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchApplications = async () => {
+        try {
+            setLoading(true);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                setLoading(false);
+                return;
+            }
+
+            // Get applications for gigs owned by current user
+            const { data, error } = await supabase
+                .from('gig_applications')
+                .select(`
+          *,
+          gigs!inner (*,
+            gig_images (image_url, is_primary)
+          ),
+          profiles:applicant_id (id, first_name, last_name, avatar_url, email)
+        `)
+                .eq('gigs.user_id', user.id)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setApplications(data || []);
+        } catch (error: any) {
+            console.error('Error fetching received applications:', error);
+            toast.error('Failed to load received applications');
         } finally {
             setLoading(false);
         }
@@ -468,6 +512,121 @@ export const deleteReview = async (reviewId: string) => {
     } catch (err: any) {
         console.error('Error deleting review:', err);
         toast.error(err.message || 'Failed to delete review');
+        throw err;
+    }
+};
+
+// Accept an application
+export const acceptApplication = async (applicationId: string, message?: string) => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('You must be logged in');
+
+        const updateData: any = {
+            status: 'accepted',
+            updated_at: new Date().toISOString()
+        };
+
+        if (message) {
+            updateData.response_message = message;
+        }
+
+        const { data, error } = await supabase
+            .from('gig_applications')
+            .update(updateData)
+            .eq('id', applicationId)
+            .select(`
+                *,
+                gigs!inner(user_id)
+            `)
+            .single();
+
+        if (error) throw error;
+
+        // Verify ownership
+        if (data.gigs.user_id !== user.id) {
+            throw new Error('You can only accept applications for your own gigs');
+        }
+
+        toast.success('Application accepted!');
+        return data;
+    } catch (err: any) {
+        console.error('Error accepting application:', err);
+        toast.error(err.message || 'Failed to accept application');
+        throw err;
+    }
+};
+
+// Reject an application
+export const rejectApplication = async (applicationId: string, message?: string) => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('You must be logged in');
+
+        const updateData: any = {
+            status: 'rejected',
+            updated_at: new Date().toISOString()
+        };
+
+        if (message) {
+            updateData.response_message = message;
+        }
+
+        const { data, error } = await supabase
+            .from('gig_applications')
+            .update(updateData)
+            .eq('id', applicationId)
+            .select(`
+                *,
+                gigs!inner(user_id)
+            `)
+            .single();
+
+        if (error) throw error;
+
+        // Verify ownership
+        if (data.gigs.user_id !== user.id) {
+            throw new Error('You can only reject applications for your own gigs');
+        }
+
+        toast.success('Application rejected');
+        return data;
+    } catch (err: any) {
+        console.error('Error rejecting application:', err);
+        toast.error(err.message || 'Failed to reject application');
+        throw err;
+    }
+};
+
+// Helper to apply to a gig
+export const applyToGig = async (gigId: string, message: string) => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('You must be logged in to apply');
+
+        const { data, error } = await supabase
+            .from('gig_applications')
+            .insert({
+                gig_id: gigId,
+                applicant_id: user.id,
+                message: message,
+                status: 'pending'
+            })
+            .select()
+            .single();
+
+        if (error) {
+            if (error.code === '23505') { // Unique violation
+                throw new Error('You have already applied to this gig');
+            }
+            throw error;
+        }
+
+        toast.success('Application sent successfully!');
+        return data;
+    } catch (err: any) {
+        console.error('Error applying to gig:', err);
+        toast.error(err.message || 'Failed to apply to gig');
         throw err;
     }
 };

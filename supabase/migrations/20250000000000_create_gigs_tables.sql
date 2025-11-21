@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS public.gig_applications (
   applicant_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   message TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'withdrawn')),
+  response_message TEXT,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   UNIQUE(gig_id, applicant_id) -- One application per user per gig
