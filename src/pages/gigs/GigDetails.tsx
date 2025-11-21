@@ -660,7 +660,7 @@ const GigDetails = () => {
 
                                 <Separator className="my-6" />
 
-                                <div className="flex items-center gap-3 cursor-pointer hover:opacity-80" onClick={() => navigate(`/user-profile/${gig.user_id}`)}>
+                                <div className="flex items-center gap-3 cursor-pointer hover:opacity-80" onClick={() => navigate(`/user/${gig.user_id}`)}>
                                     <Avatar className="h-12 w-12 border-2 border-background">
                                         <AvatarImage src={gig.profiles?.avatar_url || undefined} />
                                         <AvatarFallback>

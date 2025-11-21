@@ -70,7 +70,7 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
 
   const handleUserClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/user-profile/${gig.user_id}`);
+    navigate(`/user/${gig.user_id}`);
   };
 
   const getUserName = () => {
