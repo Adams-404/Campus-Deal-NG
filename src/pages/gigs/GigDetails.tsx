@@ -18,15 +18,18 @@ import {
     Trash2,
     ChevronLeft,
     ChevronRight,
-    Image as ImageIcon
+    Image as ImageIcon,
+    XCircle
 } from "lucide-react";
 import { toast } from "sonner";
 import { PageTransition } from "@/components/PageTransition";
 import { EditGigModal } from "@/components/EditGigModal";
 import { GigReviewModal } from "@/components/GigReviewModal";
-import { fetchGigById, deleteGig, canDeleteGig, useGigReviews, deleteReview, applyToGig, useGigApplications } from "@/hooks/useGigs";
+import { fetchGigById, deleteGig, canDeleteGig, useGigReviews, deleteReview, applyToGig, withdrawApplication } from "@/hooks/useGigs";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const GigDetails = () => {
     const { id } = useParams();
@@ -75,8 +78,40 @@ const GigDetails = () => {
         checkPermissions();
     }, [gig]);
 
-    const { applications } = useGigApplications();
-    const hasApplied = applications.some(app => app.gig_id === id);
+    const [applicationStatus, setApplicationStatus] = useState<{
+        id: string;
+        status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+        response_message?: string;
+        withdrawal_reason?: string;
+    } | null>(null);
+
+    const [withdrawDialog, setWithdrawDialog] = useState(false);
+    const [withdrawalReason, setWithdrawalReason] = useState("");
+    const [withdrawing, setWithdrawing] = useState(false);
+
+    const fetchApplicationStatus = async () => {
+        if (!id || !currentUser) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('gig_applications')
+                .select('id, status, response_message, withdrawal_reason')
+                .eq('gig_id', id)
+                .eq('applicant_id', currentUser.id)
+                .maybeSingle();
+
+            if (error && error.code !== 'PGRST116') throw error;
+            setApplicationStatus(data);
+        } catch (error) {
+            console.error('Error fetching application status:', error);
+        }
+    };
+
+    useEffect(() => {
+        fetchApplicationStatus();
+    }, [id, currentUser]);
+
+    const hasApplied = !!applicationStatus;
 
     const handleApply = async () => {
         if (!gig) return;
@@ -104,11 +139,96 @@ const GigDetails = () => {
             // Create Application
             await applyToGig(gig.id, `I'm interested in working on: ${gig.title}`);
 
-            // Refresh to update hasApplied status
+            // Refresh status
+            await fetchApplicationStatus();
             toast.success('Application submitted! The gig owner will review it.');
         } catch (error: any) {
             console.error('Error:', error);
             // Error is already shown by applyToGig
+        }
+    };
+
+    const handleReapply = async () => {
+        if (!applicationStatus || !gig) return;
+
+        try {
+            // Update the withdrawn application back to pending
+            const { error } = await supabase
+                .from('gig_applications')
+                .update({
+                    status: 'pending',
+                    withdrawal_reason: null, // Clear the withdrawal reason
+                    message: `I'm interested in working on: ${gig.title}`,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', applicationStatus.id);
+
+            if (error) throw error;
+
+            // Refresh status
+            await fetchApplicationStatus();
+            toast.success('Reapplied successfully!');
+        } catch (error: any) {
+            console.error('Error:', error);
+            toast.error('Failed to reapply');
+        }
+    };
+
+    const handleMessage = async () => {
+        if (!gig || !currentUser) return;
+
+        try {
+            // Check if conversation exists
+            const { data: existingConv } = await supabase
+                .from('conversations')
+                .select('id')
+                .or(`and(buyer_id.eq.${currentUser.id},seller_id.eq.${gig.user_id}),and(buyer_id.eq.${gig.user_id},seller_id.eq.${currentUser.id})`)
+                .limit(1)
+                .maybeSingle();
+
+            if (existingConv) {
+                navigate(`/messages/${existingConv.id}`);
+                return;
+            }
+
+            // Create new conversation without sending initial message
+            const { data: newConv, error } = await supabase
+                .from('conversations')
+                .insert({
+                    buyer_id: currentUser.id,
+                    seller_id: gig.user_id,
+                    last_message: '',
+                    last_message_at: new Date().toISOString(),
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            navigate(`/messages/${newConv.id}`);
+        } catch (error: any) {
+            console.error('Error:', error);
+            toast.error('Failed to start conversation');
+        }
+    };
+
+    const handleWithdraw = async () => {
+        if (!applicationStatus) return;
+
+        try {
+            setWithdrawing(true);
+            await withdrawApplication(applicationStatus.id, withdrawalReason);
+
+            // Refresh status
+            await fetchApplicationStatus();
+
+            // Close dialog and reset
+            setWithdrawDialog(false);
+            setWithdrawalReason("");
+        } catch (error) {
+            console.error('Error withdrawing application:', error);
+        } finally {
+            setWithdrawing(false);
         }
     };
 
@@ -454,20 +574,93 @@ const GigDetails = () => {
                                 {/* Only show Apply button if not the gig owner */}
                                 {currentUser && currentUser.id !== gig.user_id && (
                                     <div className="space-y-3 mb-6">
-                                        <Button className="w-full" size="lg" onClick={handleApply} disabled={hasApplied}>
-                                            <MessageCircle className="mr-2 h-4 w-4" />
-                                            {hasApplied ? 'Applied' : 'Apply Now'}
-                                        </Button>
-                                        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                                            <ShieldCheck className="h-3 w-3" />
-                                            Secure Payment via Escrow
-                                        </div>
+                                        {!hasApplied ? (
+                                            <>
+                                                <Button className="w-full" size="lg" onClick={handleApply}>
+                                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                                    Apply Now
+                                                </Button>
+                                                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                                                    <ShieldCheck className="h-3 w-3" />
+                                                    Secure Payment via Escrow
+                                                </div>
+                                            </>
+                                        ) : applicationStatus?.status === 'pending' ? (
+                                            <>
+                                                <Button className="w-full" size="lg" disabled variant="secondary">
+                                                    <Clock className="mr-2 h-4 w-4" />
+                                                    Applied - Pending Review
+                                                </Button>
+                                                <Button
+                                                    className="w-full"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => setWithdrawDialog(true)}
+                                                >
+                                                    Withdraw Application
+                                                </Button>
+                                                {applicationStatus.response_message && (
+                                                    <div className="text-sm p-3 bg-muted rounded-lg">
+                                                        <p className="font-medium mb-1">Message from owner:</p>
+                                                        <p className="text-muted-foreground">{applicationStatus.response_message}</p>
+                                                    </div>
+                                                )}
+                                            </>
+                                        ) : applicationStatus?.status === 'accepted' ? (
+                                            <>
+                                                <Button className="w-full bg-green-600 hover:bg-green-700" size="lg" onClick={handleMessage}>
+                                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                                    Message Owner
+                                                </Button>
+                                                <div className="text-sm p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                                                    <p className="font-medium text-green-700 dark:text-green-400 flex items-center gap-2">
+                                                        <CheckCircle2 className="h-4 w-4" />
+                                                        Application Accepted!
+                                                    </p>
+                                                    {applicationStatus.response_message && (
+                                                        <p className="text-muted-foreground mt-2">{applicationStatus.response_message}</p>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : applicationStatus?.status === 'rejected' ? (
+                                            <>
+                                                <Button className="w-full" size="lg" onClick={handleReapply} variant="outline">
+                                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                                    Reapply
+                                                </Button>
+                                                <div className="text-sm p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+                                                    <p className="font-medium text-red-700 dark:text-red-400 flex items-center gap-2">
+                                                        <XCircle className="h-4 w-4" />
+                                                        Application Rejected
+                                                    </p>
+                                                    {applicationStatus.response_message && (
+                                                        <p className="text-muted-foreground mt-2">{applicationStatus.response_message}</p>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : applicationStatus?.status === 'withdrawn' ? (
+                                            <>
+                                                <Button className="w-full" size="lg" onClick={handleReapply} variant="default">
+                                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                                    Reapply
+                                                </Button>
+                                                <div className="text-sm p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                                                    <p className="font-medium text-orange-700 dark:text-orange-400 flex items-center gap-2">
+                                                        <XCircle className="h-4 w-4" />
+                                                        Application Withdrawn
+                                                    </p>
+                                                    {applicationStatus.withdrawal_reason && (
+                                                        <p className="text-muted-foreground mt-2">Reason: {applicationStatus.withdrawal_reason}</p>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : null}
                                     </div>
                                 )}
 
                                 <Separator className="my-6" />
 
-                                <div className="flex items-center gap-3 cursor-pointer hover:opacity-80" onClick={() => navigate(`/user-profile/${gig.user_id}`)}>
+                                <div className="flex items-center gap-3 cursor-pointer hover:opacity-80" onClick={() => navigate(`/user/${gig.user_id}`)}>
                                     <Avatar className="h-12 w-12 border-2 border-background">
                                         <AvatarImage src={gig.profiles?.avatar_url || undefined} />
                                         <AvatarFallback>
@@ -521,6 +714,45 @@ const GigDetails = () => {
                     }}
                 />
             )}
+
+            {/* Withdrawal Dialog */}
+            <Dialog open={withdrawDialog} onOpenChange={setWithdrawDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Withdraw Application</DialogTitle>
+                        <DialogDescription>
+                            Please provide a reason for withdrawing your application. This will be shared with the gig owner.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            placeholder="E.g., Found another opportunity, Changed my mind, etc."
+                            value={withdrawalReason}
+                            onChange={(e) => setWithdrawalReason(e.target.value)}
+                            rows={4}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setWithdrawDialog(false);
+                                setWithdrawalReason("");
+                            }}
+                            disabled={withdrawing}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleWithdraw}
+                            disabled={!withdrawalReason.trim() || withdrawing}
+                        >
+                            {withdrawing ? 'Withdrawing...' : 'Withdraw Application'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </PageTransition>
     );
 };
