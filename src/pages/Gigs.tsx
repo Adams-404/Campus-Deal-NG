@@ -33,12 +33,6 @@ const Gigs = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pt-24 sm:pt-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Available Gigs</h1>
-          {user && (
-            <Button onClick={() => setIsCreateModalOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Gig
-            </Button>
-          )}
         </div>
 
         {loading ? (
@@ -59,11 +53,6 @@ const Gigs = () => {
             <div className="text-muted-foreground mb-4">
               No gigs available at the moment
             </div>
-            {user && (
-              <Button onClick={() => setIsCreateModalOpen(true)} variant="outline">
-                Be the first to post a gig
-              </Button>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

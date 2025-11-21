@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Gig } from "@/data/mockGigs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { applyToGig } from "@/hooks/useGigs";
 
 interface GigCardProps {
   gig: Gig;
@@ -15,56 +17,39 @@ interface GigCardProps {
 
 export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
   const navigate = useNavigate();
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-  const handleContact = async (e: React.MouseEvent) => {
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+    };
+    getUser();
+  }, []);
+
+  const handleApply = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (!user) {
-        toast.error('Please sign in to contact the seller');
+        toast.error('Please sign in to apply');
         navigate('/auth/signin');
         return;
       }
 
       if (user.id === gig.user_id) {
-        toast.error('You cannot contact yourself');
+        toast.error('You cannot apply to your own gig');
         return;
       }
 
-      // Check if conversation already exists
-      const { data: existingConv } = await supabase
-        .from('conversations')
-        .select('id')
-        .or(`and(buyer_id.eq.${user.id},seller_id.eq.${gig.user_id}),and(buyer_id.eq.${gig.user_id},seller_id.eq.${user.id})`)
-        .limit(1)
-        .single();
-
-      if (existingConv) {
-        navigate(`/messages/${existingConv.id}`);
-        return;
-      }
-
-      // Create new conversation
-      const { data: newConv, error } = await supabase
-        .from('conversations')
-        .insert({
-          buyer_id: user.id,
-          seller_id: gig.user_id,
-          last_message: `Interested in: ${gig.title}`,
-          last_message_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      navigate(`/messages/${newConv.id}`);
-      toast.success('Conversation started!');
+      // Apply to the gig
+      await applyToGig(gig.id, `I'm interested in working on: ${gig.title}`);
+      toast.success('Application submitted! The gig owner will review it.');
     } catch (error: any) {
-      console.error('Error creating conversation:', error);
-      toast.error('Failed to start conversation');
+      console.error('Error applying:', error);
+      // Error is already shown by applyToGig
     }
   };
 
@@ -97,6 +82,9 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
     }
     return null;
   };
+
+  // Check if current user is the gig owner
+  const isOwnGig = currentUser && currentUser.id === gig.user_id;
 
   return (
     <Card
@@ -183,14 +171,16 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
               <div className="text-sm font-medium">{getUserName()}</div>
             </div>
           </div>
-          <Button
-            size="sm"
-            onClick={handleContact}
-            className="gap-2"
-          >
-            <MessageCircle className="h-4 w-4" />
-            Contact
-          </Button>
+          {!isOwnGig && (
+            <Button
+              size="sm"
+              onClick={handleApply}
+              className="gap-2"
+            >
+              <MessageCircle className="h-4 w-4" />
+              Apply Now
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

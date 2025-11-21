@@ -58,13 +58,6 @@ export default function MyGigs() {
               Manage your posted gigs and track their performance
             </p>
           </div>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Create New Gig
-          </Button>
         </div>
 
         {/* Search and Filter */}
@@ -125,12 +118,6 @@ export default function MyGigs() {
                 : "Create your first gig to start offering your services"
               }
             </p>
-            {!searchTerm && statusFilter === "all" && (
-              <Button onClick={() => setIsCreateModalOpen(true)} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Create Your First Gig
-              </Button>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

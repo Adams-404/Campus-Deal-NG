@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS public.gig_applications (
   applicant_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   message TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'withdrawn')),
+  response_message TEXT,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   UNIQUE(gig_id, applicant_id) -- One application per user per gig
@@ -49,6 +50,7 @@ CREATE TABLE IF NOT EXISTS public.gig_reviews (
   rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
   comment TEXT,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   UNIQUE(gig_id, reviewer_id) -- One review per user per gig
 );
 
@@ -288,6 +290,11 @@ CREATE TRIGGER set_updated_at_gigs
 DROP TRIGGER IF EXISTS set_updated_at_gig_applications ON public.gig_applications;
 CREATE TRIGGER set_updated_at_gig_applications
   BEFORE UPDATE ON public.gig_applications
+  FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
+
+DROP TRIGGER IF EXISTS set_updated_at_gig_reviews ON public.gig_reviews;
+CREATE TRIGGER set_updated_at_gig_reviews
+  BEFORE UPDATE ON public.gig_reviews
   FOR EACH ROW EXECUTE FUNCTION public.handle_updated_at();
 
 -- Grant necessary permissions
