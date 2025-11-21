@@ -1,4 +1,4 @@
-import { Clock, MapPin, Star, MessageCircle } from "lucide-react";
+import { Clock, MapPin, Star, MessageCircle, CheckCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,14 +18,29 @@ interface GigCardProps {
 export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [applicationStatus, setApplicationStatus] = useState<{
+    status: 'pending' | 'accepted' | 'rejected';
+  } | null>(null);
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setCurrentUser(user);
+
+      // Fetch application status if user is logged in
+      if (user) {
+        const { data } = await supabase
+          .from('gig_applications')
+          .select('status')
+          .eq('gig_id', gig.id)
+          .eq('applicant_id', user.id)
+          .maybeSingle();
+
+        setApplicationStatus(data);
+      }
     };
     getUser();
-  }, []);
+  }, [gig.id]);
 
   const handleApply = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -172,14 +187,33 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
             </div>
           </div>
           {!isOwnGig && (
-            <Button
-              size="sm"
-              onClick={handleApply}
-              className="gap-2"
-            >
-              <MessageCircle className="h-4 w-4" />
-              Apply Now
-            </Button>
+            <>
+              {!applicationStatus ? (
+                <Button
+                  size="sm"
+                  onClick={handleApply}
+                  className="gap-2"
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  Apply Now
+                </Button>
+              ) : applicationStatus.status === 'pending' ? (
+                <Badge variant="secondary" className="gap-1">
+                  <Clock className="h-3 w-3" />
+                  Pending
+                </Badge>
+              ) : applicationStatus.status === 'accepted' ? (
+                <Badge className="bg-green-600 hover:bg-green-700 gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  Accepted
+                </Badge>
+              ) : applicationStatus.status === 'rejected' ? (
+                <Badge variant="destructive" className="gap-1">
+                  <XCircle className="h-3 w-3" />
+                  Rejected
+                </Badge>
+              ) : null}
+            </>
           )}
         </div>
       </CardContent>
