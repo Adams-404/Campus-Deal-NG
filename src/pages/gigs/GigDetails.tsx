@@ -451,16 +451,19 @@ const GigDetails = () => {
                                     <div className="text-sm text-muted-foreground">per service</div>
                                 </div>
 
-                                <div className="space-y-3 mb-6">
-                                    <Button className="w-full" size="lg" onClick={handleApply} disabled={hasApplied}>
-                                        <MessageCircle className="mr-2 h-4 w-4" />
-                                        {hasApplied ? 'Applied' : 'Apply Now'}
-                                    </Button>
-                                    <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                                        <ShieldCheck className="h-3 w-3" />
-                                        Secure Payment via Escrow
+                                {/* Only show Apply button if not the gig owner */}
+                                {currentUser && currentUser.id !== gig.user_id && (
+                                    <div className="space-y-3 mb-6">
+                                        <Button className="w-full" size="lg" onClick={handleApply} disabled={hasApplied}>
+                                            <MessageCircle className="mr-2 h-4 w-4" />
+                                            {hasApplied ? 'Applied' : 'Apply Now'}
+                                        </Button>
+                                        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                                            <ShieldCheck className="h-3 w-3" />
+                                            Secure Payment via Escrow
+                                        </div>
                                     </div>
-                                </div>
+                                )}
 
                                 <Separator className="my-6" />
 
