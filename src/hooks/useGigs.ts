@@ -345,3 +345,129 @@ export const useGigApplications = () => {
 
     return { applications, loading, refetch: fetchApplications };
 };
+
+// Hook for fetching gig reviews
+export const useGigReviews = (gigId?: string) => {
+    const [reviews, setReviews] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchReviews = async () => {
+        if (!gigId) return;
+        try {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('gig_reviews')
+                .select(`
+                    *,
+                    profiles:reviewer_id (
+                        id,
+                        first_name,
+                        last_name,
+                        avatar_url
+                    )
+                `)
+                .eq('gig_id', gigId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+            setReviews(data || []);
+        } catch (error: any) {
+            console.error('Error fetching reviews:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchReviews();
+    }, [gigId]);
+
+    return { reviews, loading, refetch: fetchReviews };
+};
+
+// Helper to add a review
+export const addReview = async (reviewData: {
+    gigId: string;
+    rating: number;
+    comment: string;
+}) => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('You must be logged in to review');
+
+        const { data, error } = await supabase
+            .from('gig_reviews')
+            .insert({
+                gig_id: reviewData.gigId,
+                reviewer_id: user.id,
+                rating: reviewData.rating,
+                comment: reviewData.comment
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        toast.success('Review posted successfully!');
+        return data;
+    } catch (err: any) {
+        console.error('Error posting review:', err);
+        toast.error(err.message || 'Failed to post review');
+        throw err;
+    }
+};
+
+// Helper to update a review
+export const updateReview = async (reviewId: string, reviewData: {
+    rating: number;
+    comment: string;
+}) => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('You must be logged in to update a review');
+
+        const { data, error } = await supabase
+            .from('gig_reviews')
+            .update({
+                rating: reviewData.rating,
+                comment: reviewData.comment,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', reviewId)
+            .eq('reviewer_id', user.id) // Ensure ownership
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        toast.success('Review updated successfully!');
+        return data;
+    } catch (err: any) {
+        console.error('Error updating review:', err);
+        toast.error(err.message || 'Failed to update review');
+        throw err;
+    }
+};
+
+// Helper to delete a review
+export const deleteReview = async (reviewId: string) => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('You must be logged in to delete a review');
+
+        const { error } = await supabase
+            .from('gig_reviews')
+            .delete()
+            .eq('id', reviewId)
+            .eq('reviewer_id', user.id); // Ensure ownership
+
+        if (error) throw error;
+
+        toast.success('Review deleted successfully!');
+        return true;
+    } catch (err: any) {
+        console.error('Error deleting review:', err);
+        toast.error(err.message || 'Failed to delete review');
+        throw err;
+    }
+};

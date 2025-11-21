@@ -1,39 +1,56 @@
-import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { useToast } from "@/components/ui/use-toast";
 import {
+    MessageCircle,
+    Share2,
     MapPin,
     Clock,
     Star,
-    Share2,
-    MessageCircle,
     ArrowLeft,
     CheckCircle2,
     ShieldCheck,
     Calendar,
+    Edit,
     Trash2,
-    Edit
+    ChevronLeft,
+    ChevronRight,
+    Image as ImageIcon
 } from "lucide-react";
-import { Gig } from "@/data/mockGigs";
+import { toast } from "sonner";
 import { PageTransition } from "@/components/PageTransition";
 import { EditGigModal } from "@/components/EditGigModal";
-import { fetchGigById, deleteGig, canDeleteGig } from "@/hooks/useGigs";
+import { GigReviewModal } from "@/components/GigReviewModal";
+import { fetchGigById, deleteGig, canDeleteGig, useGigReviews, deleteReview } from "@/hooks/useGigs";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 
 const GigDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { toast: toastFn } = useToast();
-    const [gig, setGig] = useState<Gig | null>(null);
+    const [gig, setGig] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [canDelete, setCanDelete] = useState(false);
+    const [currentUser, setCurrentUser] = useState<any>(null);
+
+    const [reviewToEdit, setReviewToEdit] = useState<any>(null);
+    const { reviews, loading: reviewsLoading, refetch: refetchReviews } = useGigReviews(id);
+
+    const userReview = reviews.find(r => r.reviewer_id === currentUser?.id);
+
+    useEffect(() => {
+        const checkUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setCurrentUser(user);
+        };
+        checkUser();
+    }, []);
 
     useEffect(() => {
         const loadGig = async () => {
@@ -112,10 +129,7 @@ const GigDetails = () => {
 
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href);
-        toastFn({
-            title: "Link Copied",
-            description: "Gig link copied to clipboard",
-        });
+        toast.success("Gig link copied to clipboard");
     };
 
     const handleDelete = async () => {
@@ -132,15 +146,28 @@ const GigDetails = () => {
         }
     };
 
+    const handleDeleteReview = async (reviewId: string) => {
+        if (!confirm('Are you sure you want to delete this review?')) return;
+
+        try {
+            await deleteReview(reviewId);
+            refetchReviews();
+            refreshGig();
+            toast.success('Review deleted');
+        } catch (error) {
+            console.error('Error deleting review:', error);
+        }
+    };
+
     const nextImage = () => {
         if (gig?.gig_images && gig.gig_images.length > 0) {
-            setSelectedImageIndex((prev) => (prev + 1) % gig.gig_images!.length);
+            setCurrentImageIndex((prev) => (prev + 1) % gig.gig_images!.length);
         }
     };
 
     const prevImage = () => {
         if (gig?.gig_images && gig.gig_images.length > 0) {
-            setSelectedImageIndex((prev) => (prev - 1 + gig.gig_images!.length) % gig.gig_images!.length);
+            setCurrentImageIndex((prev) => (prev - 1 + gig.gig_images!.length) % gig.gig_images!.length);
         }
     };
 
@@ -266,8 +293,8 @@ const GigDetails = () => {
                                         {/* Main Image with Navigation */}
                                         <div className="relative group">
                                             <img
-                                                src={gig.gig_images[selectedImageIndex].image_url}
-                                                alt={`${gig.title} - Image ${selectedImageIndex + 1}`}
+                                                src={gig.gig_images[currentImageIndex].image_url}
+                                                alt={`${gig.title} - Image ${currentImageIndex + 1}`}
                                                 className="w-full h-64 md:h-80 object-cover rounded-lg"
                                             />
 
@@ -280,9 +307,7 @@ const GigDetails = () => {
                                                         className="absolute left-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                                                         onClick={prevImage}
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <path d="m15 18-6-6 6-6" />
-                                                        </svg>
+                                                        <ChevronLeft className="h-5 w-5" />
                                                     </Button>
                                                     <Button
                                                         variant="secondary"
@@ -290,14 +315,12 @@ const GigDetails = () => {
                                                         className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
                                                         onClick={nextImage}
                                                     >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                                            <path d="m9 18 6-6-6-6" />
-                                                        </svg>
+                                                        <ChevronRight className="h-5 w-5" />
                                                     </Button>
 
                                                     {/* Image Counter */}
                                                     <div className="absolute bottom-2 right-2 bg-black/60 text-white px-2 py-1 rounded text-xs">
-                                                        {selectedImageIndex + 1} / {gig.gig_images.length}
+                                                        {currentImageIndex + 1} / {gig.gig_images.length}
                                                     </div>
                                                 </>
                                             )}
@@ -309,11 +332,11 @@ const GigDetails = () => {
                                                 {gig.gig_images.map((image, index) => (
                                                     <div
                                                         key={index}
-                                                        className={`relative rounded-lg overflow-hidden cursor-pointer transition-all ${selectedImageIndex === index
+                                                        className={`relative rounded-lg overflow-hidden cursor-pointer transition-all ${currentImageIndex === index
                                                             ? 'ring-2 ring-primary'
                                                             : 'hover:opacity-80'
                                                             }`}
-                                                        onClick={() => setSelectedImageIndex(index)}
+                                                        onClick={() => setCurrentImageIndex(index)}
                                                     >
                                                         <img
                                                             src={image.image_url}
@@ -348,12 +371,84 @@ const GigDetails = () => {
                                 </div>
                             </div>
 
-                            {/* Reviews Section (Placeholder) */}
+                            {/* Reviews Section */}
                             <div className="bg-card rounded-xl shadow-sm border border-border p-6">
-                                <h2 className="text-xl font-semibold mb-4">Reviews</h2>
-                                <div className="text-center py-8 text-muted-foreground">
-                                    <p>No reviews yet for this gig.</p>
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xl font-semibold">Reviews ({reviews.length})</h2>
+                                    {currentUser && gig && currentUser.id !== gig.user_id && !userReview && (
+                                        <Button variant="outline" onClick={() => {
+                                            setReviewToEdit(null);
+                                            setIsReviewModalOpen(true);
+                                        }}>
+                                            Write a Review
+                                        </Button>
+                                    )}
                                 </div>
+
+                                {reviewsLoading ? (
+                                    <div className="text-center py-8 text-muted-foreground">Loading reviews...</div>
+                                ) : reviews.length === 0 ? (
+                                    <div className="text-center py-8 text-muted-foreground">
+                                        <p>No reviews yet for this gig.</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6">
+                                        {reviews.map((review) => (
+                                            <div key={review.id} className="border-b border-border pb-6 last:border-0 last:pb-0">
+                                                <div className="flex items-start justify-between mb-2">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar className="h-10 w-10">
+                                                            <AvatarImage src={review.profiles?.avatar_url} />
+                                                            <AvatarFallback>
+                                                                {review.profiles?.first_name?.[0] || 'U'}
+                                                            </AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <div className="font-medium">
+                                                                {review.profiles?.first_name} {review.profiles?.last_name}
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground">
+                                                                {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex items-center">
+                                                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 mr-1" />
+                                                            <span className="font-medium">{review.rating}</span>
+                                                        </div>
+                                                        {currentUser?.id === review.reviewer_id && (
+                                                            <div className="flex gap-1 ml-2">
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8"
+                                                                    onClick={() => {
+                                                                        setReviewToEdit(review);
+                                                                        setIsReviewModalOpen(true);
+                                                                    }}
+                                                                >
+                                                                    <Edit className="h-3 w-3" />
+                                                                </Button>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-destructive"
+                                                                    onClick={() => handleDeleteReview(review.id)}
+                                                                >
+                                                                    <Trash2 className="h-3 w-3" />
+                                                                </Button>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <p className="text-muted-foreground text-sm mt-2">
+                                                    {review.comment}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -419,6 +514,20 @@ const GigDetails = () => {
                     onClose={() => setIsEditModalOpen(false)}
                     gigId={gig.id}
                     onGigUpdated={refreshGig}
+                />
+            )}
+
+            {/* Add Review Modal */}
+            {gig && (
+                <GigReviewModal
+                    isOpen={isReviewModalOpen}
+                    onClose={() => setIsReviewModalOpen(false)}
+                    gigId={gig.id}
+                    initialData={reviewToEdit}
+                    onReviewAdded={() => {
+                        refetchReviews();
+                        refreshGig(); // Update gig rating
+                    }}
                 />
             )}
         </PageTransition>
