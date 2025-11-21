@@ -19,7 +19,7 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
   const navigate = useNavigate();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [applicationStatus, setApplicationStatus] = useState<{
-    status: 'pending' | 'accepted' | 'rejected';
+    status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
   } | null>(null);
 
   useEffect(() => {
@@ -211,6 +211,11 @@ export const GigCard = ({ gig, showActions = false }: GigCardProps) => {
                 <Badge variant="destructive" className="gap-1">
                   <XCircle className="h-3 w-3" />
                   Rejected
+                </Badge>
+              ) : applicationStatus.status === 'withdrawn' ? (
+                <Badge variant="outline" className="gap-1 text-orange-600 border-orange-600">
+                  <XCircle className="h-3 w-3" />
+                  Withdrawn
                 </Badge>
               ) : null}
             </>

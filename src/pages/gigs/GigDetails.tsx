@@ -80,8 +80,9 @@ const GigDetails = () => {
 
     const [applicationStatus, setApplicationStatus] = useState<{
         id: string;
-        status: 'pending' | 'accepted' | 'rejected';
+        status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
         response_message?: string;
+        withdrawal_reason?: string;
     } | null>(null);
 
     const [withdrawDialog, setWithdrawDialog] = useState(false);
@@ -94,7 +95,7 @@ const GigDetails = () => {
         try {
             const { data, error } = await supabase
                 .from('gig_applications')
-                .select('id, status, response_message')
+                .select('id, status, response_message, withdrawal_reason')
                 .eq('gig_id', id)
                 .eq('applicant_id', currentUser.id)
                 .maybeSingle();
@@ -151,16 +152,18 @@ const GigDetails = () => {
         if (!applicationStatus || !gig) return;
 
         try {
-            // Delete the old rejected application
-            const { error: deleteError } = await supabase
+            // Update the withdrawn application back to pending
+            const { error } = await supabase
                 .from('gig_applications')
-                .delete()
+                .update({
+                    status: 'pending',
+                    withdrawal_reason: null, // Clear the withdrawal reason
+                    message: `I'm interested in working on: ${gig.title}`,
+                    updated_at: new Date().toISOString()
+                })
                 .eq('id', applicationStatus.id);
 
-            if (deleteError) throw deleteError;
-
-            // Create new application
-            await applyToGig(gig.id, `I'm interested in working on: ${gig.title}`);
+            if (error) throw error;
 
             // Refresh status
             await fetchApplicationStatus();
@@ -632,6 +635,22 @@ const GigDetails = () => {
                                                     </p>
                                                     {applicationStatus.response_message && (
                                                         <p className="text-muted-foreground mt-2">{applicationStatus.response_message}</p>
+                                                    )}
+                                                </div>
+                                            </>
+                                        ) : applicationStatus?.status === 'withdrawn' ? (
+                                            <>
+                                                <Button className="w-full" size="lg" onClick={handleReapply} variant="default">
+                                                    <MessageCircle className="mr-2 h-4 w-4" />
+                                                    Reapply
+                                                </Button>
+                                                <div className="text-sm p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg border border-orange-200 dark:border-orange-800">
+                                                    <p className="font-medium text-orange-700 dark:text-orange-400 flex items-center gap-2">
+                                                        <XCircle className="h-4 w-4" />
+                                                        Application Withdrawn
+                                                    </p>
+                                                    {applicationStatus.withdrawal_reason && (
+                                                        <p className="text-muted-foreground mt-2">Reason: {applicationStatus.withdrawal_reason}</p>
                                                     )}
                                                 </div>
                                             </>
