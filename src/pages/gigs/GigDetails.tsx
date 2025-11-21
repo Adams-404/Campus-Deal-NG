@@ -25,9 +25,11 @@ import { toast } from "sonner";
 import { PageTransition } from "@/components/PageTransition";
 import { EditGigModal } from "@/components/EditGigModal";
 import { GigReviewModal } from "@/components/GigReviewModal";
-import { fetchGigById, deleteGig, canDeleteGig, useGigReviews, deleteReview, applyToGig, useGigApplications } from "@/hooks/useGigs";
+import { fetchGigById, deleteGig, canDeleteGig, useGigReviews, deleteReview, applyToGig, withdrawApplication } from "@/hooks/useGigs";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const GigDetails = () => {
     const { id } = useParams();
@@ -81,6 +83,10 @@ const GigDetails = () => {
         status: 'pending' | 'accepted' | 'rejected';
         response_message?: string;
     } | null>(null);
+
+    const [withdrawDialog, setWithdrawDialog] = useState(false);
+    const [withdrawalReason, setWithdrawalReason] = useState("");
+    const [withdrawing, setWithdrawing] = useState(false);
 
     const fetchApplicationStatus = async () => {
         if (!id || !currentUser) return;
@@ -182,13 +188,13 @@ const GigDetails = () => {
                 return;
             }
 
-            // Create new conversation
+            // Create new conversation without sending initial message
             const { data: newConv, error } = await supabase
                 .from('conversations')
                 .insert({
                     buyer_id: currentUser.id,
                     seller_id: gig.user_id,
-                    last_message: `About: ${gig.title}`,
+                    last_message: '',
                     last_message_at: new Date().toISOString(),
                 })
                 .select()
@@ -197,10 +203,29 @@ const GigDetails = () => {
             if (error) throw error;
 
             navigate(`/messages/${newConv.id}`);
-            toast.success('Conversation started!');
         } catch (error: any) {
             console.error('Error:', error);
             toast.error('Failed to start conversation');
+        }
+    };
+
+    const handleWithdraw = async () => {
+        if (!applicationStatus) return;
+
+        try {
+            setWithdrawing(true);
+            await withdrawApplication(applicationStatus.id, withdrawalReason);
+
+            // Refresh status
+            await fetchApplicationStatus();
+
+            // Close dialog and reset
+            setWithdrawDialog(false);
+            setWithdrawalReason("");
+        } catch (error) {
+            console.error('Error withdrawing application:', error);
+        } finally {
+            setWithdrawing(false);
         }
     };
 
@@ -563,6 +588,14 @@ const GigDetails = () => {
                                                     <Clock className="mr-2 h-4 w-4" />
                                                     Applied - Pending Review
                                                 </Button>
+                                                <Button
+                                                    className="w-full"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    onClick={() => setWithdrawDialog(true)}
+                                                >
+                                                    Withdraw Application
+                                                </Button>
                                                 {applicationStatus.response_message && (
                                                     <div className="text-sm p-3 bg-muted rounded-lg">
                                                         <p className="font-medium mb-1">Message from owner:</p>
@@ -662,6 +695,45 @@ const GigDetails = () => {
                     }}
                 />
             )}
+
+            {/* Withdrawal Dialog */}
+            <Dialog open={withdrawDialog} onOpenChange={setWithdrawDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Withdraw Application</DialogTitle>
+                        <DialogDescription>
+                            Please provide a reason for withdrawing your application. This will be shared with the gig owner.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Textarea
+                            placeholder="E.g., Found another opportunity, Changed my mind, etc."
+                            value={withdrawalReason}
+                            onChange={(e) => setWithdrawalReason(e.target.value)}
+                            rows={4}
+                        />
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setWithdrawDialog(false);
+                                setWithdrawalReason("");
+                            }}
+                            disabled={withdrawing}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleWithdraw}
+                            disabled={!withdrawalReason.trim() || withdrawing}
+                        >
+                            {withdrawing ? 'Withdrawing...' : 'Withdraw Application'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </PageTransition>
     );
 };

@@ -598,6 +598,35 @@ export const rejectApplication = async (applicationId: string, message?: string)
     }
 };
 
+// Withdraw an application
+export const withdrawApplication = async (applicationId: string, reason: string) => {
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('You must be logged in');
+
+        const { data, error } = await supabase
+            .from('gig_applications')
+            .update({
+                status: 'withdrawn',
+                withdrawal_reason: reason,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', applicationId)
+            .eq('applicant_id', user.id) // Ensure user can only withdraw their own applications
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        toast.success('Application withdrawn');
+        return data;
+    } catch (err: any) {
+        console.error('Error withdrawing application:', err);
+        toast.error(err.message || 'Failed to withdraw application');
+        throw err;
+    }
+};
+
 // Helper to apply to a gig
 export const applyToGig = async (gigId: string, message: string) => {
     try {

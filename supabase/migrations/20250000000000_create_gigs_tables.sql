@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS public.gig_applications (
   message TEXT,
   status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected', 'withdrawn')),
   response_message TEXT,
+  withdrawal_reason TEXT,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   UNIQUE(gig_id, applicant_id) -- One application per user per gig

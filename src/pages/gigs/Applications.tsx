@@ -52,6 +52,8 @@ export default function Applications() {
         return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'rejected':
         return <XCircle className="w-4 h-4 text-red-500" />;
+      case 'withdrawn':
+        return <XCircle className="w-4 h-4 text-gray-500" />;
       default:
         return <Clock className="w-4 h-4" />;
     }
@@ -65,6 +67,8 @@ export default function Applications() {
         return 'bg-green-100 text-green-800 border-green-300';
       case 'rejected':
         return 'bg-red-100 text-red-800 border-red-300';
+      case 'withdrawn':
+        return 'bg-gray-100 text-gray-800 border-gray-300';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-300';
     }
@@ -214,6 +218,30 @@ export default function Applications() {
             </div>
           )}
 
+          {/* Show withdrawal reason for gig owners (received tab) */}
+          {isReceived && application.status === 'withdrawn' && (application as any).withdrawal_reason && (
+            <div className={cn(
+              "p-3 rounded-lg",
+              theme === 'light' ? "bg-orange-50" : "bg-orange-900/20"
+            )}>
+              <div className="flex items-center gap-2 mb-1">
+                <XCircle className="w-4 h-4 text-orange-500" />
+                <h4 className={cn(
+                  "font-medium text-sm text-orange-600",
+                  theme === 'dark' && "text-orange-400"
+                )}>
+                  Applicant Withdrew Application
+                </h4>
+              </div>
+              <p className={cn(
+                "text-sm",
+                theme === 'light' ? "text-gray-700" : "text-gray-300"
+              )}>
+                Reason: {(application as any).withdrawal_reason}
+              </p>
+            </div>
+          )}
+
           <div className="flex items-center justify-between pt-2">
             <div className="flex items-center gap-2">
               {isReceived && application.profiles?.email && (
@@ -302,6 +330,7 @@ export default function Applications() {
               <SelectItem value="pending">Pending</SelectItem>
               <SelectItem value="accepted">Accepted</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="withdrawn">Withdrawn</SelectItem>
             </SelectContent>
           </Select>
         </div>
