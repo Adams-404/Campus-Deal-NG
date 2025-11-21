@@ -1,6 +1,5 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { supabase } from "@/integrations/supabase/client"
@@ -8,11 +7,10 @@ import { PageTransition } from "@/components/PageTransition"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  AlertTriangle,
   Calendar,
   MapPin,
   Phone,
@@ -21,10 +19,30 @@ import {
   ChevronLeft,
   Clock,
   Tag,
-  PhoneIcon as WhatsApp,
+  MessageCircle,
+  Star,
+  ShieldCheck,
+  Share2,
+  Loader2,
 } from "lucide-react"
 import { getKycStatusBadgeProps, type KycStatus } from "@/utils/kycUtils"
 import { Skeleton } from "@/components/ui/skeleton"
+import { motion } from "framer-motion"
+import { cn } from "@/lib/utils"
+
+interface Gig {
+  id: string
+  title: string
+  price: number
+  category: string
+  description: string | null
+  status: string
+  images: string[]
+  created_at: string
+  rating: number
+  reviews_count: number
+  user_id: string
+}
 
 interface UserProfile {
   id: string
@@ -56,142 +74,124 @@ interface Item {
   }
 }
 
-interface ProductGridProps {
-  items: Item[]
-  title?: string
-  isLoading?: boolean
-  navigate: (path: string) => void
-}
-
-// Color utility function to get a color based on index
-const getColorByIndex = (index: number) => {
-  const colors = [
-    "bg-red-500",
-    "bg-orange-500",
-    "bg-blue-500",
-    "bg-green-500",
-    "bg-yellow-500",
-    "text-red-500",
-    "text-orange-500",
-    "text-blue-500",
-    "text-green-500",
-    "text-yellow-500",
-    "border-red-500",
-    "border-orange-500",
-    "border-blue-500",
-    "border-green-500",
-    "border-yellow-500",
-  ]
-  return colors[index % colors.length]
-}
-
-// Header component that matches the Settings page style but keeps back button on all screens
 const ProfileHeader = ({ onBack }: { onBack: () => void }) => {
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 dark:border-white/10 light:border-gray-200 ml-0 lg:ml-[300px] transition-all duration-300">
-      <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <div className="w-10">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onBack}
-              className="text-primary"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-          </div>
-          <h1 className="text-lg font-semibold absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 dark:text-white light:text-gray-800">
-            User Profile
-          </h1>
-          <div className="w-10"></div> {/* Spacer for alignment */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <span className="font-semibold text-lg">Profile</span>
+          <div className="w-10" /> {/* Spacer */}
         </div>
-        <div className="absolute bottom-0 left-4 right-4 h-px bg-gradient-to-r from-transparent via-border/60 to-transparent" />
       </div>
     </div>
   )
 }
 
-// Responsive ProductGrid component with proper theme support
-const ProductGrid: React.FC<ProductGridProps> = ({ items, title, isLoading = false, navigate }) => {
-  if (isLoading) {
-    return (
-      <div>
-        {title && <h2 className="text-xl font-medium mb-4 dark:text-white light:text-gray-800">{title}</h2>}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {Array(8)
-            .fill(0)
-            .map((_, index) => (
-              <div key={index} className="rounded-lg overflow-hidden dark:bg-gray-900 light:bg-gray-100 dark:border-white/10 light:border-gray-200 border shadow-sm">
-                <Skeleton className="aspect-square w-full" />
-                <div className="p-3">
-                  <Skeleton className="h-5 w-full mb-2" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-              </div>
-            ))}
-        </div>
-      </div>
-    )
-  }
-
+const ProductGrid = ({ items, navigate }: { items: Item[], navigate: (path: string) => void }) => {
   return (
-    <div>
-      {title && (
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-medium flex items-center dark:text-white light:text-gray-800">
-            <Package className="h-5 w-5 mr-2 dark:text-primary light:text-[#1078a7]" />
-            {title}
-          </h2>
-          <Badge variant="outline" className="dark:bg-gray-900 light:bg-white dark:text-primary light:text-[#1078a7] dark:border-primary/50 light:border-[#1078a7]">
-            <Tag className="h-3.5 w-3.5 mr-1 dark:text-primary light:text-[#1078a7]" />
-            {items.length} Items
-          </Badge>
-        </div>
-      )}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {items.map((item, index) => (
-          <div
-            key={item.id}
-            onClick={() => navigate(`/item/${item.id}`)}
-            className="group cursor-pointer rounded-lg overflow-hidden hover:shadow-lg transition-all duration-300 dark:bg-gray-900 light:bg-white dark:border-white/10 light:border-gray-200 border"
-          >
-            <div className="aspect-square relative bg-muted overflow-hidden">
-              {item.images && item.images.length > 0 ? (
-                <img
-                  src={item.images[0] || "/placeholder.svg"}
-                  alt={item.title}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center dark:bg-gray-800 light:bg-gray-100">
-                  <Package className="h-10 w-10 dark:text-gray-600 light:text-gray-400 opacity-50" />
-                </div>
-              )}
-              <div className="absolute top-2 right-2">
-                <Badge
-                  variant="secondary"
-                  className="dark:bg-black/50 light:bg-white/90 backdrop-blur-sm dark:border-primary/30 light:border-[#1078a7] dark:text-white light:text-[#1078a7] light:shadow-sm"
-                >
-                  {item.condition}
-                </Badge>
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      {items.map((item, index) => (
+        <motion.div
+          key={item.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+          onClick={() => navigate(`/item/${item.id}`)}
+          className="group cursor-pointer bg-card hover:bg-accent/5 rounded-xl border border-border/50 overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+        >
+          <div className="aspect-square relative overflow-hidden bg-muted">
+            {item.images?.[0] ? (
+              <img
+                src={item.images[0]}
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                <Package className="h-12 w-12 opacity-20" />
               </div>
-              <div className="absolute bottom-2 left-2">
-                <Badge variant="secondary" className="dark:bg-black/50 light:bg-white/90 backdrop-blur-sm dark:border-primary/30 light:border-[#1078a7] dark:text-white light:text-[#1078a7] light:shadow-sm">
-                  <Clock className="h-3 w-3 mr-1 dark:text-primary light:text-[#1078a7]" />
-                  {new Date(item.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
-                </Badge>
-              </div>
-            </div>
-            <div className="p-4">
-              <h3 className="font-medium truncate saved-item-title dark:group-hover:text-primary light:group-hover:text-[#1078a7] transition-colors">{item.title}</h3>
-              <div className="flex justify-between items-center mt-2">
-                <p className="font-semibold dark:text-primary light:text-[#1078a7]">₦{item.price.toLocaleString()}</p>
-              </div>
+            )}
+            <div className="absolute top-2 right-2">
+              <Badge variant="secondary" className="backdrop-blur-md bg-black/40 text-white border-white/10 text-[10px] px-1.5 py-0.5 h-5">
+                {item.condition}
+              </Badge>
             </div>
           </div>
-        ))}
-      </div>
+          <div className="p-3 space-y-1.5">
+            <h3 className="font-medium line-clamp-1 text-sm group-hover:text-primary transition-colors">
+              {item.title}
+            </h3>
+            <div className="flex items-center justify-between">
+              <p className="font-bold text-primary text-sm">
+                ₦{item.price.toLocaleString()}
+              </p>
+              <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {new Date(item.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+              </span>
+            </div>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+const GigGrid = ({ gigs, navigate }: { gigs: Gig[], navigate: (path: string) => void }) => {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {gigs.map((gig, index) => (
+        <motion.div
+          key={gig.id}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.05 }}
+          onClick={() => navigate(`/gigs/${gig.id}`)}
+          className="group cursor-pointer bg-card hover:bg-accent/5 rounded-xl border border-border/50 overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+        >
+          <div className="aspect-video relative overflow-hidden bg-muted">
+            {gig.images?.[0] ? (
+              <img
+                src={gig.images[0]}
+                alt={gig.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                <Star className="h-12 w-12 opacity-20" />
+              </div>
+            )}
+            <div className="absolute top-2 left-2">
+              <Badge variant="secondary" className="backdrop-blur-md bg-black/40 text-white border-white/10 text-[10px] px-1.5 py-0.5 h-5">
+                {gig.category}
+              </Badge>
+            </div>
+          </div>
+          <div className="p-3 space-y-1.5">
+            <h3 className="font-medium line-clamp-2 text-sm group-hover:text-primary transition-colors min-h-[2.5rem]">
+              {gig.title}
+            </h3>
+            <div className="flex items-center justify-between pt-2 border-t border-border/50">
+              <div className="flex items-center gap-1 text-amber-500">
+                <Star className="h-3 w-3 fill-current" />
+                <span className="font-medium text-xs">{gig.rating}</span>
+                <span className="text-muted-foreground text-[10px]">({gig.reviews_count})</span>
+              </div>
+              <p className="font-bold text-primary text-sm">
+                From ₦{gig.price.toLocaleString()}
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      ))}
     </div>
   )
 }
@@ -201,6 +201,7 @@ const UserProfile = () => {
   const navigate = useNavigate()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [userItems, setUserItems] = useState<Item[]>([])
+  const [userGigs, setUserGigs] = useState<Gig[]>([])
   const [loading, setLoading] = useState(true)
   const [isCurrentUser, setIsCurrentUser] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -217,67 +218,54 @@ const UserProfile = () => {
           return
         }
 
-        // Get current user to check if viewing own profile
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
+        const { data: { user } } = await supabase.auth.getUser()
         setIsCurrentUser(user?.id === userId)
 
-        // Fetch user profile data
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", userId)
           .single()
 
-        if (profileError) {
-          if (profileError.code === "PGRST116") {
-            setError("User not found")
-          } else {
-            setError("Failed to load user profile")
-          }
-          return
-        }
-
-        if (!profileData) {
+        if (profileError || !profileData) {
           setError("User not found")
           return
         }
 
-        // Update the profile fetching logic to avoid using bio, email, and website if they are not part of profileData
-        const enhancedProfile = {
-          ...profileData,
-          bio: "Hi there! I'm a seller on this platform. I love finding new homes for items I no longer need.",
-          email: "user@example.com",
-          website: "www.example.com",
-        }
+        setProfile(profileData)
 
-        setProfile(enhancedProfile)
-
-        // Fetch user's listings
-        const { data: itemsData, error: itemsError } = await supabase
+        // Fetch Listings
+        const { data: itemsData } = await supabase
           .from("items")
-          .select(`
-            *,
-            images:item_images(image_url)
-          `)
+          .select(`*, images:item_images(image_url)`)
           .eq("seller_id", userId)
           .eq("status", "active")
           .order("created_at", { ascending: false })
 
-        if (itemsError) {
-          toast.error("Failed to load user's listings")
-          return
+        if (itemsData) {
+          setUserItems(itemsData.map((item: any) => ({
+            ...item,
+            images: item.images.map((img: any) => img.image_url),
+          })))
         }
 
-        const formattedItems = itemsData.map((item: any) => ({
-          ...item,
-          images: item.images.map((img: any) => img.image_url),
-        }))
+        // Fetch Gigs
+        const { data: gigsData } = await (supabase as any)
+          .from("gigs")
+          .select(`*, images:gig_images(image_url)`)
+          .eq("user_id", userId)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
 
-        setUserItems(formattedItems)
+        if (gigsData) {
+          setUserGigs(gigsData.map((gig: any) => ({
+            ...gig,
+            images: gig.images.map((img: any) => img.image_url),
+          })))
+        }
+
       } catch (error: any) {
-        setError(error.message || "An error occurred while loading user data")
+        setError(error.message)
       } finally {
         setLoading(false)
       }
@@ -286,242 +274,291 @@ const UserProfile = () => {
     fetchUserData()
   }, [userId, navigate])
 
-  const fetchKycStatus = async () => {
+  const handleMessage = async () => {
     try {
-      const { data, error } = await supabase.from("profiles").select("kyc_status").eq("id", userId).single()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        toast.error("Please sign in to message this user")
+        return
+      }
+      if (user.id === profile?.id) {
+        toast.error("You can't message yourself")
+        return
+      }
+
+      const { data: existingConvs } = await supabase
+        .from("conversations")
+        .select("id, buyer_id, seller_id")
+        .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`)
+        .or(`buyer_id.eq.${profile?.id},seller_id.eq.${profile?.id}`)
+
+      const conversation = existingConvs?.find(c =>
+        (c.buyer_id === user.id && c.seller_id === profile?.id) ||
+        (c.buyer_id === profile?.id && c.seller_id === user.id)
+      )
+
+      if (conversation) {
+        navigate(`/messages/${conversation.id}`)
+        return
+      }
+
+      const { data: newConv, error } = await supabase
+        .from("conversations")
+        .insert({
+          buyer_id: user.id,
+          seller_id: profile?.id,
+          last_message: "Started a conversation",
+          last_message_at: new Date().toISOString(),
+        })
+        .select()
+        .single()
 
       if (error) throw error
-
-      if (data) {
-        setProfile((prev) => ({ ...prev, kyc_status: data.kyc_status }))
-      }
+      navigate(`/messages/${newConv.id}`)
     } catch (error) {
-      console.error("Error fetching KYC status:", error)
-      toast.error("Failed to fetch KYC status")
+      toast.error("Failed to start conversation")
     }
   }
-
-  useEffect(() => {
-    fetchKycStatus()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-
-    // Subscribe to real-time KYC status updates
-    const channel = supabase
-      .channel("profiles-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "profiles",
-          filter: `id=eq.${userId}`,
-        },
-        (payload) => {
-          setProfile((prev) => ({ ...prev, kyc_status: payload.new.kyc_status }))
-        },
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [userId])
 
   if (loading) {
     return (
-      <PageTransition>
-        <ProfileHeader onBack={() => navigate(-1)} />
-        <div className="container max-w-4xl mx-auto px-4 pb-32">
-          <Card className="mb-8 border-none shadow-sm rounded-xl">
-            <CardHeader className="p-6">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                <Skeleton className="h-24 w-24 rounded-full" />
-                <div className="flex-1 space-y-3 text-center sm:text-left">
-                  <Skeleton className="h-8 w-48 mx-auto sm:mx-0" />
-                  <Skeleton className="h-4 w-32 mx-auto sm:mx-0" />
-                  <div className="mt-4 flex flex-col sm:flex-row gap-4">
-                    <Skeleton className="h-4 w-40 mx-auto sm:mx-0" />
-                    <Skeleton className="h-4 w-32 mx-auto sm:mx-0" />
-                  </div>
-                </div>
-                <Skeleton className="h-10 w-28 rounded-full" />
-              </div>
-            </CardHeader>
-          </Card>
-
-          <Tabs defaultValue="listings">
-            <TabsList className="w-full sm:w-auto border-b rounded-none p-0 h-auto bg-transparent space-x-8">
-              <TabsTrigger
-                value="listings"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent py-2 px-1"
-              >
-                <Package className="h-4 w-4 mr-2" />
-                Listings
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="listings" className="mt-6">
-              <ProductGrid items={[]} isLoading={true} navigate={navigate} />
-            </TabsContent>
-          </Tabs>
-        </div>
-      </PageTransition>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
     )
   }
 
-  // Update the error state to match the new styling
   if (error || !profile) {
     return (
-      <PageTransition>
-        <ProfileHeader onBack={() => navigate(-1)} />
-        <div className="min-h-[70vh] flex items-center justify-center px-4 bg-black text-white">
-          <Card className="w-full max-w-md border border-red-500/50 shadow-sm bg-black">
-            <CardHeader className="text-center">
-              <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <CardTitle className="text-xl font-medium">User not found</CardTitle>
-              <CardDescription className="mt-2 text-gray-400">
-                {error || "The user profile you're looking for doesn't exist."}
-              </CardDescription>
-            </CardHeader>
-            <CardFooter className="flex justify-center pb-6">
-              <Button onClick={() => navigate("/")} className="bg-blue-500 hover:bg-blue-600 text-white">
-                Return Home
-              </Button>
-            </CardFooter>
-          </Card>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 text-center">
+        <div className="bg-destructive/10 p-4 rounded-full mb-4">
+          <User className="h-12 w-12 text-destructive" />
         </div>
-      </PageTransition>
+        <h2 className="text-2xl font-bold mb-2">User Not Found</h2>
+        <p className="text-muted-foreground mb-6">The user you are looking for does not exist or has been removed.</p>
+        <Button onClick={() => navigate("/")}>Return Home</Button>
+      </div>
     )
   }
 
   const statusBadgeProps = getKycStatusBadgeProps(profile.kyc_status)
   const fullName = [profile.first_name, profile.last_name].filter(Boolean).join(" ")
 
-  // Update the main component to apply black background, remove email/website, center KYC status, and update colors
   return (
     <PageTransition>
-      <ProfileHeader onBack={() => navigate(-1)} />
-      <div className="w-full max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 transition-all duration-300 pt-24 pb-32 dark:text-white light:text-gray-800 flex flex-col items-center">
-        <div className="w-full mb-8">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6">
-            <Avatar className="h-24 w-24 ring-2 dark:ring-primary/50 light:ring-[#1078a7] dark:ring-offset-gray-950 light:ring-offset-white ring-offset-2">
-              <AvatarImage src={profile.avatar_url || undefined} />
-              <AvatarFallback className="text-2xl dark:bg-primary/10 light:bg-[#1078a7]/10 dark:text-primary light:text-[#1078a7]">
-                {profile.first_name?.[0] || ""}
-                {profile.last_name?.[0] || ""}
-              </AvatarFallback>
-            </Avatar>
+      <div className="min-h-screen bg-background pb-20">
+        <ProfileHeader onBack={() => navigate(-1)} />
 
-            <div className="flex-1 text-center sm:text-left">
-              <div className="flex flex-col items-center sm:items-start gap-2 mb-2">
-                <h2 className="text-2xl font-medium dark:text-white light:text-gray-800">{fullName || "Anonymous User"}</h2>
-
-                <Badge
-                  variant={statusBadgeProps.variant}
-                  className={`${statusBadgeProps.className} px-2 py-0.5 mx-auto sm:mx-0`}
+        {/* Add top padding to account for fixed header */}
+        <div className="pt-16">
+          <div className="container max-w-4xl mx-auto px-4 py-8">
+            {/* Header with Shapes Background */}
+            <div className="relative mb-8">
+              <div className="h-40 bg-secondary/50 rounded-lg border border-blue-500/30 overflow-hidden">
+                <svg
+                  className="absolute inset-0 h-full w-full opacity-60"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="100%"
+                  height="100%"
+                  viewBox="0 0 100 100"
+                  preserveAspectRatio="xMidYMid slice"
                 >
-                  {statusBadgeProps.icon}
-                  {statusBadgeProps.label}
-                </Badge>
+                  <defs>
+                    <pattern
+                      id="user-shapes"
+                      x="0"
+                      y="0"
+                      width="25"
+                      height="25"
+                      patternUnits="userSpaceOnUse"
+                    >
+                      {/* Circles */}
+                      <circle cx="4" cy="4" r="2" fill="none" stroke="rgb(59, 130, 246)" strokeWidth="0.5" opacity="0.5" />
+                      <circle cx="20" cy="18" r="1.5" fill="none" stroke="rgb(59, 130, 246)" strokeWidth="0.5" opacity="0.5" />
+
+                      {/* Squares */}
+                      <rect x="15" y="2" width="4" height="4" fill="none" stroke="rgb(249, 115, 22)" strokeWidth="0.5" opacity="0.5" transform="rotate(45, 17, 4)" />
+                      <rect x="2" y="15" width="3" height="3" fill="none" stroke="rgb(249, 115, 22)" strokeWidth="0.5" opacity="0.5" transform="rotate(30, 3.5, 16.5)" />
+
+                      {/* Triangles */}
+                      <path d="M 20 12 L 22 15 L 18 15 Z" fill="none" stroke="rgb(239, 68, 68)" strokeWidth="0.5" opacity="0.5" />
+                      <path d="M 8 8 L 10 11 L 6 11 Z" fill="none" stroke="rgb(239, 68, 68)" strokeWidth="0.5" opacity="0.5" transform="rotate(180, 8, 9.5)" />
+
+                      {/* Hexagons */}
+                      <path d="M 12 20 L 14 18 L 16 20 L 14 22 Z" fill="none" stroke="rgb(34, 197, 94)" strokeWidth="0.5" opacity="0.5" />
+                      <path d="M 22 8 L 24 6 L 26 8 L 24 10 Z" fill="none" stroke="rgb(34, 197, 94)" strokeWidth="0.5" opacity="0.5" />
+
+                      {/* Stars */}
+                      <path d="M 6 22 L 7 20 L 8 22 L 6 21 L 8 21 Z" fill="none" stroke="rgb(168, 85, 247)" strokeWidth="0.5" opacity="0.5" />
+                      <path d="M 16 7 L 17 5 L 18 7 L 16 6 L 18 6 Z" fill="none" stroke="rgb(168, 85, 247)" strokeWidth="0.5" opacity="0.5" />
+
+                      {/* Plus signs */}
+                      <path d="M 12 3 L 12 5 M 11 4 L 13 4" stroke="rgb(234, 179, 8)" strokeWidth="0.5" opacity="0.5" />
+                      <path d="M 3 12 L 3 14 M 2 13 L 4 13" stroke="rgb(234, 179, 8)" strokeWidth="0.5" opacity="0.5" />
+                    </pattern>
+                  </defs>
+                  <rect x="0" y="0" width="100%" height="100%" fill="url(#user-shapes)" />
+                </svg>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-background/20" />
               </div>
 
-              <div className="dark:text-gray-400 light:text-gray-600">
-                <div className="flex items-center justify-center sm:justify-start gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 dark:text-primary light:text-[#1078a7]" />
-                  <span>
-                    Joined{" "}
-                    {new Date(profile.created_at).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "long",
-                    })}
-                  </span>
+              {/* Avatar */}
+              <div className="absolute -bottom-16 left-1/2 transform -translate-x-1/2">
+                <Avatar className="h-32 w-32 border-4 border-background ring-2 ring-blue-500/20">
+                  <AvatarImage src={profile.avatar_url || undefined} className="object-cover" />
+                  <AvatarFallback className="text-3xl bg-secondary text-secondary-foreground">
+                    {profile.first_name?.[0]}{profile.last_name?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                {profile.kyc_status === 'verified' && (
+                  <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-1.5 shadow-sm ring-2 ring-green-500/20">
+                    <ShieldCheck className="h-6 w-6 text-green-500" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* User Info */}
+            <div className="mt-20 space-y-6">
+              <div className="text-center space-y-3">
+                <h1 className="text-3xl font-bold">{fullName || "Anonymous User"}</h1>
+
+                <div className="flex items-center justify-center gap-2">
+                  <Badge variant={statusBadgeProps.variant} className="px-3 py-1">
+                    {statusBadgeProps.icon}
+                    <span className="ml-1.5">{statusBadgeProps.label}</span>
+                  </Badge>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center justify-center gap-3 pt-2">
+                  {isCurrentUser ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => navigate("/profile")}
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  ) : (
+                    <Button
+                      className="bg-blue-500 hover:bg-blue-600"
+                      onClick={handleMessage}
+                    >
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Message
+                    </Button>
+                  )}
+                  <Button variant="outline" size="icon">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-4 justify-center sm:justify-start">
-                {profile.address && (
-                  <div className="flex items-center gap-1.5 text-sm dark:text-gray-400 light:text-gray-600">
-                    <MapPin className="h-3.5 w-3.5 flex-shrink-0 dark:text-primary light:text-[#1078a7]" />
-                    <span className="truncate">{profile.address}</span>
-                  </div>
-                )}
+              {/* Info Cards - Made bigger and more consistent */}
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Location & Member Since Card */}
+                <Card className="border-blue-500/30 bg-secondary/50 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                  <CardContent className="p-6 space-y-4">
+                    {profile.address && (
+                      <div className="flex items-center space-x-4 p-4 bg-background/50 rounded-lg border border-red-500/20">
+                        <MapPin className="h-5 w-5 text-red-500 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">Location</p>
+                          <p className="text-sm text-muted-foreground truncate">{profile.address}</p>
+                        </div>
+                      </div>
+                    )}
 
-                {profile.phone && (
-                  <div className="flex items-center gap-1.5 text-sm dark:text-gray-400 light:text-gray-600">
-                    <Phone className="h-3.5 w-3.5 flex-shrink-0 dark:text-primary light:text-[#1078a7]" />
-                    <span>{profile.phone}</span>
-                  </div>
-                )}
+                    <div className="flex items-center space-x-4 p-4 bg-background/50 rounded-lg border border-orange-500/20">
+                      <Calendar className="h-5 w-5 text-orange-500 flex-shrink-0" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">Member Since</p>
+                        <p className="text-sm text-muted-foreground">
+                          {new Date(profile.created_at).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Stats Card - Made bigger */}
+                <Card className="border-green-500/30 bg-secondary/50 shadow-[0_0_15px_rgba(34,197,94,0.1)]">
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex flex-col items-center justify-center p-6 bg-background/50 rounded-lg border border-violet-500/20 hover:border-violet-500/40 transition-colors">
+                        <Package className="h-6 w-6 text-violet-500 mb-2" />
+                        <p className="text-3xl font-bold">{userItems.length}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Listings</p>
+                      </div>
+
+                      <div className="flex flex-col items-center justify-center p-6 bg-background/50 rounded-lg border border-cyan-500/20 hover:border-cyan-500/40 transition-colors">
+                        <Star className="h-6 w-6 text-cyan-500 mb-2" />
+                        <p className="text-3xl font-bold">{userGigs.length}</p>
+                        <p className="text-xs text-muted-foreground mt-1">Gigs</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
 
-            <div className="flex-shrink-0 flex flex-col gap-2 mt-4 sm:mt-0">
-              {isCurrentUser ? (
-                <Button
-                  variant="outline"
-                  onClick={() => navigate("/profile")}
-                  className="dark:border-primary/50 dark:text-primary dark:hover:bg-primary/10 light:border-[#1078a7] light:text-[#1078a7] light:hover:bg-[#1078a7]/10"
-                >
-                  <User className="h-4 w-4 mr-2 dark:text-primary light:text-[#1078a7]" />
-                  Edit Profile
-                </Button>
-              ) : (
-                <Button
-                  className="dark:bg-primary dark:hover:bg-primary/90 light:bg-[#1078a7] light:hover:bg-[#1078a7]/90 text-white"
-                  onClick={() => window.open(`https://wa.me/${profile.phone?.replace(/\D/g, "")}`, "_blank")}
-                >
-                  <WhatsApp className="h-4 w-4 mr-2" />
-                  WhatsApp
-                </Button>
-              )}
+              {/* Tabs */}
+              <Tabs defaultValue="listings" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 bg-secondary/30 border border-white/5">
+                  <TabsTrigger value="listings" className="data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
+                    <Package className="h-4 w-4 mr-2" />
+                    Listings ({userItems.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="gigs" className="data-[state=active]:bg-cyan-500/10 data-[state=active]:text-cyan-500">
+                    <Star className="h-4 w-4 mr-2" />
+                    Gigs ({userGigs.length})
+                  </TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="listings" className="mt-6">
+                  {userItems.length > 0 ? (
+                    <ProductGrid items={userItems} navigate={navigate} />
+                  ) : (
+                    <div className="text-center py-16 bg-secondary/10 rounded-lg border border-dashed border-border">
+                      <Package className="h-12 w-12 mx-auto text-muted-foreground/20 mb-3" />
+                      <h3 className="text-lg font-medium mb-2">No Listings Yet</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
+                        {isCurrentUser ? "Start selling your items today!" : "This user hasn't listed any items yet."}
+                      </p>
+                      {isCurrentUser && (
+                        <Button onClick={() => document.getElementById("sell-button")?.click()}>
+                          Create Listing
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+
+                <TabsContent value="gigs" className="mt-6">
+                  {userGigs.length > 0 ? (
+                    <GigGrid gigs={userGigs} navigate={navigate} />
+                  ) : (
+                    <div className="text-center py-16 bg-secondary/10 rounded-lg border border-dashed border-border">
+                      <Star className="h-12 w-12 mx-auto text-muted-foreground/20 mb-3" />
+                      <h3 className="text-lg font-medium mb-2">No Gigs Yet</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm mx-auto mb-4">
+                        {isCurrentUser ? "Start offering your services!" : "This user hasn't created any gigs yet."}
+                      </p>
+                      {isCurrentUser && (
+                        <Button onClick={() => navigate("/gigs/create")}>
+                          Create Gig
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </div>
           </div>
         </div>
-
-        <Tabs defaultValue="listings" className="space-y-6">
-          <TabsList className="w-full sm:w-auto border-b dark:border-primary/30 light:border-[#1078a7]/30 rounded-none p-0 h-auto bg-transparent space-x-8">
-            <TabsTrigger
-              value="listings"
-              className="rounded-none border-b-2 border-transparent dark:text-gray-400 light:text-gray-600 data-[state=active]:border-primary data-[state=active]:dark:text-primary data-[state=active]:light:text-[#1078a7] data-[state=active]:bg-transparent py-2 px-1"
-            >
-              <Package className="h-4 w-4 mr-2 dark:text-primary light:text-[#1078a7]" />
-              Listings
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="listings" className="mt-6">
-            {userItems.length === 0 ? (
-              <Card className="border dark:border-primary/30 light:border-[#1078a7]/30 dark:bg-gray-900 light:bg-white rounded-xl">
-                <CardContent className="pt-12 pb-12 text-center">
-                  <Package className="h-16 w-16 mx-auto dark:text-primary/50 light:text-[#1078a7]/50 mb-4" />
-                  <h3 className="text-xl font-medium mb-2 dark:text-white light:text-gray-800">No Listings Yet</h3>
-                  <p className="dark:text-gray-400 light:text-gray-600 max-w-md mx-auto">
-                    {isCurrentUser
-                      ? "You haven't listed any items for sale yet. Create your first listing to start selling!"
-                      : `${profile.first_name || "This user"} hasn't listed any items for sale yet.`}
-                  </p>
-
-                  {isCurrentUser && (
-                    <Button
-                      variant="default"
-                      className="mt-6 dark:bg-primary dark:hover:bg-primary/90 light:bg-[#1078a7] light:hover:bg-[#1078a7]/90 text-white"
-                      onClick={() => document.getElementById("sell-button")?.click()}
-                    >
-                      <Tag className="h-4 w-4 mr-2 text-white" />
-                      Create Your First Listing
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <ProductGrid items={userItems} title={`${profile.first_name || "User"}'s Listings`} navigate={navigate} />
-            )}
-          </TabsContent>
-        </Tabs>
       </div>
     </PageTransition>
   )
 }
 
 export default UserProfile
-
