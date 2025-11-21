@@ -409,6 +409,9 @@ const GigDetails = () => {
                                                             </div>
                                                             <div className="text-xs text-muted-foreground">
                                                                 {formatDistanceToNow(new Date(review.created_at), { addSuffix: true })}
+                                                                {review.updated_at && new Date(review.updated_at).getTime() > new Date(review.created_at).getTime() + 1000 && (
+                                                                    <span className="ml-1 text-muted-foreground/60 italic">(edited)</span>
+                                                                )}
                                                             </div>
                                                         </div>
                                                     </div>
