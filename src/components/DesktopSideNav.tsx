@@ -297,8 +297,8 @@ export const DesktopSideNav = () => {
         variant="ghost"
         size="icon"
         className={cn(
-          "fixed top-5 h-8 w-8 rounded-full border-2 shadow-xl z-[60] transition-all duration-300 ease-in-out",
-          isSidebarCollapsed ? "left-[68px]" : "left-[228px]",
+          "fixed top-3.5 h-8 w-8 rounded-full border-2 shadow-xl z-[60] transition-all duration-300 ease-in-out",
+          isSidebarCollapsed ? "left-16" : "left-[224px]",
           theme === 'light'
             ? "bg-white border-gray-300 text-gray-600 hover:text-primary hover:border-primary hover:shadow-2xl"
             : "bg-black border-white/20 text-gray-300 hover:text-primary hover:border-primary hover:shadow-2xl"
