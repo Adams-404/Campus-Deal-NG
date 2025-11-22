@@ -141,7 +141,10 @@ export default function Support() {
   return (
     <div className="bg-background">
       {/* Header - Fixed */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 transition-all duration-300",
+        isSidebarCollapsed ? "ml-0 lg:ml-[80px]" : "ml-0 lg:ml-[240px]"
+      )}>
         <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="w-10">

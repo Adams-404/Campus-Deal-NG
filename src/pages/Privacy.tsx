@@ -4,6 +4,8 @@ import { Shield, Lock, Eye, UserCheck, Database, Bell, ArrowLeft } from "lucide-
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { useSettings } from "@/contexts/SettingsContext";
+import { cn } from "@/lib/utils";
 
 const privacySections = [
   {
@@ -60,6 +62,7 @@ const privacySections = [
 
 export default function Privacy() {
   const navigate = useNavigate();
+  const { isSidebarCollapsed } = useSettings();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -67,8 +70,11 @@ export default function Privacy() {
 
   return (
     <div className="bg-background">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
-        <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 transition-all duration-300",
+        isSidebarCollapsed ? "ml-0 lg:ml-[80px]" : "ml-0 lg:ml-[240px]"
+      )}>
+        <div className="relative px-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
             <Button
               variant="ghost"
@@ -85,7 +91,7 @@ export default function Privacy() {
         </div>
       </div>
 
-      <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
+      <main className="w-full max-w-2xl mx-auto px-4 sm:px-6">
         <PageTransition>
           <div className="pt-24 pb-32 space-y-6">
             <div className="prose prose-invert max-w-none mb-8">

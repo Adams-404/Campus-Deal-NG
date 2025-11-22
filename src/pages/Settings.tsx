@@ -4,12 +4,12 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { Button } from "@/components/ui/button";
 import { ExpandableSection } from "@/components/ui/expandable-section";
 import { Switch } from "@/components/ui/switch";
-import { 
-  ChevronRight, 
-  Type, 
-  Bell, 
-  Share2, 
-  User, 
+import {
+  ChevronRight,
+  Type,
+  Bell,
+  Share2,
+  User,
   Moon,
   Sun,
   HelpCircle,
@@ -50,6 +50,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export default function Settings() {
   const { theme, setTheme } = useTheme();
   const { isEnabled, isPushSupported, toggleNotifications } = useNotifications();
+  const { isSidebarCollapsed } = useSettings();
   const navigate = useNavigate();
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -238,13 +239,16 @@ export default function Settings() {
 
   return (
     <div className="bg-background">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 transition-all duration-300",
+        isSidebarCollapsed ? "ml-0 lg:ml-[80px]" : "ml-0 lg:ml-[240px]"
+      )}>
         <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="w-10">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => navigate(-1)}
                 className="text-primary lg:hidden"
               >
@@ -290,8 +294,8 @@ export default function Settings() {
                             <Moon className="h-4 w-4" />
                             <span>Dark</span>
                           </div>
-                          <Switch 
-                            checked={theme === 'dark'} 
+                          <Switch
+                            checked={theme === 'dark'}
                             onCheckedChange={() => setTheme('dark')}
                           />
                         </div>
@@ -300,8 +304,8 @@ export default function Settings() {
                             <Sun className="h-4 w-4" />
                             <span>Light</span>
                           </div>
-                          <Switch 
-                            checked={theme === 'light'} 
+                          <Switch
+                            checked={theme === 'light'}
                             onCheckedChange={() => setTheme('light')}
                           />
                         </div>
@@ -310,8 +314,8 @@ export default function Settings() {
                             <Monitor className="h-4 w-4" />
                             <span>System</span>
                           </div>
-                          <Switch 
-                            checked={theme === 'system'} 
+                          <Switch
+                            checked={theme === 'system'}
                             onCheckedChange={() => setTheme('system')}
                           />
                         </div>
@@ -358,9 +362,9 @@ export default function Settings() {
                         <Link
                           key={item.label}
                           to={item.href}
-                          className={cn("rounded-lg p-4 flex items-center justify-between hover:bg-opacity-80 transition-colors shadow-sm", 
-                             item.bgColor.replace('bg-', 'bg-') + '/15',
-                             'border border-' + item.bgColor.split('-')[1] + '-200 dark:border-white/10')}
+                          className={cn("rounded-lg p-4 flex items-center justify-between hover:bg-opacity-80 transition-colors shadow-sm",
+                            item.bgColor.replace('bg-', 'bg-') + '/15',
+                            'border border-' + item.bgColor.split('-')[1] + '-200 dark:border-white/10')}
                         >
                           <div className="flex items-center gap-3">
                             <div className={cn("p-2 rounded-full", item.bgColor)}>
@@ -393,7 +397,7 @@ export default function Settings() {
                       </div>
                       <ChevronRight className="w-5 h-5 text-red-500 transition-transform group-hover:translate-x-0.5" />
                     </Button>
-                    
+
                     <div className="mt-8 text-center">
                       <p className="text-sm text-gray-400">Campus Deal v1.0.7</p>
                     </div>
@@ -420,7 +424,7 @@ export default function Settings() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleSignOut}
               className="bg-red-500 hover:bg-red-600"
             >

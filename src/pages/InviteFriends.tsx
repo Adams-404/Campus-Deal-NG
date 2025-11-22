@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useSettings } from "@/contexts/SettingsContext";
+import { cn } from "@/lib/utils";
 
 type KYCStatus = 'pending' | 'processing' | 'verified' | 'rejected';
 
@@ -58,6 +60,7 @@ const InviteFriends = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const navigate = useNavigate();
+  const { isSidebarCollapsed } = useSettings();
 
   const fetchLeaderboard = useCallback(async () => {
     setIsRefreshing(true);
@@ -313,7 +316,10 @@ const InviteFriends = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+        <div className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 transition-all duration-300",
+        isSidebarCollapsed ? "ml-0 lg:ml-[80px]" : "ml-0 lg:ml-[240px]"
+      )}>
           <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="w-10">
@@ -346,7 +352,10 @@ const InviteFriends = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border/40 ml-0 lg:ml-[300px] transition-all duration-300 shadow-sm">
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border/40 transition-all duration-300 shadow-sm",
+        isSidebarCollapsed ? "ml-0 lg:ml-[80px]" : "ml-0 lg:ml-[240px]"
+      )}>
         <div className="relative max-w-2xl lg:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-14 sm:h-16">
             <Button 
