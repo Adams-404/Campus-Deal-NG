@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
+import { GigCardSkeleton } from "@/components/GigCardSkeleton";
 
 export default function MyGigs() {
   const [userId, setUserId] = useState<string | null>(null);
@@ -87,14 +88,10 @@ export default function MyGigs() {
 
         {/* Gigs Grid */}
         {loading ? (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className={cn(
-              "mt-4",
-              theme === 'light' ? "text-gray-600" : "text-gray-400"
-            )}>
-              Loading your gigs...
-            </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <GigCardSkeleton key={i} />
+            ))}
           </div>
         ) : filteredGigs.length === 0 ? (
           <div className={cn(

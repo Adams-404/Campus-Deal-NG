@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Gig } from '@/data/mockGigs';
 import { toast } from 'sonner';
@@ -10,18 +10,12 @@ interface FetchGigsParams {
 }
 
 export const useGigs = (params?: FetchGigsParams) => {
-    const [gigs, setGigs] = useState<Gig[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const queryClient = useQueryClient();
 
     const fetchGigs = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-
-            let query = supabase
-                .from('gigs')
-                .select(`
+        let query = supabase
+            .from('gigs')
+            .select(`
           *,
           gig_images (
             image_url,
@@ -34,46 +28,41 @@ export const useGigs = (params?: FetchGigsParams) => {
             avatar_url
           )
         `)
-                .eq('is_active', true)
-                .neq('status', 'deleted')
-                .order('created_at', { ascending: false });
+            .eq('is_active', true)
+            .neq('status', 'deleted')
+            .order('created_at', { ascending: false });
 
-            // Apply filters
-            if (params?.category) {
-                query = query.eq('category', params.category);
-            }
-
-            if (params?.userId) {
-                query = query.eq('user_id', params.userId);
-            }
-
-            if (params?.status) {
-                query = query.eq('status', params.status);
-            }
-
-            const { data, error: fetchError } = await query;
-
-            if (fetchError) throw fetchError;
-
-            setGigs(data || []);
-        } catch (err: any) {
-            console.error('Error fetching gigs:', err);
-            setError(err.message);
-            toast.error('Failed to load gigs');
-        } finally {
-            setLoading(false);
+        // Apply filters
+        if (params?.category) {
+            query = query.eq('category', params.category);
         }
+
+        if (params?.userId) {
+            query = query.eq('user_id', params.userId);
+        }
+
+        if (params?.status) {
+            query = query.eq('status', params.status);
+        }
+
+        const { data, error } = await query;
+
+        if (error) {
+            console.error('Error fetching gigs:', error);
+            throw error;
+        }
+
+        return data as Gig[];
     };
 
-    useEffect(() => {
-        fetchGigs();
-    }, [params?.category, params?.userId, params?.status]);
+    const { data: gigs = [], isLoading: loading, error, refetch } = useQuery({
+        queryKey: ['gigs', params?.category, params?.userId, params?.status],
+        queryFn: fetchGigs,
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes
+    });
 
-    const refetch = () => {
-        fetchGigs();
-    };
-
-    return { gigs, loading, error, refetch };
+    return { gigs, loading, error: error ? (error as Error).message : null, refetch };
 };
 
 // Helper function to get a single gig by ID
@@ -304,21 +293,13 @@ export const canDeleteGig = async (gigUserId: string): Promise<boolean> => {
 
 // Hook for fetching gig applications (as applicant)
 export const useGigApplications = () => {
-    const [applications, setApplications] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
     const fetchApplications = async () => {
-        try {
-            setLoading(true);
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                setLoading(false);
-                return;
-            }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
 
-            const { data, error } = await supabase
-                .from('gig_applications')
-                .select(`
+        const { data, error } = await supabase
+            .from('gig_applications')
+            .select(`
           *,
           gigs (*,
             gig_images (image_url, is_primary),
@@ -326,82 +307,59 @@ export const useGigApplications = () => {
           ),
           profiles:applicant_id (id, first_name, last_name, avatar_url)
         `)
-                .eq('applicant_id', user.id)
-                .order('created_at', { ascending: false });
+            .eq('applicant_id', user.id)
+            .order('created_at', { ascending: false });
 
-            if (error) throw error;
-            setApplications(data || []);
-        } catch (error: any) {
-            console.error('Error fetching applications:', error);
-            toast.error('Failed to load applications');
-        } finally {
-            setLoading(false);
-        }
+        if (error) throw error;
+        return data || [];
     };
 
-    useEffect(() => {
-        fetchApplications();
-    }, []);
+    const { data: applications = [], isLoading: loading, refetch } = useQuery({
+        queryKey: ['gig-applications'],
+        queryFn: fetchApplications,
+    });
 
-    return { applications, loading, refetch: fetchApplications };
+    return { applications, loading, refetch };
 };
 
 // Hook for fetching applications received on your gigs (as gig owner)
 export const useReceivedApplications = () => {
-    const [applications, setApplications] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
     const fetchApplications = async () => {
-        try {
-            setLoading(true);
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                setLoading(false);
-                return;
-            }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return [];
 
-            // Get applications for gigs owned by current user
-            const { data, error } = await supabase
-                .from('gig_applications')
-                .select(`
+        // Get applications for gigs owned by current user
+        const { data, error } = await supabase
+            .from('gig_applications')
+            .select(`
           *,
           gigs!inner (*,
             gig_images (image_url, is_primary)
           ),
           profiles:applicant_id (id, first_name, last_name, avatar_url, email)
         `)
-                .eq('gigs.user_id', user.id)
-                .order('created_at', { ascending: false });
+            .eq('gigs.user_id', user.id)
+            .order('created_at', { ascending: false });
 
-            if (error) throw error;
-            setApplications(data || []);
-        } catch (error: any) {
-            console.error('Error fetching received applications:', error);
-            toast.error('Failed to load received applications');
-        } finally {
-            setLoading(false);
-        }
+        if (error) throw error;
+        return data || [];
     };
 
-    useEffect(() => {
-        fetchApplications();
-    }, []);
+    const { data: applications = [], isLoading: loading, refetch } = useQuery({
+        queryKey: ['received-applications'],
+        queryFn: fetchApplications,
+    });
 
-    return { applications, loading, refetch: fetchApplications };
+    return { applications, loading, refetch };
 };
 
 // Hook for fetching gig reviews
 export const useGigReviews = (gigId?: string) => {
-    const [reviews, setReviews] = useState<any[]>([]);
-    const [loading, setLoading] = useState(true);
-
     const fetchReviews = async () => {
-        if (!gigId) return;
-        try {
-            setLoading(true);
-            const { data, error } = await supabase
-                .from('gig_reviews')
-                .select(`
+        if (!gigId) return [];
+        const { data, error } = await supabase
+            .from('gig_reviews')
+            .select(`
                     *,
                     profiles:reviewer_id (
                         id,
@@ -410,23 +368,20 @@ export const useGigReviews = (gigId?: string) => {
                         avatar_url
                     )
                 `)
-                .eq('gig_id', gigId)
-                .order('created_at', { ascending: false });
+            .eq('gig_id', gigId)
+            .order('created_at', { ascending: false });
 
-            if (error) throw error;
-            setReviews(data || []);
-        } catch (error: any) {
-            console.error('Error fetching reviews:', error);
-        } finally {
-            setLoading(false);
-        }
+        if (error) throw error;
+        return data || [];
     };
 
-    useEffect(() => {
-        fetchReviews();
-    }, [gigId]);
+    const { data: reviews = [], isLoading: loading, refetch } = useQuery({
+        queryKey: ['gig-reviews', gigId],
+        queryFn: fetchReviews,
+        enabled: !!gigId,
+    });
 
-    return { reviews, loading, refetch: fetchReviews };
+    return { reviews, loading, refetch };
 };
 
 // Helper to add a review

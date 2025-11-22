@@ -220,7 +220,7 @@ const AnimatedRoutes = () => {
       return 'pb-24';
     } else if (shouldShowSideNav) {
       // Add left margin for desktop/tablet with sidenav, and top padding if navbar is visible
-      return showNav ? "ml-[300px] pt-14" : "ml-[300px]";
+      return showNav ? "ml-[240px] pt-14" : "ml-[240px]";
     } else {
       // Add top padding if navbar is visible
       return showNav ? "pt-14" : "";

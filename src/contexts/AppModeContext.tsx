@@ -42,36 +42,22 @@ export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   }, [location.pathname]);
 
-  // Update URL when mode changes
-  useEffect(() => {
-    const path = location.pathname;
+  const handleSetMode = (mode: AppMode) => {
+    setCurrentMode(mode);
 
-    // Helper to check if we are already on the correct path for the mode
-    const isCorrectPath = (mode: AppMode) => {
-      if (mode === 'gigs') return path.startsWith('/gigs');
-      if (mode === 'events') return path.startsWith('/events');
-      if (mode === 'news') return path.startsWith('/news');
-      if (mode === 'study') return path.startsWith('/study');
-      if (mode === 'lost') return path.startsWith('/lost-and-found');
-      if (mode === 'room') return path.startsWith('/roommates');
-      if (mode === 'marketplace') return !path.startsWith('/gigs') && !path.startsWith('/events') && !path.startsWith('/news') && !path.startsWith('/study') && !path.startsWith('/lost-and-found') && !path.startsWith('/roommates');
-      return false;
-    };
-
-    if (!isCorrectPath(currentMode)) {
-      if (currentMode === 'gigs') navigate('/gigs');
-      else if (currentMode === 'events') navigate('/events');
-      else if (currentMode === 'news') navigate('/news');
-      else if (currentMode === 'study') navigate('/study');
-      else if (currentMode === 'lost') navigate('/lost-and-found');
-      else if (currentMode === 'room') navigate('/roommates');
-      else navigate('/home');
-    }
-  }, [currentMode, navigate]);
+    // Navigate to the appropriate route
+    if (mode === 'gigs') navigate('/gigs');
+    else if (mode === 'events') navigate('/events');
+    else if (mode === 'news') navigate('/news');
+    else if (mode === 'study') navigate('/study');
+    else if (mode === 'lost') navigate('/lost-and-found');
+    else if (mode === 'room') navigate('/roommates');
+    else navigate('/home');
+  };
 
   const value = {
     currentMode,
-    setCurrentMode,
+    setCurrentMode: handleSetMode,
     isMarketplace: currentMode === 'marketplace',
     isGigs: currentMode === 'gigs',
     isEvents: currentMode === 'events',

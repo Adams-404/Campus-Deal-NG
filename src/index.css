@@ -408,25 +408,46 @@
   animation: float 4s ease-in-out infinite;
 }
 
-/* Improve light mode scrollbars */
-.light ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+/* Global Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
-.light ::-webkit-scrollbar-track {
-  background: rgba(236, 249, 255, 0.6);
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
   border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background 0.3s ease;
 }
 
-.light ::-webkit-scrollbar-thumb {
-  background: rgba(30, 174, 219, 0.2);
-  border-radius: 10px;
-  transition: all 0.3s ease;
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+  border: 2px solid transparent;
+  background-clip: content-box;
 }
 
-.light ::-webkit-scrollbar-thumb:hover {
-  background: rgba(30, 174, 219, 0.4);
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.4);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.6);
+}
+
+/* Firefox support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.3) transparent;
+}
+
+.dark * {
+  scrollbar-color: hsl(var(--muted-foreground) / 0.4) transparent;
 }
 
 /* Add glass morphism effect to important elements */
