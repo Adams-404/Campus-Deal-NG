@@ -216,7 +216,7 @@ export const DesktopSideNav = () => {
     <>
       <motion.aside
         className={cn(
-          "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col min-h-0 p-0 m-0 transition-all duration-300 ease-in-out overflow-hidden",
+          "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col min-h-0 p-0 m-0 transition-all duration-300 ease-in-out",
           isSidebarCollapsed ? "w-[80px]" : "w-[240px]",
           theme === 'light'
             ? "border-r border-gray-200 bg-white/95 shadow-sm"
@@ -229,7 +229,7 @@ export const DesktopSideNav = () => {
       >
         {/* Header section with logo */}
         <div className={cn(
-          "flex-shrink-0 flex flex-col items-center px-4 py-3 space-y-3 relative"
+          "flex-shrink-0 flex flex-col items-center px-4 py-3 space-y-3 relative overflow-visible"
         )}>
           <Link to={homeLink} className="w-full flex justify-center group relative transition-all duration-300 hover:scale-105">
             <motion.div
@@ -252,21 +252,6 @@ export const DesktopSideNav = () => {
 
           <ModeToggle isCollapsed={isSidebarCollapsed} />
         </div>
-
-        {/* Toggle Button - positioned on the vertical right border at navbar level */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn(
-            "absolute -right-4 top-5 h-7 w-7 rounded-full border-2 shadow-lg z-50 transition-all duration-200",
-            theme === 'light'
-              ? "bg-white border-gray-300 text-gray-600 hover:text-primary hover:border-primary"
-              : "bg-black border-white/20 text-gray-300 hover:text-primary hover:border-primary"
-          )}
-          onClick={toggleSidebar}
-        >
-          {isSidebarCollapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <ChevronsLeft className="h-3.5 w-3.5" />}
-        </Button>
 
         {/* Scrollable navigation section */}
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
@@ -306,6 +291,22 @@ export const DesktopSideNav = () => {
           </div>
         </div>
       </motion.aside>
+
+      {/* Toggle Button - positioned independently, not inside sidebar */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className={cn(
+          "fixed top-5 h-8 w-8 rounded-full border-2 shadow-xl z-[60] transition-all duration-300 ease-in-out",
+          isSidebarCollapsed ? "left-[68px]" : "left-[228px]",
+          theme === 'light'
+            ? "bg-white border-gray-300 text-gray-600 hover:text-primary hover:border-primary hover:shadow-2xl"
+            : "bg-black border-white/20 text-gray-300 hover:text-primary hover:border-primary hover:shadow-2xl"
+        )}
+        onClick={toggleSidebar}
+      >
+        {isSidebarCollapsed ? <ChevronsRight className="h-4 w-4" /> : <ChevronsLeft className="h-4 w-4" />}
+      </Button>
 
       {/* Modals */}
       <SafetyTipsDialog
