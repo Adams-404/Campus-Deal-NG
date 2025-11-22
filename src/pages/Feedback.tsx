@@ -7,9 +7,12 @@ import { ArrowLeft, Send, MessageSquare, Mail, MessageCircle } from "lucide-reac
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useSettings } from "@/contexts/SettingsContext";
+import { cn } from "@/lib/utils";
 
 export default function Feedback() {
   const navigate = useNavigate();
+  const { isSidebarCollapsed } = useSettings();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -58,8 +61,11 @@ export default function Feedback() {
   return (
     <div className="bg-background">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
-        <div className="relative max-w-2xl mx-auto px-4 sm:px-6">
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 transition-all duration-300",
+        isSidebarCollapsed ? "ml-0 lg:ml-[80px]" : "ml-0 lg:ml-[240px]"
+      )}>
+        <div className="relative px-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
             <Button
               variant="ghost"
@@ -77,7 +83,7 @@ export default function Feedback() {
       </div>
 
       {/* Main Content */}
-      <main className="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
+      <main className="w-full max-w-2xl mx-auto px-4 sm:px-6">
         <PageTransition>
           <div className="pt-24 pb-32 space-y-6">
             <div className="space-y-6">

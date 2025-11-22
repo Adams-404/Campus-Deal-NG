@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { PageTransition } from "@/components/PageTransition";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Trash2 } from "lucide-react";
+import { useSettings } from "@/contexts/SettingsContext";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -38,6 +40,7 @@ export default function SavedItems() {
   const [items, setItems] = useState<SavedItem[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const { isSidebarCollapsed } = useSettings();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -174,7 +177,10 @@ export default function SavedItems() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 ml-0 lg:ml-[300px] transition-all duration-300">
+      <div className={cn(
+        "fixed top-0 left-0 right-0 z-50 bg-background/60 backdrop-blur-sm border-b border-white/10 transition-all duration-300",
+        isSidebarCollapsed ? "ml-0 lg:ml-[80px]" : "ml-0 lg:ml-[240px]"
+      )}>
         <div className="max-w-3xl mx-auto px-4 sm:px-6">
           <div className="h-16 flex items-center justify-between gap-4">
             <div className="flex items-center gap-4">
@@ -192,22 +198,22 @@ export default function SavedItems() {
         </div>
       </div>
 
-      <main className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:ml-[300px] transition-all duration-300">
+      <main className="w-full max-w-3xl mx-auto px-4 sm:px-6">
         <PageTransition>
           <div className="pt-24 pb-32">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {items.map((savedItem) => (
-                <div 
+                <div
                   key={savedItem.id}
                   className="group relative aspect-square rounded-lg overflow-hidden border border-white/10 cursor-pointer hover:border-primary/20 transition-colors"
                 >
-                  <div 
+                  <div
                     onClick={() => navigate(`/item/${savedItem.item.id}`)}
                     className="absolute inset-0 z-10"
                   />
                   {savedItem.item.images.length > 0 ? (
-                    <img 
-                      src={savedItem.item.images[0]} 
+                    <img
+                      src={savedItem.item.images[0]}
                       alt={savedItem.item.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                     />
@@ -267,7 +273,7 @@ export default function SavedItems() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDelete}
               className="bg-red-500 hover:bg-red-600"
             >
