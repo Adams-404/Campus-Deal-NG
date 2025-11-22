@@ -65,6 +65,11 @@ const Gigs = lazy(() => import("./pages/Gigs"));
 const GigDetails = lazy(() => import("./pages/gigs/GigDetails"));
 const MyGigs = lazy(() => import("./pages/gigs/MyGigs"));
 const Applications = lazy(() => import("./pages/gigs/Applications"));
+const Events = lazy(() => import("./pages/Events"));
+const News = lazy(() => import("./pages/News"));
+const Study = lazy(() => import("./pages/Study"));
+const LostAndFound = lazy(() => import("./pages/LostAndFound"));
+const Roommates = lazy(() => import("./pages/Roommates"));
 
 // Create a single query client instance outside of the component with better caching
 const queryClient = new QueryClient({
@@ -215,7 +220,7 @@ const AnimatedRoutes = () => {
       return 'pb-24';
     } else if (shouldShowSideNav) {
       // Add left margin for desktop/tablet with sidenav, and top padding if navbar is visible
-      return showNav ? "ml-[300px] pt-14" : "ml-[300px]";
+      return showNav ? "ml-[240px] pt-14" : "ml-[240px]";
     } else {
       // Add top padding if navbar is visible
       return showNav ? "pt-14" : "";
@@ -268,6 +273,13 @@ const AnimatedRoutes = () => {
               <Route path="/item/:id" element={<ProtectedRoute allowGuest><LazyViewItem /></ProtectedRoute>} />
               <Route path="/my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+
+              {/* New App Modes */}
+              <Route path="/events" element={<ProtectedRoute allowGuest><Events /></ProtectedRoute>} />
+              <Route path="/news" element={<ProtectedRoute allowGuest><News /></ProtectedRoute>} />
+              <Route path="/study" element={<ProtectedRoute allowGuest><Study /></ProtectedRoute>} />
+              <Route path="/lost-and-found" element={<ProtectedRoute allowGuest><LostAndFound /></ProtectedRoute>} />
+              <Route path="/roommates" element={<ProtectedRoute allowGuest><Roommates /></ProtectedRoute>} />
 
               {/* Delivery Coordinator route */}
               <Route path="/delivery" element={<ProtectedRoute><DeliveryCoordinator /></ProtectedRoute>} />

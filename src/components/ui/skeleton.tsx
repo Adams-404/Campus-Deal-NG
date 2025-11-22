@@ -12,12 +12,11 @@ const SkeletonComponent = ({
   ...props
 }: SkeletonProps) => {
   if (!loading) return null;
-  
+
   return (
     <div
-      className={cn("animate-pulse rounded-md bg-secondary/60 dark:bg-secondary/60 light:bg-gray-200/60", className)}
+      className={cn("rounded-md bg-secondary/60 dark:bg-secondary/60 light:bg-gray-200/60", className)}
       {...props}
-      style={{animationDuration: '0.8s'}} // Faster, smoother animation
     />
   )
 }

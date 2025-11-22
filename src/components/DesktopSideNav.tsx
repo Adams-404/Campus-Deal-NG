@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck, Wallet, Briefcase, Search, UserCheck, FileText } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck, Wallet, Briefcase, Search, UserCheck, FileText, Calendar, Newspaper, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -51,7 +51,7 @@ export const DesktopSideNav = () => {
   const { currentMode, isMarketplace, isGigs } = useAppMode();
   const deviceType = useDeviceType();
   const { theme } = useTheme();
-  
+
   useEffect(() => {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -141,25 +141,84 @@ export const DesktopSideNav = () => {
     { icon: Settings, label: "Settings", href: "/settings" },
   ];
 
-  const navItems = isMarketplace ? marketplaceNavItems : gigsNavItems;
-  
+  const eventsNavItems = [
+    { icon: Calendar, label: "Browse Events", href: "/events" },
+    { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
+    { icon: User, label: "Profile", href: "/profile" },
+    { icon: Settings, label: "Settings", href: "/settings" },
+  ];
+
+  const newsNavItems = [
+    { icon: Newspaper, label: "Latest News", href: "/news" },
+    { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
+    { icon: User, label: "Profile", href: "/profile" },
+    { icon: Settings, label: "Settings", href: "/settings" },
+  ];
+
+  const studyNavItems = [
+    { icon: BookOpen, label: "Study Groups", href: "/study" },
+    { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
+    { icon: User, label: "Profile", href: "/profile" },
+    { icon: Settings, label: "Settings", href: "/settings" },
+  ];
+
+  const lostNavItems = [
+    { icon: Search, label: "Lost & Found", href: "/lost-and-found" },
+    { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
+    { icon: User, label: "Profile", href: "/profile" },
+    { icon: Settings, label: "Settings", href: "/settings" },
+  ];
+
+  const roomNavItems = [
+    { icon: Home, label: "Roommates", href: "/roommates" },
+    { icon: MessageSquare, label: "Messages", href: "/messages", hasNotification: hasNewMessages, notificationCount: totalUnreadMessages },
+    { icon: User, label: "Profile", href: "/profile" },
+    { icon: Settings, label: "Settings", href: "/settings" },
+  ];
+
+  let navItems = marketplaceNavItems;
+  if (isGigs) navItems = gigsNavItems;
+  else if (currentMode === 'events') navItems = eventsNavItems;
+  else if (currentMode === 'news') navItems = newsNavItems;
+  else if (currentMode === 'study') navItems = studyNavItems;
+  else if (currentMode === 'lost') navItems = lostNavItems;
+  else if (currentMode === 'room') navItems = roomNavItems;
+
   // Action items based on mode
   const sellItem = { icon: Plus, label: "Sell", href: "#", onClick: handleSellClick };
   const createGigItem = { icon: Plus, label: "Create", href: "#", onClick: handleCreateGigClick };
-  const actionItem = isMarketplace ? sellItem : createGigItem;
-  
+
+  let actionItem = sellItem;
+  if (isGigs) actionItem = createGigItem;
+  // For other modes, we can default to sellItem or null, or a specific action
+  // For now, let's hide the action button for other modes if not applicable, or default to something generic
+  if (!isMarketplace && !isGigs) {
+    // Maybe a generic "Post" button?
+    // For now, we'll just use sellItem as a placeholder or hide it
+    // Let's keep it as sellItem for now to avoid errors
+    actionItem = sellItem;
+  }
+
   // Don't show on mobile
   if (deviceType === 'mobile') {
     return null;
   }
 
+  let homeLink = "/home";
+  if (currentMode === 'gigs') homeLink = "/gigs";
+  else if (currentMode === 'events') homeLink = "/events";
+  else if (currentMode === 'news') homeLink = "/news";
+  else if (currentMode === 'study') homeLink = "/study";
+  else if (currentMode === 'lost') homeLink = "/lost-and-found";
+  else if (currentMode === 'room') homeLink = "/roommates";
+
   return (
     <>
-      <motion.aside 
+      <motion.aside
         className={cn(
           "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col w-[240px] min-h-0 p-0 m-0",
-          theme === 'light' 
-            ? "border-r border-gray-200 bg-white/95 shadow-sm" 
+          theme === 'light'
+            ? "border-r border-gray-200 bg-white/95 shadow-sm"
             : "border-r border-white/10 bg-black"
         )}
         style={{ height: '100vh' }}
@@ -170,8 +229,8 @@ export const DesktopSideNav = () => {
         <div className={cn(
           "flex flex-col items-center px-4 py-3 space-y-3"
         )}>
-          <Link to={isMarketplace ? "/home" : "/gigs"} className="group relative flex items-center transition-all duration-300 hover:scale-105">
-            <motion.div 
+          <Link to={homeLink} className="group relative flex items-center transition-all duration-300 hover:scale-105">
+            <motion.div
               className="h-10 overflow-hidden"
               initial={{ y: 0 }}
               whileHover={{ y: -2 }}
@@ -179,17 +238,17 @@ export const DesktopSideNav = () => {
             >
               <img src="/logo.png" alt="Book'n'Campus Logo" className="h-full object-contain" />
             </motion.div>
-            <motion.span 
+            <motion.span
               className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-[#16a34a] to-emerald-500 transition-all duration-300 group-hover:w-full"
               initial={{ width: 0 }}
               whileHover={{ width: '100%' }}
               transition={{ duration: 0.3 }}
             />
           </Link>
-          
+
           <ModeToggle />
         </div>
-        
+
         <div className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 flex flex-col">
             <nav className="py-1 px-1">
@@ -198,11 +257,11 @@ export const DesktopSideNav = () => {
                   <SideNavItem key={item.label} item={item} theme={theme} />
                 ))}
               </div>
-              
+
               <div className="my-2">
                 <SellButton item={actionItem} theme={theme} />
               </div>
-              
+
               <div className="space-y-0.5">
                 {navItems.slice(Math.ceil(navItems.length / 2)).map((item) => (
                   <SideNavItem key={item.label} item={item} theme={theme} />
@@ -210,15 +269,15 @@ export const DesktopSideNav = () => {
               </div>
             </nav>
           </div>
-          
+
           <div className={cn(
             "border-t px-2 pt-0.5 pb-2",
             theme === 'light' ? "border-gray-200" : "border-white/10"
           )}>
-            <UserProfileSection 
-              userProfile={userProfile} 
-              user={user} 
-              theme={theme} 
+            <UserProfileSection
+              userProfile={userProfile}
+              user={user}
+              theme={theme}
               isLoading={profileLoading}
             />
             <div className="mt-1">
@@ -227,27 +286,27 @@ export const DesktopSideNav = () => {
           </div>
         </div>
       </motion.aside>
-      
+
       {/* Modals */}
-      <SafetyTipsDialog 
-        open={showSellSafetyTips} 
+      <SafetyTipsDialog
+        open={showSellSafetyTips}
         onClose={() => {
           setShowSellSafetyTips(false);
           setIsSellModalOpen(true);
-        }} 
+        }}
         trigger="sell"
       />
-      <SafetyTipsDialog 
-        open={showGigSafetyTips} 
+      <SafetyTipsDialog
+        open={showGigSafetyTips}
         onClose={() => {
           setShowGigSafetyTips(false);
           setIsCreateGigModalOpen(true);
-        }} 
+        }}
         trigger="gig"
       />
       <SellModal isOpen={isSellModalOpen} onClose={() => setIsSellModalOpen(false)} />
       <CreateGigModal isOpen={isCreateGigModalOpen} onClose={() => setIsCreateGigModalOpen(false)} />
-      
+
       <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -258,7 +317,7 @@ export const DesktopSideNav = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleLogout}
               className="bg-red-500 hover:bg-red-600 text-white"
             >

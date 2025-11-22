@@ -1,6 +1,6 @@
 import ModeSwitcherMobile from './ModeSwitcherMobile';
 import type React from "react"
-import { 
+import {
   User,
   Bell,
   Wallet,
@@ -30,12 +30,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
 import { useSearch } from "@/contexts/SearchContext"
 import { SearchParams } from "@/services/nlpService"
 import { NLPSearchBar } from './NLPSearchBar'
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from "./ui/select"
 import {
   Popover,
@@ -60,17 +60,17 @@ const NavbarSkeleton = () => {
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'mobile';
   const { theme } = useTheme();
-  
+
   return (
     <nav className={cn(
       "fixed top-0 z-50 backdrop-blur-md",
       theme === 'light'
-        ? isMobile 
-          ? "w-full bg-white/80 border-b border-gray-200" 
-          : "left-[300px] right-0 bg-white/80 border-b border-gray-200"
-        : isMobile 
-          ? "w-full bg-secondary/80 border-b border-white/10" 
-          : "left-[300px] right-0 bg-black/80 border-b border-white/10"
+        ? isMobile
+          ? "w-full bg-white/80 border-b border-gray-200"
+          : "left-[240px] right-0 bg-white/80 border-b border-gray-200"
+        : isMobile
+          ? "w-full bg-secondary/80 border-b border-white/10"
+          : "left-[240px] right-0 bg-black/80 border-b border-white/10"
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -115,7 +115,7 @@ export const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
-  
+
   // Show navbar on home and gigs pages for desktop view
   const shouldShowOnDesktop = location.pathname === '/home' || location.pathname === '/gigs';
 
@@ -282,45 +282,45 @@ export const Navbar = () => {
   if (deviceType !== 'mobile' && !shouldShowOnDesktop) {
     return null;
   }
-  
+
   // Don't show navbar on saved page for desktop
   if (location.pathname === '/saved' && deviceType !== 'mobile') {
     return null;
   }
-  
+
   const isMobile = deviceType === 'mobile';
   const navbarHeight = isMobile ? "h-14" : "h-14";
-  const navbarClass = isMobile 
-    ? "w-full" 
+  const navbarClass = isMobile
+    ? "w-full"
     : "left-[300px] right-0";
 
-  const mainContentClass = deviceType === 'desktop' 
-    ? "pl-4" 
+  const mainContentClass = deviceType === 'desktop'
+    ? "pl-4"
     : "";
-  
+
   if (isLoading) {
     return <NavbarSkeleton />
   }
-  
+
   return (
     <>
-    <nav className={cn(
-      "fixed top-0 z-50 backdrop-blur-md",
-      theme === 'light'
-        ? isMobile 
-          ? "w-full bg-white/80 border-b border-gray-200 shadow-sm" 
-          : "left-[300px] right-0 bg-white/80 border-b border-gray-200 shadow-sm"
-        : isMobile 
-          ? "w-full bg-secondary/80 border-b border-white/10" 
-          : "left-[300px] right-0 bg-black/80 border-b border-white/10"
-    )}>
-      <div className={cn(
-        "mx-auto px-4 sm:px-6 lg:px-8",
-        mainContentClass
+      <nav className={cn(
+        "fixed top-0 z-50 backdrop-blur-md",
+        theme === 'light'
+          ? isMobile
+            ? "w-full bg-white/80 border-b border-gray-200 shadow-sm"
+            : "left-[240px] right-0 bg-white/80 border-b border-gray-200 shadow-sm"
+          : isMobile
+            ? "w-full bg-secondary/80 border-b border-white/10"
+            : "left-[240px] right-0 bg-black/80 border-b border-white/10"
       )}>
-        {/* First Row */}
-        <div className={`flex justify-between items-center ${navbarHeight} ${!isMobile ? 'py-4 lg:px-2 gap-8' : ''}`}>
-          {/* Only show GSU Market text on desktop, not on mobile */}
+        <div className={cn(
+          "mx-auto px-4 sm:px-6 lg:px-8",
+          mainContentClass
+        )}>
+          {/* First Row */}
+          <div className={`flex justify-between items-center ${navbarHeight} ${!isMobile ? 'py-4 lg:px-2 gap-8' : ''}`}>
+            {/* Only show GSU Market text on desktop, not on mobile */}
             {/* Search and User Icons */}
             <div className={`flex items-center ${isMobile ? 'w-full justify-between gap-4' : 'gap-8 w-full'}`}>
               {/* Search Input */}
@@ -329,10 +329,10 @@ export const Navbar = () => {
                 <ModeSwitcherMobile />
               )}
               <div
-                className={cn("transition-all duration-300 ease-in-out relative", 
-                  isSearchFocused 
-                  ? "flex-1 max-w-2xl" 
-                  : isMobile ? "w-36 flex-1" : "w-[400px] lg:w-[480px]"
+                className={cn("transition-all duration-300 ease-in-out relative",
+                  isSearchFocused
+                    ? "flex-1 max-w-2xl"
+                    : isMobile ? "w-36 flex-1" : "w-[400px] lg:w-[480px]"
                 ) + (!isMobile ? ' mr-8' : '')}
               >
                 {/* Using our new NLPSearchBar component */}
@@ -516,5 +516,5 @@ export const Navbar = () => {
         </AlertDialogContent>
       </AlertDialog>
     </>
-    )
+  )
 }
