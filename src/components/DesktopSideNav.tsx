@@ -1,5 +1,5 @@
 
-import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck, Wallet, Briefcase, Search, UserCheck, FileText, Calendar, Newspaper, BookOpen } from "lucide-react";
+import { Home, MessageSquare, Plus, Heart, Settings, User, LogOut, ShoppingBag, Truck, Wallet, Briefcase, Search, UserCheck, FileText, Calendar, Newspaper, BookOpen, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -46,7 +46,7 @@ export const DesktopSideNav = () => {
   const [profileLoading, setProfileLoading] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
-  const { hideSellTips } = useSettings();
+  const { hideSellTips, isSidebarCollapsed, toggleSidebar } = useSettings();
   const { unreadMessagesByUser } = useNotifications();
   const { currentMode, isMarketplace, isGigs } = useAppMode();
   const deviceType = useDeviceType();
@@ -216,7 +216,8 @@ export const DesktopSideNav = () => {
     <>
       <motion.aside
         className={cn(
-          "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col w-[240px] min-h-0 p-0 m-0",
+          "fixed left-0 top-0 bottom-0 right-auto z-40 flex flex-col min-h-0 p-0 m-0 transition-all duration-300 ease-in-out overflow-hidden",
+          isSidebarCollapsed ? "w-[80px]" : "w-[240px]",
           theme === 'light'
             ? "border-r border-gray-200 bg-white/95 shadow-sm"
             : "border-r border-white/10 bg-black"
@@ -226,10 +227,11 @@ export const DesktopSideNav = () => {
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
       >
+        {/* Header section with logo */}
         <div className={cn(
-          "flex flex-col items-center px-4 py-3 space-y-3"
+          "flex-shrink-0 flex flex-col items-center px-4 py-3 space-y-3 relative"
         )}>
-          <Link to={homeLink} className="group relative flex items-center transition-all duration-300 hover:scale-105">
+          <Link to={homeLink} className="w-full flex justify-center group relative transition-all duration-300 hover:scale-105">
             <motion.div
               className="h-10 overflow-hidden"
               initial={{ y: 0 }}
@@ -238,51 +240,69 @@ export const DesktopSideNav = () => {
             >
               <img src="/logo.png" alt="Book'n'Campus Logo" className="h-full object-contain" />
             </motion.div>
-            <motion.span
-              className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-[#16a34a] to-emerald-500 transition-all duration-300 group-hover:w-full"
-              initial={{ width: 0 }}
-              whileHover={{ width: '100%' }}
-              transition={{ duration: 0.3 }}
-            />
+            {!isSidebarCollapsed && (
+              <motion.span
+                className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-[#16a34a] to-emerald-500 transition-all duration-300 group-hover:w-full"
+                initial={{ width: 0 }}
+                whileHover={{ width: '100%' }}
+                transition={{ duration: 0.3 }}
+              />
+            )}
           </Link>
 
-          <ModeToggle />
+          <ModeToggle isCollapsed={isSidebarCollapsed} />
         </div>
 
-        <div className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 flex flex-col">
-            <nav className="py-1 px-1">
-              <div className="space-y-0.5">
-                {navItems.slice(0, Math.ceil(navItems.length / 2)).map((item) => (
-                  <SideNavItem key={item.label} item={item} theme={theme} />
-                ))}
-              </div>
+        {/* Toggle Button - positioned on the vertical right border at navbar level */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "absolute -right-4 top-5 h-7 w-7 rounded-full border-2 shadow-lg z-50 transition-all duration-200",
+            theme === 'light'
+              ? "bg-white border-gray-300 text-gray-600 hover:text-primary hover:border-primary"
+              : "bg-black border-white/20 text-gray-300 hover:text-primary hover:border-primary"
+          )}
+          onClick={toggleSidebar}
+        >
+          {isSidebarCollapsed ? <ChevronsRight className="h-3.5 w-3.5" /> : <ChevronsLeft className="h-3.5 w-3.5" />}
+        </Button>
 
-              <div className="my-2">
-                <SellButton item={actionItem} theme={theme} />
-              </div>
-
-              <div className="space-y-0.5">
-                {navItems.slice(Math.ceil(navItems.length / 2)).map((item) => (
-                  <SideNavItem key={item.label} item={item} theme={theme} />
-                ))}
-              </div>
-            </nav>
-          </div>
-
-          <div className={cn(
-            "border-t px-2 pt-0.5 pb-2",
-            theme === 'light' ? "border-gray-200" : "border-white/10"
-          )}>
-            <UserProfileSection
-              userProfile={userProfile}
-              user={user}
-              theme={theme}
-              isLoading={profileLoading}
-            />
-            <div className="mt-1">
-              <LogoutButton onClick={() => setShowLogoutDialog(true)} theme={theme} />
+        {/* Scrollable navigation section */}
+        <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
+          <nav className="py-1 px-1">
+            <div className="space-y-1">
+              {navItems.slice(0, Math.ceil(navItems.length / 2)).map((item) => (
+                <SideNavItem key={item.label} item={item} theme={theme} isCollapsed={isSidebarCollapsed} />
+              ))}
             </div>
+
+            <div className="my-2 flex justify-center">
+              <SellButton item={actionItem} theme={theme} isCollapsed={isSidebarCollapsed} />
+            </div>
+
+            <div className="space-y-1">
+              {navItems.slice(Math.ceil(navItems.length / 2)).map((item) => (
+                <SideNavItem key={item.label} item={item} theme={theme} isCollapsed={isSidebarCollapsed} />
+              ))}
+            </div>
+          </nav>
+        </div>
+
+        {/* Footer section with profile and logout */}
+        <div className={cn(
+          "flex-shrink-0 border-t px-2 py-2",
+          theme === 'light' ? "border-gray-200" : "border-white/10"
+        )}>
+          <UserProfileSection
+            userProfile={userProfile}
+            user={user}
+            theme={theme}
+            isLoading={profileLoading}
+            isCollapsed={isSidebarCollapsed}
+          />
+          <div className="mt-1">
+            <LogoutButton onClick={() => setShowLogoutDialog(true)} theme={theme} isCollapsed={isSidebarCollapsed} />
           </div>
         </div>
       </motion.aside>

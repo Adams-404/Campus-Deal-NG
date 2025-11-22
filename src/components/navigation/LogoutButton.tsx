@@ -8,16 +8,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 interface LogoutButtonProps {
   onClick: () => void;
   theme: string;
+  isCollapsed?: boolean;
 }
 
-export const LogoutButton = ({ onClick, theme }: LogoutButtonProps) => {
+export const LogoutButton = ({ onClick, theme, isCollapsed }: LogoutButtonProps) => {
   return (
-    <Tooltip>
+    <Tooltip delayDuration={0}>
       <TooltipTrigger asChild>
         <Button
           variant="ghost"
           className={cn(
-            "group relative flex items-center gap-3 w-full py-1.5 px-4 h-auto rounded-lg transition-all duration-300",
+            "group relative flex items-center w-full h-auto rounded-lg transition-all duration-300",
+            isCollapsed ? "justify-center py-2 px-2" : "gap-3 py-1.5 px-4",
             theme === 'light' ? "text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200" : "text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/30"
           )}
           onClick={onClick}
@@ -31,10 +33,12 @@ export const LogoutButton = ({ onClick, theme }: LogoutButtonProps) => {
             />
             <LogOut className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
           </div>
-          <span className="text-xs font-medium group-hover:translate-x-1 transition-transform duration-300">Logout</span>
+          {!isCollapsed && (
+            <span className="text-xs font-medium group-hover:translate-x-1 transition-transform duration-300">Logout</span>
+          )}
         </Button>
       </TooltipTrigger>
-      <TooltipContent className="bg-black/90 text-white border-white/10 px-3 py-1">
+      <TooltipContent side="right" className="bg-black/90 text-white border-white/10 px-3 py-1 ml-2">
         Sign out from your account
       </TooltipContent>
     </Tooltip>

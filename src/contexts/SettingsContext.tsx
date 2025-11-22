@@ -14,6 +14,8 @@ interface SettingsContextType {
   showSafetyTips: boolean;
   setShowSafetyTips: (show: boolean) => void;
   loadingSettings: boolean;
+  isSidebarCollapsed: boolean;
+  toggleSidebar: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -23,6 +25,7 @@ const LS_HIDE_SAFETY_TIPS = 'hide_safety_tips';
 const LS_HIDE_SELL_TIPS = 'hide_sell_tips';
 const LS_HIDE_MESSAGE_TIPS = 'hide_message_tips';
 const LS_FONT_SIZE = 'font_size';
+const LS_SIDEBAR_COLLAPSED = 'sidebar_collapsed';
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [fontSizeClass, setFontSizeClass] = useState('medium');
@@ -31,6 +34,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [hideMessageTips, setHideMessageTipsState] = useState(false);
   const [showSafetyTips, setShowSafetyTips] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Load settings from localStorage first, then try Supabase if user is logged in
   useEffect(() => {
@@ -40,18 +44,20 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       const localHideSafetyTips = localStorage.getItem(LS_HIDE_SAFETY_TIPS);
       const localHideSellTips = localStorage.getItem(LS_HIDE_SELL_TIPS);
       const localHideMessageTips = localStorage.getItem(LS_HIDE_MESSAGE_TIPS);
+      const localSidebarCollapsed = localStorage.getItem(LS_SIDEBAR_COLLAPSED);
 
       if (localFontSize) setFontSizeClass(localFontSize);
       if (localHideSafetyTips) setHideSafetyTipsState(localHideSafetyTips === 'true');
       if (localHideSellTips) setHideSellTipsState(localHideSellTips === 'true');
       if (localHideMessageTips) setHideMessageTipsState(localHideMessageTips === 'true');
+      if (localSidebarCollapsed) setIsSidebarCollapsed(localSidebarCollapsed === 'true');
     };
 
     // Then try to load from Supabase if user is logged in
     const loadUserSettings = async () => {
       try {
         loadLocalSettings(); // Load from localStorage first for immediate response
-        
+
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           const { data, error } = await supabase
@@ -66,7 +72,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             setHideSafetyTipsState(data.hide_safety_tips || false);
             setHideSellTipsState(data.hide_sell_tips || false);
             setHideMessageTipsState(data.hide_message_tips || false);
-            
+
             // Update localStorage
             localStorage.setItem(LS_FONT_SIZE, data.font_size || 'medium');
             localStorage.setItem(LS_HIDE_SAFETY_TIPS, String(data.hide_safety_tips || false));
@@ -87,7 +93,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const updateFontSize = async (size: string) => {
     setFontSizeClass(size);
     localStorage.setItem(LS_FONT_SIZE, size);
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -104,7 +110,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const setHideSafetyTips = async (value: boolean) => {
     setHideSafetyTipsState(value);
     localStorage.setItem(LS_HIDE_SAFETY_TIPS, String(value));
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -121,7 +127,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const setHideSellTips = async (value: boolean) => {
     setHideSellTipsState(value);
     localStorage.setItem(LS_HIDE_SELL_TIPS, String(value));
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -138,7 +144,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const setHideMessageTips = async (value: boolean) => {
     setHideMessageTipsState(value);
     localStorage.setItem(LS_HIDE_MESSAGE_TIPS, String(value));
-    
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -152,10 +158,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const toggleSidebar = () => {
+    const newState = !isSidebarCollapsed;
+    setIsSidebarCollapsed(newState);
+    localStorage.setItem(LS_SIDEBAR_COLLAPSED, String(newState));
+  };
+
   return (
-    <SettingsContext.Provider 
-      value={{ 
-        fontSizeClass, 
+    <SettingsContext.Provider
+      value={{
+        fontSizeClass,
         updateFontSize,
         hideSafetyTips,
         setHideSafetyTips,
@@ -165,7 +177,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
         setHideMessageTips,
         showSafetyTips,
         setShowSafetyTips,
-        loadingSettings
+        loadingSettings,
+        isSidebarCollapsed,
+        toggleSidebar
       }}
     >
       {children}

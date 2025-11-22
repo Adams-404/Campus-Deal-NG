@@ -8,14 +8,16 @@ interface UserProfileSectionProps {
   user: any;
   theme: string;
   isLoading?: boolean;
+  isCollapsed?: boolean;
 }
 
-export const UserProfileSection = ({ userProfile, user, theme, isLoading = false }: UserProfileSectionProps) => {
+export const UserProfileSection = ({ userProfile, user, theme, isLoading = false, isCollapsed }: UserProfileSectionProps) => {
   if (isLoading) {
     // Use a semi-transparent background similar to header/bottomnav
     return (
       <div className={cn(
         "group relative flex items-center gap-3 w-full px-4 py-2 rounded-xl",
+        isCollapsed && "justify-center px-2",
         theme === 'light'
           ? 'bg-white/80 backdrop-blur-md border border-gray-200'
           : 'bg-black/60 backdrop-blur-md border border-white/10'
@@ -32,18 +34,23 @@ export const UserProfileSection = ({ userProfile, user, theme, isLoading = false
             </div>
           </div>
         </div>
-        <div className="flex-1 space-y-2">
-          <div className={cn("h-4 rounded w-24", theme === 'light' ? 'bg-primary/10' : 'bg-primary/20')} />
-          <div className={cn("h-3 rounded w-32", theme === 'light' ? 'bg-primary/10' : 'bg-primary/20')} />
-        </div>
+        {!isCollapsed && (
+          <div className="flex-1 space-y-2">
+            <div className={cn("h-4 rounded w-24", theme === 'light' ? 'bg-primary/10' : 'bg-primary/20')} />
+            <div className={cn("h-3 rounded w-32", theme === 'light' ? 'bg-primary/10' : 'bg-primary/20')} />
+          </div>
+        )}
       </div>
     );
   }
 
   if (!userProfile) return null;
-  
+
   return (
-    <div className="group relative flex items-center gap-3 w-full px-4 py-2 rounded-xl transition-all duration-300 hover:bg-primary/5">
+    <div className={cn(
+      "group relative flex items-center gap-3 w-full px-4 py-2 rounded-xl transition-all duration-300 hover:bg-primary/5",
+      isCollapsed && "justify-center px-2"
+    )}>
       <div className="relative">
         <motion.div
           className="absolute -inset-1 rounded-full bg-primary/0 group-hover:bg-primary/10 transition-all duration-300"
@@ -58,12 +65,14 @@ export const UserProfileSection = ({ userProfile, user, theme, isLoading = false
           </AvatarFallback>
         </Avatar>
       </div>
-      <div className="flex-1 min-w-0">
-        <div className={cn("font-medium text-sm truncate group-hover:text-primary transition-all duration-300", theme === 'light' ? "text-black" : undefined)}>
-          {userProfile?.first_name || 'User'}
+      {!isCollapsed && (
+        <div className="flex-1 min-w-0">
+          <div className={cn("font-medium text-sm truncate group-hover:text-primary transition-all duration-300", theme === 'light' ? "text-black" : undefined)}>
+            {userProfile?.first_name || 'User'}
+          </div>
+          <div className={cn("text-xs truncate", theme === 'light' ? "text-gray-600" : "text-gray-400")}>{user?.email}</div>
         </div>
-        <div className={cn("text-xs truncate", theme === 'light' ? "text-gray-600" : "text-gray-400")}>{user?.email}</div>
-      </div>
+      )}
     </div>
   );
 };

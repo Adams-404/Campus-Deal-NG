@@ -147,7 +147,7 @@ const AnimatedRoutes = () => {
     "/feedback"
   ].includes(location.pathname) || location.pathname.match(/^\/messages\/[^/]+$/);
 
-  const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings } = useSettings();
+  const { hideSafetyTips, showSafetyTips, setShowSafetyTips, loadingSettings, isSidebarCollapsed } = useSettings();
   const [user, setUser] = useState<any>(null);
   const [authLoaded, setAuthLoaded] = useState(false);
   const deviceType = useDeviceType();
@@ -220,7 +220,9 @@ const AnimatedRoutes = () => {
       return 'pb-24';
     } else if (shouldShowSideNav) {
       // Add left margin for desktop/tablet with sidenav, and top padding if navbar is visible
-      return showNav ? "ml-[240px] pt-14" : "ml-[240px]";
+      return showNav
+        ? (isSidebarCollapsed ? "ml-[80px] pt-14 transition-all duration-300 ease-in-out" : "ml-[240px] pt-14 transition-all duration-300 ease-in-out")
+        : (isSidebarCollapsed ? "ml-[80px] transition-all duration-300 ease-in-out" : "ml-[240px] transition-all duration-300 ease-in-out");
     } else {
       // Add top padding if navbar is visible
       return showNav ? "pt-14" : "";
