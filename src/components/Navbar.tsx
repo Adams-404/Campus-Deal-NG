@@ -44,6 +44,7 @@ import {
 } from "./ui/popover"
 import { Skeleton } from './ui/skeleton'
 import { useDeviceType } from "../hooks/use-mobile"
+import { useSettings } from "@/contexts/SettingsContext"
 import { useTheme } from "../contexts/ThemeContext"
 import {
   AlertDialog,
@@ -60,17 +61,22 @@ const NavbarSkeleton = () => {
   const deviceType = useDeviceType();
   const isMobile = deviceType === 'mobile';
   const { theme } = useTheme();
+  const { isSidebarCollapsed } = useSettings();
 
   return (
     <nav className={cn(
-      "fixed top-0 z-50 backdrop-blur-md",
+      "fixed top-0 z-50 backdrop-blur-md transition-all duration-300 ease-in-out",
       theme === 'light'
         ? isMobile
           ? "w-full bg-white/80 border-b border-gray-200"
-          : "left-[240px] right-0 bg-white/80 border-b border-gray-200"
+          : (isSidebarCollapsed
+            ? "left-[80px] right-0 bg-white/80 border-b border-gray-200"
+            : "left-[240px] right-0 bg-white/80 border-b border-gray-200")
         : isMobile
           ? "w-full bg-secondary/80 border-b border-white/10"
-          : "left-[240px] right-0 bg-black/80 border-b border-white/10"
+          : (isSidebarCollapsed
+            ? "left-[80px] right-0 bg-black/80 border-b border-white/10"
+            : "left-[240px] right-0 bg-black/80 border-b border-white/10")
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
@@ -115,6 +121,7 @@ export const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const { isSidebarCollapsed } = useSettings(); // Added useSettings hook
 
   // Show navbar on home and gigs pages for desktop view
   const shouldShowOnDesktop = location.pathname === '/home' || location.pathname === '/gigs';
@@ -305,14 +312,18 @@ export const Navbar = () => {
   return (
     <>
       <nav className={cn(
-        "fixed top-0 z-50 backdrop-blur-md",
+        "fixed top-0 z-50 backdrop-blur-md transition-all duration-300 ease-in-out",
         theme === 'light'
           ? isMobile
             ? "w-full bg-white/80 border-b border-gray-200 shadow-sm"
-            : "left-[240px] right-0 bg-white/80 border-b border-gray-200 shadow-sm"
+            : (isSidebarCollapsed
+              ? "left-[80px] right-0 bg-white/80 border-b border-gray-200 shadow-sm"
+              : "left-[240px] right-0 bg-white/80 border-b border-gray-200 shadow-sm")
           : isMobile
             ? "w-full bg-secondary/80 border-b border-white/10"
-            : "left-[240px] right-0 bg-black/80 border-b border-white/10"
+            : (isSidebarCollapsed
+              ? "left-[80px] right-0 bg-black/80 border-b border-white/10"
+              : "left-[240px] right-0 bg-black/80 border-b border-white/10")
       )}>
         <div className={cn(
           "mx-auto px-4 sm:px-6 lg:px-8",

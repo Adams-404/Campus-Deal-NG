@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 
-export const ModeToggle = () => {
+export const ModeToggle = ({ isCollapsed }: { isCollapsed?: boolean }) => {
   const { currentMode, setCurrentMode } = useAppMode();
   const { theme } = useTheme();
 
@@ -43,25 +43,37 @@ export const ModeToggle = () => {
         <Button
           variant="outline"
           className={cn(
-            "w-full justify-between px-3 py-2 h-auto rounded-xl border-2",
+            "h-auto rounded-xl border-2 transition-all duration-300",
+            isCollapsed ? "w-12 h-12 p-0 justify-center" : "w-full justify-between px-3 py-2",
             theme === 'light'
               ? "bg-white border-gray-100 hover:bg-gray-50 hover:border-gray-200"
               : "bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20"
           )}
         >
-          <div className="flex items-center gap-2">
+          {isCollapsed ? (
             <div className={cn(
               "p-1.5 rounded-lg text-white",
               currentModeData.bgColor
             )}>
               <CurrentIcon className="w-4 h-4" />
             </div>
-            <span className="font-medium">{currentModeData.label}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <ChevronsUpDown className="w-4 h-4 opacity-50" />
-            <Grid className="w-4 h-4 opacity-50" />
-          </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                <div className={cn(
+                  "p-1.5 rounded-lg text-white",
+                  currentModeData.bgColor
+                )}>
+                  <CurrentIcon className="w-4 h-4" />
+                </div>
+                <span className="font-medium">{currentModeData.label}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <ChevronsUpDown className="w-4 h-4 opacity-50" />
+                <Grid className="w-4 h-4 opacity-50" />
+              </div>
+            </>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent
@@ -70,6 +82,7 @@ export const ModeToggle = () => {
           theme === 'light' ? "bg-white" : "bg-zinc-950 border-zinc-800"
         )}
         align="start"
+        side={isCollapsed ? "right" : "bottom"}
       >
         <div className="grid grid-cols-3 gap-4">
           {modes.map((mode) => {
