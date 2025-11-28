@@ -30,20 +30,44 @@ Campus Deal was created to address the challenges people face when trying to sel
 - **KYC Process**: Ensures all users are legitimate students
 - **Secure Access**: Only verified students can access the platform
 
-### 🛍️ Campus Marketplace
-- Buy, sell, or trade items within your campus community
-- Categories for textbooks, gadgets, dorm essentials, and more
-- Secure transactions with built-in trust features
+## Campus Deal — Features
 
-### 💼 Gig & Job Opportunities
-- Find on-campus and remote gigs
-- Post or discover student services like tutoring
-- Easy application and hiring process
+Campus Deal brings together essential campus-life services into one unified platform. Here are the core features:
 
-### 💰 Exclusive Deals & Discounts
-- Student-exclusive offers from local businesses
-- Curated discounts on food, services, and more
-- Personalized recommendations based on your campus
+### 🛒 Marketplace
+
+Buy and sell items within your campus community easily and securely.
+
+### 💼 Gigs
+
+Find quick gigs, short-term jobs, and opportunities posted by fellow students.
+
+### 📚 Study Resources
+
+Access and share notes, past questions, study guides, and academic materials.
+
+### 📰 News & Updates
+
+Stay informed with campus announcements, local updates, and important notifications.
+
+### 🚚 Delivery Services
+
+Request or offer delivery services within campus — from food to parcels.
+
+### 🎉 Events
+
+Discover upcoming campus events, workshops, hangouts, and activities.
+
+### 🔎 Lost & Found
+
+Report lost items or help others recover theirs using the dedicated portal.
+
+### 🏠 Accommodation
+
+Search for campus housing, hostels, and student-friendly accommodation options.
+
+---
+
 
 ### 🔒 Security & Trust
 - **Verified Users**: All users must verify their campus affiliation
