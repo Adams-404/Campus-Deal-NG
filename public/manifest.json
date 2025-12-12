@@ -1,7 +1,7 @@
 {
-  "name": "Campus Deal - Campus Marketplace",
+  "name": "Campus Deal - The Digital Ecosystem for students",
   "short_name": "Campus Deal",
-  "description": "Buy, sell, and trade within your campus community - safely, easily, and on your own terms.",
+  "description": "Buy, sell, and get gig within your campus community - safely, easily, and on your own terms.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
