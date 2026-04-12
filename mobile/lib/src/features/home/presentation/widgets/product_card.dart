@@ -1,0 +1,152 @@
+import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+class ProductCardData {
+  final String title;
+  final double price;
+  final String imageUrl;
+  final String sellerName;
+  final bool isFeatured;
+
+  ProductCardData({
+    required this.title,
+    required this.price,
+    required this.imageUrl,
+    required this.sellerName,
+    this.isFeatured = false,
+  });
+}
+
+class ProductCard extends StatelessWidget {
+  final String title;
+  final double price;
+  final String imageUrl;
+  final String sellerName;
+  final bool isFeatured;
+  final VoidCallback? onTap;
+
+  const ProductCard({
+    super.key,
+    required this.title,
+    required this.price,
+    required this.imageUrl,
+    required this.sellerName,
+    this.isFeatured = false,
+    this.onTap,
+  });
+
+  factory ProductCard.fromData(ProductCardData data, {VoidCallback? onTap}) {
+    return ProductCard(
+      title: data.title,
+      price: data.price,
+      imageUrl: data.imageUrl,
+      sellerName: data.sellerName,
+      isFeatured: data.isFeatured,
+      onTap: onTap,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: isFeatured ? double.infinity : 160,
+        decoration: BoxDecoration(
+          color: const Color(0xFF171717),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white.withOpacity(0.05)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image Section
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    height: isFeatured ? 200 : 120,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: Colors.grey[900],
+                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: Colors.grey[900],
+                      child: const Icon(Icons.error),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.favorite_border, color: Colors.white, size: 18),
+                  ),
+                ),
+              ],
+            ),
+            
+            // Content Section
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '₦${price.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      color: Color(0xFF3B82F6),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 8,
+                        backgroundColor: Colors.grey[800],
+                        child: Text(
+                          sellerName[0],
+                          style: const TextStyle(fontSize: 8, color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        sellerName,
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
