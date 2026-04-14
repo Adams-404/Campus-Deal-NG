@@ -4,10 +4,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'src/core/constants/supabase_constants.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/features/auth/auth_provider.dart';
+import 'src/features/auth/presentation/pages/sign_up_screen.dart';
 import 'src/features/home/presentation/pages/home_screen.dart';
 import 'src/features/navigation/presentation/widgets/bottom_nav_bar.dart';
 import 'src/features/marketplace/presentation/pages/saved_items_screen.dart';
 import 'src/features/marketplace/presentation/pages/settings_screen.dart';
+import 'src/features/marketplace/presentation/pages/create_listing_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -183,10 +185,10 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Create listing — coming soon! 🚀'),
-                      behavior: SnackBarBehavior.floating,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CreateListingScreen(),
                     ),
                   );
                 },
@@ -466,10 +468,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(color: Colors.grey[400])),
                   TextButton(
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Sign up — coming soon!'),
-                          behavior: SnackBarBehavior.floating,
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SignUpScreen(),
                         ),
                       );
                     },

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../home/domain/models/product.dart';
-import '../../data/repositories/saved_items_repository.dart';
 import '../../../auth/auth_provider.dart';
 import '../providers/saved_items_provider.dart';
 
