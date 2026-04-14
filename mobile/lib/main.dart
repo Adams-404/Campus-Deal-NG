@@ -10,6 +10,7 @@ import 'src/features/navigation/presentation/widgets/bottom_nav_bar.dart';
 import 'src/features/marketplace/presentation/pages/saved_items_screen.dart';
 import 'src/features/marketplace/presentation/pages/settings_screen.dart';
 import 'src/features/marketplace/presentation/pages/create_listing_screen.dart';
+import 'src/features/messages/presentation/pages/messages_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -84,7 +85,7 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
   static const List<Widget> _screens = [
     HomeScreen(),        // nav 0
     SavedItemsScreen(),  // nav 1
-    _MessagesScreen(),   // nav 3
+    MessagesScreen(),    // nav 3
     SettingsScreen(),    // nav 4
   ];
 
@@ -221,60 +222,6 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
 
 // ── Messages placeholder ──────────────────────────────────────────────────────
 
-class _MessagesScreen extends StatelessWidget {
-  const _MessagesScreen();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0A),
-        title: const Text('Messages',
-            style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 22)),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF171717),
-                  shape: BoxShape.circle,
-                  border:
-                      Border.all(color: Colors.white.withOpacity(0.06)),
-                ),
-                child: const Icon(Icons.chat_bubble_outline,
-                    color: Colors.grey, size: 32),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Messages coming soon',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Real-time chat with sellers will land here.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey[500], fontSize: 14),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ── Login Screen ──────────────────────────────────────────────────────────────
 

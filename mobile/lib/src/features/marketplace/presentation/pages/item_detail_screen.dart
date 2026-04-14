@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../home/domain/models/product.dart';
 import '../../../auth/auth_provider.dart';
 import '../providers/saved_items_provider.dart';
+import '../../../messages/domain/models/chat_models.dart';
+import '../../../messages/presentation/pages/chat_screen.dart';
 
 class ItemDetailScreen extends ConsumerStatefulWidget {
   final String itemId;
@@ -167,10 +169,30 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Conversation started!')),
+        final conv = Conversation(
+          id: conversationId,
+          buyerId: user.id,
+          sellerId: _product!.sellerId ?? '',
+          lastMessage: "Hi, I'm interested in ${_product!.title}",
+          lastMessageAt: DateTime.now(),
+          otherUser: ConvProfile(
+            id: _product!.sellerId ?? '',
+            firstName: _product!.seller?.firstName,
+            lastName: _product!.seller?.lastName,
+            avatarUrl: _product!.seller?.avatarUrl,
+          ),
+          itemTitle: _product!.title,
+          itemPrice: _product!.price,
         );
-        // TODO: Navigate to conversation when Messages screen is ready
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              conversation: conv,
+              currentUserId: user.id,
+            ),
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {
