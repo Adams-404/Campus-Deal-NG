@@ -308,9 +308,9 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                   color: Colors.grey, size: 32),
             ),
             const SizedBox(height: 20),
-            const Text(
-              _search.length > 0 ? 'No results' : 'No conversations yet',
-              style: TextStyle(
+            Text(
+              _search.isNotEmpty ? 'No results' : 'No conversations yet',
+              style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold),
