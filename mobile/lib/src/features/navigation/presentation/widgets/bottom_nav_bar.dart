@@ -15,8 +15,6 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF111111).withOpacity(0.9),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/product.dart';
 import 'product_card.dart';
+import '../pages/category_page.dart';
+import '../../../marketplace/presentation/pages/item_detail_screen.dart';
 
 class CategorySection extends StatelessWidget {
   final String title;
@@ -35,7 +37,17 @@ class CategorySection extends StatelessWidget {
                 ),
               ),
               TextButton(
-                onPressed: onSeeAllTap,
+                onPressed: onSeeAllTap ?? () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => CategoryPage(
+                        category: title,
+                        products: items,
+                      ),
+                    ),
+                  );
+                },
                 child: Row(
                   children: [
                     Text(
@@ -73,6 +85,14 @@ class CategorySection extends StatelessWidget {
                     ? product.images.first 
                     : 'https://via.placeholder.com/300',
                 sellerName: product.seller?.firstName ?? product.seller?.fullName ?? 'Seller',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ItemDetailScreen(itemId: product.id),
+                    ),
+                  );
+                },
               );
             },
           ),

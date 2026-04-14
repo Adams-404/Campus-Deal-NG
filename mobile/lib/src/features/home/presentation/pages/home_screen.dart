@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/product_card.dart';
 import '../widgets/category_section.dart';
 import '../providers/product_provider.dart';
+import '../../../marketplace/presentation/pages/item_detail_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -103,6 +104,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             : 'https://via.placeholder.com/800',
                         sellerName: products[0].seller?.firstName ?? products[0].seller?.fullName ?? 'Seller',
                         isFeatured: true,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ItemDetailScreen(itemId: products[0].id),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
