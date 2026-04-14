@@ -9,7 +9,7 @@ android {
     namespace = "com.campusdeal.ng.campus_deal_mobile"
     compileSdk = 34
     buildToolsVersion = "34.0.0"
-    ndkVersion = "25.1.8937393"
+    ndkVersion = "28.2.13676358"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
