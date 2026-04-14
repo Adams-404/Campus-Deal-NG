@@ -9,7 +9,7 @@ class ProductRepository {
   Future<List<Product>> getProducts() async {
     final response = await _supabase
         .from('items')
-        .select('*, seller:profiles(id, full_name, first_name, last_name, avatar_url), item_images(image_url)')
+        .select('*, seller:profiles(id, first_name, last_name, avatar_url), item_images(image_url)')
         .eq('status', 'active')
         .order('created_at', ascending: false);
 
