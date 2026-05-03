@@ -645,70 +645,151 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
       bottom: 0,
       left: 0,
       right: 0,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0A0A0A),
-          border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(0.08)),
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Row(
-            children: [
-              // Save button
-              GestureDetector(
-                onTap: _isSaving ? null : _toggleSave,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: _isSaved
-                        ? Colors.red.withOpacity(0.15)
-                        : const Color(0xFF171717),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _isSaved
-                          ? Colors.red.withOpacity(0.4)
-                          : Colors.white.withOpacity(0.1),
-                    ),
-                  ),
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child:
-                              CircularProgressIndicator(strokeWidth: 2))
-                      : Icon(
-                          _isSaved
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: _isSaved ? Colors.red : Colors.white,
-                          size: 22,
-                        ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Message button
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _messageSeller,
-                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                  label: const Text('Message Seller',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                ),
-              ),
+      child: ShaderMask(
+        shaderCallback: (rect) {
+          return const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black,
+              Colors.black,
             ],
+            stops: [0.0, 0.4, 1.0],
+          ).createShader(rect);
+        },
+        blendMode: BlendMode.dstIn,
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 48, 20, 32),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.0),
+                    Colors.black.withOpacity(0.85),
+                    Colors.black.withOpacity(0.95),
+                  ],
+                  stops: const [0.0, 0.4, 1.0],
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    // Save button (Liquid Glass)
+                    GestureDetector(
+                      onTap: _isSaving ? null : _toggleSave,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: _isSaved
+                                  ? Colors.red.withOpacity(0.2)
+                                  : Colors.white.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _isSaved
+                                    ? Colors.red.withOpacity(0.6)
+                                    : Colors.white.withOpacity(0.3),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: _isSaving
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white))
+                                : Icon(
+                                    _isSaved
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: _isSaved ? Colors.red : Colors.white,
+                                    size: 22,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Message button (Liquid Glass)
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withOpacity(0.25),
+                                  Colors.white.withOpacity(0.10),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.4),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.1),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _messageSeller,
+                                borderRadius: BorderRadius.circular(20),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.chat_bubble_outline, size: 20, color: Colors.white),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        'Message Seller',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
