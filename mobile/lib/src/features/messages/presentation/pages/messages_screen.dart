@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/models/chat_models.dart';
 import '../../../auth/auth_provider.dart';
 import '../../../../core/utils/image_utils.dart';
+import 'package:campus_deal_mobile/src/core/widgets/glass_search_bar.dart';
 import 'chat_screen.dart';
 
 class MessagesScreen extends ConsumerStatefulWidget {
@@ -16,6 +17,7 @@ class MessagesScreen extends ConsumerStatefulWidget {
 }
 
 class _MessagesScreenState extends ConsumerState<MessagesScreen> {
+  final _searchController = TextEditingController();
   List<Conversation> _conversations = [];
   bool _isLoading = true;
   String _search = '';
@@ -25,6 +27,12 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -123,41 +131,11 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
             scrolledUnderElevation: 0,
             elevation: 0,
             flexibleSpace: const SizedBox.shrink(),
-            title: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withOpacity(0.15),
-                        Colors.white.withOpacity(0.05),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.2),
-                      width: 1.0,
-                    ),
-                  ),
-                  child: TextField(
-                    onChanged: (v) => setState(() => _search = v),
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: 'Search conversations...',
-                      hintStyle: TextStyle(color: Colors.white60),
-                      prefixIcon: Icon(Icons.search,
-                          color: Colors.white70, size: 20),
-                      border: InputBorder.none,
-                      contentPadding:
-                          EdgeInsets.symmetric(vertical: 12),
-                    ),
-                  ),
-                ),
-              ),
+            title: GlassSearchBar(
+              controller: _searchController,
+              hintText: 'Search conversations...',
+              onChanged: (v) => setState(() => _search = v),
+              onClear: () => setState(() => _search = ''),
             ),
           ),
           if (_isLoading)

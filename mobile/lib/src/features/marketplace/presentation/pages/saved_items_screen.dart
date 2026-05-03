@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../providers/saved_items_provider.dart';
+import 'package:campus_deal_mobile/src/core/widgets/glass_search_bar.dart';
 import 'item_detail_screen.dart';
 
 class SavedItemsScreen extends ConsumerStatefulWidget {
@@ -14,6 +15,15 @@ class SavedItemsScreen extends ConsumerStatefulWidget {
 }
 
 class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
+  final _searchController = TextEditingController();
+  String _search = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<void> _removeItem(String savedId) async {
     try {
       final repo = ref.read(savedItemsRepositoryProvider);
@@ -71,20 +81,12 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
             pinned: true,
             backgroundColor: Colors.transparent,
             elevation: 0,
-            flexibleSpace: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  color: const Color(0xFF0A0A0A).withOpacity(0.7),
-                ),
-              ),
-            ),
-            title: const Text(
-              'Saved Items',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold),
+            flexibleSpace: const SizedBox.shrink(),
+            title: GlassSearchBar(
+              controller: _searchController,
+              hintText: 'Search saved items...',
+              onChanged: (v) => setState(() => _search = v),
+              onClear: () => setState(() => _search = ''),
             ),
           ),
           savedAsync.when(
@@ -95,8 +97,21 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
               child: _buildEmptyState(isError: true, errorMsg: err.toString()),
             ),
             data: (items) {
-              if (items.isEmpty) {
-                return SliverFillRemaining(child: _buildEmptyState());
+              final filtered = _search.isEmpty
+                  ? items
+                  : items.where((entry) {
+                      final item = entry['item'] as Map<String, dynamic>;
+                      final title = item['title'] as String? ?? '';
+                      return title.toLowerCase().contains(_search.toLowerCase());
+                    }).toList();
+
+              if (filtered.isEmpty) {
+                return SliverFillRemaining(
+                    child: _buildEmptyState(
+                        isSearch: _search.isNotEmpty,
+                        errorMsg: _search.isNotEmpty
+                            ? 'No items match your search'
+                            : null));
               }
 
               return SliverPadding(
@@ -111,7 +126,7 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      final entry = items[index];
+                      final entry = filtered[index];
                       final savedId = entry['savedId'] as String;
                       final itemData =
                           entry['item'] as Map<String, dynamic>;
@@ -250,7 +265,7 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
     );
   }
 
-  Widget _buildEmptyState({bool isError = false, String? errorMsg}) {
+  Widget _buildEmptyState({bool isError = false, bool isSearch = false, String? errorMsg}) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -266,14 +281,16 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
                 border: Border.all(color: Colors.white.withOpacity(0.06)),
               ),
               child: Icon(
-                isError ? Icons.error_outline : Icons.favorite_border,
+                isError ? Icons.error_outline : (isSearch ? Icons.search_off : Icons.favorite_border),
                 color: isError ? Colors.red : Colors.grey,
                 size: 36,
               ),
             ),
             const SizedBox(height: 20),
             Text(
-              isError ? 'Something went wrong' : 'No saved items yet',
+              isError
+                  ? 'Something went wrong'
+                  : (isSearch ? 'No items found' : 'No saved items yet'),
               style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -283,7 +300,9 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
             Text(
               isError
                   ? (errorMsg ?? 'Please try again')
-                  : 'Tap the heart on any listing to save it here',
+                  : (isSearch
+                      ? (errorMsg ?? 'Try a different search term')
+                      : 'Tap the heart on any listing to save it here'),
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey[500], fontSize: 14),
             ),

@@ -11,6 +11,7 @@ import 'src/features/marketplace/presentation/pages/saved_items_screen.dart';
 import 'src/features/marketplace/presentation/pages/settings_screen.dart';
 import 'src/features/marketplace/presentation/pages/create_listing_screen.dart';
 import 'src/features/messages/presentation/pages/messages_screen.dart';
+import 'src/core/widgets/status_bar_blur.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,6 +37,14 @@ class MyApp extends StatelessWidget {
       title: 'Campus Deal NG',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.darkTheme,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (child != null) child,
+            const StatusBarBlur(),
+          ],
+        );
+      },
       home: const AuthWrapper(),
     );
   }

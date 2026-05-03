@@ -8,6 +8,7 @@ import 'package:campus_deal_mobile/src/features/marketplace/presentation/pages/i
 import 'package:campus_deal_mobile/src/features/auth/profile_provider.dart';
 import 'package:campus_deal_mobile/src/core/providers/app_mode_provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../../core/widgets/glass_search_bar.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -51,44 +52,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 
                 // Search Bar (Liquid Glass Pill)
                 Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                      child: Container(
-                        height: 46,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Colors.white.withOpacity(0.15),
-                              Colors.white.withOpacity(0.05),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.25),
-                            width: 1.0,
-                          ),
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          style: const TextStyle(color: Colors.white, fontSize: 14),
-                          decoration: const InputDecoration(
-                            hintText: 'Search items...',
-                            hintStyle: TextStyle(
-                              color: Colors.white60, 
-                              fontSize: 13,
-                              fontWeight: FontWeight.w300,
-                            ),
-                            prefixIcon: Icon(Icons.search, color: Colors.white70, size: 18),
-                            border: InputBorder.none,
-                            contentPadding: EdgeInsets.only(top: 10),
-                          ),
-                        ),
-                      ),
-                    ),
+                  child: GlassSearchBar(
+                    controller: _searchController,
+                    onChanged: (v) => setState(() {}), // Refresh for the clear button
                   ),
                 ),
                 
