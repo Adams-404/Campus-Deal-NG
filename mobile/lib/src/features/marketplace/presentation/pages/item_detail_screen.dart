@@ -207,6 +207,23 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
     }
   }
 
+  void _showFullScreenImages(int initialIndex) {
+    if (_product == null) return;
+    
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black.withOpacity(0.9),
+        pageBuilder: (context, _, __) {
+          return FullScreenImageViewer(
+            images: _product!.images,
+            initialIndex: initialIndex,
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -330,26 +347,30 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
 
     return Stack(
       children: [
-        PageView.builder(
-          controller: _pageController,
-          itemCount: product.images.length,
-          onPageChanged: (i) => setState(() => _currentImageIndex = i),
-          itemBuilder: (context, index) {
-            return CachedNetworkImage(
-              imageUrl: ImageUtils.getThumbnailUrl(product.images[index], width: 800, height: 600),
-              fit: BoxFit.cover,
-              memCacheWidth: 1000,
-              placeholder: (context, url) => Shimmer.fromColors(
-                baseColor: AppTheme.shimmerBase,
-                highlightColor: AppTheme.shimmerHighlight,
-                child: Container(color: Colors.white),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: const Color(0xFF171717),
-                child: const Icon(Icons.broken_image, color: Colors.grey),
-              ),
-            );
-          },
+        GestureDetector(
+          onTap: () => _showFullScreenImages(_currentImageIndex),
+          behavior: HitTestBehavior.opaque,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: product.images.length,
+            onPageChanged: (i) => setState(() => _currentImageIndex = i),
+            itemBuilder: (context, index) {
+              return CachedNetworkImage(
+                imageUrl: ImageUtils.getThumbnailUrl(product.images[index], width: 800, height: 600),
+                fit: BoxFit.cover,
+                memCacheWidth: 1000,
+                placeholder: (context, url) => Shimmer.fromColors(
+                  baseColor: AppTheme.shimmerBase,
+                  highlightColor: AppTheme.shimmerHighlight,
+                  child: Container(color: Colors.white),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: const Color(0xFF171717),
+                  child: const Icon(Icons.broken_image, color: Colors.grey),
+                ),
+              );
+            },
+          ),
         ),
 
         // Page dots
@@ -645,70 +666,151 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
       bottom: 0,
       left: 0,
       right: 0,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0A0A0A),
-          border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(0.08)),
-          ),
-        ),
-        child: SafeArea(
-          top: false,
-          child: Row(
-            children: [
-              // Save button
-              GestureDetector(
-                onTap: _isSaving ? null : _toggleSave,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: _isSaved
-                        ? Colors.red.withOpacity(0.15)
-                        : const Color(0xFF171717),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: _isSaved
-                          ? Colors.red.withOpacity(0.4)
-                          : Colors.white.withOpacity(0.1),
-                    ),
-                  ),
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child:
-                              CircularProgressIndicator(strokeWidth: 2))
-                      : Icon(
-                          _isSaved
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: _isSaved ? Colors.red : Colors.white,
-                          size: 22,
-                        ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Message button
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _messageSeller,
-                  icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                  label: const Text('Message Seller',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                ),
-              ),
+      child: ShaderMask(
+        shaderCallback: (rect) {
+          return const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black,
+              Colors.black,
             ],
+            stops: [0.0, 0.4, 1.0],
+          ).createShader(rect);
+        },
+        blendMode: BlendMode.dstIn,
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(20, 48, 20, 32),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.0),
+                    Colors.black.withOpacity(0.85),
+                    Colors.black.withOpacity(0.95),
+                  ],
+                  stops: const [0.0, 0.4, 1.0],
+                ),
+              ),
+              child: SafeArea(
+                top: false,
+                child: Row(
+                  children: [
+                    // Save button (Liquid Glass)
+                    GestureDetector(
+                      onTap: _isSaving ? null : _toggleSave,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: _isSaved
+                                  ? Colors.red.withOpacity(0.2)
+                                  : Colors.white.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _isSaved
+                                    ? Colors.red.withOpacity(0.6)
+                                    : Colors.white.withOpacity(0.3),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: _isSaving
+                                ? const SizedBox(
+                                    width: 22,
+                                    height: 22,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white))
+                                : Icon(
+                                    _isSaved
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: _isSaved ? Colors.red : Colors.white,
+                                    size: 22,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Message button (Liquid Glass)
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.white.withOpacity(0.25),
+                                  Colors.white.withOpacity(0.10),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.4),
+                                width: 1.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.1),
+                                  blurRadius: 15,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: _messageSeller,
+                                borderRadius: BorderRadius.circular(20),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: const [
+                                      Icon(Icons.chat_bubble_outline, size: 20, color: Colors.white),
+                                      SizedBox(width: 10),
+                                      Text(
+                                        'Message Seller',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -739,5 +841,126 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
     if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} weeks ago';
     if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} months ago';
     return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+class FullScreenImageViewer extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const FullScreenImageViewer({
+    super.key,
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  State<FullScreenImageViewer> createState() => _FullScreenImageViewerState();
+}
+
+class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // Blurred background
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  color: Colors.black.withOpacity(0.85),
+                ),
+              ),
+            ),
+          ),
+
+          // Images
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.images.length,
+            onPageChanged: (index) => setState(() => _currentIndex = index),
+            itemBuilder: (context, index) {
+              return InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Center(
+                  child: CachedNetworkImage(
+                    imageUrl: widget.images[index],
+                    fit: BoxFit.contain,
+                    placeholder: (context, url) => const CircularProgressIndicator(color: Colors.white),
+                    errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.white),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // Close button (Liquid Glass)
+          Positioned(
+            top: 60,
+            left: 20,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    ),
+                    child: const Icon(Icons.close, color: Colors.white, size: 24),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Badge (Liquid Glass)
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    ),
+                    child: Text(
+                      '${_currentIndex + 1} / ${widget.images.length}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
