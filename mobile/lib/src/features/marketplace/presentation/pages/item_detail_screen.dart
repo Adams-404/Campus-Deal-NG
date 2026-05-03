@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../home/domain/models/product.dart';
 import '../../../auth/auth_provider.dart';
 import '../providers/saved_items_provider.dart';
 import '../../../../core/utils/image_utils.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../messages/domain/models/chat_models.dart';
 import '../../../messages/presentation/pages/chat_screen.dart';
 
@@ -337,13 +339,10 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               imageUrl: ImageUtils.getThumbnailUrl(product.images[index], width: 800, height: 600),
               fit: BoxFit.cover,
               memCacheWidth: 1000,
-              placeholder: (context, url) => Container(
-                color: const Color(0xFF171717),
-                child: const Center(
-                    child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white24),
-                )),
+              placeholder: (context, url) => Shimmer.fromColors(
+                baseColor: AppTheme.shimmerBase,
+                highlightColor: AppTheme.shimmerHighlight,
+                child: Container(color: Colors.white),
               ),
               errorWidget: (context, url, error) => Container(
                 color: const Color(0xFF171717),

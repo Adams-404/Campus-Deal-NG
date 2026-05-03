@@ -6,7 +6,9 @@ class AppTheme {
   static const surfaceColor = Color(0xFF171717);
   static const textColor = Colors.white;
   static const secondaryTextColor = Color(0xFFA3A3A3);
-  static const accentColor = Color(0xFF6366F1); // Vibrant Indigo
+  static const accentColor = Color(0xFF3B82F6); // Web Primary Blue
+  static const shimmerBase = Color(0xFF1A1A1A);
+  static const shimmerHighlight = Color(0xFF262626);
 
   static ThemeData get darkTheme {
     return ThemeData(

@@ -11,7 +11,8 @@ class ProductRepository {
         .from('items')
         .select('*, seller:profiles(id, first_name, last_name, avatar_url), item_images(image_url)')
         .eq('status', 'active')
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .limit(20);
 
     final List<dynamic> data = response as List<dynamic>;
     
