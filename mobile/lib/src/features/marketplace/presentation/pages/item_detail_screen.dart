@@ -207,6 +207,23 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
     }
   }
 
+  void _showFullScreenImages(int initialIndex) {
+    if (_product == null) return;
+    
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black.withOpacity(0.9),
+        pageBuilder: (context, _, __) {
+          return FullScreenImageViewer(
+            images: _product!.images,
+            initialIndex: initialIndex,
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -330,26 +347,30 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
 
     return Stack(
       children: [
-        PageView.builder(
-          controller: _pageController,
-          itemCount: product.images.length,
-          onPageChanged: (i) => setState(() => _currentImageIndex = i),
-          itemBuilder: (context, index) {
-            return CachedNetworkImage(
-              imageUrl: ImageUtils.getThumbnailUrl(product.images[index], width: 800, height: 600),
-              fit: BoxFit.cover,
-              memCacheWidth: 1000,
-              placeholder: (context, url) => Shimmer.fromColors(
-                baseColor: AppTheme.shimmerBase,
-                highlightColor: AppTheme.shimmerHighlight,
-                child: Container(color: Colors.white),
-              ),
-              errorWidget: (context, url, error) => Container(
-                color: const Color(0xFF171717),
-                child: const Icon(Icons.broken_image, color: Colors.grey),
-              ),
-            );
-          },
+        GestureDetector(
+          onTap: () => _showFullScreenImages(_currentImageIndex),
+          behavior: HitTestBehavior.opaque,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: product.images.length,
+            onPageChanged: (i) => setState(() => _currentImageIndex = i),
+            itemBuilder: (context, index) {
+              return CachedNetworkImage(
+                imageUrl: ImageUtils.getThumbnailUrl(product.images[index], width: 800, height: 600),
+                fit: BoxFit.cover,
+                memCacheWidth: 1000,
+                placeholder: (context, url) => Shimmer.fromColors(
+                  baseColor: AppTheme.shimmerBase,
+                  highlightColor: AppTheme.shimmerHighlight,
+                  child: Container(color: Colors.white),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: const Color(0xFF171717),
+                  child: const Icon(Icons.broken_image, color: Colors.grey),
+                ),
+              );
+            },
+          ),
         ),
 
         // Page dots
@@ -820,5 +841,126 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
     if (diff.inDays < 30) return '${(diff.inDays / 7).floor()} weeks ago';
     if (diff.inDays < 365) return '${(diff.inDays / 30).floor()} months ago';
     return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+class FullScreenImageViewer extends StatefulWidget {
+  final List<String> images;
+  final int initialIndex;
+
+  const FullScreenImageViewer({
+    super.key,
+    required this.images,
+    required this.initialIndex,
+  });
+
+  @override
+  State<FullScreenImageViewer> createState() => _FullScreenImageViewerState();
+}
+
+class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          // Blurred background
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                child: Container(
+                  color: Colors.black.withOpacity(0.85),
+                ),
+              ),
+            ),
+          ),
+
+          // Images
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.images.length,
+            onPageChanged: (index) => setState(() => _currentIndex = index),
+            itemBuilder: (context, index) {
+              return InteractiveViewer(
+                minScale: 0.5,
+                maxScale: 4.0,
+                child: Center(
+                  child: CachedNetworkImage(
+                    imageUrl: widget.images[index],
+                    fit: BoxFit.contain,
+                    placeholder: (context, url) => const CircularProgressIndicator(color: Colors.white),
+                    errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.white),
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // Close button (Liquid Glass)
+          Positioned(
+            top: 60,
+            left: 20,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    ),
+                    child: const Icon(Icons.close, color: Colors.white, size: 24),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Badge (Liquid Glass)
+          Positioned(
+            bottom: 40,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(20),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.2)),
+                    ),
+                    child: Text(
+                      '${_currentIndex + 1} / ${widget.images.length}',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
