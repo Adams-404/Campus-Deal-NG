@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/models/chat_models.dart';
 import '../../../auth/auth_provider.dart';
+import '../../../../core/utils/image_utils.dart';
 import 'chat_screen.dart';
 
 class MessagesScreen extends ConsumerStatefulWidget {
@@ -116,14 +118,23 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
           SliverAppBar(
             floating: true,
             pinned: true,
-            backgroundColor: const Color(0xFF0A0A0A),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  color: const Color(0xFF0A0A0A).withOpacity(0.7),
+                ),
+              ),
+            ),
             title: const Text('Messages',
                 style: TextStyle(
                     color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.bold)),
             bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(56),
+              preferredSize: const Size.fromHeight(64),
               child: Padding(
                 padding:
                     const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -136,7 +147,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                     prefixIcon: Icon(Icons.search,
                         color: Colors.grey[600], size: 20),
                     filled: true,
-                    fillColor: const Color(0xFF171717),
+                    fillColor: Colors.white.withOpacity(0.05),
                     contentPadding:
                         const EdgeInsets.symmetric(vertical: 10),
                     border: OutlineInputBorder(
@@ -191,7 +202,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-                color: Colors.white.withValues(alpha: 0.05)),
+                color: Colors.white.withOpacity(0.05)),
           ),
         ),
         child: Row(
@@ -225,12 +236,12 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                     Row(
                       children: [
                         Icon(Icons.tag,
-                            size: 11, color: const Color(0xFF3B82F6).withValues(alpha: 0.8)),
+                            size: 11, color: Colors.white.withOpacity(0.8)),
                         const SizedBox(width: 3),
                         Text(
                           conv.itemTitle!,
                           style: TextStyle(
-                              color: const Color(0xFF3B82F6).withValues(alpha: 0.8),
+                              color: Colors.white.withOpacity(0.8),
                               fontSize: 11,
                               fontWeight: FontWeight.w500),
                         ),
@@ -254,10 +265,12 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: CachedNetworkImage(
-                  imageUrl: conv.itemImageUrl!,
+                  imageUrl: ImageUtils.getThumbnailUrl(conv.itemImageUrl!, width: 150, height: 150),
                   width: 44,
                   height: 44,
                   fit: BoxFit.cover,
+                  memCacheWidth: 150,
+                  memCacheHeight: 150,
                   placeholder: (_, __) =>
                       Container(color: const Color(0xFF222222)),
                   errorWidget: (_, __, ___) =>
@@ -274,14 +287,16 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
     return CircleAvatar(
       radius: 24,
       backgroundColor:
-          const Color(0xFF3B82F6).withValues(alpha: 0.2),
+          Colors.white.withOpacity(0.2),
       backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
-          ? CachedNetworkImageProvider(user.avatarUrl!)
+          ? CachedNetworkImageProvider(
+              ImageUtils.getThumbnailUrl(user.avatarUrl!, width: 100, height: 100),
+            )
           : null,
       child: user.avatarUrl == null || user.avatarUrl!.isEmpty
           ? Text(user.initials,
               style: const TextStyle(
-                  color: Color(0xFF3B82F6),
+                  color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 18))
           : null,
@@ -302,7 +317,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
                 color: const Color(0xFF171717),
                 shape: BoxShape.circle,
                 border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.06)),
+                    color: Colors.white.withOpacity(0.06)),
               ),
               child: const Icon(Icons.chat_bubble_outline,
                   color: Colors.grey, size: 32),

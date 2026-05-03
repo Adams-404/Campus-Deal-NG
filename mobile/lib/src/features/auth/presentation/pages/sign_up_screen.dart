@@ -80,7 +80,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.15),
+                color: Colors.green.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.mark_email_read_outlined,
@@ -112,7 +112,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Navigator.pop(context); // Back to login
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6),
+                backgroundColor: Colors.white,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
@@ -176,14 +176,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     height: 72,
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF3B82F6), Color(0xFF6366F1)],
+                        colors: [Colors.white, Color(0xFF6366F1)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF3B82F6).withValues(alpha: 0.35),
+                          color: Colors.white.withOpacity(0.35),
                           blurRadius: 20,
                           spreadRadius: 4,
                         ),
@@ -271,7 +271,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ElevatedButton(
                   onPressed: _isLoading ? null : _signUp,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
+                    backgroundColor: Colors.white,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -300,7 +300,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Sign In',
                           style: TextStyle(
-                              color: Color(0xFF3B82F6),
+                              color: Colors.white,
                               fontWeight: FontWeight.bold)),
                     ),
                   ],
@@ -321,7 +321,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
+            color: color.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: color, size: 22),
@@ -363,7 +363,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               )
             : null,
         filled: true,
-        fillColor: Colors.grey[900]?.withValues(alpha: 0.5),
+        fillColor: Colors.grey[900]?.withOpacity(0.5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -371,7 +371,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-              const BorderSide(color: Color(0xFF3B82F6), width: 1),
+              const BorderSide(color: Colors.white, width: 1),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

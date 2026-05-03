@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/models/product.dart';
 import '../../../marketplace/presentation/pages/item_detail_screen.dart';
@@ -22,7 +23,16 @@ class CategoryPage extends StatelessWidget {
           SliverAppBar(
             floating: true,
             pinned: true,
-            backgroundColor: const Color(0xFF0A0A0A),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  color: const Color(0xFF0A0A0A).withOpacity(0.7),
+                ),
+              ),
+            ),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new,
                   color: Colors.white, size: 20),
@@ -43,13 +53,14 @@ class CategoryPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3B82F6).withOpacity(0.15),
+                      color: Colors.white.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.white.withOpacity(0.1)),
                     ),
                     child: Text(
                       '${products.length} items',
                       style: const TextStyle(
-                          color: Color(0xFF3B82F6),
+                          color: Colors.white70,
                           fontSize: 12,
                           fontWeight: FontWeight.w500),
                     ),
@@ -161,7 +172,7 @@ class CategoryPage extends StatelessWidget {
                   Text(
                     '₦${product.price.toStringAsFixed(0)}',
                     style: const TextStyle(
-                        color: Color(0xFF3B82F6),
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14),
                   ),

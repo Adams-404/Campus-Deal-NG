@@ -200,7 +200,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             CircleAvatar(
               radius: 18,
               backgroundColor:
-                  const Color(0xFF3B82F6).withValues(alpha: 0.2),
+                  Colors.white.withOpacity(0.2),
               backgroundImage:
                   other.avatarUrl != null && other.avatarUrl!.isNotEmpty
                       ? CachedNetworkImageProvider(other.avatarUrl!)
@@ -208,7 +208,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: other.avatarUrl == null || other.avatarUrl!.isEmpty
                   ? Text(other.initials,
                       style: const TextStyle(
-                          color: Color(0xFF3B82F6),
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 14))
                   : null,
@@ -229,7 +229,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     Text(
                       widget.conversation.itemTitle!,
                       style: TextStyle(
-                          color: const Color(0xFF3B82F6).withValues(alpha: 0.8),
+                          color: Colors.white.withOpacity(0.8),
                           fontSize: 11),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -242,7 +242,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           preferredSize: const Size.fromHeight(1),
           child: Container(
               height: 1,
-              color: Colors.white.withValues(alpha: 0.06)),
+              color: Colors.white.withOpacity(0.06)),
         ),
       ),
       body: Column(
@@ -294,7 +294,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF171717),
         border: Border(
-            bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+            bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
       ),
       child: Row(
         children: [
@@ -330,7 +330,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   Text(
                     '₦${conv.itemPrice!.toStringAsFixed(0)}',
                     style: const TextStyle(
-                        color: Color(0xFF3B82F6),
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 12),
                   ),
@@ -357,7 +357,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isMe
-              ? const Color(0xFF3B82F6)
+              ? Colors.white
               : const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
@@ -387,7 +387,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   _formatMsgTime(msg.createdAt),
                   style: TextStyle(
                       color: isMe
-                          ? Colors.white.withValues(alpha: 0.6)
+                          ? Colors.white.withOpacity(0.6)
                           : Colors.grey[600],
                       fontSize: 10),
                 ),
@@ -395,7 +395,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   const SizedBox(width: 4),
                   Icon(Icons.done_all,
                       size: 12,
-                      color: Colors.white.withValues(alpha: 0.6)),
+                      color: Colors.white.withOpacity(0.6)),
                 ] else if (isMe && isTemp) ...[
                   const SizedBox(width: 4),
                   SizedBox(
@@ -403,7 +403,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     height: 10,
                     child: CircularProgressIndicator(
                       strokeWidth: 1.5,
-                      color: Colors.white.withValues(alpha: 0.6),
+                      color: Colors.white.withOpacity(0.6),
                     ),
                   ),
                 ],
@@ -428,13 +428,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       child: Row(
         children: [
           Expanded(
-              child: Divider(color: Colors.white.withValues(alpha: 0.08))),
+              child: Divider(color: Colors.white.withOpacity(0.08))),
           const SizedBox(width: 8),
           Text(label,
               style: TextStyle(color: Colors.grey[600], fontSize: 11)),
           const SizedBox(width: 8),
           Expanded(
-              child: Divider(color: Colors.white.withValues(alpha: 0.08))),
+              child: Divider(color: Colors.white.withOpacity(0.08))),
         ],
       ),
     );
@@ -447,7 +447,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF111111),
         border: Border(
-            top: BorderSide(color: Colors.white.withValues(alpha: 0.06))),
+            top: BorderSide(color: Colors.white.withOpacity(0.06))),
       ),
       child: Row(
         children: [
@@ -458,7 +458,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 color: const Color(0xFF1E1E1E),
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.08)),
+                    color: Colors.white.withOpacity(0.08)),
               ),
               child: TextField(
                 controller: _messageController,
@@ -486,7 +486,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               height: 46,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF3B82F6), Color(0xFF6366F1)],
+                  colors: [Colors.white, Color(0xFF6366F1)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -494,7 +494,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 boxShadow: [
                   BoxShadow(
                     color:
-                        const Color(0xFF3B82F6).withValues(alpha: 0.4),
+                        Colors.white.withOpacity(0.4),
                     blurRadius: 10,
                     spreadRadius: 1,
                   ),
@@ -524,11 +524,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
+              color: Colors.white.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.waving_hand_outlined,
-                color: Color(0xFF3B82F6), size: 32),
+                color: Colors.white, size: 32),
           ),
           const SizedBox(height: 16),
           const Text('Say hello!',
