@@ -39,27 +39,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             floating: true,
             pinned: true,
             backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
             elevation: 0,
-            flexibleSpace: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        const Color(0xFF0A0A0A).withOpacity(0.85),
-                        const Color(0xFF0A0A0A).withOpacity(0.4),
-                        const Color(0xFF0A0A0A).withOpacity(0.1),
-                        Colors.transparent,
-                      ],
-                      stops: const [0.0, 0.5, 0.8, 1.0],
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            flexibleSpace: const SizedBox.shrink(),
             title: Row(
               children: [
                 // Mode Switcher
@@ -71,23 +54,16 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(24),
                     child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
                       child: Container(
                         height: 46,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.04),
+                          color: Colors.white.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.12),
-                            width: 0.8,
+                            color: Colors.white.withOpacity(0.2),
+                            width: 1.0,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
                         ),
                         child: TextField(
                           controller: _searchController,
@@ -216,14 +192,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: const Color(0xFF3B82F6).withOpacity(0.12),
+            color: Colors.white.withOpacity(0.08),
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.25)),
+            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.0),
           ),
           child: IconButton(
             icon: FaIcon(icon, color: const Color(0xFF3B82F6), size: 16),
@@ -239,14 +215,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withOpacity(0.08),
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.0),
           ),
           child: Stack(
             alignment: Alignment.center,
@@ -259,7 +235,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                    color: Colors.red,
+                    color: Color(0xFF3B82F6),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -277,14 +253,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.06),
+            color: Colors.white.withOpacity(0.08),
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.0),
           ),
           child: profileAsync.when(
             data: (profile) {
@@ -298,7 +274,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     : Center(
                         child: Text(
                           initial,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                       ),
               );

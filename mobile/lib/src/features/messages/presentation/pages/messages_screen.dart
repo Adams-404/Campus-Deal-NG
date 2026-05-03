@@ -119,15 +119,10 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
             floating: true,
             pinned: true,
             backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
             elevation: 0,
-            flexibleSpace: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                child: Container(
-                  color: const Color(0xFF0A0A0A).withOpacity(0.7),
-                ),
-              ),
-            ),
+            flexibleSpace: const SizedBox.shrink(),
             title: const Text('Messages',
                 style: TextStyle(
                     color: Colors.white,
