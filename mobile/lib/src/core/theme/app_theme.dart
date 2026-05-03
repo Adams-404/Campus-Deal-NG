@@ -6,7 +6,9 @@ class AppTheme {
   static const surfaceColor = Color(0xFF171717);
   static const textColor = Colors.white;
   static const secondaryTextColor = Color(0xFFA3A3A3);
-  static const accentColor = Color(0xFF6366F1); // Vibrant Indigo
+  static const accentColor = Color(0xFF3B82F6); // Web Primary Blue
+  static const shimmerBase = Color(0xFF1A1A1A);
+  static const shimmerHighlight = Color(0xFF262626);
 
   static ThemeData get darkTheme {
     return ThemeData(
@@ -21,6 +23,14 @@ class AppTheme {
         onSurface: textColor,
       ),
       scaffoldBackgroundColor: backgroundColor,
+      scrollbarTheme: ScrollbarThemeData(
+        thumbColor: WidgetStateProperty.all(Colors.white.withOpacity(0.15)),
+        trackColor: WidgetStateProperty.all(Colors.transparent),
+        radius: const Radius.circular(10),
+        thickness: WidgetStateProperty.all(6),
+        thumbVisibility: WidgetStateProperty.all(true),
+        interactive: true,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,

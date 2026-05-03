@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -16,35 +16,56 @@ class BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          decoration: BoxDecoration(
-            color: const Color(0xFF0A0A0A).withOpacity(0.7),
-            border: Border(
-              top: BorderSide(
-                color: Colors.white.withOpacity(0.1),
-                width: 0.5,
+    final accentColor = Theme.of(context).colorScheme.secondary;
+    
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
+        children: [
+          // Glass Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                height: 70,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0A0A0A).withOpacity(0.55), // More transparent glass
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.12),
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(context, 0, FontAwesomeIcons.house, 'Home'),
+                    _buildNavItem(context, 1, FontAwesomeIcons.heart, 'Saved'),
+                    const SizedBox(width: 48), // Space for Sell button
+                    _buildNavItem(context, 3, FontAwesomeIcons.comment, 'Messages'),
+                    _buildNavItem(context, 4, FontAwesomeIcons.gear, 'Settings'),
+                  ],
+                ),
               ),
             ),
           ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildNavItem(context, 0, FontAwesomeIcons.house, 'Home'),
-                  _buildNavItem(context, 1, FontAwesomeIcons.heart, 'Saved'),
-                  _buildSellButton(),
-                  _buildNavItem(context, 3, FontAwesomeIcons.comment, 'Messages'),
-                  _buildNavItem(context, 4, FontAwesomeIcons.gear, 'Settings'),
-                ],
-              ),
-            ),
+          
+          // Floating Sell Button (Unclipped)
+          Positioned(
+            top: -20,
+            child: _buildSellButton(accentColor),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -77,46 +98,39 @@ class BottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildSellButton() {
+  Widget _buildSellButton(Color accentColor) {
     return GestureDetector(
       onTap: onSellTap,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Transform.translate(
-            offset: const Offset(0, -15),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: const Color(0xFF3B82F6), // Web Primary Blue
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white.withOpacity(0.2), width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF3B82F6).withOpacity(0.5),
+                  blurRadius: 20,
+                  spreadRadius: 4,
                 ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF6366F1).withOpacity(0.4),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: const FaIcon(
-                FontAwesomeIcons.plus,
-                color: Colors.white,
-                size: 20,
-              ),
+              ],
+            ),
+            child: const FaIcon(
+              FontAwesomeIcons.plus,
+              color: Colors.white,
+              size: 24,
             ),
           ),
-          Transform.translate(
-            offset: const Offset(0, -10),
-            child: Text(
-              'Sell',
-              style: TextStyle(
-                fontSize: 10,
-                color: Colors.grey[400],
-              ),
+          const SizedBox(height: 4),
+          Text(
+            'Sell',
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey[300],
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],

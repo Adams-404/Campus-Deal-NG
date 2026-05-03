@@ -28,8 +28,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final groupedProductsAsync = ref.watch(groupedProductsProvider);
     
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
-      body: CustomScrollView(
+      body: Scrollbar(
+        child: CustomScrollView(
         slivers: [
           // App Bar with Search
           SliverAppBar(
@@ -154,6 +154,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

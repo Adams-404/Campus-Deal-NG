@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../core/utils/image_utils.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class ProductCardData {
   final String title;
@@ -77,18 +79,10 @@ class ProductCard extends StatelessWidget {
                     fit: BoxFit.cover,
                     memCacheWidth: isFeatured ? 600 : 400,
                     fadeInDuration: const Duration(milliseconds: 300),
-                    placeholder: (context, url) => Container(
-                      color: const Color(0xFF222222),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white24),
-                          ),
-                        ),
-                      ),
+                    placeholder: (context, url) => Shimmer.fromColors(
+                      baseColor: AppTheme.shimmerBase,
+                      highlightColor: AppTheme.shimmerHighlight,
+                      child: Container(color: Colors.white),
                     ),
                     errorWidget: (context, url, error) => Container(
                       color: const Color(0xFF222222),
