@@ -58,10 +58,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: Container(
                         height: 46,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withOpacity(0.15),
+                              Colors.white.withOpacity(0.05),
+                            ],
+                          ),
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.2),
+                            color: Colors.white.withOpacity(0.25),
                             width: 1.0,
                           ),
                         ),
