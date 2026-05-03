@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  static const primaryColor = Color(0xFF3B82F6);
+  static const primaryColor = Colors.white;
   static const backgroundColor = Color(0xFF0A0A0A);
   static const surfaceColor = Color(0xFF171717);
   static const textColor = Colors.white;
   static const secondaryTextColor = Color(0xFFA3A3A3);
+  static const accentColor = Color(0xFF6366F1); // Vibrant Indigo
 
   static ThemeData get darkTheme {
     return ThemeData(
@@ -13,7 +14,7 @@ class AppTheme {
       brightness: Brightness.dark,
       colorScheme: const ColorScheme.dark(
         primary: primaryColor,
-        secondary: primaryColor,
+        secondary: accentColor,
         surface: surfaceColor,
         background: backgroundColor,
         onBackground: textColor,
@@ -53,7 +54,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryColor, width: 1),
+          borderSide: const BorderSide(color: accentColor, width: 1),
         ),
         labelStyle: const TextStyle(color: secondaryTextColor),
         prefixIconColor: secondaryTextColor,

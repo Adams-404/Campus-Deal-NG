@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../core/utils/image_utils.dart';
 import '../providers/saved_items_provider.dart';
 import 'item_detail_screen.dart';
 
@@ -67,7 +69,16 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
           SliverAppBar(
             floating: true,
             pinned: true,
-            backgroundColor: const Color(0xFF0A0A0A),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  color: const Color(0xFF0A0A0A).withOpacity(0.7),
+                ),
+              ),
+            ),
             title: const Text(
               'Saved Items',
               style: TextStyle(
@@ -163,10 +174,12 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
                         top: Radius.circular(16)),
                     child: images.isNotEmpty
                         ? CachedNetworkImage(
-                            imageUrl: images.first,
+                            imageUrl: ImageUtils.getThumbnailUrl(images.first, width: 300, height: 300),
                             width: double.infinity,
                             height: double.infinity,
                             fit: BoxFit.cover,
+                            memCacheWidth: 400,
+                            memCacheHeight: 400,
                             placeholder: (_, __) => Container(
                                 color: const Color(0xFF222222)),
                             errorWidget: (_, __, ___) =>
@@ -217,7 +230,7 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
                   Text(
                     '₦${price.toStringAsFixed(0)}',
                     style: const TextStyle(
-                        color: Color(0xFF3B82F6),
+                        color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14),
                   ),
@@ -279,7 +292,7 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
               ElevatedButton(
                 onPressed: () => ref.invalidate(savedItemsProvider),
                 style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
+                    backgroundColor: Colors.white,
                     foregroundColor: Colors.white),
                 child: const Text('Try Again'),
               ),

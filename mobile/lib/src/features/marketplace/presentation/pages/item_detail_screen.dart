@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../home/domain/models/product.dart';
 import '../../../auth/auth_provider.dart';
 import '../providers/saved_items_provider.dart';
+import '../../../../core/utils/image_utils.dart';
 import '../../../messages/domain/models/chat_models.dart';
 import '../../../messages/presentation/pages/chat_screen.dart';
 
@@ -246,7 +248,8 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               SliverAppBar(
                 expandedHeight: 340,
                 pinned: true,
-                backgroundColor: const Color(0xFF0A0A0A),
+                backgroundColor: Colors.transparent,
+                elevation: 0,
                 leading: _buildCircleButton(
                   icon: Icons.arrow_back_ios_new,
                   onTap: () => Navigator.pop(context),
@@ -260,7 +263,19 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                   const SizedBox(width: 8),
                 ],
                 flexibleSpace: FlexibleSpaceBar(
-                  background: _buildImageGallery(product),
+                  background: Stack(
+                    children: [
+                      _buildImageGallery(product),
+                      Positioned.fill(
+                        child: ClipRect(
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
+                            child: Container(color: Colors.transparent),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -319,12 +334,16 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
           onPageChanged: (i) => setState(() => _currentImageIndex = i),
           itemBuilder: (context, index) {
             return CachedNetworkImage(
-              imageUrl: product.images[index],
+              imageUrl: ImageUtils.getThumbnailUrl(product.images[index], width: 800, height: 600),
               fit: BoxFit.cover,
+              memCacheWidth: 1000,
               placeholder: (context, url) => Container(
                 color: const Color(0xFF171717),
                 child: const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2)),
+                    child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white24),
+                )),
               ),
               errorWidget: (context, url, error) => Container(
                 color: const Color(0xFF171717),
@@ -351,7 +370,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                   height: 6,
                   decoration: BoxDecoration(
                     color: _currentImageIndex == index
-                        ? const Color(0xFF3B82F6)
+                        ? Colors.white
                         : Colors.white.withOpacity(0.4),
                     borderRadius: BorderRadius.circular(3),
                   ),
@@ -413,7 +432,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               Text(
                 '₦${product.price.toStringAsFixed(0)}',
                 style: const TextStyle(
-                  color: Color(0xFF3B82F6),
+                  color: Colors.white,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
@@ -435,8 +454,8 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               ],
               _buildBadge(
                 label: product.category,
-                color: const Color(0xFF3B82F6).withOpacity(0.15),
-                textColor: const Color(0xFF3B82F6),
+                color: Colors.white.withOpacity(0.15),
+                textColor: Colors.white,
               ),
             ],
           ),
@@ -452,16 +471,18 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
             children: [
               CircleAvatar(
                 radius: 22,
-                backgroundColor: const Color(0xFF3B82F6).withOpacity(0.2),
+                backgroundColor: Colors.white.withOpacity(0.2),
                 backgroundImage: product.seller?.avatarUrl != null &&
                         product.seller!.avatarUrl!.isNotEmpty
-                    ? CachedNetworkImageProvider(product.seller!.avatarUrl!)
+                    ? CachedNetworkImageProvider(
+                        ImageUtils.getThumbnailUrl(product.seller!.avatarUrl!, width: 150, height: 150),
+                      )
                     : null,
                 child: product.seller?.avatarUrl == null ||
                         product.seller!.avatarUrl!.isEmpty
                     ? Text(avatarLetter,
                         style: const TextStyle(
-                            color: Color(0xFF3B82F6),
+                            color: Colors.white,
                             fontWeight: FontWeight.bold))
                     : null,
               ),
@@ -489,15 +510,15 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3B82F6).withOpacity(0.1),
+                    color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                        color: const Color(0xFF3B82F6).withOpacity(0.3)),
+                        color: Colors.white.withOpacity(0.3)),
                   ),
                   child: const Text(
                     'Your listing',
                     style: TextStyle(
-                        color: Color(0xFF3B82F6),
+                        color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w500),
                   ),
@@ -678,7 +699,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                   label: const Text('Message Seller',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
+                    backgroundColor: Colors.white,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

@@ -128,8 +128,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _SettingsItem(
                       icon: Icons.person_outline,
                       label: 'Profile',
-                      iconBg: const Color(0xFF3B82F6).withOpacity(0.15),
-                      iconColor: const Color(0xFF3B82F6),
+                      iconBg: Colors.white.withOpacity(0.15),
+                      iconColor: Colors.white,
                       onTap: () => _showComingSoon('Profile editing'),
                     ),
                     _SettingsItem(
@@ -280,7 +280,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF3B82F6).withOpacity(0.15),
+              Colors.white.withOpacity(0.15),
               const Color(0xFF171717),
             ],
             begin: Alignment.topLeft,
@@ -288,14 +288,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-              color: const Color(0xFF3B82F6).withOpacity(0.2)),
+              color: Colors.white.withOpacity(0.2)),
         ),
         child: Row(
           children: [
             CircleAvatar(
               radius: 30,
               backgroundColor:
-                  const Color(0xFF3B82F6).withOpacity(0.2),
+                  Colors.white.withOpacity(0.2),
               backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
                   ? CachedNetworkImageProvider(avatarUrl)
                   : null,
@@ -303,7 +303,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ? Text(
                       avatarLetter,
                       style: const TextStyle(
-                          color: Color(0xFF3B82F6),
+                          color: Colors.white,
                           fontWeight: FontWeight.bold,
                           fontSize: 24),
                     )
@@ -437,11 +437,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: const Color(0xFF3B82F6).withOpacity(0.15),
+                color: Colors.white.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
               child: const Icon(Icons.storefront,
-                  color: Color(0xFF3B82F6), size: 36),
+                  color: Colors.white, size: 36),
             ),
             const SizedBox(height: 16),
             const Text('Campus Deal',
@@ -464,7 +464,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Close',
-                style: TextStyle(color: Color(0xFF3B82F6))),
+                style: TextStyle(color: Colors.white)),
           ),
         ],
       ),

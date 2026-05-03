@@ -178,7 +178,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
             child: ElevatedButton(
               onPressed: _isSubmitting ? null : _submit,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF3B82F6),
+                backgroundColor: Colors.white,
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
@@ -280,7 +280,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                 child: ElevatedButton(
                   onPressed: _isSubmitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF3B82F6),
+                    backgroundColor: Colors.white,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -348,19 +348,19 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
           color: const Color(0xFF171717),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-              color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+              color: Colors.white.withOpacity(0.3),
               style: BorderStyle.solid),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.add_photo_alternate_outlined,
-                color: const Color(0xFF3B82F6).withValues(alpha: 0.8), size: 28),
+                color: Colors.white.withOpacity(0.8), size: 28),
             const SizedBox(height: 4),
             Text(
               _pickedImages.isEmpty ? 'Add Photos' : 'Add More',
               style: TextStyle(
-                  color: const Color(0xFF3B82F6).withValues(alpha: 0.8),
+                  color: Colors.white.withOpacity(0.8),
                   fontSize: 11),
             ),
           ],
@@ -388,7 +388,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: const Color(0xFF3B82F6),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(6),
               ),
               child: const Text('Cover',
@@ -427,12 +427,12 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(2))),
             const SizedBox(height: 16),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined,
-                  color: Color(0xFF3B82F6)),
+                  color: Colors.white),
               title: const Text('Choose from Gallery',
                   style: TextStyle(color: Colors.white)),
               onTap: () {
@@ -442,7 +442,7 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined,
-                  color: Color(0xFF3B82F6)),
+                  color: Colors.white),
               title: const Text('Take a Photo',
                   style: TextStyle(color: Colors.white)),
               onTap: () {
@@ -470,18 +470,18 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: isSelected
-                  ? const Color(0xFF3B82F6).withValues(alpha: 0.15)
+                  ? Colors.white.withOpacity(0.15)
                   : const Color(0xFF171717),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                   color: isSelected
-                      ? const Color(0xFF3B82F6)
-                      : Colors.white.withValues(alpha: 0.1)),
+                      ? Colors.white
+                      : Colors.white.withOpacity(0.1)),
             ),
             child: Text(
               c.$2,
               style: TextStyle(
-                  color: isSelected ? const Color(0xFF3B82F6) : Colors.grey,
+                  color: isSelected ? Colors.white : Colors.grey,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                   fontSize: 13),
             ),
@@ -499,9 +499,9 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[900]?.withValues(alpha: 0.5),
+        color: Colors.grey[900]?.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
       ),
       child: DropdownButton<String>(
         value: value,
@@ -546,14 +546,14 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
       prefixStyle:
           const TextStyle(color: Colors.grey, fontSize: 15),
       filled: true,
-      fillColor: Colors.grey[900]?.withValues(alpha: 0.5),
+      fillColor: Colors.grey[900]?.withOpacity(0.5),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none),
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-              const BorderSide(color: Color(0xFF3B82F6), width: 1)),
+              const BorderSide(color: Colors.white, width: 1)),
       errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Colors.red, width: 1)),

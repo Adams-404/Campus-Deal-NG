@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../../core/utils/image_utils.dart';
 
 class ProductCardData {
   final String title;
@@ -66,17 +67,32 @@ class ProductCard extends StatelessWidget {
                 ClipRRect(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                   child: CachedNetworkImage(
-                    imageUrl: imageUrl,
+                    imageUrl: ImageUtils.getThumbnailUrl(
+                      imageUrl,
+                      width: isFeatured ? 500 : 300,
+                      height: isFeatured ? 400 : 250,
+                    ),
                     height: isFeatured ? 200 : 120,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                    memCacheWidth: isFeatured ? 600 : 400,
+                    fadeInDuration: const Duration(milliseconds: 300),
                     placeholder: (context, url) => Container(
-                      color: Colors.grey[900],
-                      child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      color: const Color(0xFF222222),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white24),
+                          ),
+                        ),
+                      ),
                     ),
                     errorWidget: (context, url, error) => Container(
-                      color: Colors.grey[900],
-                      child: const Icon(Icons.error),
+                      color: const Color(0xFF222222),
+                      child: const Icon(Icons.broken_image, color: Colors.white24),
                     ),
                   ),
                 ),
@@ -115,7 +131,7 @@ class ProductCard extends StatelessWidget {
                   Text(
                     '₦${price.toStringAsFixed(0)}',
                     style: const TextStyle(
-                      color: Color(0xFF3B82F6),
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
