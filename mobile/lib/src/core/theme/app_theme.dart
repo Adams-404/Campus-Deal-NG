@@ -23,6 +23,14 @@ class AppTheme {
         onSurface: textColor,
       ),
       scaffoldBackgroundColor: backgroundColor,
+      scrollbarTheme: ScrollbarThemeData(
+        thumbColor: WidgetStateProperty.all(Colors.white.withOpacity(0.15)),
+        trackColor: WidgetStateProperty.all(Colors.transparent),
+        radius: const Radius.circular(10),
+        thickness: WidgetStateProperty.all(6),
+        thumbVisibility: WidgetStateProperty.all(true),
+        interactive: true,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
