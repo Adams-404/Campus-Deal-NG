@@ -1,22 +1,23 @@
-import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../widgets/product_card.dart';
-import '../widgets/category_section.dart';
-import '../providers/product_provider.dart';
-import 'package:campus_deal_mobile/src/features/marketplace/presentation/pages/item_detail_screen.dart';
-import 'package:campus_deal_mobile/src/features/auth/profile_provider.dart';
 import '../../../../core/widgets/glass_search_bar.dart';
 import '../../../../core/widgets/mode_switcher_pill.dart';
+import '../../../auth/profile_provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import '../providers/gigs_provider.dart';
+import '../widgets/gig_card.dart';
+import 'gig_detail_screen.dart';
+import '../../domain/models/gig_model.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
-  const HomeScreen({super.key});
+class GigsBrowseScreen extends ConsumerStatefulWidget {
+  const GigsBrowseScreen({super.key});
 
   @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<GigsBrowseScreen> createState() => _GigsBrowseScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> {
+class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
   final _searchController = TextEditingController();
 
   @override
@@ -27,14 +28,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final featuredProductsAsync = ref.watch(featuredProductsProvider);
-    final groupedProductsAsync = ref.watch(groupedProductsProvider);
-    
     return Scaffold(
-      body: Scrollbar(
-        child: CustomScrollView(
+      body: CustomScrollView(
         slivers: [
-          // App Bar with Search
           SliverAppBar(
             floating: true,
             pinned: true,
@@ -45,117 +41,118 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             flexibleSpace: const SizedBox.shrink(),
             title: Row(
               children: [
-                // Mode Switcher Pill
                 const ModeSwitcherPill(),
                 const SizedBox(width: 8),
-                
-                // Search Bar (Liquid Glass Pill)
                 Expanded(
                   child: GlassSearchBar(
                     controller: _searchController,
-                    onChanged: (v) => setState(() {}), // Refresh for the clear button
+                    hintText: 'Search gigs...',
+                    onChanged: (v) => setState(() {}),
                   ),
                 ),
-                
                 const SizedBox(width: 8),
-                
-                // Notification Bell
                 _buildNotificationIcon(),
-                
                 const SizedBox(width: 8),
-                
-                // Profile Avatar
                 _buildProfileAvatar(),
               ],
             ),
           ),
-
-          // Featured Section
-          featuredProductsAsync.when(
-            data: (products) {
-              if (products.isEmpty) return const SliverToBoxAdapter(child: SizedBox.shrink());
-              return SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Featured Items',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+          // Gigs List
+          ref.watch(gigsNotifierProvider).when(
+            data: (gigs) {
+              if (gigs.isEmpty) {
+                return SliverFillRemaining(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.work_off_outlined, size: 64, color: Colors.white.withOpacity(0.2)),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No gigs found',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      ProductCard(
-                        title: products[0].title,
-                        price: products[0].price,
-                        imageUrl: products[0].images.isNotEmpty 
-                            ? products[0].images.first 
-                            : 'https://via.placeholder.com/800',
-                        sellerName: products[0].seller?.firstName ?? products[0].seller?.fullName ?? 'Seller',
-                        isFeatured: true,
+                        const SizedBox(height: 8),
+                        Text(
+                          'Try adjusting your search or check back later.',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+              
+              // Filter logic placeholder (can implement search here later)
+              final filteredGigs = _searchController.text.isEmpty 
+                  ? gigs 
+                  : gigs.where((g) => g.title.toLowerCase().contains(_searchController.text.toLowerCase()) || 
+                                      g.category.toLowerCase().contains(_searchController.text.toLowerCase())).toList();
+
+              return SliverPadding(
+                padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 100),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final gig = filteredGigs[index];
+                      return GigCard(
+                        gig: gig,
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => ItemDetailScreen(itemId: products[0].id),
+                              builder: (context) => GigDetailScreen(gig: gig),
                             ),
                           );
                         },
-                      ),
-                    ],
+                      );
+                    },
+                    childCount: filteredGigs.length,
                   ),
                 ),
               );
             },
-            loading: () => const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-            ),
-            error: (err, stack) => SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text('Error: $err', style: const TextStyle(color: Colors.red)),
-              ),
-            ),
-          ),
-
-          // Categories Sections
-          groupedProductsAsync.when(
-            data: (groups) {
-              return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final category = groups.keys.elementAt(index);
-                    final products = groups[category]!;
-                    return CategorySection(
-                      title: category,
-                      items: products,
-                    );
-                  },
-                  childCount: groups.length,
+            loading: () => SliverPadding(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 8, bottom: 100),
+              sliver: Skeletonizer.sliver(
+                enabled: true,
+                child: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      return GigCard(
+                        gig: Gig(
+                          id: index.toString(),
+                          title: 'Loading Gig Title...',
+                          description: 'Loading description...',
+                          category: 'Loading...',
+                          price: 0,
+                          userId: '',
+                          status: 'active',
+                          createdAt: DateTime.now(),
+                        ),
+                        onTap: () {},
+                      );
+                    },
+                    childCount: 3,
+                  ),
                 ),
-              );
-            },
-            loading: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
-            error: (err, stack) => const SliverToBoxAdapter(child: SizedBox.shrink()),
-          ),
-          
-          // Extra padding for bottom nav
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 100),
+              ),
+            ),
+            error: (err, stack) => SliverFillRemaining(
+              child: Center(child: Text('Error: $err', style: const TextStyle(color: Colors.red))),
+            ),
           ),
         ],
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   Widget _buildNotificationIcon() {
     return ClipRRect(
@@ -181,7 +178,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   width: 6,
                   height: 6,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF3B82F6),
+                    color: Color(0xFFF59E0B),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -192,7 +189,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
-
   Widget _buildProfileAvatar() {
     final profileAsync = ref.watch(profileProvider);
     

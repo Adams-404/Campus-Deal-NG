@@ -1,8 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../../core/providers/app_mode_provider.dart';
 
-class BottomNavBar extends StatelessWidget {
+class BottomNavBar extends ConsumerWidget {
   final int currentIndex;
   final Function(int) onTap;
   final VoidCallback onSellTap;
@@ -15,8 +17,13 @@ class BottomNavBar extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final accentColor = Theme.of(context).colorScheme.secondary;
+    final currentMode = ref.watch(appModeProvider);
+    final modeInfo = getModeInfo(currentMode);
+
+    // Determine nav items and center action based on mode
+    final navConfig = _getNavConfig(currentMode);
     
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
@@ -57,32 +64,67 @@ class BottomNavBar extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildNavItem(context, 0, FontAwesomeIcons.house, 'Home'),
-                    _buildNavItem(context, 1, FontAwesomeIcons.heart, 'Saved'),
-                    const SizedBox(width: 54), // Space for Sell button
-                    _buildNavItem(context, 3, FontAwesomeIcons.comment, 'Messages'),
-                    _buildNavItem(context, 4, FontAwesomeIcons.gear, 'Settings'),
+                    _buildNavItem(context, navConfig.items[0]),
+                    _buildNavItem(context, navConfig.items[1]),
+                    const SizedBox(width: 54), // Space for center button
+                    _buildNavItem(context, navConfig.items[2]),
+                    _buildNavItem(context, navConfig.items[3]),
                   ],
                 ),
               ),
             ),
           ),
           
-          // Floating Sell Button (Liquid Glass Blue)
+          // Floating Center Button (color adapts to mode)
           Positioned(
             top: -24,
-            child: _buildSellButton(accentColor),
+            child: _buildCenterButton(modeInfo, navConfig.centerLabel),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(BuildContext context, int index, FaIconData icon, String label) {
-    final isSelected = currentIndex == index;
-    final accentColor = Theme.of(context).colorScheme.secondary;
+  _NavConfig _getNavConfig(AppMode mode) {
+    switch (mode) {
+      case AppMode.marketplace:
+        return _NavConfig(
+          items: [
+            _NavItemData(index: 0, icon: FontAwesomeIcons.house, label: 'Home'),
+            _NavItemData(index: 1, icon: FontAwesomeIcons.heart, label: 'Saved'),
+            _NavItemData(index: 3, icon: FontAwesomeIcons.comment, label: 'Messages'),
+            _NavItemData(index: 4, icon: FontAwesomeIcons.gear, label: 'Settings'),
+          ],
+          centerLabel: 'Sell',
+        );
+      case AppMode.gigs:
+        return _NavConfig(
+          items: [
+            _NavItemData(index: 0, icon: FontAwesomeIcons.magnifyingGlass, label: 'Browse'),
+            _NavItemData(index: 1, icon: FontAwesomeIcons.briefcase, label: 'My Gigs'),
+            _NavItemData(index: 3, icon: FontAwesomeIcons.comment, label: 'Messages'),
+            _NavItemData(index: 4, icon: FontAwesomeIcons.gear, label: 'Settings'),
+          ],
+          centerLabel: 'Create',
+        );
+      default:
+        // Default layout for upcoming modes
+        return _NavConfig(
+          items: [
+            _NavItemData(index: 0, icon: FontAwesomeIcons.house, label: 'Home'),
+            _NavItemData(index: 1, icon: FontAwesomeIcons.heart, label: 'Saved'),
+            _NavItemData(index: 3, icon: FontAwesomeIcons.comment, label: 'Messages'),
+            _NavItemData(index: 4, icon: FontAwesomeIcons.gear, label: 'Settings'),
+          ],
+          centerLabel: 'Create',
+        );
+    }
+  }
+
+  Widget _buildNavItem(BuildContext context, _NavItemData item) {
+    final isSelected = currentIndex == item.index;
     return GestureDetector(
-      onTap: () => onTap(index),
+      onTap: () => onTap(item.index),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
@@ -91,13 +133,13 @@ class BottomNavBar extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             FaIcon(
-              icon,
+              item.icon,
               size: 20,
               color: isSelected ? const Color(0xFF3B82F6) : Colors.white.withOpacity(0.5),
             ),
             const SizedBox(height: 5),
             Text(
-              label,
+              item.label,
               style: TextStyle(
                 fontSize: 10,
                 color: isSelected ? Colors.white : Colors.white.withOpacity(0.4),
@@ -111,7 +153,7 @@ class BottomNavBar extends StatelessWidget {
     );
   }
 
-  Widget _buildSellButton(Color accentColor) {
+  Widget _buildCenterButton(AppModeInfo modeInfo, String label) {
     return GestureDetector(
       onTap: onSellTap,
       child: Column(
@@ -155,9 +197,9 @@ class BottomNavBar extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            'Sell',
-            style: TextStyle(
+          Text(
+            label,
+            style: const TextStyle(
               fontSize: 11,
               color: Colors.white70,
               fontWeight: FontWeight.w600,
@@ -168,4 +210,17 @@ class BottomNavBar extends StatelessWidget {
       ),
     );
   }
+}
+
+class _NavConfig {
+  final List<_NavItemData> items;
+  final String centerLabel;
+  const _NavConfig({required this.items, required this.centerLabel});
+}
+
+class _NavItemData {
+  final int index;
+  final FaIconData icon;
+  final String label;
+  const _NavItemData({required this.index, required this.icon, required this.label});
 }
