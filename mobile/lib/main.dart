@@ -4,7 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'src/core/constants/supabase_constants.dart';
 import 'src/core/theme/app_theme.dart';
 import 'src/features/auth/auth_provider.dart';
-import 'src/features/auth/presentation/pages/sign_up_screen.dart';
+import 'src/features/auth/onboarding_provider.dart';
+import 'src/features/auth/presentation/pages/login_screen.dart';
+import 'src/features/auth/presentation/pages/onboarding_screen.dart';
 import 'src/features/home/presentation/pages/home_screen.dart';
 import 'src/features/navigation/presentation/widgets/bottom_nav_bar.dart';
 import 'src/features/marketplace/presentation/pages/saved_items_screen.dart';
@@ -64,7 +66,15 @@ class AuthWrapper extends ConsumerWidget {
         if (data.session != null) {
           return const MainNavigationWrapper();
         } else {
-          return const LoginScreen();
+          final onboardingState = ref.watch(onboardingProvider);
+          return onboardingState.when(
+            data: (hasSeen) {
+              if (hasSeen) return const LoginScreen();
+              return const OnboardingScreen();
+            },
+            loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+            error: (_, __) => const LoginScreen(),
+          );
         }
       },
       loading: () => const Scaffold(
@@ -233,217 +243,3 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
 // ── Messages placeholder ──────────────────────────────────────────────────────
 
 
-// ── Login Screen ──────────────────────────────────────────────────────────────
-
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
-
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
-class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _isLoading = false;
-  bool _obscurePassword = true;
-
-  Future<void> _signIn() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-    try {
-      await Supabase.instance.client.auth.signInWithPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-    } on AuthException catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(error.message), backgroundColor: Colors.red),
-        );
-      }
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Unexpected error occurred'),
-              backgroundColor: Colors.red),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 64),
-              // Logo
-              Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF3B82F6), Color(0xFF6366F1)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF3B82F6).withOpacity(0.35),
-                        blurRadius: 24,
-                        spreadRadius: 4,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.storefront,
-                      size: 40, color: Colors.white),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Welcome Back',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Sign in to Campus Deal',
-                textAlign: TextAlign.center,
-                style:
-                    theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[400]),
-              ),
-              const SizedBox(height: 48),
-              // Email
-              TextField(
-                controller: _emailController,
-                style: const TextStyle(color: Colors.white),
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email Address',
-                  prefixIcon: const Icon(Icons.mail_outline),
-                  filled: true,
-                  fillColor: Colors.grey[900]?.withOpacity(0.5),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                        color: Color(0xFF3B82F6), width: 1),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              // Password
-              TextField(
-                controller: _passwordController,
-                style: const TextStyle(color: Colors.white),
-                obscureText: _obscurePassword,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off_outlined
-                          : Icons.visibility_outlined,
-                      color: Colors.grey,
-                    ),
-                    onPressed: () =>
-                        setState(() => _obscurePassword = !_obscurePassword),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[900]?.withOpacity(0.5),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                        color: Color(0xFF3B82F6), width: 1),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Sign In button
-              ElevatedButton(
-                onPressed: _isLoading ? null : _signIn,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Text('Sign In',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text("Don't have an account? ",
-                      style: TextStyle(color: Colors.grey[400])),
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const SignUpScreen(),
-                        ),
-                      );
-                    },
-                    child: const Text('Sign Up',
-                        style: TextStyle(
-                            color: Color(0xFF3B82F6),
-                            fontWeight: FontWeight.bold)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 40),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
