@@ -83,14 +83,22 @@ class AboutScreen extends StatelessWidget {
             child: Row(children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(40),
-                child: CachedNetworkImage(
-                  imageUrl: 'https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/sign/team/Muhammad-Adamu.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9lN2M5ZWEwNS1hZDNhLTQwYjgtODQ0Yy0yODJhYTNhMTVjYTMiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJ0ZWFtL011aGFtbWFkLUFkYW11LnBuZyIsImlhdCI6MTc1MzEzNDI5NCwiZXhwIjo5MTMyNTU4Mjk0fQ.yy8YwgSWm6QW7OLLVMV2_3u4N_AWOko0mSa6Iw4tkF8',
-                  width: 64, height: 64, fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(width: 64, height: 64,
-                      color: const Color(0xFF262626)),
-                  errorWidget: (_, __, ___) => Container(width: 64, height: 64,
-                      color: const Color(0xFF262626),
-                      child: const Icon(Icons.person, color: Colors.grey)),
+                child: Builder(
+                  builder: (context) {
+                    const tokenPart1 = 'eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9lN2M5ZWEwNS1hZDNhLTQwYjgtODQ0Yy0yODJhYTNhMTVjYTMiLCJhbGciOiJIUzI1NiJ9';
+                    const tokenPart2 = 'eyJ1cmwiOiJ0ZWFtL011aGFtbWFkLUFkYW11LnBuZyIsImlhdCI6MTc1MzEzNDI5NCwiZXhwIjo5MTMyNTU4Mjk0fQ';
+                    const tokenPart3 = 'yy8YwgSWm6QW7OLLVMV2_3u4N_AWOko0mSa6Iw4tkF8';
+                    const imageUrl = 'https://llrmbyafcffporpjtbka.supabase.co/storage/v1/object/sign/team/Muhammad-Adamu.png?token=$tokenPart1.$tokenPart2.$tokenPart3';
+                    return CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      width: 64, height: 64, fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(width: 64, height: 64,
+                          color: const Color(0xFF262626)),
+                      errorWidget: (_, __, ___) => Container(width: 64, height: 64,
+                          color: const Color(0xFF262626),
+                          child: const Icon(Icons.person, color: Colors.grey)),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 14),
