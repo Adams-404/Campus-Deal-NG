@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -328,7 +329,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
                 if (conv.itemPrice != null)
                   Text(
-                    '₦${conv.itemPrice!.toStringAsFixed(0)}',
+                    '₦${NumberFormat('#,##0').format(conv.itemPrice!)}',
                     style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,

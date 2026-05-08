@@ -1,8 +1,17 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../auth/auth_provider.dart';
+import '../../../settings/presentation/pages/profile_screen.dart';
+import '../../../settings/presentation/pages/change_password_screen.dart';
+import '../../../settings/presentation/pages/my_listings_screen.dart';
+import '../../../settings/presentation/pages/notifications_screen.dart';
+import '../../../settings/presentation/pages/help_center_screen.dart';
+import '../../../settings/presentation/pages/feedback_screen.dart';
+import '../../../settings/presentation/pages/privacy_policy_screen.dart';
+import '../../../settings/presentation/pages/about_screen.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -54,7 +63,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         title: const Text('Sign Out',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         content: const Text(
-          'Are you sure you want to sign out?',
+          'Are you sure you want to sign out? You will need to sign in again to access your account.',
           style: TextStyle(color: Colors.grey),
         ),
         actions: [
@@ -76,13 +85,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  void _navigateTo(Widget screen) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => screen),
+    ).then((_) => _loadProfile()); // Refresh profile on return
+  }
+
   @override
   Widget build(BuildContext context) {
     final supabase = ref.watch(supabaseClientProvider);
     final user = supabase.auth.currentUser;
     final firstName = _profile?['first_name'] as String? ?? '';
     final lastName = _profile?['last_name'] as String? ?? '';
-    final fullName = '${firstName} ${lastName}'.trim();
+    final fullName = '$firstName $lastName'.trim();
     final avatarUrl = _profile?['avatar_url'] as String?;
     final displayName = fullName.isNotEmpty ? fullName : (user?.email ?? 'User');
     final avatarLetter =
@@ -95,14 +111,34 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           SliverAppBar(
             floating: true,
             pinned: true,
-            backgroundColor: const Color(0xFF0A0A0A),
+            backgroundColor: Colors.transparent,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            flexibleSpace: ClipRect(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.08),
+                        Colors.white.withValues(alpha: 0.03),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
             title: const Text(
               'Settings',
               style: TextStyle(
                   color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold),
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600),
             ),
+            centerTitle: true,
           ),
           if (_isLoading)
             const SliverFillRemaining(
@@ -130,21 +166,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       label: 'Profile',
                       iconBg: Colors.white.withOpacity(0.15),
                       iconColor: Colors.white,
-                      onTap: () => _showComingSoon('Profile editing'),
+                      onTap: () => _navigateTo(const ProfileScreen()),
                     ),
                     _SettingsItem(
                       icon: Icons.lock_outline,
                       label: 'Change Password',
                       iconBg: Colors.orange.withOpacity(0.15),
                       iconColor: Colors.orange,
-                      onTap: () => _showComingSoon('Change password'),
+                      onTap: () => _navigateTo(const ChangePasswordScreen()),
                     ),
                     _SettingsItem(
                       icon: Icons.receipt_long_outlined,
                       label: 'My Listings',
                       iconBg: Colors.green.withOpacity(0.15),
                       iconColor: Colors.green,
-                      onTap: () => _showComingSoon('My listings'),
+                      onTap: () => _navigateTo(const MyListingsScreen()),
                     ),
                   ],
                 ),
@@ -160,7 +196,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       label: 'Notifications',
                       iconBg: Colors.pink.withOpacity(0.15),
                       iconColor: Colors.pink,
-                      onTap: () => _showComingSoon('Notifications'),
+                      onTap: () => _navigateTo(const NotificationsScreen()),
                     ),
                   ],
                 ),
@@ -176,28 +212,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       label: 'Help Center',
                       iconBg: Colors.teal.withOpacity(0.15),
                       iconColor: Colors.teal,
-                      onTap: () => _showComingSoon('Help center'),
+                      onTap: () => _navigateTo(const HelpCenterScreen()),
                     ),
                     _SettingsItem(
                       icon: Icons.feedback_outlined,
                       label: 'Send Feedback',
                       iconBg: Colors.purple.withOpacity(0.15),
                       iconColor: Colors.purple,
-                      onTap: () => _showComingSoon('Feedback'),
+                      onTap: () => _navigateTo(const FeedbackScreen()),
                     ),
                     _SettingsItem(
                       icon: Icons.privacy_tip_outlined,
                       label: 'Privacy Policy',
                       iconBg: Colors.yellow.withOpacity(0.15),
                       iconColor: Colors.yellow,
-                      onTap: () => _showComingSoon('Privacy policy'),
+                      onTap: () => _navigateTo(const PrivacyPolicyScreen()),
                     ),
                     _SettingsItem(
                       icon: Icons.info_outline,
                       label: 'About Campus Deal',
                       iconBg: Colors.cyan.withOpacity(0.15),
                       iconColor: Colors.cyan,
-                      onTap: () => _showAboutDialog(),
+                      onTap: () => _navigateTo(const AboutScreen()),
                     ),
                   ],
                 ),
@@ -273,65 +309,69 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     String? avatarUrl,
     required String avatarLetter,
   }) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Colors.white.withOpacity(0.15),
-              const Color(0xFF171717),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return GestureDetector(
+      onTap: () => _navigateTo(const ProfileScreen()),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.15),
+                const Color(0xFF171717),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+                color: Colors.white.withOpacity(0.2)),
           ),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-              color: Colors.white.withOpacity(0.2)),
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 30,
-              backgroundColor:
-                  Colors.white.withOpacity(0.2),
-              backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
-                  ? CachedNetworkImageProvider(avatarUrl)
-                  : null,
-              child: avatarUrl == null || avatarUrl.isEmpty
-                  ? Text(
-                      avatarLetter,
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor:
+                    Colors.white.withOpacity(0.2),
+                backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
+                    ? CachedNetworkImageProvider(avatarUrl)
+                    : null,
+                child: avatarUrl == null || avatarUrl.isEmpty
+                    ? Text(
+                        avatarLetter,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 24),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      displayName,
                       style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 24),
-                    )
-                  : null,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    displayName,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 17),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    email,
-                    style: TextStyle(
-                        color: Colors.grey[400], fontSize: 13),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                          fontSize: 17),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      email,
+                      style: TextStyle(
+                          color: Colors.grey[400], fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              Icon(Icons.chevron_right, color: Colors.grey[600], size: 20),
+            ],
+          ),
         ),
       ),
     );
@@ -411,15 +451,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Icon(Icons.chevron_right, color: Colors.grey[600], size: 20),
           ],
         ),
-      ),
-    );
-  }
-
-  void _showComingSoon(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature — coming soon!'),
-        behavior: SnackBarBehavior.floating,
       ),
     );
   }

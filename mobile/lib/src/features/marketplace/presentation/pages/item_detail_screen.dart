@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
@@ -285,11 +286,41 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                   background: Stack(
                     children: [
                       _buildImageGallery(product),
-                      Positioned.fill(
-                        child: ClipRect(
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
-                            child: Container(color: Colors.transparent),
+                      // Top gradient for status bar readability
+                      Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: 120,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.black.withOpacity(0.6),
+                                Colors.black.withOpacity(0.0),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Bottom gradient for content transition
+                      Positioned(
+                        bottom: 0,
+                        left: 0,
+                        right: 0,
+                        height: 80,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [
+                                const Color(0xFF0A0A0A),
+                                Colors.transparent,
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -450,7 +481,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               ),
               const SizedBox(width: 12),
               Text(
-                '₦${product.price.toStringAsFixed(0)}',
+                '₦${NumberFormat('#,##0').format(product.price)}',
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 22,

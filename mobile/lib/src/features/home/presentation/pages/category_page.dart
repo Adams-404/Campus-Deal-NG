@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/models/product.dart';
 import '../../../marketplace/presentation/pages/item_detail_screen.dart';
@@ -165,7 +166,7 @@ class CategoryPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '₦${product.price.toStringAsFixed(0)}',
+                    '₦${NumberFormat('#,##0').format(product.price)}',
                     style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
