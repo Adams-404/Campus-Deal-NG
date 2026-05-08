@@ -14,6 +14,10 @@ import 'src/features/marketplace/presentation/pages/settings_screen.dart';
 import 'src/features/marketplace/presentation/pages/create_listing_screen.dart';
 import 'src/features/messages/presentation/pages/messages_screen.dart';
 import 'src/core/widgets/status_bar_blur.dart';
+import 'src/core/providers/app_mode_provider.dart';
+import 'src/features/gigs/presentation/pages/gigs_browse_screen.dart';
+import 'src/features/gigs/presentation/pages/my_gigs_screen.dart';
+import 'src/features/gigs/presentation/pages/gigs_applications_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,24 +93,16 @@ class AuthWrapper extends ConsumerWidget {
 
 // ── Main shell ────────────────────────────────────────────────────────────────
 
-class MainNavigationWrapper extends StatefulWidget {
+class MainNavigationWrapper extends ConsumerStatefulWidget {
   const MainNavigationWrapper({super.key});
 
   @override
-  State<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
+  ConsumerState<MainNavigationWrapper> createState() => _MainNavigationWrapperState();
 }
 
-class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
+class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
   // Tracks which nav-bar tab is active (0=Home, 1=Saved, 2=Sell[modal], 3=Messages, 4=Settings)
   int _currentIndex = 0;
-
-  // 4 screens (Sell at index 2 is a modal, not a screen)
-  static const List<Widget> _screens = [
-    HomeScreen(),        // nav 0
-    SavedItemsScreen(),  // nav 1
-    MessagesScreen(),    // nav 3
-    SettingsScreen(),    // nav 4
-  ];
 
   /// Map nav-bar index → stack index, skipping the Sell button (nav 2).
   int get _stackIndex {
@@ -126,17 +122,51 @@ class _MainNavigationWrapperState extends State<MainNavigationWrapper> {
 
   @override
   Widget build(BuildContext context) {
+    final mode = ref.watch(appModeProvider);
+
+    List<Widget> currentScreens;
+    if (mode == AppMode.gigs) {
+      currentScreens = const [
+        GigsBrowseScreen(),         // nav 0
+        MyGigsScreen(),             // nav 1
+        MessagesScreen(),           // nav 3
+        SettingsScreen(),           // nav 4
+      ];
+    } else {
+      // Default / Marketplace
+      currentScreens = const [
+        HomeScreen(),               // nav 0
+        SavedItemsScreen(),         // nav 1
+        MessagesScreen(),           // nav 3
+        SettingsScreen(),           // nav 4
+      ];
+    }
+
     return Scaffold(
       extendBody: true,
       body: IndexedStack(
         index: _stackIndex,
-        children: _screens,
+        children: currentScreens,
       ),
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
         onTap: _onNavTap,
-        onSellTap: () => _showSellModal(context),
+        onSellTap: () => _handleCenterAction(context, mode),
       ),
+    );
+  }
+
+  void _handleCenterAction(BuildContext context, AppMode mode) {
+    if (mode == AppMode.gigs) {
+      _showCreateGigModal(context);
+    } else {
+      _showSellModal(context);
+    }
+  }
+
+  void _showCreateGigModal(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Create Gig coming soon')),
     );
   }
 
