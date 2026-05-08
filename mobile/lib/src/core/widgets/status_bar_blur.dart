@@ -12,8 +12,7 @@ class StatusBarBlur extends StatelessWidget {
       top: 0,
       left: 0,
       right: 0,
-      // Increased height for a more natural fade-out
-      height: statusBarHeight + 80, 
+      height: statusBarHeight + 56,
       child: IgnorePointer(
         child: ShaderMask(
           shaderCallback: (rect) {
@@ -21,20 +20,19 @@ class StatusBarBlur extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.black.withOpacity(0.85),
-                Colors.black.withOpacity(0.5),
+                Colors.black.withOpacity(1.0),
+                Colors.black.withOpacity(0.9),
                 Colors.black.withOpacity(0.0),
               ],
-              stops: const [0.0, 0.4, 1.0],
+              stops: const [0.0, 0.5, 1.0],
             ).createShader(rect);
           },
           blendMode: BlendMode.dstIn,
           child: ClipRect(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+              filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
               child: Container(
-                // Base tint to anchor the status bar
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withOpacity(0.45),
               ),
             ),
           ),

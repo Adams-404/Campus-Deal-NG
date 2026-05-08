@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
+import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/utils/image_utils.dart';
@@ -243,7 +244,7 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '₦${price.toStringAsFixed(0)}',
+                    '₦${NumberFormat('#,##0').format(price)}',
                     style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
