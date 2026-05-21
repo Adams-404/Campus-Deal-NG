@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../domain/models/gig_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/utils/image_utils.dart';
 
 class GigCard extends StatelessWidget {
   final Gig gig;
@@ -16,7 +17,7 @@ class GigCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final primaryColor = const Color(0xFF3B82F6);
     
-    final imageUrl = gig.gigImages.isNotEmpty ? gig.gigImages.first.imageUrl : null;
+    final imageUrl = gig.gigImages.isNotEmpty ? ImageUtils.getFullUrl(gig.gigImages.first.imageUrl) : null;
     
     return GestureDetector(
       onTap: onTap,
@@ -293,6 +294,7 @@ class GigCard extends StatelessWidget {
   String _getInitials(String? first, String? last) {
     String name = _getUserName(first, last);
     if (name == 'Anonymous') return 'A';
-    return name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').join('').toUpperCase().substring(0, 2);
+    final initials = name.split(' ').where((n) => n.isNotEmpty).map((n) => n[0]).join('').toUpperCase();
+    return initials.length > 2 ? initials.substring(0, 2) : initials;
   }
 }

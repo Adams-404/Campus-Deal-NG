@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import '../../../../core/utils/image_utils.dart';
 import '../providers/gigs_provider.dart';
 import '../../domain/models/gig_model.dart';
 import '../widgets/gig_card.dart';
@@ -19,6 +20,8 @@ class MyGigsScreen extends ConsumerStatefulWidget {
 
 class _MyGigsScreenState extends ConsumerState<MyGigsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final _postedScrollController = ScrollController();
+  final _appliedScrollController = ScrollController();
 
   @override
   void initState() {
@@ -29,6 +32,8 @@ class _MyGigsScreenState extends ConsumerState<MyGigsScreen> with SingleTickerPr
   @override
   void dispose() {
     _tabController.dispose();
+    _postedScrollController.dispose();
+    _appliedScrollController.dispose();
     super.dispose();
   }
 
@@ -115,6 +120,7 @@ class _MyGigsScreenState extends ConsumerState<MyGigsScreen> with SingleTickerPr
         }
 
         return ListView.builder(
+          controller: _postedScrollController,
           padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
           itemCount: gigs.length,
           itemBuilder: (context, index) {
@@ -150,6 +156,7 @@ class _MyGigsScreenState extends ConsumerState<MyGigsScreen> with SingleTickerPr
         }
 
         return ListView.builder(
+          controller: _appliedScrollController,
           padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 100),
           itemCount: applications.length,
           itemBuilder: (context, index) {
@@ -249,7 +256,7 @@ class _MyGigsScreenState extends ConsumerState<MyGigsScreen> with SingleTickerPr
                           color: Colors.white.withOpacity(0.05),
                           child: gig.gigImages.isNotEmpty
                               ? CachedNetworkImage(
-                                  imageUrl: gig.gigImages.first.imageUrl,
+                                  imageUrl: ImageUtils.getFullUrl(gig.gigImages.first.imageUrl),
                                   fit: BoxFit.cover,
                                 )
                               : const Center(

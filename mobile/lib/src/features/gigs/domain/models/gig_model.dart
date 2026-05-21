@@ -36,7 +36,8 @@ class GigImage with _$GigImage {
     @JsonKey(name: 'is_primary') @Default(false) bool isPrimary,
   }) = _GigImage;
 
-  factory GigImage.fromJson(Map<String, dynamic> json) => _$GigImageFromJson(json);
+  factory GigImage.fromJson(Map<String, dynamic> json) =>
+      _$GigImageFromJson(json);
 }
 
 @freezed
@@ -48,7 +49,8 @@ class GigProfile with _$GigProfile {
     @JsonKey(name: 'avatar_url') String? avatarUrl,
   }) = _GigProfile;
 
-  factory GigProfile.fromJson(Map<String, dynamic> json) => _$GigProfileFromJson(json);
+  factory GigProfile.fromJson(Map<String, dynamic> json) =>
+      _$GigProfileFromJson(json);
 }
 
 @freezed
@@ -65,5 +67,6 @@ class GigApplication with _$GigApplication {
     GigProfile? profile,
   }) = _GigApplication;
 
-  factory GigApplication.fromJson(Map<String, dynamic> json) => _$GigApplicationFromJson(json);
+  factory GigApplication.fromJson(Map<String, dynamic> json) =>
+      _$GigApplicationFromJson(json);
 }

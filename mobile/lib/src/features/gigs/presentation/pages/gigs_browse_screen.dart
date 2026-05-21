@@ -19,10 +19,12 @@ class GigsBrowseScreen extends ConsumerStatefulWidget {
 
 class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
   final _searchController = TextEditingController();
+  final _scrollController = ScrollController();
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -30,6 +32,7 @@ class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           SliverAppBar(
             floating: true,
