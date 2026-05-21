@@ -8,6 +8,7 @@ import 'package:campus_deal_mobile/src/features/marketplace/presentation/pages/i
 import 'package:campus_deal_mobile/src/features/auth/profile_provider.dart';
 import '../../../../core/widgets/glass_search_bar.dart';
 import '../../../../core/widgets/mode_switcher_pill.dart';
+import '../../../settings/presentation/widgets/notification_bell.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -60,7 +61,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(width: 8),
                 
                 // Notification Bell
-                _buildNotificationIcon(),
+                const NotificationBell(),
                 
                 const SizedBox(width: 8),
                 
@@ -156,42 +157,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   );
 }
 
-
-  Widget _buildNotificationIcon() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.0),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              const Icon(Icons.notifications_none, color: Colors.white, size: 20),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF3B82F6),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildProfileAvatar() {
     final profileAsync = ref.watch(profileProvider);

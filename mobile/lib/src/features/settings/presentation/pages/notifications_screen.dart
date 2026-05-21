@@ -50,7 +50,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           .order('created_at', ascending: false);
 
       setState(() {
-        _notifications = List<Map<String, dynamic>>.from(response ?? []);
+        _notifications = List<Map<String, dynamic>>.from(response);
         _isLoading = false;
       });
     } catch (e) {
@@ -154,7 +154,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.green.withOpacity(0.1),
+            color: Colors.green.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(Icons.check_circle, color: Colors.green, size: 20),
@@ -163,7 +163,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.red.withOpacity(0.1),
+            color: Colors.red.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(Icons.cancel, color: Colors.red, size: 20),
@@ -172,7 +172,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF3B82F6).withOpacity(0.1),
+            color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(Icons.info, color: Color(0xFF3B82F6), size: 20),
@@ -181,7 +181,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         return Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: const Color(0xFF3B82F6).withOpacity(0.1),
+            color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Icon(Icons.notifications,
@@ -239,7 +239,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                   child: ListView.separated(
                     padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + kToolbarHeight + 8, 16, 16),
                     itemCount: _notifications.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, index) => const SizedBox(height: 8),
                     itemBuilder: (context, index) {
                       final notification = _notifications[index];
                       final isRead = notification['is_read'] == true;
@@ -251,12 +251,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         decoration: BoxDecoration(
                           color: isRead
                               ? const Color(0xFF171717)
-                              : const Color(0xFF171717).withOpacity(0.9),
+                              : const Color(0xFF171717).withValues(alpha: 0.9),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isRead
-                                ? Colors.white.withOpacity(0.05)
-                                : const Color(0xFF3B82F6).withOpacity(0.2),
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : const Color(0xFF3B82F6).withValues(alpha: 0.2),
                           ),
                         ),
                         child: Column(
@@ -271,7 +271,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                     CircleAvatar(
                                       radius: 12,
                                       backgroundColor: const Color(0xFF1078A7)
-                                          .withOpacity(0.2),
+                                          .withValues(alpha: 0.2),
                                       child: const Text('A',
                                           style: TextStyle(
                                               fontSize: 10,
@@ -291,7 +291,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                           horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFF1078A7)
-                                            .withOpacity(0.1),
+                                            .withValues(alpha: 0.1),
                                         borderRadius: BorderRadius.circular(6),
                                         border: Border.all(
                                             color: const Color(0xFF1078A7)),
@@ -384,7 +384,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFF3B82F6).withOpacity(0.1),
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.notifications_none,

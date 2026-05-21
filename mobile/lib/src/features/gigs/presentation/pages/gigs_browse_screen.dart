@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/glass_search_bar.dart';
 import '../../../../core/widgets/mode_switcher_pill.dart';
 import '../../../auth/profile_provider.dart';
+import '../../../settings/presentation/widgets/notification_bell.dart';
 import 'package:shimmer/shimmer.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -58,7 +59,7 @@ class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                _buildNotificationIcon(),
+                const NotificationBell(),
                 const SizedBox(width: 8),
                 _buildProfileAvatar(),
               ],
@@ -157,42 +158,6 @@ class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationIcon() {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
-            shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.0),
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              const Icon(Icons.notifications_none, color: Colors.white, size: 20),
-              Positioned(
-                top: 10,
-                right: 10,
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF59E0B),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
