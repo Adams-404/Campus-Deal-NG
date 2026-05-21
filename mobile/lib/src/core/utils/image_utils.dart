@@ -1,4 +1,14 @@
 class ImageUtils {
+  static String getFullUrl(String? path, {String bucket = 'gig_images'}) {
+    if (path == null || path.isEmpty) return '';
+    if (path.startsWith('http')) return path;
+    
+    // Build Supabase public URL
+    // Format: https://{project_ref}.supabase.co/storage/v1/object/public/{bucket}/{path}
+    const baseUrl = 'https://llrmbyafcffporpjtbka.supabase.co';
+    return '$baseUrl/storage/v1/object/public/$bucket/$path';
+  }
+
   static String getThumbnailUrl(String url, {int width = 300, int height = 300}) {
     // Note: Image transformation is a paid Supabase feature.
     // If you have it enabled, uncomment the block below.

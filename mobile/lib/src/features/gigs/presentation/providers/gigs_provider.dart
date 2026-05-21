@@ -69,6 +69,8 @@ final userGigsProvider = FutureProvider<List<Gig>>((ref) async {
 });
 
 // Provider for fetching gig applications made by the current user
-final userApplicationsProvider = FutureProvider<List<GigApplication>>((ref) async {
+final userApplicationsProvider = FutureProvider<List<GigApplication>>((
+  ref,
+) async {
   return ref.read(gigsRepositoryProvider).fetchApplications();
 });

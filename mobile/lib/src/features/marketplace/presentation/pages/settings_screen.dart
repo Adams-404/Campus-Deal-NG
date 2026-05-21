@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../auth/auth_provider.dart';
+import '../../../auth/onboarding_provider.dart';
 import '../../../settings/presentation/pages/profile_screen.dart';
 import '../../../settings/presentation/pages/change_password_screen.dart';
 import '../../../settings/presentation/pages/my_listings_screen.dart';
@@ -57,31 +59,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   void _confirmSignOut() {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Sign Out',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text(
-          'Are you sure you want to sign out? You will need to sign in again to access your account.',
-          style: TextStyle(color: Colors.grey),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              await Supabase.instance.client.auth.signOut();
-            },
-            child: const Text('Sign Out',
-                style: TextStyle(
-                    color: Colors.red, fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+      builder: (ctx) => _ConfirmSignOutDialog(ref: ref),
     );
   }
 
@@ -517,4 +495,42 @@ class _SettingsItem {
     required this.iconColor,
     required this.onTap,
   });
+}
+
+class _ConfirmSignOutDialog extends StatelessWidget {
+  final WidgetRef ref;
+  const _ConfirmSignOutDialog({required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: const Color(0xFF1A1A1A),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Text('Sign Out',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      content: const Text(
+        'Are you sure you want to sign out? You will need to sign in again to access your account.',
+        style: TextStyle(color: Colors.grey),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+        ),
+        TextButton(
+          onPressed: () async {
+            Navigator.pop(context);
+            // Reset onboarding state so they can test the landing screen again!
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('has_seen_onboarding', false);
+            ref.invalidate(onboardingProvider);
+            await Supabase.instance.client.auth.signOut();
+          },
+          child: const Text('Sign Out',
+              style: TextStyle(
+                  color: Colors.red, fontWeight: FontWeight.bold)),
+        ),
+      ],
+    );
+  }
 }

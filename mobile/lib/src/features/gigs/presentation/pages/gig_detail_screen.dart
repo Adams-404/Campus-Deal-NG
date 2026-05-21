@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/models/gig_model.dart';
 import '../providers/gigs_provider.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
+import '../../../../core/utils/image_utils.dart';
 
 class GigDetailScreen extends ConsumerStatefulWidget {
   final Gig gig;
@@ -37,8 +38,14 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
       builder: (dialogContext) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete Gig?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        content: const Text('Are you sure you want to delete this gig listing? This action cannot be undone.', style: TextStyle(color: Colors.white70)),
+        title: const Text(
+          'Delete Gig?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Are you sure you want to delete this gig listing? This action cannot be undone.',
+          style: TextStyle(color: Colors.white70),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -65,9 +72,9 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to delete gig: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Failed to delete gig: $e')));
         }
       } finally {
         if (mounted) setState(() => _isApplying = false);
@@ -84,13 +91,13 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final primaryColor = const Color(0xFF3B82F6);
-    final imageUrl = widget.gig.gigImages.isNotEmpty ? widget.gig.gigImages.first.imageUrl : null;
+    final imageUrl = widget.gig.gigImages.isNotEmpty
+        ? ImageUtils.getFullUrl(widget.gig.gigImages.first.imageUrl)
+        : null;
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: const GlassAppBar(
-        title: 'Gig Details',
-      ),
+      appBar: const GlassAppBar(title: 'Gig Details'),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +116,9 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                   ),
                   errorWidget: (context, url, error) => Container(
                     color: Colors.white.withOpacity(0.05),
-                    child: const Center(child: Icon(Icons.error, color: Colors.white54)),
+                    child: const Center(
+                      child: Icon(Icons.error, color: Colors.white54),
+                    ),
                   ),
                 ),
               )
@@ -127,11 +136,16 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: primaryColor.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: primaryColor.withOpacity(0.5)),
+                          border: Border.all(
+                            color: primaryColor.withOpacity(0.5),
+                          ),
                         ),
                         child: Text(
                           widget.gig.category,
@@ -182,11 +196,24 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                   Row(
                     children: [
                       if (widget.gig.location != null)
-                        Expanded(child: _buildInfoCard(FontAwesomeIcons.locationDot, 'Location', widget.gig.location!)),
-                      if (widget.gig.location != null && widget.gig.duration != null)
+                        Expanded(
+                          child: _buildInfoCard(
+                            FontAwesomeIcons.locationDot,
+                            'Location',
+                            widget.gig.location!,
+                          ),
+                        ),
+                      if (widget.gig.location != null &&
+                          widget.gig.duration != null)
                         const SizedBox(width: 12),
                       if (widget.gig.duration != null)
-                        Expanded(child: _buildInfoCard(FontAwesomeIcons.clock, 'Duration', widget.gig.duration!)),
+                        Expanded(
+                          child: _buildInfoCard(
+                            FontAwesomeIcons.clock,
+                            'Duration',
+                            widget.gig.duration!,
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -227,11 +254,16 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                       runSpacing: 8,
                       children: widget.gig.tags.map((tag) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.08),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white.withOpacity(0.1)),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.1),
+                            ),
                           ),
                           child: Text(
                             tag,
@@ -265,12 +297,20 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                         radius: 24,
                         backgroundColor: Colors.white.withOpacity(0.1),
                         backgroundImage: widget.gig.profile?.avatarUrl != null
-                            ? CachedNetworkImageProvider(widget.gig.profile!.avatarUrl!)
+                            ? CachedNetworkImageProvider(
+                                ImageUtils.getFullUrl(widget.gig.profile!.avatarUrl!, bucket: 'avatars'),
+                              )
                             : null,
                         child: widget.gig.profile?.avatarUrl == null
                             ? Text(
-                                _getInitials(widget.gig.profile?.firstName, widget.gig.profile?.lastName),
-                                style: const TextStyle(fontSize: 16, color: Colors.white),
+                                _getInitials(
+                                  widget.gig.profile?.firstName,
+                                  widget.gig.profile?.lastName,
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
                               )
                             : null,
                       ),
@@ -280,7 +320,10 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _getUserName(widget.gig.profile?.firstName, widget.gig.profile?.lastName),
+                              _getUserName(
+                                widget.gig.profile?.firstName,
+                                widget.gig.profile?.lastName,
+                              ),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -290,16 +333,27 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                             const SizedBox(height: 4),
                             Row(
                               children: [
-                                const FaIcon(FontAwesomeIcons.solidStar, size: 12, color: Colors.amber),
+                                const FaIcon(
+                                  FontAwesomeIcons.solidStar,
+                                  size: 12,
+                                  color: Colors.amber,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   widget.gig.rating.toStringAsFixed(1),
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
                                   '(${widget.gig.reviewsCount} reviews)',
-                                  style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.5)),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.white.withOpacity(0.5),
+                                  ),
                                 ),
                               ],
                             ),
@@ -308,7 +362,11 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                       ),
                       IconButton(
                         onPressed: () {},
-                        icon: FaIcon(FontAwesomeIcons.comment, color: primaryColor, size: 20),
+                        icon: FaIcon(
+                          FontAwesomeIcons.comment,
+                          color: primaryColor,
+                          size: 20,
+                        ),
                         style: IconButton.styleFrom(
                           backgroundColor: primaryColor.withOpacity(0.1),
                         ),
@@ -336,11 +394,11 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
         left: 20,
         right: 20,
         top: 16,
-        bottom: MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom : 16,
+        bottom: MediaQuery.of(context).padding.bottom > 0
+            ? MediaQuery.of(context).padding.bottom
+            : 16,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
-      ),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: BackdropFilter(
@@ -385,20 +443,35 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                             ),
                           ),
                           child: ElevatedButton(
-                            onPressed: _isApplying ? null : () => _handleDelete(context),
+                            onPressed: _isApplying
+                                ? null
+                                : () => _handleDelete(context),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
                               foregroundColor: Colors.red,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
                               elevation: 0,
                             ),
                             child: const Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                FaIcon(FontAwesomeIcons.trashCan, size: 14, color: Colors.redAccent),
+                                FaIcon(
+                                  FontAwesomeIcons.trashCan,
+                                  size: 14,
+                                  color: Colors.redAccent,
+                                ),
                                 SizedBox(width: 8),
-                                Text('Delete', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.redAccent)),
+                                Text(
+                                  'Delete',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.redAccent,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -430,7 +503,9 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                               backgroundColor: Colors.transparent,
                               shadowColor: Colors.transparent,
                               foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
                               elevation: 0,
                             ),
                             child: const Row(
@@ -438,7 +513,13 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                               children: [
                                 FaIcon(FontAwesomeIcons.penToSquare, size: 14),
                                 SizedBox(width: 8),
-                                Text('Edit Gig', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+                                Text(
+                                  'Edit Gig',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -454,14 +535,26 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
                         elevation: 0,
                       ),
                       child: _isApplying
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
                           : const Text(
                               'Apply Now',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                     ),
                   ),
@@ -529,13 +622,14 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
   String _getInitials(String? first, String? last) {
     String name = _getUserName(first, last);
     if (name == 'Anonymous') return 'A';
-    return name.split(' ').map((n) => n.isNotEmpty ? n[0] : '').join('').toUpperCase().substring(0, 2);
+    final initials = name.split(' ').where((n) => n.isNotEmpty).map((n) => n[0]).join('').toUpperCase();
+    return initials.length > 2 ? initials.substring(0, 2) : initials;
   }
 }
 
 class _ApplicationSheet extends StatefulWidget {
   final Gig gig;
-  
+
   const _ApplicationSheet({required this.gig});
 
   @override
@@ -554,7 +648,7 @@ class _ApplicationSheetState extends State<_ApplicationSheet> {
   @override
   Widget build(BuildContext context) {
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
-    
+
     return Container(
       margin: const EdgeInsets.all(16),
       padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomPadding),
@@ -611,15 +705,22 @@ class _ApplicationSheetState extends State<_ApplicationSheet> {
               onPressed: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Application submitted successfully!')),
+                  const SnackBar(
+                    content: Text('Application submitted successfully!'),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF3B82F6),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
-              child: const Text('Send Application', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              child: const Text(
+                'Send Application',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
