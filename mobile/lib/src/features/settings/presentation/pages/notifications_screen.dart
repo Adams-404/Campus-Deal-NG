@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../../auth/auth_provider.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -230,7 +231,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? GlassShimmer(
+              child: ListView.separated(
+                padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + kToolbarHeight + 8, 16, 16),
+                itemCount: 6,
+                separatorBuilder: (_, index) => const SizedBox(height: 8),
+                itemBuilder: (context, index) => const GlassSkeletonListTile(
+                  hasAvatar: true,
+                  hasTrailing: false,
+                ),
+              ),
+            )
           : _notifications.isEmpty
               ? _buildEmptyState()
               : RefreshIndicator(

@@ -14,6 +14,7 @@ import '../../../settings/presentation/pages/help_center_screen.dart';
 import '../../../settings/presentation/pages/feedback_screen.dart';
 import '../../../settings/presentation/pages/privacy_policy_screen.dart';
 import '../../../settings/presentation/pages/about_screen.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -119,8 +120,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             centerTitle: true,
           ),
           if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
+            SliverFillRemaining(
+              child: GlassShimmer(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: List.generate(
+                      5,
+                      (_) => const GlassSkeletonListTile(
+                        hasAvatar: false,
+                        hasTrailing: true,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             )
           else
             SliverList(

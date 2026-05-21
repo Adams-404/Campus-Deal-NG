@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../auth/auth_provider.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 const _categories = [
   'Food', 'Clothing', 'Beauty', 'Jewelry', 'Art', 'Baby',
@@ -401,27 +402,16 @@ class _CreateListingModalState extends ConsumerState<CreateListingModal> {
                                 ),
                               ),
                               child: _isSubmitting
-                                  ? const Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            color: Colors.white,
-                                            strokeWidth: 2.5,
-                                          ),
+                                  ? const GlassShimmer(
+                                      child: Text(
+                                        'Publishing listing...',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          letterSpacing: 0.5,
                                         ),
-                                        SizedBox(width: 12),
-                                        Text(
-                                          'Publishing listing...',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     )
                                   : const Text(
                                       'Publish Listing',

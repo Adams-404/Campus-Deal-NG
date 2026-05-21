@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/gigs_provider.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class CreateGigModal extends ConsumerStatefulWidget {
   const CreateGigModal({super.key});
@@ -417,12 +418,15 @@ class _CreateGigModalState extends ConsumerState<CreateGigModal> {
                                 ),
                               ),
                               child: _isSubmitting
-                                  ? const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2.5,
+                                  ? const GlassShimmer(
+                                      child: Text(
+                                        'Posting Gig...',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                          letterSpacing: 0.5,
+                                        ),
                                       ),
                                     )
                                   : const Text(

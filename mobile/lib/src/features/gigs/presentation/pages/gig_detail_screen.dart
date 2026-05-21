@@ -12,6 +12,7 @@ import '../../../../core/widgets/glass_app_bar.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/safe_image.dart';
 import '../../../marketplace/presentation/pages/item_detail_screen.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class GigDetailScreen extends ConsumerStatefulWidget {
   final Gig gig;
@@ -743,12 +744,14 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                   borderRadius: BorderRadius.circular(18),
                                   child: Center(
                                     child: _isApplying
-                                        ? const SizedBox(
-                                            width: 20,
-                                            height: 20,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2,
+                                        ? const GlassShimmer(
+                                            child: Text(
+                                              'Applying...',
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white,
+                                              ),
                                             ),
                                           )
                                         : const Text(

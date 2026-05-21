@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../auth/auth_provider.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -450,7 +451,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const GlassShimmer(
+              child: SafeArea(
+                child: GlassSkeletonProfile(),
+              ),
+            )
           : SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + kToolbarHeight + 8, 16, 16),
               child: Column(
@@ -532,14 +537,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                               width: 2),
                                         ),
                                         child: _isUploading
-                                            ? const SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  color: Colors.white,
-                                                  strokeWidth: 2,
-                                                ),
+                                            ? const GlassPulseIcon(
+                                                icon: Icons.camera_alt,
+                                                color: Colors.white,
+                                                size: 16,
                                               )
                                             : const Icon(Icons.camera_alt,
                                                 color: Colors.white, size: 16),

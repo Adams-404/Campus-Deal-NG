@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../auth/auth_provider.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -201,11 +202,10 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                     elevation: 0,
                   ),
                   child: _isSubmitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              color: Colors.white, strokeWidth: 2),
+                      ? const GlassShimmer(
+                          child: Text('Updating password...',
+                              style: TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16)),
                         )
                       : const Text('Update Password',
                           style: TextStyle(

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/models/chat_models.dart';
 import '../../../auth/auth_provider.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Conversation conversation;
@@ -255,7 +256,43 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           // Messages
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const GlassShimmer(
+                    child: SingleChildScrollView(
+                      physics: NeverScrollableScrollPhysics(),
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        child: Column(
+                          children: [
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: GlassSkeletonBlock(
+                                  height: 40, width: 180, borderRadius: 16, margin: EdgeInsets.only(bottom: 12)),
+                            ),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: GlassSkeletonBlock(
+                                  height: 50, width: 220, borderRadius: 16, margin: EdgeInsets.only(bottom: 12)),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: GlassSkeletonBlock(
+                                  height: 35, width: 120, borderRadius: 16, margin: EdgeInsets.only(bottom: 12)),
+                            ),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: GlassSkeletonBlock(
+                                  height: 60, width: 250, borderRadius: 16, margin: EdgeInsets.only(bottom: 12)),
+                            ),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: GlassSkeletonBlock(
+                                  height: 45, width: 200, borderRadius: 16, margin: EdgeInsets.only(bottom: 12)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
                 : _messages.isEmpty
                     ? _buildEmptyState()
                     : ListView.builder(
@@ -399,13 +436,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       color: Colors.white.withOpacity(0.6)),
                 ] else if (isMe && isTemp) ...[
                   const SizedBox(width: 4),
-                  SizedBox(
-                    width: 10,
-                    height: 10,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 1.5,
-                      color: Colors.white.withOpacity(0.6),
-                    ),
+                  GlassPulseIcon(
+                    icon: Icons.access_time,
+                    color: Colors.white.withOpacity(0.6),
+                    size: 10,
                   ),
                 ],
               ],
@@ -504,8 +538,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: _isSending
                   ? const Padding(
                       padding: EdgeInsets.all(12),
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                      child: GlassShimmer(
+                        child: Icon(Icons.send_rounded,
+                            color: Colors.white, size: 20),
+                      ),
                     )
                   : const Icon(Icons.send_rounded,
                       color: Colors.white, size: 20),

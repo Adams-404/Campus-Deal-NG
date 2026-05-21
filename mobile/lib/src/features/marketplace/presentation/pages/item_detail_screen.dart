@@ -11,6 +11,7 @@ import '../../../../core/utils/image_utils.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../messages/domain/models/chat_models.dart';
 import '../../../messages/presentation/pages/chat_screen.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class ItemDetailScreen extends ConsumerStatefulWidget {
   final String itemId;
@@ -230,7 +231,11 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
     if (_isLoading) {
       return const Scaffold(
         backgroundColor: Color(0xFF0A0A0A),
-        body: Center(child: CircularProgressIndicator()),
+        body: SafeArea(
+          child: GlassShimmer(
+            child: GlassSkeletonDetails(),
+          ),
+        ),
       );
     }
 
@@ -762,11 +767,11 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                               ],
                             ),
                             child: _isSaving
-                                ? const SizedBox(
-                                    width: 22,
-                                    height: 22,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: Colors.white))
+                                ? GlassPulseIcon(
+                                    icon: _isSaved ? Icons.favorite : Icons.favorite_border,
+                                    color: _isSaved ? Colors.red : Colors.white,
+                                    size: 22,
+                                  )
                                 : Icon(
                                     _isSaved
                                         ? Icons.favorite
@@ -932,7 +937,13 @@ class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
                   child: CachedNetworkImage(
                     imageUrl: widget.images[index],
                     fit: BoxFit.contain,
-                    placeholder: (context, url) => const CircularProgressIndicator(color: Colors.white),
+                    placeholder: (context, url) => const GlassShimmer(
+                      child: GlassSkeletonBlock(
+                        height: double.infinity,
+                        width: double.infinity,
+                        borderRadius: 0,
+                      ),
+                    ),
                     errorWidget: (context, url, error) => const Icon(Icons.error, color: Colors.white),
                   ),
                 ),

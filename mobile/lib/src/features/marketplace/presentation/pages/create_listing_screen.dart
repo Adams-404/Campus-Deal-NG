@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../auth/auth_provider.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 const _categories = [
   'Food', 'Clothing', 'Beauty', 'Jewelry', 'Art', 'Baby',
@@ -187,11 +188,11 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                 elevation: 0,
               ),
               child: _isSubmitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white),
+                  ? const GlassShimmer(
+                      child: Text(
+                        'Posting...',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     )
                   : const Text('Post',
                       style: TextStyle(fontWeight: FontWeight.bold)),
@@ -288,19 +289,10 @@ class _CreateListingScreenState extends ConsumerState<CreateListingScreen> {
                     elevation: 0,
                   ),
                   child: _isSubmitting
-                      ? const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: Colors.white),
-                            ),
-                            SizedBox(width: 12),
-                            Text('Publishing listing...',
-                                style: TextStyle(fontSize: 16)),
-                          ],
+                      ? const GlassShimmer(
+                          child: Text('Publishing listing...',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
                         )
                       : const Text('Publish Listing',
                           style: TextStyle(

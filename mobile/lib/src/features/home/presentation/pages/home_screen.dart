@@ -9,6 +9,7 @@ import 'package:campus_deal_mobile/src/features/auth/profile_provider.dart';
 import '../../../../core/widgets/glass_search_bar.dart';
 import '../../../../core/widgets/mode_switcher_pill.dart';
 import '../../../settings/presentation/widgets/notification_bell.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -115,7 +116,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             loading: () => const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.all(16.0),
-                child: Center(child: CircularProgressIndicator()),
+                child: GlassShimmer(
+                  child: GlassSkeletonCard(isFeatured: true),
+                ),
               ),
             ),
             error: (err, stack) => SliverToBoxAdapter(
@@ -143,7 +146,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               );
             },
-            loading: () => const SliverToBoxAdapter(child: SizedBox.shrink()),
+            loading: () => SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const GlassShimmer(
+                          child: GlassSkeletonBlock(height: 20, width: 120),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          height: 210,
+                          child: ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: 4,
+                            separatorBuilder: (_, __) => const SizedBox(width: 12),
+                            itemBuilder: (context, _) => const GlassShimmer(
+                              child: GlassSkeletonCard(isFeatured: false),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                childCount: 2,
+              ),
+            ),
             error: (err, stack) => const SliverToBoxAdapter(child: SizedBox.shrink()),
           ),
           

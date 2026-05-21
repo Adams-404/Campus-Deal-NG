@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:ui';
 import 'sign_up_screen.dart';
 import '../widgets/liquid_glass_background.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -453,12 +454,15 @@ class _LiquidFormButton extends StatelessWidget {
                 ),
                 child: Center(
                   child: isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
+                      ? const GlassShimmer(
+                          child: Text(
+                            'Signing in...',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         )
                       : Text(

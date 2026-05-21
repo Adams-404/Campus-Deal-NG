@@ -18,6 +18,7 @@ import 'src/core/providers/app_mode_provider.dart';
 import 'src/features/gigs/presentation/pages/gigs_browse_screen.dart';
 import 'src/features/gigs/presentation/pages/my_gigs_screen.dart';
 import 'src/features/gigs/presentation/widgets/create_gig_modal.dart';
+import 'src/core/widgets/glass_skeleton.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -76,13 +77,67 @@ class AuthWrapper extends ConsumerWidget {
               if (hasSeen) return const LoginScreen();
               return const OnboardingScreen();
             },
-            loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
+            loading: () => Scaffold(
+              body: Center(
+                child: GlassShimmer(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Campus Deal',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Student Marketplace',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.5),
+                          fontSize: 14,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
             error: (err, stack) => const LoginScreen(),
           );
         }
       },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+      loading: () => Scaffold(
+        body: Center(
+          child: GlassShimmer(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Campus Deal',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Student Marketplace',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       error: (error, stack) => Scaffold(
         body: Center(child: Text('Error: $error')),

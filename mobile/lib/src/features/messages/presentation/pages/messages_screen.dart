@@ -8,6 +8,7 @@ import '../../../auth/auth_provider.dart';
 import '../../../../core/utils/image_utils.dart';
 import 'package:campus_deal_mobile/src/core/widgets/glass_search_bar.dart';
 import 'chat_screen.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class MessagesScreen extends ConsumerStatefulWidget {
   const MessagesScreen({super.key});
@@ -139,8 +140,20 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
             ),
           ),
           if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
+            SliverFillRemaining(
+              child: GlassShimmer(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: List.generate(
+                      6,
+                      (_) => const GlassSkeletonListTile(
+                        hasAvatar: true,
+                        hasTrailing: true,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
             )
           else if (_filtered.isEmpty)
             SliverFillRemaining(child: _buildEmpty())

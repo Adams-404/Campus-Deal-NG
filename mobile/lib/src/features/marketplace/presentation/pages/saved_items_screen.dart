@@ -8,6 +8,8 @@ import '../providers/saved_items_provider.dart';
 import 'package:campus_deal_mobile/src/core/widgets/glass_search_bar.dart';
 import 'item_detail_screen.dart';
 
+import '../../../../core/widgets/glass_skeleton.dart';
+
 class SavedItemsScreen extends ConsumerStatefulWidget {
   const SavedItemsScreen({super.key});
 
@@ -91,8 +93,22 @@ class _SavedItemsScreenState extends ConsumerState<SavedItemsScreen> {
             ),
           ),
           savedAsync.when(
-            loading: () => const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
+            loading: () => SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 0.72,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => const GlassShimmer(
+                    child: GlassSkeletonCard(),
+                  ),
+                  childCount: 6,
+                ),
+              ),
             ),
             error: (err, _) => SliverFillRemaining(
               child: _buildEmptyState(isError: true, errorMsg: err.toString()),

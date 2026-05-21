@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -103,14 +104,8 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
+                    child: ElevatedButton(
                       onPressed: _isSubmitting ? null : _submit,
-                      icon: _isSubmitting
-                          ? const SizedBox(width: 16, height: 16,
-                              child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.send, size: 16),
-                      label: Text(_isSubmitting ? 'Sending...' : 'Send Feedback'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.purple.withOpacity(0.15),
                         foregroundColor: Colors.purple,
@@ -120,6 +115,27 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         elevation: 0,
                       ),
+                      child: _isSubmitting
+                          ? const GlassShimmer(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.send, size: 16),
+                                  SizedBox(width: 8),
+                                  Text('Submitting...',
+                                      style: TextStyle(fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            )
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.send, size: 16),
+                                SizedBox(width: 8),
+                                Text('Send Feedback',
+                                    style: TextStyle(fontWeight: FontWeight.bold)),
+                              ],
+                            ),
                     ),
                   ),
                 ],

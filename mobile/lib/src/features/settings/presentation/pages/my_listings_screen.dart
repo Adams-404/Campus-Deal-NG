@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import '../../../auth/auth_provider.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
+import '../../../../core/widgets/glass_skeleton.dart';
 
 class MyListingsScreen extends ConsumerStatefulWidget {
   const MyListingsScreen({super.key});
@@ -93,7 +93,45 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
           // Listings
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? GlassShimmer(
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                      itemCount: 6,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) => Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.03),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.white.withOpacity(0.06)),
+                        ),
+                        child: Row(
+                          children: [
+                            const GlassSkeletonBlock(width: 80, height: 80, borderRadius: 10),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const GlassSkeletonBlock(height: 14, width: double.infinity),
+                                  const SizedBox(height: 6),
+                                  const GlassSkeletonBlock(height: 12, width: 80),
+                                  const SizedBox(height: 10),
+                                  Row(
+                                    children: [
+                                      const GlassSkeletonBlock(height: 18, width: 60, borderRadius: 6),
+                                      const SizedBox(width: 8),
+                                      const GlassSkeletonBlock(height: 12, width: 70),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
                 : _listings.isEmpty
                     ? _buildEmptyState()
                     : RefreshIndicator(
