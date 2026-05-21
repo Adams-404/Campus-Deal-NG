@@ -1,7 +1,7 @@
 class ImageUtils {
   static String getFullUrl(String? path, {String bucket = 'gig_images'}) {
     if (path == null || path.isEmpty) return '';
-    if (path.startsWith('http')) return path;
+    if (path.startsWith('http') || path.startsWith('data:image/')) return path;
     
     // Build Supabase public URL
     // Format: https://{project_ref}.supabase.co/storage/v1/object/public/{bucket}/{path}

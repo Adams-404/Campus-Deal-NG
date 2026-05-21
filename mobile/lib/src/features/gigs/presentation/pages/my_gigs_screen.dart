@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/image_utils.dart';
+import '../../../../core/widgets/safe_image.dart';
 import '../providers/gigs_provider.dart';
 import '../../domain/models/gig_model.dart';
 import '../widgets/gig_card.dart';
@@ -44,7 +46,6 @@ class _MyGigsScreenState extends ConsumerState<MyGigsScreen> with SingleTickerPr
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final primaryColor = const Color(0xFF3B82F6);
 
     return Scaffold(
@@ -255,9 +256,27 @@ class _MyGigsScreenState extends ConsumerState<MyGigsScreen> with SingleTickerPr
                           height: 60,
                           color: Colors.white.withOpacity(0.05),
                           child: gig.gigImages.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: ImageUtils.getFullUrl(gig.gigImages.first.imageUrl),
+                              ? SafeImage(
+                                  imageUrl: ImageUtils.getThumbnailUrl(
+                                    ImageUtils.getFullUrl(gig.gigImages.first.imageUrl),
+                                    width: 120,
+                                    height: 120,
+                                  ),
                                   fit: BoxFit.cover,
+                                  memCacheWidth: 150,
+                                  memCacheHeight: 150,
+                                  fadeInDuration: const Duration(milliseconds: 200),
+                                  placeholder: (context, url) => Shimmer.fromColors(
+                                    baseColor: AppTheme.shimmerBase,
+                                    highlightColor: AppTheme.shimmerHighlight,
+                                    child: Container(color: Colors.white),
+                                  ),
+                                  errorWidget: (context, url, error) => Container(
+                                    color: const Color(0xFF222222),
+                                    child: const Center(
+                                      child: Icon(Icons.broken_image_outlined, color: Colors.white24, size: 16),
+                                    ),
+                                  ),
                                 )
                               : const Center(
                                   child: FaIcon(FontAwesomeIcons.briefcase, color: Colors.white30, size: 20),
