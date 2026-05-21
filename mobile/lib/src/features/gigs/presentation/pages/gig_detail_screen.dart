@@ -11,6 +11,7 @@ import '../providers/gigs_provider.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
 import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/safe_image.dart';
+import '../../../marketplace/presentation/pages/item_detail_screen.dart';
 
 class GigDetailScreen extends ConsumerStatefulWidget {
   final Gig gig;
@@ -90,6 +91,26 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
     );
   }
 
+  void _showFullScreenImages(int initialIndex) {
+    final images = widget.gig.gigImages
+        .map((img) => ImageUtils.getFullUrl(img.imageUrl))
+        .toList();
+    if (images.isEmpty) return;
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black.withOpacity(0.9),
+        pageBuilder: (context, _, __) {
+          return FullScreenImageViewer(
+            images: images,
+            initialIndex: initialIndex,
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final primaryColor = const Color(0xFF3B82F6);
@@ -99,43 +120,112 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
 
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: const GlassAppBar(title: 'Gig Details'),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Image Header
-            if (imageUrl != null)
-              SizedBox(
-                height: 300,
-                width: double.infinity,
-                child: SafeImage(
-                  imageUrl: imageUrl,
-                  fit: BoxFit.cover,
-                  memCacheWidth: 800,
-                  fadeInDuration: const Duration(milliseconds: 300),
-                  placeholder: (context, url) => Shimmer.fromColors(
-                    baseColor: AppTheme.shimmerBase,
-                    highlightColor: AppTheme.shimmerHighlight,
-                    child: Container(
-                      color: Colors.white,
-                      width: double.infinity,
-                      height: 300,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        leadingWidth: 70,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: Center(
+            child: _buildHeaderCircleButton(
+              icon: Icons.arrow_back_ios_new,
+              onTap: () => Navigator.pop(context),
+            ),
+          ),
+        ),
+        title: null,
+      ),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image Header
+                if (imageUrl != null)
+                  SizedBox(
+                    height: 300,
+                    width: double.infinity,
+                    child: Stack(
+                      children: [
+                        GestureDetector(
+                          onTap: () => _showFullScreenImages(0),
+                          behavior: HitTestBehavior.opaque,
+                          child: SizedBox(
+                            height: 300,
+                            width: double.infinity,
+                            child: SafeImage(
+                              imageUrl: imageUrl,
+                              fit: BoxFit.cover,
+                              memCacheWidth: 800,
+                              fadeInDuration: const Duration(milliseconds: 300),
+                              placeholder: (context, url) => Shimmer.fromColors(
+                                baseColor: AppTheme.shimmerBase,
+                                highlightColor: AppTheme.shimmerHighlight,
+                                child: Container(
+                                  color: Colors.white,
+                                  width: double.infinity,
+                                  height: 300,
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                color: const Color(0xFF222222),
+                                child: const Center(
+                                  child: Icon(Icons.broken_image_outlined, color: Colors.white24, size: 48),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Top gradient for status bar readability
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 120,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.black.withOpacity(0.65),
+                                  Colors.black.withOpacity(0.0),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Bottom gradient for content transition
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: 80,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                                colors: [
+                                  const Color(0xFF0F0F13),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    color: const Color(0xFF222222),
-                    child: const Center(
-                      child: Icon(Icons.broken_image_outlined, color: Colors.white24, size: 48),
-                    ),
-                  ),
-                ),
-              )
-            else
-              const SizedBox(height: kToolbarHeight + 40),
+                  )
+                else
+                  const SizedBox(height: kToolbarHeight + 40),
 
-            Padding(
-              padding: const EdgeInsets.all(20.0),
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -414,190 +504,270 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                     ],
                   ),
 
-                  const SizedBox(height: 100), // padding for bottom button
+                  const SizedBox(height: 120), // padding for bottom bar hover spacing
                 ],
               ),
             ),
           ],
         ),
       ),
-      bottomSheet: _buildBottomSheet(context, primaryColor),
+      _buildBottomActionBar(context, primaryColor),
+    ],
+  ),
+);
+  }
+
+  Widget _buildHeaderCircleButton({
+    required IconData icon,
+    Color? iconColor,
+    VoidCallback? onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.5),
+          shape: BoxShape.circle,
+        ),
+        padding: const EdgeInsets.all(8),
+        child: Icon(icon, color: iconColor ?? Colors.white, size: 18),
+      ),
     );
   }
 
-  Widget _buildBottomSheet(BuildContext context, Color primaryColor) {
+  Widget _buildBottomActionBar(BuildContext context, Color primaryColor) {
     final currentUserId = Supabase.instance.client.auth.currentUser?.id;
     final isOwner = currentUserId != null && currentUserId == widget.gig.userId;
 
-    return Container(
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 16,
-        bottom: MediaQuery.of(context).padding.bottom > 0
-            ? MediaQuery.of(context).padding.bottom
-            : 16,
-      ),
-      decoration: const BoxDecoration(color: Colors.transparent),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Colors.white.withOpacity(0.12),
-                  Colors.white.withOpacity(0.03),
-                ],
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: ShaderMask(
+        shaderCallback: (rect) {
+          return const LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              Colors.black,
+              Colors.black,
+            ],
+            stops: [0.0, 0.4, 1.0],
+          ).createShader(rect);
+        },
+        blendMode: BlendMode.dstIn,
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                20,
+                48,
+                20,
+                MediaQuery.of(context).padding.bottom > 0
+                    ? MediaQuery.of(context).padding.bottom + 16
+                    : 32,
               ),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.2),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 15,
-                  spreadRadius: 2,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(0.0),
+                    Colors.black.withOpacity(0.85),
+                    Colors.black.withOpacity(0.95),
+                  ],
+                  stops: const [0.0, 0.4, 1.0],
                 ),
-              ],
-            ),
-            child: isOwner
-                ? Row(
-                    children: [
-                      // Delete Button (Glassmorphic Red)
-                      Expanded(
-                        child: Container(
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: Colors.red.withOpacity(0.4),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _isApplying
-                                ? null
-                                : () => _handleDelete(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              foregroundColor: Colors.red,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                FaIcon(
-                                  FontAwesomeIcons.trashCan,
-                                  size: 14,
-                                  color: Colors.redAccent,
-                                ),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Delete',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.redAccent,
+              ),
+              child: SafeArea(
+                top: false,
+                child: isOwner
+                    ? Row(
+                        children: [
+                          // Delete Button (Liquid Glass Red)
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                                child: Container(
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Colors.red.withValues(alpha: 0.35),
+                                        Colors.red.withValues(alpha: 0.12),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: Colors.red.withValues(alpha: 0.55),
+                                      width: 1.5,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.red.withValues(alpha: 0.30),
+                                        blurRadius: 16,
+                                        spreadRadius: 1,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _isApplying ? null : () => _handleDelete(context),
+                                      borderRadius: BorderRadius.circular(18),
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          FaIcon(
+                                            FontAwesomeIcons.trashCan,
+                                            size: 14,
+                                            color: Colors.white,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Delete',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              letterSpacing: 0.3,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // Edit Button (Glassmorphic Blue/White)
-                      Expanded(
-                        child: Container(
-                          height: 48,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                Colors.white.withOpacity(0.20),
-                                Colors.white.withOpacity(0.05),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: Colors.white.withOpacity(0.25),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: () => _handleEdit(context),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
                               ),
-                              elevation: 0,
                             ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                FaIcon(FontAwesomeIcons.penToSquare, size: 14),
-                                SizedBox(width: 8),
-                                Text(
-                                  'Edit Gig',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
+                          ),
+                          const SizedBox(width: 12),
+                          // Edit Button (Liquid Glass White/Silver)
+                          Expanded(
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                                child: Container(
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Colors.white.withOpacity(0.22),
+                                        Colors.white.withOpacity(0.06),
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(18),
+                                    border: Border.all(
+                                      color: Colors.white.withOpacity(0.30),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _handleEdit(context),
+                                      borderRadius: BorderRadius.circular(18),
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          FaIcon(
+                                            FontAwesomeIcons.penToSquare,
+                                            size: 14,
+                                            color: Colors.white,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Edit Gig',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                              letterSpacing: 0.3,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                    ],
-                  )
-                : SizedBox(
-                    width: double.infinity,
-                    height: 48,
-                    child: ElevatedButton(
-                      onPressed: _isApplying ? null : _handleApply,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryColor,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
+                        ],
+                      )
+                    : SizedBox(
+                        width: double.infinity,
+                        height: 48,
+                        child: ClipRRect(
                           borderRadius: BorderRadius.circular(18),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isApplying
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                                strokeWidth: 2,
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(18),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    primaryColor.withOpacity(0.25),
+                                    primaryColor.withOpacity(0.08),
+                                  ],
+                                ),
+                                border: Border.all(
+                                  color: primaryColor.withOpacity(0.45),
+                                  width: 1.5,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: primaryColor.withOpacity(0.25),
+                                    blurRadius: 16,
+                                    spreadRadius: 1,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
                               ),
-                            )
-                          : const Text(
-                              'Apply Now',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.bold,
+                              child: Material(
+                                color: Colors.transparent,
+                                child: InkWell(
+                                  onTap: _isApplying ? null : _handleApply,
+                                  borderRadius: BorderRadius.circular(18),
+                                  child: Center(
+                                    child: _isApplying
+                                        ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Apply Now',
+                                            style: TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                  ),
+                                ),
                               ),
                             ),
-                    ),
-                  ),
+                          ),
+                        ),
+                      ),
+              ),
+            ),
           ),
         ),
       ),

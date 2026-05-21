@@ -11,7 +11,7 @@ import 'src/features/home/presentation/pages/home_screen.dart';
 import 'src/features/navigation/presentation/widgets/bottom_nav_bar.dart';
 import 'src/features/marketplace/presentation/pages/saved_items_screen.dart';
 import 'src/features/marketplace/presentation/pages/settings_screen.dart';
-import 'src/features/marketplace/presentation/pages/create_listing_screen.dart';
+import 'src/features/marketplace/presentation/widgets/create_listing_modal.dart';
 import 'src/features/messages/presentation/pages/messages_screen.dart';
 import 'src/core/widgets/status_bar_blur.dart';
 import 'src/core/providers/app_mode_provider.dart';
@@ -178,97 +178,7 @@ class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF171717),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: EdgeInsets.fromLTRB(
-            24, 24, 24, 24 + MediaQuery.of(ctx).viewInsets.bottom),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 28),
-            // Icon
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF3B82F6), Color(0xFF6366F1)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF3B82F6).withOpacity(0.4),
-                    blurRadius: 20,
-                    spreadRadius: 4,
-                  ),
-                ],
-              ),
-              child: const Icon(Icons.add, color: Colors.white, size: 36),
-            ),
-            const SizedBox(height: 18),
-            const Text(
-              'Sell Something',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'List your items on the campus marketplace',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[400], fontSize: 14),
-            ),
-            const SizedBox(height: 28),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CreateListingScreen(),
-                    ),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
-                ),
-                child: const Text('Create a Listing',
-                    style: TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child:
-                  Text('Cancel', style: TextStyle(color: Colors.grey[400])),
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+      builder: (ctx) => const CreateListingModal(),
     );
   }
 }

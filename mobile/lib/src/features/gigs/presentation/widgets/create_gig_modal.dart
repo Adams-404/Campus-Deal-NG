@@ -342,12 +342,29 @@ class _CreateGigModalState extends ConsumerState<CreateGigModal> {
                               child: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [primaryColor, const Color(0xFF6366F1)],
-                                  ),
+                                  color: Colors.white.withValues(alpha: 0.04),
                                   borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    width: 1.2,
+                                  ),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withValues(alpha: 0.12),
+                                      Colors.white.withValues(alpha: 0.03),
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: primaryColor.withValues(alpha: 0.15),
+                                      blurRadius: 8,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(Icons.add, color: Colors.white, size: 20),
+                                child: Icon(Icons.add, color: primaryColor, size: 20),
                               ),
                             ),
                           ],
@@ -370,14 +387,22 @@ class _CreateGigModalState extends ConsumerState<CreateGigModal> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(16),
                               gradient: LinearGradient(
-                                colors: [primaryColor, const Color(0xFF4F46E5)],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
+                                colors: [
+                                  primaryColor.withValues(alpha: 0.25),
+                                  primaryColor.withValues(alpha: 0.08),
+                                ],
+                              ),
+                              border: Border.all(
+                                color: primaryColor.withValues(alpha: 0.45),
+                                width: 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: primaryColor.withOpacity(0.3),
-                                  blurRadius: 12,
+                                  color: primaryColor.withValues(alpha: 0.25),
+                                  blurRadius: 16,
+                                  spreadRadius: 1,
                                   offset: const Offset(0, 4),
                                 ),
                               ],
@@ -406,6 +431,7 @@ class _CreateGigModalState extends ConsumerState<CreateGigModal> {
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
                             ),
