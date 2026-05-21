@@ -59,4 +59,49 @@ class GigsRepository {
       'is_active': false,
     }).eq('id', id);
   }
+
+  Future<Gig> createGig({
+    required String title,
+    required String description,
+    required String category,
+    required num price,
+    String? location,
+    String? duration,
+    List<String>? tags,
+    List<String>? images,
+  }) async {
+    final user = _client.auth.currentUser;
+    if (user == null) throw Exception('You must be logged in to create a gig');
+
+    final newGigData = await _client.from('gigs').insert({
+      'title': title,
+      'description': description,
+      'category': category,
+      'price': price,
+      'location': location,
+      'duration': duration,
+      'tags': tags ?? [],
+      'user_id': user.id,
+      'is_active': true,
+      'status': 'active',
+    }).select().single();
+
+    final newGigId = newGigData['id'] as String;
+
+    if (images != null && images.isNotEmpty) {
+      final imageRecords = images.asMap().entries.map((entry) {
+        final index = entry.key;
+        final url = entry.value;
+        return {
+          'gig_id': newGigId,
+          'image_url': url,
+          'is_primary': index == 0,
+        };
+      }).toList();
+
+      await _client.from('gig_images').insert(imageRecords);
+    }
+
+    return fetchGigById(newGigId);
+  }
 }

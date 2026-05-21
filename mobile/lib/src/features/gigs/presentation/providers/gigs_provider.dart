@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/models/gig_model.dart';
@@ -44,7 +45,7 @@ class GigsNotifier extends AsyncNotifier<List<Gig>> {
       _cachedGigs = realGigs;
       state = AsyncValue.data(realGigs);
     } catch (e) {
-      print('Background fetch error: $e');
+      debugPrint('Background fetch error: $e');
     }
   }
 
@@ -55,7 +56,38 @@ class GigsNotifier extends AsyncNotifier<List<Gig>> {
       ref.invalidateSelf();
       ref.invalidate(userGigsProvider);
     } catch (e) {
-      print('Error deleting gig: $e');
+      debugPrint('Error deleting gig: $e');
+      rethrow;
+    }
+  }
+
+  Future<Gig> createGig({
+    required String title,
+    required String description,
+    required String category,
+    required num price,
+    String? location,
+    String? duration,
+    List<String>? tags,
+    List<String>? images,
+  }) async {
+    try {
+      final gig = await ref.read(gigsRepositoryProvider).createGig(
+        title: title,
+        description: description,
+        category: category,
+        price: price,
+        location: location,
+        duration: duration,
+        tags: tags,
+        images: images,
+      );
+      _cachedGigs = null; // reset cache
+      ref.invalidateSelf();
+      ref.invalidate(userGigsProvider);
+      return gig;
+    } catch (e) {
+      debugPrint('Error creating gig: $e');
       rethrow;
     }
   }

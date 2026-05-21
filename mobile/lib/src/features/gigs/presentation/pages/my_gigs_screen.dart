@@ -61,35 +61,100 @@ class _MyGigsScreenState extends ConsumerState<MyGigsScreen> with SingleTickerPr
             color: Colors.white,
           ),
         ),
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: primaryColor,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white.withOpacity(0.5),
-          dividerColor: Colors.white.withOpacity(0.05),
-          indicatorSize: TabBarIndicatorSize.tab,
-          tabs: const [
-            Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FaIcon(FontAwesomeIcons.briefcase, size: 14),
-                  SizedBox(width: 8),
-                  Text('My Gigs', style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(60),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
+                child: Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.03),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.08),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        spreadRadius: 0,
+                      )
+                    ],
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      gradient: LinearGradient(
+                        colors: [
+                          primaryColor.withOpacity(0.3),
+                          const Color(0xFF6366F1).withOpacity(0.2),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      border: Border.all(
+                        color: primaryColor.withOpacity(0.4),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primaryColor.withOpacity(0.2),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.white.withOpacity(0.4),
+                    dividerColor: Colors.transparent,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    tabs: const [
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            FaIcon(FontAwesomeIcons.briefcase, size: 12),
+                            SizedBox(width: 8),
+                            Text(
+                              'My Gigs',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Tab(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            FaIcon(FontAwesomeIcons.circleCheck, size: 12),
+                            SizedBox(width: 8),
+                            Text(
+                              'Applied',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            Tab(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FaIcon(FontAwesomeIcons.circleCheck, size: 14),
-                  SizedBox(width: 8),
-                  Text('Applied', style: TextStyle(fontWeight: FontWeight.bold)),
-                ],
-              ),
-            ),
-          ],
+          ),
         ),
       ),
       body: RefreshIndicator(

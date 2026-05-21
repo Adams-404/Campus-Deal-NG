@@ -17,7 +17,7 @@ import 'src/core/widgets/status_bar_blur.dart';
 import 'src/core/providers/app_mode_provider.dart';
 import 'src/features/gigs/presentation/pages/gigs_browse_screen.dart';
 import 'src/features/gigs/presentation/pages/my_gigs_screen.dart';
-import 'src/features/gigs/presentation/pages/gigs_applications_screen.dart';
+import 'src/features/gigs/presentation/widgets/create_gig_modal.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return Stack(
           children: [
-            if (child != null) child,
+            child ?? const SizedBox.shrink(),
             const StatusBarBlur(),
           ],
         );
@@ -77,7 +77,7 @@ class AuthWrapper extends ConsumerWidget {
               return const OnboardingScreen();
             },
             loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-            error: (_, __) => const LoginScreen(),
+            error: (err, stack) => const LoginScreen(),
           );
         }
       },
@@ -165,8 +165,11 @@ class _MainNavigationWrapperState extends ConsumerState<MainNavigationWrapper> {
   }
 
   void _showCreateGigModal(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Create Gig coming soon')),
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => const CreateGigModal(),
     );
   }
 
