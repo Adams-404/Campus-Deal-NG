@@ -2,13 +2,15 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../../../core/theme/app_theme.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../domain/models/gig_model.dart';
 import '../providers/gigs_provider.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
 import '../../../../core/utils/image_utils.dart';
+import '../../../../core/widgets/safe_image.dart';
 
 class GigDetailScreen extends ConsumerStatefulWidget {
   final Gig gig;
@@ -107,17 +109,24 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
               SizedBox(
                 height: 300,
                 width: double.infinity,
-                child: CachedNetworkImage(
+                child: SafeImage(
                   imageUrl: imageUrl,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Container(
-                    color: Colors.white.withOpacity(0.05),
-                    child: const Center(child: CircularProgressIndicator()),
+                  memCacheWidth: 800,
+                  fadeInDuration: const Duration(milliseconds: 300),
+                  placeholder: (context, url) => Shimmer.fromColors(
+                    baseColor: AppTheme.shimmerBase,
+                    highlightColor: AppTheme.shimmerHighlight,
+                    child: Container(
+                      color: Colors.white,
+                      width: double.infinity,
+                      height: 300,
+                    ),
                   ),
                   errorWidget: (context, url, error) => Container(
-                    color: Colors.white.withOpacity(0.05),
+                    color: const Color(0xFF222222),
                     child: const Center(
-                      child: Icon(Icons.error, color: Colors.white54),
+                      child: Icon(Icons.broken_image_outlined, color: Colors.white24, size: 48),
                     ),
                   ),
                 ),
@@ -293,26 +302,57 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      CircleAvatar(
-                        radius: 24,
-                        backgroundColor: Colors.white.withOpacity(0.1),
-                        backgroundImage: widget.gig.profile?.avatarUrl != null
-                            ? CachedNetworkImageProvider(
-                                ImageUtils.getFullUrl(widget.gig.profile!.avatarUrl!, bucket: 'avatars'),
-                              )
-                            : null,
-                        child: widget.gig.profile?.avatarUrl == null
-                            ? Text(
-                                _getInitials(
-                                  widget.gig.profile?.firstName,
-                                  widget.gig.profile?.lastName,
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.1),
+                        ),
+                        child: ClipOval(
+                          child: widget.gig.profile?.avatarUrl != null
+                              ? SafeImage(
+                                  imageUrl: ImageUtils.getFullUrl(
+                                    widget.gig.profile!.avatarUrl!,
+                                    bucket: 'avatars',
+                                  ),
+                                  fit: BoxFit.cover,
+                                  memCacheWidth: 120,
+                                  memCacheHeight: 120,
+                                  fadeInDuration: const Duration(milliseconds: 200),
+                                  placeholder: (context, url) => Shimmer.fromColors(
+                                    baseColor: AppTheme.shimmerBase,
+                                    highlightColor: AppTheme.shimmerHighlight,
+                                    child: Container(color: Colors.white),
+                                  ),
+                                  errorWidget: (context, url, error) => Center(
+                                    child: Text(
+                                      _getInitials(
+                                        widget.gig.profile?.firstName,
+                                        widget.gig.profile?.lastName,
+                                      ),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : Center(
+                                  child: Text(
+                                    _getInitials(
+                                      widget.gig.profile?.firstName,
+                                      widget.gig.profile?.lastName,
+                                    ),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : null,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(

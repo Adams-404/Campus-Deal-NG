@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../domain/models/gig_model.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 import '../../../../core/utils/image_utils.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/safe_image.dart';
 
 class GigCard extends StatelessWidget {
   final Gig gig;
@@ -114,20 +116,32 @@ class GigCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
-                      child: CachedNetworkImage(
-                        imageUrl: imageUrl,
+                      child: SafeImage(
+                        imageUrl: ImageUtils.getThumbnailUrl(
+                          imageUrl,
+                          width: 400,
+                          height: 250,
+                        ),
                         height: 160,
                         width: double.infinity,
                         fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          height: 160,
-                          color: Colors.white.withOpacity(0.05),
-                          child: const Center(child: CircularProgressIndicator()),
+                        memCacheWidth: 400,
+                        fadeInDuration: const Duration(milliseconds: 300),
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: AppTheme.shimmerBase,
+                          highlightColor: AppTheme.shimmerHighlight,
+                          child: Container(
+                            height: 160,
+                            width: double.infinity,
+                            color: Colors.white,
+                          ),
                         ),
                         errorWidget: (context, url, error) => Container(
                           height: 160,
-                          color: Colors.white.withOpacity(0.05),
-                          child: const Center(child: Icon(Icons.error, color: Colors.white54)),
+                          color: const Color(0xFF222222),
+                          child: const Center(
+                            child: Icon(Icons.broken_image_outlined, color: Colors.white24, size: 32),
+                          ),
                         ),
                       ),
                     ),
@@ -178,18 +192,51 @@ class GigCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          CircleAvatar(
-                            radius: 14,
-                            backgroundColor: Colors.white.withOpacity(0.2),
-                            backgroundImage: gig.profile?.avatarUrl != null
-                                ? CachedNetworkImageProvider(gig.profile!.avatarUrl!)
-                                : null,
-                            child: gig.profile?.avatarUrl == null
-                                ? Text(
-                                    _getInitials(gig.profile?.firstName, gig.profile?.lastName),
-                                    style: const TextStyle(fontSize: 10, color: Colors.white),
-                                  )
-                                : null,
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                            child: ClipOval(
+                              child: gig.profile?.avatarUrl != null
+                                  ? SafeImage(
+                                      imageUrl: ImageUtils.getFullUrl(
+                                        gig.profile!.avatarUrl!,
+                                        bucket: 'avatars',
+                                      ),
+                                      fit: BoxFit.cover,
+                                      memCacheWidth: 80,
+                                      memCacheHeight: 80,
+                                      fadeInDuration: const Duration(milliseconds: 200),
+                                      placeholder: (context, url) => Shimmer.fromColors(
+                                        baseColor: AppTheme.shimmerBase,
+                                        highlightColor: AppTheme.shimmerHighlight,
+                                        child: Container(color: Colors.white),
+                                      ),
+                                      errorWidget: (context, url, error) => Center(
+                                        child: Text(
+                                          _getInitials(gig.profile?.firstName, gig.profile?.lastName),
+                                          style: const TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        _getInitials(gig.profile?.firstName, gig.profile?.lastName),
+                                        style: const TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Text(

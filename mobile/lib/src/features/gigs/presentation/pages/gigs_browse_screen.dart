@@ -4,6 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/widgets/glass_search_bar.dart';
 import '../../../../core/widgets/mode_switcher_pill.dart';
 import '../../../auth/profile_provider.dart';
+import 'package:shimmer/shimmer.dart';
+import '../../../../core/utils/image_utils.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/safe_image.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import '../providers/gigs_provider.dart';
 import '../widgets/gig_card.dart';
@@ -215,7 +219,27 @@ class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
               
               return ClipOval(
                 child: avatarUrl != null && avatarUrl.isNotEmpty
-                    ? Image.network(avatarUrl, fit: BoxFit.cover)
+                    ? SafeImage(
+                        imageUrl: ImageUtils.getFullUrl(
+                          avatarUrl,
+                          bucket: 'avatars',
+                        ),
+                        fit: BoxFit.cover,
+                        memCacheWidth: 100,
+                        memCacheHeight: 100,
+                        fadeInDuration: const Duration(milliseconds: 200),
+                        placeholder: (context, url) => Shimmer.fromColors(
+                          baseColor: AppTheme.shimmerBase,
+                          highlightColor: AppTheme.shimmerHighlight,
+                          child: Container(color: Colors.white),
+                        ),
+                        errorWidget: (context, url, error) => Center(
+                          child: Text(
+                            initial,
+                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      )
                     : Center(
                         child: Text(
                           initial,
@@ -225,7 +249,7 @@ class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
               );
             },
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const Icon(Icons.account_circle, color: Colors.white, size: 24),
+            error: (err, stack) => const Icon(Icons.account_circle, color: Colors.white, size: 24),
           ),
         ),
       ),
