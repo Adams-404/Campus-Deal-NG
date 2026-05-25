@@ -237,7 +237,7 @@ const AnimatedRoutes = () => {
       <main className={cn("flex-1", getContentClass())}>
         <AnimatePresence mode="wait">
           <Suspense fallback={fallbackLoader}>
-            <Routes location={location} key={location.pathname}>
+            <Routes location={location} key={location.pathname.startsWith('/messages') ? '/messages' : location.pathname}>
               <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
               <Route path="/auth" element={<AuthGuard><AuthLayout /></AuthGuard>}>
                 <Route index element={<SignIn />} />

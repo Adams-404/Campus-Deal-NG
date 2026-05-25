@@ -179,10 +179,12 @@ export default function Messages() {
   const { currentMode } = useAppMode();
   const isGigsMode = currentMode === 'gigs';
   const [loading, setLoading] = useState(true);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [filteredMessages, setFilteredMessages] = useState<Message[]>([]);
+  const [messagesCache, setMessagesCache] = useState<Record<string, Message[]>>({});
   const [newMessage, setNewMessage] = useState('');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentUserProfile, setCurrentUserProfile] = useState<any>(null);
@@ -321,6 +323,11 @@ export default function Messages() {
 
     // Fetch messages and set up real-time subscription
     if (conversationId) {
+      if (messagesCache[conversationId]) {
+        setMessages(messagesCache[conversationId]);
+      } else {
+        setMessages([]);
+      }
       fetchMessages(conversationId);
       setupRealtimeSubscription();
     }
@@ -333,6 +340,15 @@ export default function Messages() {
       }
     };
   }, [conversationId, currentUser?.id]);
+
+  useEffect(() => {
+    if (conversationId && conversations.length > 0) {
+      const selected = conversations.find(c => c.id === conversationId);
+      setSelectedConversation(selected || null);
+    } else if (!conversationId) {
+      setSelectedConversation(null);
+    }
+  }, [conversationId, conversations]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -535,7 +551,11 @@ export default function Messages() {
   };
 
   const fetchMessages = async (convId: string) => {
+    const hasCache = !!messagesCache[convId];
     try {
+      if (!hasCache) {
+        setMessagesLoading(true);
+      }
       console.log('Fetching messages for conversation:', convId);
 
       const { data, error } = await supabase
@@ -586,9 +606,15 @@ export default function Messages() {
 
       console.log(`Fetched ${formattedMessages.length} messages for conversation ${convId}`);
       setMessages(formattedMessages);
+      setMessagesCache(prev => ({
+        ...prev,
+        [convId]: formattedMessages
+      }));
     } catch (error: any) {
       console.error('Error fetching messages:', error);
       toast.error(error.message);
+    } finally {
+      setMessagesLoading(false);
     }
   };
 
@@ -796,7 +822,7 @@ export default function Messages() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen bg-background flex">
+      <div className="h-screen w-full overflow-hidden bg-background flex">
         {/* Conversations Sidebar */}
         <div className={`w-full sm:w-[380px] border-r border-white/10 flex flex-col ${conversationId ? 'hidden sm:flex' : 'flex'
           }`}>
@@ -938,7 +964,7 @@ export default function Messages() {
 
         {/* Chat Area */}
         {conversationId && selectedConversation ? (
-          <div className="flex-1 flex flex-col h-[100dvh] fixed inset-0 bg-background sm:relative sm:h-auto">
+          <div className="flex-1 flex flex-col h-[100dvh] fixed inset-0 bg-background sm:relative sm:h-full sm:max-h-screen">
             {/* Chat Header */}
             <div className="h-16 sm:h-20 border-b border-white/10 flex items-center px-3 sm:px-6 flex-shrink-0 backdrop-blur-sm bg-secondary/20">
               <div className="flex items-center gap-2 sm:gap-4 flex-1">
@@ -1004,100 +1030,121 @@ export default function Messages() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto pb-safe" ref={messageContainerRef}>
-              <div className="p-3 sm:p-6 space-y-3 sm:space-y-6">
-                {selectedConversation.item && (
-                  <div className="flex flex-col items-center gap-2 sm:gap-3 mb-4 sm:mb-8">
-                    <div className="relative w-24 sm:w-32 h-24 sm:h-32 rounded-lg overflow-hidden ring-2 ring-primary/20">
-                      <img
-                        src={selectedConversation.item.images[0]}
-                        alt={selectedConversation.item.title}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end justify-center p-2">
-                        <span className="text-xs text-muted-foreground">
-                          ₦{selectedConversation.item.price}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <p className="font-medium text-xs sm:text-sm">{selectedConversation.item.title}</p>
-                      <p className="text-[10px] sm:text-xs text-muted-foreground/60 mt-0.5 sm:mt-1">Started conversation about this item</p>
-                    </div>
-                  </div>
-                )}
-                <AnimatePresence initial={false}>
-                  {Object.entries(
-                    messages.reduce((groups, message) => {
-                      const date = format(new Date(message.created_at), 'yyyy-MM-dd');
-                      if (!groups[date]) {
-                        groups[date] = [];
-                      }
-                      groups[date].push(message);
-                      return groups;
-                    }, {} as Record<string, Message[]>)
-                  ).map(([date, dateMessages]) => (
-                    <motion.div key={date}>
-                      <div className="flex items-center justify-center my-4">
-                        <div className="px-3 py-1.5 rounded-full bg-secondary/30 backdrop-blur-sm">
+            {messagesLoading ? (
+              <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-3 sm:space-y-6">
+                <div className="flex items-end gap-2 flex-row mb-2 animate-pulse">
+                  <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white/5" />
+                  <div className="h-12 w-[60%] rounded-2xl bg-white/5" />
+                </div>
+                <div className="flex items-end gap-2 flex-row-reverse mb-2 animate-pulse">
+                  <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white/5" />
+                  <div className="h-10 w-[40%] rounded-2xl bg-white/5" />
+                </div>
+                <div className="flex items-end gap-2 flex-row mb-2 animate-pulse">
+                  <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white/5" />
+                  <div className="h-16 w-[50%] rounded-2xl bg-white/5" />
+                </div>
+                <div className="flex items-end gap-2 flex-row-reverse mb-2 animate-pulse">
+                  <div className="h-6 w-6 sm:h-8 sm:w-8 rounded-full bg-white/5" />
+                  <div className="h-12 w-[45%] rounded-2xl bg-white/5" />
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto pb-safe animate-fade-in" ref={messageContainerRef}>
+                <div className="p-3 sm:p-6 space-y-3 sm:space-y-6">
+                  {selectedConversation.item && (
+                    <div className="flex flex-col items-center gap-2 sm:gap-3 mb-4 sm:mb-8">
+                      <div className="relative w-24 sm:w-32 h-24 sm:h-32 rounded-lg overflow-hidden ring-2 ring-primary/20">
+                        <img
+                          src={selectedConversation.item.images[0]}
+                          alt={selectedConversation.item.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent flex items-end justify-center p-2">
                           <span className="text-xs text-muted-foreground">
-                            {format(new Date(date), "EEEE, MMMM d")}
+                            ₦{selectedConversation.item.price}
                           </span>
                         </div>
                       </div>
-                      <div className="space-y-3">
-                        {dateMessages.map((message) => (
-                          <motion.div
-                            key={message.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -20 }}
-                            className={`flex items-end gap-2 ${message.sender_id === currentUser?.id ? 'flex-row-reverse' : 'flex-row'
-                              } mb-2 last:mb-0`}
-                          >
-                            <Avatar
-                              className="h-6 w-6 sm:h-8 sm:w-8 ring-2 ring-offset-2 ring-offset-background ring-primary/20 flex-shrink-0 cursor-pointer"
-                              onClick={() => navigate(`/user/${message.sender_id}`)}
-                            >
-                              <AvatarImage
-                                src={message.sender_id === currentUser?.id
-                                  ? currentUserProfile?.avatar_url
-                                  : selectedConversation.other_user.avatar_url
-                                }
-                              />
-                              <AvatarFallback>
-                                <User className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
-                              </AvatarFallback>
-                            </Avatar>
-                            <div
-                              className={cn(
-                                "max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-4 shadow-sm transition-colors duration-200",
-                                message.sender_id === currentUser?.id
-                                  ? "border-2 border-primary/60 hover:border-primary/80 bg-primary/5 text-foreground rounded-br-sm"
-                                  : "border-2 border-green-500/60 hover:border-green-500/80 bg-green-500/5 text-foreground rounded-bl-sm"
-                              )}
-                            >
-                              {message.image_url && (
-                                <img
-                                  src={message.image_url}
-                                  alt="Message attachment"
-                                  className="rounded-lg mb-2 max-w-full"
-                                />
-                              )}
-                              <p className="break-words text-[13px] sm:text-[15px] leading-relaxed">{message.content}</p>
-                              <p className="text-[10px] sm:text-xs text-muted-foreground text-right mt-1.5">
-                                {format(new Date(message.created_at), 'HH:mm')}
-                              </p>
-                            </div>
-                          </motion.div>
-                        ))}
+                      <div className="text-center">
+                        <p className="font-medium text-xs sm:text-sm">{selectedConversation.item.title}</p>
+                        <p className="text-[10px] sm:text-xs text-muted-foreground/60 mt-0.5 sm:mt-1">Started conversation about this item</p>
                       </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-                <div ref={messagesEndRef} />
+                    </div>
+                  )}
+                  <AnimatePresence initial={false}>
+                    {Object.entries(
+                      messages.reduce((groups, message) => {
+                        const date = format(new Date(message.created_at), 'yyyy-MM-dd');
+                        if (!groups[date]) {
+                          groups[date] = [];
+                        }
+                        groups[date].push(message);
+                        return groups;
+                      }, {} as Record<string, Message[]>)
+                    ).map(([date, dateMessages]) => (
+                      <motion.div key={date}>
+                        <div className="flex items-center justify-center my-4">
+                          <div className="px-3 py-1.5 rounded-full bg-secondary/30 backdrop-blur-sm">
+                            <span className="text-xs text-muted-foreground">
+                              {format(new Date(date), "EEEE, MMMM d")}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          {dateMessages.map((message) => (
+                            <motion.div
+                              key={message.id}
+                              initial={{ opacity: 0, y: 20 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              exit={{ opacity: 0, y: -20 }}
+                              className={`flex items-end gap-2 ${message.sender_id === currentUser?.id ? 'flex-row-reverse' : 'flex-row'
+                                } mb-2 last:mb-0`}
+                            >
+                              <Avatar
+                                className="h-6 w-6 sm:h-8 sm:w-8 ring-2 ring-offset-2 ring-offset-background ring-primary/20 flex-shrink-0 cursor-pointer"
+                                onClick={() => navigate(`/user/${message.sender_id}`)}
+                              >
+                                <AvatarImage
+                                  src={message.sender_id === currentUser?.id
+                                    ? currentUserProfile?.avatar_url
+                                    : selectedConversation.other_user.avatar_url
+                                  }
+                                />
+                                <AvatarFallback>
+                                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                                </AvatarFallback>
+                              </Avatar>
+                              <div
+                                className={cn(
+                                  "max-w-[85%] sm:max-w-[70%] rounded-2xl p-2.5 sm:p-4 shadow-sm transition-colors duration-200",
+                                  message.sender_id === currentUser?.id
+                                    ? "border-2 border-primary/60 hover:border-primary/80 bg-primary/5 text-foreground rounded-br-sm"
+                                    : "border-2 border-green-500/60 hover:border-green-500/80 bg-green-500/5 text-foreground rounded-bl-sm"
+                                )}
+                              >
+                                {message.image_url && (
+                                  <img
+                                    src={message.image_url}
+                                    alt="Message attachment"
+                                    className="rounded-lg mb-2 max-w-full"
+                                  />
+                                )}
+                                <p className="break-words text-[13px] sm:text-[15px] leading-relaxed">{message.content}</p>
+                                <p className="text-[10px] sm:text-xs text-muted-foreground text-right mt-1.5">
+                                  {format(new Date(message.created_at), 'HH:mm')}
+                                </p>
+                              </div>
+                            </motion.div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                  <div ref={messagesEndRef} />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Message Input */}
             <div className="flex-shrink-0 border-t border-white/10 bg-secondary/20 backdrop-blur-sm p-3 sm:p-6">
@@ -1146,7 +1193,7 @@ export default function Messages() {
             </div>
           </div>
         ) : (
-          <div className="hidden sm:flex flex-1 items-center justify-center bg-secondary/10">
+          <div className="hidden sm:flex flex-1 h-full items-center justify-center bg-secondary/10">
             <div className="text-center">
               <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/40" />
               <h2 className="mt-4 text-xl font-medium">Select a conversation</h2>
