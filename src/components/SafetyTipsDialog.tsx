@@ -118,6 +118,7 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
               await setHideSafetyTips(true);
               break;
             case 'sell':
+            case 'gig': // Both gig and sell triggers map to hideSellTips
               await setHideSellTips(true);
               break;
             case 'message_seller':
@@ -133,23 +134,22 @@ export const SafetyTipsDialog = ({ open, onClose, trigger = 'app_open' }: Safety
   };
 
   const handleSkip = async () => {
-    if (dontShowAgain) {
-      try {
-        // Update the appropriate preference based on trigger
-        switch(trigger) {
-          case 'app_open':
-            await setHideSafetyTips(true);
-            break;
-          case 'sell':
-            await setHideSellTips(true);
-            break;
-          case 'message_seller':
-            await setHideMessageTips(true);
-            break;
-        }
-      } catch (error) {
-        console.error('Error updating user preferences:', error);
+    try {
+      // ALWAYS update and hide safety tips permanently when user clicks "Skip"
+      switch(trigger) {
+        case 'app_open':
+          await setHideSafetyTips(true);
+          break;
+        case 'sell':
+        case 'gig': // Both gig and sell triggers map to hideSellTips
+          await setHideSellTips(true);
+          break;
+        case 'message_seller':
+          await setHideMessageTips(true);
+          break;
       }
+    } catch (error) {
+      console.error('Error updating user preferences:', error);
     }
     onClose();
   };

@@ -52,6 +52,19 @@ const PWAInstallPrompt: React.FC = () => {
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
+      
+      // Check if prompt was recently dismissed within the last year
+      const dismissed = localStorage.getItem('pwa-prompt-dismissed');
+      if (dismissed) {
+        const dismissedTime = parseInt(dismissed);
+        const now = Date.now();
+        const dismissalPeriod = 365 * 24 * 60 * 60 * 1000; // 365 days
+        
+        if (now - dismissedTime < dismissalPeriod) {
+          return; // Do not show prompt
+        }
+      }
+
       // Add a small delay before showing the prompt
       setTimeout(() => {
         setShowInstallPrompt(true);
@@ -63,6 +76,7 @@ const PWAInstallPrompt: React.FC = () => {
       setIsInstalled(true);
       setShowInstallPrompt(false);
       setDeferredPrompt(null);
+      localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -86,13 +100,15 @@ const PWAInstallPrompt: React.FC = () => {
       console.log('User dismissed the install prompt');
     }
     
+    // Save dismissal to localStorage so they are not prompted again
+    localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
     setDeferredPrompt(null);
     setShowInstallPrompt(false);
   };
 
   const handleDismiss = () => {
     setShowInstallPrompt(false);
-    // Store in localStorage to avoid showing again for a while
+    // Store in localStorage to avoid showing again for a while (1 year)
     localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
   };
 
@@ -172,9 +188,9 @@ const PWAInstallPrompt: React.FC = () => {
     if (dismissed) {
       const dismissedTime = parseInt(dismissed);
       const now = Date.now();
-      const oneDay = 24 * 60 * 60 * 1000; // 24 hours
+      const dismissalPeriod = 365 * 24 * 60 * 60 * 1000; // 365 days
       
-      if (now - dismissedTime < oneDay) {
+      if (now - dismissedTime < dismissalPeriod) {
         setShowInstallPrompt(false);
       }
     }
