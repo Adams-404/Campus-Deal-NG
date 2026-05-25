@@ -53,6 +53,7 @@ class Conversation {
   final String? itemTitle;
   final double? itemPrice;
   final String? itemImageUrl;
+  final String? gigId;
 
   const Conversation({
     required this.id,
@@ -64,6 +65,7 @@ class Conversation {
     this.itemTitle,
     this.itemPrice,
     this.itemImageUrl,
+    this.gigId,
   });
 }
 

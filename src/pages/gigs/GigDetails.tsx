@@ -178,11 +178,12 @@ const GigDetails = () => {
         if (!gig || !currentUser) return;
 
         try {
-            // Check if conversation exists
+            // Check if conversation exists (symmetrically, where gig_id is not null)
             const { data: existingConv } = await supabase
                 .from('conversations')
                 .select('id')
                 .or(`and(buyer_id.eq.${currentUser.id},seller_id.eq.${gig.user_id}),and(buyer_id.eq.${gig.user_id},seller_id.eq.${currentUser.id})`)
+                .not('gig_id', 'is', null)
                 .limit(1)
                 .maybeSingle();
 
@@ -191,7 +192,7 @@ const GigDetails = () => {
                 return;
             }
 
-            // Create new conversation without sending initial message
+            // Create new conversation with gig_id specified
             const { data: newConv, error } = await supabase
                 .from('conversations')
                 .insert({
@@ -199,6 +200,7 @@ const GigDetails = () => {
                     seller_id: gig.user_id,
                     last_message: '',
                     last_message_at: new Date().toISOString(),
+                    gig_id: gig.id
                 })
                 .select()
                 .single();

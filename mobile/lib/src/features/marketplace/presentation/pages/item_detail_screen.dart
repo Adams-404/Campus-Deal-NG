@@ -141,12 +141,13 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
     }
 
     try {
-      // Create or find existing conversation
+      // Create or find existing conversation symmetrically where gig_id is null
       final existingConversation = await supabase
           .from('conversations')
           .select('id')
-          .eq('buyer_id', user.id)
-          .eq('seller_id', _product!.sellerId ?? '')
+          .or('and(buyer_id.eq.${user.id},seller_id.eq.${_product!.sellerId}),and(buyer_id.eq.${_product!.sellerId},seller_id.eq.${user.id})')
+          .isFilter('gig_id', null)
+          .limit(1)
           .maybeSingle();
 
       String conversationId;

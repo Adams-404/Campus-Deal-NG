@@ -18,32 +18,50 @@ interface AppModeContextType {
 const AppModeContext = createContext<AppModeContextType | undefined>(undefined);
 
 export const AppModeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentMode, setCurrentMode] = useState<AppMode>('marketplace');
+  const [currentMode, setCurrentMode] = useState<AppMode>(() => {
+    return (localStorage.getItem('appMode') as AppMode) || 'marketplace';
+  });
   const navigate = useNavigate();
   const location = useLocation();
 
   // Detect mode from URL
   useEffect(() => {
     const path = location.pathname;
+    let detectedMode: AppMode | null = null;
+
     if (path.startsWith('/gigs')) {
-      setCurrentMode('gigs');
+      detectedMode = 'gigs';
     } else if (path.startsWith('/events')) {
-      setCurrentMode('events');
+      detectedMode = 'events';
     } else if (path.startsWith('/news')) {
-      setCurrentMode('news');
+      detectedMode = 'news';
     } else if (path.startsWith('/study')) {
-      setCurrentMode('study');
+      detectedMode = 'study';
     } else if (path.startsWith('/lost-and-found')) {
-      setCurrentMode('lost');
+      detectedMode = 'lost';
     } else if (path.startsWith('/roommates')) {
-      setCurrentMode('room');
-    } else {
-      setCurrentMode('marketplace');
+      detectedMode = 'room';
+    } else if (
+      path.startsWith('/home') ||
+      path === '/' ||
+      path.startsWith('/item/') ||
+      path === '/sell' ||
+      path === '/saved' ||
+      path === '/delivery' ||
+      path === '/checkout'
+    ) {
+      detectedMode = 'marketplace';
+    }
+
+    if (detectedMode) {
+      setCurrentMode(detectedMode);
+      localStorage.setItem('appMode', detectedMode);
     }
   }, [location.pathname]);
 
   const handleSetMode = (mode: AppMode) => {
     setCurrentMode(mode);
+    localStorage.setItem('appMode', mode);
 
     // Navigate to the appropriate route
     if (mode === 'gigs') navigate('/gigs');
