@@ -53,17 +53,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       if (localSidebarCollapsed) setIsSidebarCollapsed(localSidebarCollapsed === 'true');
     };
 
-    // Then try to load from Supabase if user is logged in
-    const loadUserSettings = async () => {
+    // Load from Supabase if user is logged in
+    const loadUserSettings = async (userId?: string) => {
       try {
+        setLoadingSettings(true);
         loadLocalSettings(); // Load from localStorage first for immediate response
 
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
+        const activeUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+        if (activeUserId) {
           const { data, error } = await supabase
             .from('profiles')
             .select('font_size, hide_safety_tips, hide_sell_tips, hide_message_tips')
-            .eq('id', user.id)
+            .eq('id', activeUserId)
             .single();
 
           if (!error && data) {
@@ -79,6 +80,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
             localStorage.setItem(LS_HIDE_SELL_TIPS, String(data.hide_sell_tips || false));
             localStorage.setItem(LS_HIDE_MESSAGE_TIPS, String(data.hide_message_tips || false));
           }
+        } else {
+          // If no user, ensure local settings are applied
+          loadLocalSettings();
         }
       } catch (error) {
         console.error('Error loading user settings:', error);
@@ -88,6 +92,28 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     };
 
     loadUserSettings();
+
+    // Listen for auth state changes to reload settings dynamically
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          await loadUserSettings(session.user.id);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        // Clear state and localStorage for guest/logged-out state
+        setHideSafetyTipsState(false);
+        setHideSellTipsState(false);
+        setHideMessageTipsState(false);
+        localStorage.removeItem(LS_HIDE_SAFETY_TIPS);
+        localStorage.removeItem(LS_HIDE_SELL_TIPS);
+        localStorage.removeItem(LS_HIDE_MESSAGE_TIPS);
+        setLoadingSettings(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const updateFontSize = async (size: string) => {
