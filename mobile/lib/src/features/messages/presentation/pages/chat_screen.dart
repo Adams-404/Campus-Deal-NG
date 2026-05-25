@@ -395,8 +395,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: isMe
-              ? Colors.white
-              : const Color(0xFF1E1E1E),
+              ? const Color(0xFF6366F1).withOpacity(0.18)
+              : Colors.white.withOpacity(0.07),
+          border: Border.all(
+            color: isMe
+                ? const Color(0xFF6366F1).withOpacity(0.35)
+                : Colors.white.withOpacity(0.08),
+            width: 1.2,
+          ),
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(18),
             topRight: const Radius.circular(18),
@@ -405,6 +411,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             bottomRight:
                 isMe ? const Radius.circular(4) : const Radius.circular(18),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.15),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment:
@@ -413,7 +426,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Text(
               msg.content,
               style: TextStyle(
-                  color: isMe ? Colors.white : Colors.grey[200],
+                  color: isMe ? Colors.white : const Color(0xFFE2E8F0),
                   fontSize: 14,
                   height: 1.4),
             ),
@@ -425,8 +438,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   _formatMsgTime(msg.createdAt),
                   style: TextStyle(
                       color: isMe
-                          ? Colors.white.withOpacity(0.6)
-                          : Colors.grey[600],
+                          ? Colors.white.withOpacity(0.5)
+                          : Colors.white.withOpacity(0.4),
                       fontSize: 10),
                 ),
                 if (isMe && !isTemp) ...[

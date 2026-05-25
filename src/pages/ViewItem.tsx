@@ -382,23 +382,37 @@ export default function ViewItem() {
       
       if (!user || !item) return;
 
-      const { data: newConversation, error: conversationError } = await supabase
+      // Check if symmetric marketplace conversation exists where gig_id is null
+      const { data: existingConv } = await supabase
         .from('conversations')
-        .insert({
-          buyer_id: user.id,
-          seller_id: item.seller_id,
-          last_message: `Interested in ${item.title}`,
-          last_message_at: new Date().toISOString()
-        })
-        .select()
-        .single();
+        .select('id')
+        .or(`and(buyer_id.eq.${user.id},seller_id.eq.${item.seller_id}),and(buyer_id.eq.${item.seller_id},seller_id.eq.${user.id})`)
+        .is('gig_id', null)
+        .limit(1)
+        .maybeSingle();
 
-      if (conversationError) throw conversationError;
+      let conversationId = existingConv?.id;
+
+      if (!conversationId) {
+        const { data: newConversation, error: conversationError } = await supabase
+          .from('conversations')
+          .insert({
+            buyer_id: user.id,
+            seller_id: item.seller_id,
+            last_message: `Interested in ${item.title}`,
+            last_message_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (conversationError) throw conversationError;
+        conversationId = newConversation.id;
+      }
 
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
-          conversation_id: newConversation.id,
+          conversation_id: conversationId,
           content: `Hi, I'm interested in ${item.title}`,
           sender_id: user.id,
           created_at: new Date().toISOString(),
@@ -407,7 +421,7 @@ export default function ViewItem() {
 
       if (messageError) throw messageError;
 
-      navigate(`/messages/${newConversation.id}`);
+      navigate(`/messages/${conversationId}`);
     } catch (error: any) {
       console.error('Error starting conversation:', error);
       toast.error(error.message);

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/models/chat_models.dart';
 import '../../../auth/auth_provider.dart';
@@ -9,6 +7,7 @@ import '../../../../core/utils/image_utils.dart';
 import 'package:campus_deal_mobile/src/core/widgets/glass_search_bar.dart';
 import 'chat_screen.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import 'package:campus_deal_mobile/src/core/providers/app_mode_provider.dart';
 
 class MessagesScreen extends ConsumerStatefulWidget {
   const MessagesScreen({super.key});
@@ -17,7 +16,7 @@ class MessagesScreen extends ConsumerStatefulWidget {
   ConsumerState<MessagesScreen> createState() => _MessagesScreenState();
 }
 
-class _MessagesScreenState extends ConsumerState<MessagesScreen> {
+class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticKeepAliveClientMixin {
   final _searchController = TextEditingController();
   List<Conversation> _conversations = [];
   bool _isLoading = true;
@@ -25,9 +24,12 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   String? _currentUserId;
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void initState() {
     super.initState();
-    _load();
+    _load(showSkeleton: true);
   }
 
   @override
@@ -36,8 +38,10 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
     super.dispose();
   }
 
-  Future<void> _load() async {
-    setState(() => _isLoading = true);
+  Future<void> _load({bool showSkeleton = true}) async {
+    if (showSkeleton && _conversations.isEmpty) {
+      setState(() => _isLoading = true);
+    }
     try {
       final supabase = ref.read(supabaseClientProvider);
       final user = supabase.auth.currentUser;
@@ -47,10 +51,16 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
       final data = await supabase
           .from('conversations')
           .select('''
-            id, buyer_id, seller_id, last_message, last_message_at,
+            id, buyer_id, seller_id, last_message, last_message_at, gig_id,
             buyer_profile:profiles!buyer_id(id, first_name, last_name, avatar_url),
             seller_profile:profiles!seller_id(id, first_name, last_name, avatar_url),
-            messages(id, item_id, items(id, title, price, item_images(image_url)))
+            messages(
+              id, 
+              item_id, 
+              items(id, title, price, item_images(image_url)),
+              gig_id,
+              gigs(id, title, price, gig_images(image_url))
+            )
           ''')
           .or('buyer_id.eq.${user.id},seller_id.eq.${user.id}')
           .order('last_message_at', ascending: false);
@@ -70,14 +80,31 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
               )
             : const ConvProfile(id: 'unknown', firstName: 'Unknown');
 
-        // Get item info from first message that has an item
+        // Get item/gig info from first message that has an item or gig
         final msgs = raw['messages'] as List<dynamic>? ?? [];
         final msgWithItem = msgs.firstWhere(
           (m) => m['items'] != null,
           orElse: () => null,
         );
+        final msgWithGig = msgs.firstWhere(
+          (m) => m['gigs'] != null,
+          orElse: () => null,
+        );
+
         final item = msgWithItem?['items'] as Map<String, dynamic>?;
+        final gig = msgWithGig?['gigs'] as Map<String, dynamic>?;
+
+        final itemTitle = item?['title'] ?? gig?['title'] as String?;
+        final itemPrice = (item?['price'] as num?)?.toDouble() ?? (gig?['price'] as num?)?.toDouble();
+
         final itemImages = item?['item_images'] as List<dynamic>?;
+        final gigImages = gig?['gig_images'] as List<dynamic>?;
+
+        final itemImageUrl = itemImages?.isNotEmpty == true
+            ? itemImages!.first['image_url'] as String?
+            : (gigImages?.isNotEmpty == true
+                ? gigImages!.first['image_url'] as String?
+                : null);
 
         return Conversation(
           id: raw['id'] as String,
@@ -88,11 +115,10 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
               ? DateTime.parse(raw['last_message_at'] as String)
               : null,
           otherUser: otherUser,
-          itemTitle: item?['title'] as String?,
-          itemPrice: (item?['price'] as num?)?.toDouble(),
-          itemImageUrl: itemImages?.isNotEmpty == true
-              ? itemImages!.first['image_url'] as String?
-              : null,
+          itemTitle: itemTitle,
+          itemPrice: itemPrice,
+          itemImageUrl: itemImageUrl,
+          gigId: raw['gig_id'] as String?,
         );
       }).toList();
 
@@ -109,9 +135,20 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   }
 
   List<Conversation> get _filtered {
-    if (_search.isEmpty) return _conversations;
+    final currentMode = ref.watch(appModeProvider);
+    final isGigsMode = currentMode == AppMode.gigs;
+
+    final baseConvs = _conversations.where((c) {
+      if (isGigsMode) {
+        return c.gigId != null;
+      } else {
+        return c.gigId == null;
+      }
+    }).toList();
+
+    if (_search.isEmpty) return baseConvs;
     final q = _search.toLowerCase();
-    return _conversations.where((c) {
+    return baseConvs.where((c) {
       return c.otherUser.displayName.toLowerCase().contains(q) ||
           (c.itemTitle?.toLowerCase().contains(q) ?? false) ||
           (c.lastMessage?.toLowerCase().contains(q) ?? false);
@@ -120,6 +157,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
       body: CustomScrollView(
@@ -186,7 +224,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
             ),
           ),
         );
-        _load(); // refresh last message on return
+        _load(showSkeleton: false); // refresh last message on return silently!
       },
       child: Container(
         padding:
