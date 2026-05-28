@@ -79,9 +79,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final lastName = _profile?['last_name'] as String? ?? '';
     final fullName = '$firstName $lastName'.trim();
     final avatarUrl = _profile?['avatar_url'] as String?;
-    final displayName = fullName.isNotEmpty ? fullName : (user?.email ?? 'User');
-    final avatarLetter =
-        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U';
+    final displayName = fullName.isNotEmpty
+        ? fullName
+        : (user?.email ?? 'User');
+    final avatarLetter = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'U';
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
@@ -93,29 +96,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             backgroundColor: Colors.transparent,
             surfaceTintColor: Colors.transparent,
             scrolledUnderElevation: 0,
-            flexibleSpace: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.08),
-                        Colors.white.withValues(alpha: 0.03),
-                      ],
+            flexibleSpace: ShaderMask(
+              shaderCallback: (rect) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: const [
+                    Colors.black,
+                    Colors.black87,
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.6, 1.0],
+                ).createShader(rect);
+              },
+              blendMode: BlendMode.dstIn,
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.08),
+                          Colors.white.withValues(alpha: 0.0),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            title: const Text(
-              'Settings',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600),
             ),
             centerTitle: true,
           ),
@@ -139,12 +150,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             SliverList(
               delegate: SliverChildListDelegate([
                 // Profile header
-                if (user != null) _buildProfileHeader(
-                  displayName: displayName,
-                  email: user.email ?? '',
-                  avatarUrl: avatarUrl,
-                  avatarLetter: avatarLetter,
-                ),
+                if (user != null)
+                  _buildProfileHeader(
+                    displayName: displayName,
+                    email: user.email ?? '',
+                    avatarUrl: avatarUrl,
+                    avatarLetter: avatarLetter,
+                  ),
 
                 const SizedBox(height: 8),
 
@@ -152,13 +164,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 _buildSection(
                   title: 'Account',
                   items: [
-                    _SettingsItem(
-                      icon: Icons.person_outline,
-                      label: 'Profile',
-                      iconBg: Colors.white.withOpacity(0.15),
-                      iconColor: Colors.white,
-                      onTap: () => _navigateTo(const ProfileScreen()),
-                    ),
                     _SettingsItem(
                       icon: Icons.lock_outline,
                       label: 'Change Password',
@@ -235,7 +240,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 if (user != null) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: GestureDetector(
                       onTap: _confirmSignOut,
                       child: Container(
@@ -244,7 +251,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           color: Colors.red.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                              color: Colors.red.withOpacity(0.2)),
+                            color: Colors.red.withOpacity(0.2),
+                          ),
                         ),
                         child: Row(
                           children: [
@@ -254,20 +262,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 color: Colors.red.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.logout,
-                                  color: Colors.red, size: 20),
+                              child: const Icon(
+                                Icons.logout,
+                                color: Colors.red,
+                                size: 20,
+                              ),
                             ),
                             const SizedBox(width: 14),
                             const Text(
                               'Sign Out',
                               style: TextStyle(
-                                  color: Colors.red,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 15),
+                                color: Colors.red,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
                             ),
                             const Spacer(),
-                            const Icon(Icons.chevron_right,
-                                color: Colors.red, size: 20),
+                            const Icon(
+                              Icons.chevron_right,
+                              color: Colors.red,
+                              size: 20,
+                            ),
                           ],
                         ),
                       ),
@@ -307,24 +322,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.white.withOpacity(0.15),
-                const Color(0xFF171717),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: const Color(0xFF171717).withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-                color: Colors.white.withOpacity(0.2)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Row(
             children: [
               CircleAvatar(
                 radius: 30,
-                backgroundColor:
-                    Colors.white.withOpacity(0.2),
+                backgroundColor: Colors.white.withOpacity(0.2),
                 backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
                     ? CachedNetworkImageProvider(avatarUrl)
                     : null,
@@ -332,9 +338,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ? Text(
                         avatarLetter,
                         style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 24),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                        ),
                       )
                     : null,
               ),
@@ -346,15 +353,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Text(
                       displayName,
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 17),
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
                     ),
                     const SizedBox(height: 3),
                     Text(
                       email,
-                      style: TextStyle(
-                          color: Colors.grey[400], fontSize: 13),
+                      style: TextStyle(color: Colors.grey[400], fontSize: 13),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -368,8 +375,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _buildSection(
-      {required String title, required List<_SettingsItem> items}) {
+  Widget _buildSection({
+    required String title,
+    required List<_SettingsItem> items,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Column(
@@ -380,10 +389,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Text(
               title.toUpperCase(),
               style: TextStyle(
-                  color: Colors.grey[500],
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.2),
+                color: Colors.grey[500],
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.2,
+              ),
             ),
           ),
           Container(
@@ -400,10 +410,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     _buildSettingsTile(entry.value),
                     if (!isLast)
                       Divider(
-                          height: 1,
-                          color: Colors.white.withOpacity(0.05),
-                          indent: 56,
-                          endIndent: 0),
+                        height: 1,
+                        color: Colors.white.withOpacity(0.05),
+                        indent: 56,
+                        endIndent: 0,
+                      ),
                   ],
                 );
               }).toList(),
@@ -435,8 +446,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Expanded(
               child: Text(
                 item.label,
-                style: const TextStyle(
-                    color: Colors.white, fontSize: 15),
+                style: const TextStyle(color: Colors.white, fontSize: 15),
               ),
             ),
             Icon(Icons.chevron_right, color: Colors.grey[600], size: 20),
@@ -462,31 +472,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 color: Colors.white.withOpacity(0.15),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.storefront,
-                  color: Colors.white, size: 36),
+              child: const Icon(
+                Icons.storefront,
+                color: Colors.white,
+                size: 36,
+              ),
             ),
             const SizedBox(height: 16),
-            const Text('Campus Deal',
-                style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold)),
+            const Text(
+              'Campus Deal',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 6),
-            const Text('Version 1.0.0',
-                style: TextStyle(color: Colors.grey, fontSize: 14)),
+            const Text(
+              'Version 1.0.0',
+              style: TextStyle(color: Colors.grey, fontSize: 14),
+            ),
             const SizedBox(height: 12),
             Text(
               'The student marketplace for Nigerian campuses. Buy and sell anything, find gigs, and connect with your campus community.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[400], fontSize: 13, height: 1.5),
+              style: TextStyle(
+                color: Colors.grey[400],
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close',
-                style: TextStyle(color: Colors.white)),
+            child: const Text('Close', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -519,8 +540,10 @@ class _ConfirmSignOutDialog extends StatelessWidget {
     return AlertDialog(
       backgroundColor: const Color(0xFF1A1A1A),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text('Sign Out',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      title: const Text(
+        'Sign Out',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
       content: const Text(
         'Are you sure you want to sign out? You will need to sign in again to access your account.',
         style: TextStyle(color: Colors.grey),
@@ -539,9 +562,10 @@ class _ConfirmSignOutDialog extends StatelessWidget {
             ref.invalidate(onboardingProvider);
             await Supabase.instance.client.auth.signOut();
           },
-          child: const Text('Sign Out',
-              style: TextStyle(
-                  color: Colors.red, fontWeight: FontWeight.bold)),
+          child: const Text(
+            'Sign Out',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );
