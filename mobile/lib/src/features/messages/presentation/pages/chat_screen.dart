@@ -6,6 +6,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../domain/models/chat_models.dart';
 import '../../../auth/auth_provider.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import '../../../../core/providers/connectivity_provider.dart';
+import '../../../../core/utils/connectivity_utils.dart';
+import '../providers/offline_messages_provider.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Conversation conversation;
@@ -111,6 +114,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty || _isSending) return;
 
+    final isOffline = ref.read(connectivityProvider) == ConnectivityStatus.disconnected;
+
+    if (isOffline) {
+      final tempId = 'temp-${DateTime.now().millisecondsSinceEpoch}';
+      final pending = PendingMessage(
+        tempId: tempId,
+        content: text,
+        senderId: widget.currentUserId,
+        conversationId: widget.conversation.id,
+        createdAt: DateTime.now(),
+      );
+      
+      _messageController.clear();
+      await ref.read(offlineMessagesProvider.notifier).queueMessage(pending);
+      _scrollToBottom();
+      return;
+    }
+
     setState(() => _isSending = true);
     _messageController.clear();
 
@@ -137,9 +158,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             'content': text,
             'sender_id': widget.currentUserId,
             'created_at': timestamp,
-            'item_id': widget.conversation.itemTitle != null
-                ? null // we don't have the item_id here; keep null
-                : null,
+            'item_id': null,
           })
           .select()
           .single();
@@ -159,12 +178,28 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         'last_message_at': timestamp,
       }).eq('id', widget.conversation.id);
     } catch (e) {
-      // Roll back optimistic message
-      setState(() => _messages.removeWhere((m) => m.id == tempId));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send: $e')),
+      // If insertion fails due to an unexpected offline/network issue, queue it!
+      final stillOffline = await ConnectivityUtils.hasInternetConnection() == false;
+      if (stillOffline) {
+        setState(() {
+          _messages.removeWhere((m) => m.id == tempId);
+        });
+        final pending = PendingMessage(
+          tempId: tempId,
+          content: text,
+          senderId: widget.currentUserId,
+          conversationId: widget.conversation.id,
+          createdAt: optimistic.createdAt,
         );
+        await ref.read(offlineMessagesProvider.notifier).queueMessage(pending);
+      } else {
+        // Roll back optimistic message for general database / policy failures
+        setState(() => _messages.removeWhere((m) => m.id == tempId));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to send: $e')),
+          );
+        }
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -186,6 +221,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     final other = widget.conversation.otherUser;
+
+    // Retrieve and filter pending offline messages for this conversation
+    final pendingMessages = ref.watch(offlineMessagesProvider)
+        .where((msg) => msg.conversationId == widget.conversation.id)
+        .map((msg) => ChatMessage(
+              id: msg.tempId,
+              content: msg.content,
+              senderId: msg.senderId,
+              conversationId: msg.conversationId,
+              createdAt: msg.createdAt,
+            ))
+        .toList();
+
+    final allMessages = [..._messages, ...pendingMessages];
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
@@ -293,20 +342,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       ),
                     ),
                   )
-                : _messages.isEmpty
+                : allMessages.isEmpty
                     ? _buildEmptyState()
                     : ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 12),
-                        itemCount: _messages.length,
+                        itemCount: allMessages.length,
                         itemBuilder: (ctx, i) {
-                          final msg = _messages[i];
+                          final msg = allMessages[i];
                           final isMe =
                               msg.senderId == widget.currentUserId;
                           final showDate = i == 0 ||
                               !_sameDay(
-                                  _messages[i - 1].createdAt,
+                                  allMessages[i - 1].createdAt,
                                   msg.createdAt);
                           return Column(
                             children: [
