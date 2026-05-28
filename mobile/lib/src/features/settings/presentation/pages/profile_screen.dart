@@ -80,16 +80,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       if (user == null) return;
 
       final file = File(picked.path);
-      final fileName = '${user.id}/${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final fileName =
+          '${user.id}/${DateTime.now().millisecondsSinceEpoch}.jpg';
 
-      await supabase.storage.from('avatars').upload(
-            fileName,
-            file,
-            fileOptions: const FileOptions(upsert: true),
-          );
+      await supabase.storage
+          .from('avatars')
+          .upload(fileName, file, fileOptions: const FileOptions(upsert: true));
 
-      final publicUrl =
-          supabase.storage.from('avatars').getPublicUrl(fileName);
+      final publicUrl = supabase.storage.from('avatars').getPublicUrl(fileName);
 
       await supabase
           .from('profiles')
@@ -124,14 +122,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   void _showEditProfileSheet() {
-    final firstNameController =
-        TextEditingController(text: _profile?['first_name'] ?? '');
-    final lastNameController =
-        TextEditingController(text: _profile?['last_name'] ?? '');
-    final phoneController =
-        TextEditingController(text: _profile?['phone'] ?? '');
-    final addressController =
-        TextEditingController(text: _profile?['address'] ?? '');
+    final firstNameController = TextEditingController(
+      text: _profile?['first_name'] ?? '',
+    );
+    final lastNameController = TextEditingController(
+      text: _profile?['last_name'] ?? '',
+    );
+    final phoneController = TextEditingController(
+      text: _profile?['phone'] ?? '',
+    );
+    final addressController = TextEditingController(
+      text: _profile?['address'] ?? '',
+    );
 
     showModalBottomSheet(
       context: context,
@@ -147,7 +149,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-              24, 16, 24, MediaQuery.of(ctx).viewInsets.bottom + 24),
+            24,
+            16,
+            24,
+            MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -173,8 +179,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: const Color(0xFF3B82F6).withOpacity(0.15),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(Icons.edit,
-                          color: Color(0xFF3B82F6), size: 20),
+                      child: const Icon(
+                        Icons.edit,
+                        color: Color(0xFF3B82F6),
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     const Text(
@@ -236,13 +245,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         final user = supabase.auth.currentUser;
                         if (user == null) return;
 
-                        await supabase.from('profiles').update({
-                          'first_name': firstNameController.text.trim(),
-                          'last_name': lastNameController.text.trim(),
-                          'phone': phoneController.text.trim(),
-                          'address': addressController.text.trim(),
-                          'updated_at': DateTime.now().toIso8601String(),
-                        }).eq('id', user.id);
+                        await supabase
+                            .from('profiles')
+                            .update({
+                              'first_name': firstNameController.text.trim(),
+                              'last_name': lastNameController.text.trim(),
+                              'phone': phoneController.text.trim(),
+                              'address': addressController.text.trim(),
+                              'updated_at': DateTime.now().toIso8601String(),
+                            })
+                            .eq('id', user.id);
 
                         if (mounted) Navigator.pop(ctx);
                         await _loadProfile();
@@ -275,9 +287,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text('Save Changes',
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    child: const Text(
+                      'Save Changes',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -326,11 +342,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: Color(0xFF3B82F6), width: 1),
+              borderSide: const BorderSide(color: Color(0xFF3B82F6), width: 1),
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
       ],
@@ -408,10 +425,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final lastName = _profile?['last_name'] as String? ?? '';
     final fullName = '$firstName $lastName'.trim();
     final avatarUrl = _profile?['avatar_url'] as String?;
-    final displayName =
-        fullName.isNotEmpty ? fullName : (user?.email ?? 'User');
-    final avatarLetter =
-        displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U';
+    final displayName = fullName.isNotEmpty
+        ? fullName
+        : (user?.email ?? 'User');
+    final avatarLetter = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'U';
 
     return Scaffold(
       backgroundColor: const Color(0xFF0A0A0A),
@@ -451,13 +470,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ],
       ),
       body: _isLoading
-          ? const GlassShimmer(
-              child: SafeArea(
-                child: GlassSkeletonProfile(),
-              ),
-            )
+          ? const GlassShimmer(child: SafeArea(child: GlassSkeletonProfile()))
           : SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(16, MediaQuery.of(context).padding.top + kToolbarHeight + 8, 16, 16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                MediaQuery.of(context).padding.top + kToolbarHeight + 8,
+                16,
+                16,
+              ),
               child: Column(
                 children: [
                   // Avatar + cover
@@ -466,7 +486,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                          color: const Color(0xFF3B82F6).withOpacity(0.3)),
+                        color: const Color(0xFF3B82F6).withOpacity(0.3),
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -475,16 +496,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           height: 100,
                           decoration: BoxDecoration(
                             borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(16)),
+                              top: Radius.circular(16),
+                            ),
                             color: const Color(0xFF171717),
                             border: Border.all(
-                                color:
-                                    const Color(0xFF3B82F6).withOpacity(0.2)),
+                              color: const Color(0xFF3B82F6).withOpacity(0.2),
+                            ),
                           ),
                           child: Center(
-                            child: Icon(Icons.auto_awesome,
-                                color: const Color(0xFF3B82F6).withOpacity(0.3),
-                                size: 40),
+                            child: Icon(
+                              Icons.auto_awesome,
+                              color: const Color(0xFF3B82F6).withOpacity(0.3),
+                              size: 40,
+                            ),
                           ),
                         ),
                         Transform.translate(
@@ -498,25 +522,32 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                          color: const Color(0xFF0A0A0A),
-                                          width: 4),
+                                        color: const Color(0xFF0A0A0A),
+                                        width: 4,
+                                      ),
                                     ),
                                     child: CircleAvatar(
                                       radius: 50,
-                                      backgroundColor:
-                                          Colors.white.withOpacity(0.2),
-                                      backgroundImage: avatarUrl != null &&
+                                      backgroundColor: Colors.white.withOpacity(
+                                        0.2,
+                                      ),
+                                      backgroundImage:
+                                          avatarUrl != null &&
                                               avatarUrl.isNotEmpty
                                           ? CachedNetworkImageProvider(
-                                              avatarUrl)
+                                              avatarUrl,
+                                            )
                                           : null,
-                                      child: avatarUrl == null ||
-                                              avatarUrl.isEmpty
-                                          ? Text(avatarLetter,
+                                      child:
+                                          avatarUrl == null || avatarUrl.isEmpty
+                                          ? Text(
+                                              avatarLetter,
                                               style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 32))
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 32,
+                                              ),
+                                            )
                                           : null,
                                     ),
                                   ),
@@ -533,8 +564,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           color: const Color(0xFF3B82F6),
                                           shape: BoxShape.circle,
                                           border: Border.all(
-                                              color: const Color(0xFF0A0A0A),
-                                              width: 2),
+                                            color: const Color(0xFF0A0A0A),
+                                            width: 2,
+                                          ),
                                         ),
                                         child: _isUploading
                                             ? const GlassPulseIcon(
@@ -542,8 +574,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                                 color: Colors.white,
                                                 size: 16,
                                               )
-                                            : const Icon(Icons.camera_alt,
-                                                color: Colors.white, size: 16),
+                                            : const Icon(
+                                                Icons.camera_alt,
+                                                color: Colors.white,
+                                                size: 16,
+                                              ),
                                       ),
                                     ),
                                   ),
@@ -565,7 +600,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               Text(
                                 'Member since ${_formatDate(_profile?['created_at'])}',
                                 style: TextStyle(
-                                    color: Colors.grey[500], fontSize: 13),
+                                  color: Colors.grey[500],
+                                  fontSize: 13,
+                                ),
                               ),
                               const SizedBox(height: 10),
                               _buildKycBadge(),
@@ -587,23 +624,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       color: const Color(0xFF171717),
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(
-                          color: const Color(0xFF3B82F6).withOpacity(0.2)),
+                        color: const Color(0xFF3B82F6).withOpacity(0.2),
+                      ),
                     ),
                     child: Column(
                       children: [
                         _buildInfoRow(
-                            Icons.email_outlined,
-                            'Email',
-                            user?.email ?? 'N/A',
-                            const Color(0xFF3B82F6)),
+                          Icons.email_outlined,
+                          'Email',
+                          user?.email ?? 'N/A',
+                          const Color(0xFF3B82F6),
+                        ),
                         if (_profile?['phone'] != null &&
                             (_profile!['phone'] as String).isNotEmpty)
-                          _buildInfoRow(Icons.phone_outlined, 'Phone',
-                              _profile!['phone'], Colors.green),
+                          _buildInfoRow(
+                            Icons.phone_outlined,
+                            'Phone',
+                            _profile!['phone'],
+                            Colors.green,
+                          ),
                         if (_profile?['address'] != null &&
                             (_profile!['address'] as String).isNotEmpty)
-                          _buildInfoRow(Icons.location_on_outlined, 'Address',
-                              _profile!['address'], Colors.red),
+                          _buildInfoRow(
+                            Icons.location_on_outlined,
+                            'Address',
+                            _profile!['address'],
+                            Colors.red,
+                          ),
                         _buildInfoRow(
                           Icons.calendar_today_outlined,
                           'Joined',
@@ -626,7 +673,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         color: const Color(0xFF171717),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                            color: Colors.green.withOpacity(0.2)),
+                          color: Colors.green.withOpacity(0.2),
+                        ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -636,15 +684,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             children: [
                               Row(
                                 children: [
-                                  const Text('My Listings',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w600)),
+                                  const Text(
+                                    'My Listings',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                   const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 2),
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.green.withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(12),
@@ -652,7 +705,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                     child: Text(
                                       '${_userItems.length} items',
                                       style: const TextStyle(
-                                          color: Colors.green, fontSize: 12),
+                                        color: Colors.green,
+                                        fontSize: 12,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -665,17 +720,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             physics: const NeverScrollableScrollPhysics(),
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                              childAspectRatio: 4 / 3,
-                            ),
+                                  crossAxisCount: 2,
+                                  crossAxisSpacing: 10,
+                                  mainAxisSpacing: 10,
+                                  childAspectRatio: 4 / 3,
+                                ),
                             itemCount: _userItems.length,
                             itemBuilder: (context, index) {
                               final item = _userItems[index];
                               final images = item['item_images'] as List?;
-                              final imageUrl = images != null &&
-                                      images.isNotEmpty
+                              final imageUrl =
+                                  images != null && images.isNotEmpty
                                   ? images[0]['image_url'] as String?
                                   : null;
                               return ClipRRect(
@@ -692,8 +747,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       Container(
                                         color: const Color(0xFF262626),
                                         child: const Icon(
-                                            Icons.image_not_supported,
-                                            color: Colors.grey),
+                                          Icons.image_not_supported,
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                     Container(
                                       decoration: BoxDecoration(
@@ -718,17 +774,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                           Text(
                                             item['title'] ?? '',
                                             style: const TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500),
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                           ),
                                           Text(
                                             '₦${NumberFormat('#,##0').format(item['price'] ?? 0)}',
                                             style: const TextStyle(
-                                                color: Colors.green,
-                                                fontSize: 12),
+                                              color: Colors.green,
+                                              fontSize: 12,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -749,8 +807,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Widget _buildInfoRow(
-      IconData icon, String label, String value, Color color,
-      {bool showDivider = true}) {
+    IconData icon,
+    String label,
+    String value,
+    Color color, {
+    bool showDivider = true,
+  }) {
     return Column(
       children: [
         Padding(
@@ -771,13 +833,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label,
-                        style: TextStyle(
-                            color: Colors.grey[500], fontSize: 12)),
+                    Text(
+                      label,
+                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
+                    ),
                     const SizedBox(height: 2),
-                    Text(value,
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 14)),
+                    Text(
+                      value,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                    ),
                   ],
                 ),
               ),

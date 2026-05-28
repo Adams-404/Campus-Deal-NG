@@ -12,6 +12,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../messages/domain/models/chat_models.dart';
 import '../../../messages/presentation/pages/chat_screen.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import '../../../settings/presentation/pages/user_profile_screen.dart';
 
 class ItemDetailScreen extends ConsumerStatefulWidget {
   final String itemId;
@@ -524,63 +525,76 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
           const SizedBox(height: 20),
 
           // Seller
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                backgroundImage: product.seller?.avatarUrl != null &&
-                        product.seller!.avatarUrl!.isNotEmpty
-                    ? CachedNetworkImageProvider(
-                        ImageUtils.getThumbnailUrl(product.seller!.avatarUrl!, width: 150, height: 150),
-                      )
-                    : null,
-                child: product.seller?.avatarUrl == null ||
-                        product.seller!.avatarUrl!.isEmpty
-                    ? Text(avatarLetter,
+          GestureDetector(
+            onTap: () {
+              if (product.sellerId != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => UserProfileScreen(userId: product.sellerId!),
+                  ),
+                );
+              }
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: Colors.white.withOpacity(0.2),
+                  backgroundImage: product.seller?.avatarUrl != null &&
+                          product.seller!.avatarUrl!.isNotEmpty
+                      ? CachedNetworkImageProvider(
+                          ImageUtils.getThumbnailUrl(product.seller!.avatarUrl!, width: 150, height: 150),
+                        )
+                      : null,
+                  child: product.seller?.avatarUrl == null ||
+                          product.seller!.avatarUrl!.isEmpty
+                      ? Text(avatarLetter,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold))
+                      : null,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        sellerName,
                         style: const TextStyle(
                             color: Colors.white,
-                            fontWeight: FontWeight.bold))
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      sellerName,
-                      style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15),
+                      ),
+                      const Text(
+                        'Seller',
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                if (_isOwner)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                          color: Colors.white.withOpacity(0.3)),
+                    ),
+                    child: const Text(
+                      'Your listing',
+                      style: TextStyle(
                           color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500),
                     ),
-                    const Text(
-                      'Seller',
-                      style: TextStyle(color: Colors.grey, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-              if (_isOwner)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                        color: Colors.white.withOpacity(0.3)),
                   ),
-                  child: const Text(
-                    'Your listing',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
 
           const SizedBox(height: 24),

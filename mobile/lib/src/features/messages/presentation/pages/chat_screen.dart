@@ -9,6 +9,7 @@ import '../../../../core/widgets/glass_skeleton.dart';
 import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../core/utils/connectivity_utils.dart';
 import '../providers/offline_messages_provider.dart';
+import '../../../settings/presentation/pages/user_profile_screen.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Conversation conversation;
@@ -246,48 +247,61 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor:
-                  Colors.white.withOpacity(0.2),
-              backgroundImage:
-                  other.avatarUrl != null && other.avatarUrl!.isNotEmpty
-                      ? CachedNetworkImageProvider(other.avatarUrl!)
-                      : null,
-              child: other.avatarUrl == null || other.avatarUrl!.isEmpty
-                  ? Text(other.initials,
+        title: GestureDetector(
+          onTap: () {
+            if (other.id.isNotEmpty) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => UserProfileScreen(userId: other.id),
+                ),
+              );
+            }
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 18,
+                backgroundColor:
+                    Colors.white.withOpacity(0.2),
+                backgroundImage:
+                    other.avatarUrl != null && other.avatarUrl!.isNotEmpty
+                        ? CachedNetworkImageProvider(other.avatarUrl!)
+                        : null,
+                child: other.avatarUrl == null || other.avatarUrl!.isEmpty
+                    ? Text(other.initials,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14))
+                    : null,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      other.displayName,
                       style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 14))
-                  : null,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    other.displayName,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16),
-                  ),
-                  if (widget.conversation.itemTitle != null)
-                    Text(
-                      widget.conversation.itemTitle!,
-                      style: TextStyle(
-                          color: Colors.white.withOpacity(0.8),
-                          fontSize: 11),
-                      overflow: TextOverflow.ellipsis,
+                          fontSize: 16),
                     ),
-                ],
+                    if (widget.conversation.itemTitle != null)
+                      Text(
+                        widget.conversation.itemTitle!,
+                        style: TextStyle(
+                            color: Colors.white.withOpacity(0.8),
+                            fontSize: 11),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),

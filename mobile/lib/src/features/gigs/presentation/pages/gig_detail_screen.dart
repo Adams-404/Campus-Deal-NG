@@ -13,6 +13,7 @@ import '../../../../core/utils/image_utils.dart';
 import '../../../../core/widgets/safe_image.dart';
 import '../../../marketplace/presentation/pages/item_detail_screen.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import '../../../settings/presentation/pages/user_profile_screen.dart';
 
 class GigDetailScreen extends ConsumerStatefulWidget {
   final Gig gig;
@@ -391,32 +392,56 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white.withOpacity(0.1),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => UserProfileScreen(userId: widget.gig.userId),
                         ),
-                        child: ClipOval(
-                          child: widget.gig.profile?.avatarUrl != null
-                              ? SafeImage(
-                                  imageUrl: ImageUtils.getFullUrl(
-                                    widget.gig.profile!.avatarUrl!,
-                                    bucket: 'avatars',
-                                  ),
-                                  fit: BoxFit.cover,
-                                  memCacheWidth: 120,
-                                  memCacheHeight: 120,
-                                  fadeInDuration: const Duration(milliseconds: 200),
-                                  placeholder: (context, url) => Shimmer.fromColors(
-                                    baseColor: AppTheme.shimmerBase,
-                                    highlightColor: AppTheme.shimmerHighlight,
-                                    child: Container(color: Colors.white),
-                                  ),
-                                  errorWidget: (context, url, error) => Center(
+                      );
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                          child: ClipOval(
+                            child: widget.gig.profile?.avatarUrl != null
+                                ? SafeImage(
+                                    imageUrl: ImageUtils.getFullUrl(
+                                      widget.gig.profile!.avatarUrl!,
+                                      bucket: 'avatars',
+                                    ),
+                                    fit: BoxFit.cover,
+                                    memCacheWidth: 120,
+                                    memCacheHeight: 120,
+                                    fadeInDuration: const Duration(milliseconds: 200),
+                                    placeholder: (context, url) => Shimmer.fromColors(
+                                      baseColor: AppTheme.shimmerBase,
+                                      highlightColor: AppTheme.shimmerHighlight,
+                                      child: Container(color: Colors.white),
+                                    ),
+                                    errorWidget: (context, url, error) => Center(
+                                      child: Text(
+                                        _getInitials(
+                                          widget.gig.profile?.firstName,
+                                          widget.gig.profile?.lastName,
+                                        ),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : Center(
                                     child: Text(
                                       _getInitials(
                                         widget.gig.profile?.firstName,
@@ -429,80 +454,58 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                       ),
                                     ),
                                   ),
-                                )
-                              : Center(
-                                  child: Text(
-                                    _getInitials(
-                                      widget.gig.profile?.firstName,
-                                      widget.gig.profile?.lastName,
-                                    ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _getUserName(
+                                  widget.gig.profile?.firstName,
+                                  widget.gig.profile?.lastName,
+                                ),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  const FaIcon(
+                                    FontAwesomeIcons.solidStar,
+                                    size: 12,
+                                    color: Colors.amber,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    widget.gig.rating.toStringAsFixed(1),
                                     style: const TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
                                     ),
                                   ),
-                                ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _getUserName(
-                                widget.gig.profile?.firstName,
-                                widget.gig.profile?.lastName,
-                              ),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              children: [
-                                const FaIcon(
-                                  FontAwesomeIcons.solidStar,
-                                  size: 12,
-                                  color: Colors.amber,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  widget.gig.rating.toStringAsFixed(1),
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '(${widget.gig.reviewsCount} reviews)',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.white.withOpacity(0.5),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '(${widget.gig.reviewsCount} reviews)',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.white.withOpacity(0.5),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        onPressed: () {},
-                        icon: FaIcon(
-                          FontAwesomeIcons.comment,
-                          color: primaryColor,
-                          size: 20,
-                        ),
-                        style: IconButton.styleFrom(
-                          backgroundColor: primaryColor.withOpacity(0.1),
-                        ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        const Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 16),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 120), // padding for bottom bar hover spacing
