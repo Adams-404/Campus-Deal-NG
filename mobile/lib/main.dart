@@ -19,6 +19,7 @@ import 'src/features/gigs/presentation/pages/gigs_browse_screen.dart';
 import 'src/features/gigs/presentation/pages/my_gigs_screen.dart';
 import 'src/features/gigs/presentation/widgets/create_gig_modal.dart';
 import 'src/core/widgets/glass_skeleton.dart';
+import 'src/core/widgets/connectivity_wrapper.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -47,7 +48,9 @@ class MyApp extends StatelessWidget {
       builder: (context, child) {
         return Stack(
           children: [
-            child ?? const SizedBox.shrink(),
+            ConnectivityWrapper(
+              child: child ?? const SizedBox.shrink(),
+            ),
             const StatusBarBlur(),
           ],
         );
