@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../auth/auth_provider.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class MyListingsScreen extends ConsumerStatefulWidget {
   const MyListingsScreen({super.key});
@@ -70,7 +71,7 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: 'My Listings'),
       body: Column(
@@ -101,27 +102,27 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
                       itemBuilder: (context, index) => Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.03),
+                          color: context.customSurface,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.white.withOpacity(0.06)),
+                          border: Border.all(color: context.customBorder),
                         ),
                         child: Row(
                           children: [
                             const GlassSkeletonBlock(width: 80, height: 80, borderRadius: 10),
                             const SizedBox(width: 12),
-                            Expanded(
+                            const Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const GlassSkeletonBlock(height: 14, width: double.infinity),
-                                  const SizedBox(height: 6),
-                                  const GlassSkeletonBlock(height: 12, width: 80),
-                                  const SizedBox(height: 10),
+                                  GlassSkeletonBlock(height: 14, width: double.infinity),
+                                  SizedBox(height: 6),
+                                  GlassSkeletonBlock(height: 12, width: 80),
+                                  SizedBox(height: 10),
                                   Row(
                                     children: [
-                                      const GlassSkeletonBlock(height: 18, width: 60, borderRadius: 6),
-                                      const SizedBox(width: 8),
-                                      const GlassSkeletonBlock(height: 12, width: 70),
+                                      GlassSkeletonBlock(height: 18, width: 60, borderRadius: 6),
+                                      SizedBox(width: 8),
+                                      GlassSkeletonBlock(height: 12, width: 70),
                                     ],
                                   ),
                                 ],
@@ -166,18 +167,18 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
         decoration: BoxDecoration(
           color: isActive
               ? const Color(0xFF3B82F6)
-              : const Color(0xFF171717),
+              : context.customSurface,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isActive
                 ? const Color(0xFF3B82F6)
-                : Colors.white.withOpacity(0.1),
+                : context.customBorder,
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isActive ? Colors.white : Colors.grey[400],
+            color: isActive ? Colors.white : context.customSecondaryText,
             fontSize: 13,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
           ),
@@ -196,9 +197,9 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF171717),
+        color: context.customSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: context.customBorder),
       ),
       child: Row(
         children: [
@@ -213,11 +214,11 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
                       imageUrl: imageUrl,
                       fit: BoxFit.cover,
                       placeholder: (_, __) => Container(
-                          color: const Color(0xFF262626)),
+                          color: context.isDarkMode ? const Color(0xFF262626) : Colors.black.withOpacity(0.03)),
                     )
                   : Container(
-                      color: const Color(0xFF262626),
-                      child: const Icon(Icons.image, color: Colors.grey)),
+                      color: context.isDarkMode ? const Color(0xFF262626) : Colors.black.withOpacity(0.03),
+                      child: Icon(Icons.image, color: context.customSecondaryText)),
             ),
           ),
           const SizedBox(width: 12),
@@ -228,8 +229,8 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
               children: [
                 Text(
                   item['title'] ?? '',
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: context.customText,
                       fontSize: 14,
                       fontWeight: FontWeight.w500),
                   maxLines: 2,
@@ -251,8 +252,8 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
                           horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: isSold
-                            ? Colors.orange.withOpacity(0.1)
-                            : Colors.green.withOpacity(0.1),
+                            ? Colors.orange.withValues(alpha: 0.1)
+                            : Colors.green.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
@@ -268,7 +269,7 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
                     if (item['category'] != null)
                       Text(
                         item['category'],
-                        style: TextStyle(color: Colors.grey[600], fontSize: 11),
+                        style: TextStyle(color: context.customSecondaryText, fontSize: 11),
                       ),
                   ],
                 ),
@@ -288,23 +289,23 @@ class _MyListingsScreenState extends ConsumerState<MyListingsScreen> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.storefront, color: Colors.green, size: 40),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No listings yet',
             style: TextStyle(
-                color: Colors.white,
+                color: context.customText,
                 fontSize: 16,
                 fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
           Text(
             'Your listed items will appear here',
-            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            style: TextStyle(color: context.customSecondaryText, fontSize: 14),
           ),
         ],
       ),

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../auth/auth_provider.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
@@ -196,7 +197,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     final unreadCount = _notifications.where((n) => n['is_read'] != true).length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       extendBodyBehindAppBar: true,
       appBar: GlassAppBar(
         title: 'Notifications',
@@ -217,8 +218,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          Colors.white.withValues(alpha: 0.14),
-                          Colors.white.withValues(alpha: 0.05),
+                          context.customText.withOpacity(0.14),
+                          context.customText.withOpacity(0.05),
                         ],
                       ),
                     ),
@@ -260,14 +261,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                       return Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: isRead
-                              ? const Color(0xFF171717)
-                              : const Color(0xFF171717).withValues(alpha: 0.9),
+                          color: context.customSurface,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isRead
-                                ? Colors.white.withValues(alpha: 0.05)
-                                : const Color(0xFF3B82F6).withValues(alpha: 0.2),
+                                ? context.customBorder
+                                : const Color(0xFF3B82F6).withValues(alpha: 0.3),
                           ),
                         ),
                         child: Column(
@@ -291,8 +290,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                     const SizedBox(width: 6),
                                     Text(
                                       metadata?['admin_name'] ?? 'Admin Team',
-                                      style: const TextStyle(
-                                          color: Colors.white,
+                                      style: TextStyle(
+                                          color: context.customText,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w500),
                                     ),
@@ -333,7 +332,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                             child: Text(
                                               notification['title'] ?? '',
                                               style: TextStyle(
-                                                color: Colors.white,
+                                                color: context.customText,
                                                 fontSize: 14,
                                                 fontWeight: isRead
                                                     ? FontWeight.w400
@@ -360,7 +359,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                       Text(
                                         notification['content'] ?? '',
                                         style: TextStyle(
-                                          color: Colors.grey[500],
+                                          color: context.customSecondaryText,
                                           fontSize: 13,
                                           height: 1.4,
                                         ),
@@ -370,7 +369,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                                         _timeAgo(
                                             notification['created_at'] ?? ''),
                                         style: TextStyle(
-                                            color: Colors.grey[700],
+                                            color: context.customSecondaryText.withOpacity(0.5),
                                             fontSize: 11),
                                       ),
                                     ],
@@ -402,17 +401,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 color: Color(0xFF3B82F6), size: 40),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             "You're all caught up",
             style: TextStyle(
-                color: Colors.white,
+                color: context.customText,
                 fontSize: 16,
                 fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
           Text(
             'No notifications at the moment',
-            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            style: TextStyle(color: context.customSecondaryText, fontSize: 14),
           ),
         ],
       ),

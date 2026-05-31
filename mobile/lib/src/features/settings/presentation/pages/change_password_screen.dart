@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../auth/auth_provider.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -102,7 +103,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: 'Change Password'),
       body: SingleChildScrollView(
@@ -116,7 +117,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF171717),
+                  color: context.customSurface,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: Colors.orange.withOpacity(0.2)),
                 ),
@@ -132,19 +133,19 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                           color: Colors.orange, size: 22),
                     ),
                     const SizedBox(width: 14),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Update your password',
                               style: TextStyle(
-                                  color: Colors.white,
+                                  color: context.customText,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600)),
-                          SizedBox(height: 2),
+                          const SizedBox(height: 2),
                           Text('Enter your current password to set a new one',
                               style:
-                                  TextStyle(color: Colors.grey, fontSize: 13)),
+                                  TextStyle(color: context.customSecondaryText, fontSize: 13)),
                         ],
                       ),
                     ),
@@ -216,7 +217,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
               Text(
                 'Forgot your current password? Sign out and use the Forgot Password flow.',
-                style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                style: TextStyle(color: context.customSecondaryText.withOpacity(0.6), fontSize: 13),
               ),
             ],
           ),
@@ -238,7 +239,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         Text(
           label,
           style: TextStyle(
-            color: Colors.grey[400],
+            color: context.customSecondaryText,
             fontSize: 13,
             fontWeight: FontWeight.w500,
           ),
@@ -247,28 +248,32 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
         TextFormField(
           controller: controller,
           obscureText: !isVisible,
-          style: const TextStyle(color: Colors.white),
+          style: TextStyle(color: context.customText),
           validator: (v) => v == null || v.isEmpty ? 'Required' : null,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[700]),
+            hintStyle: TextStyle(color: context.customSecondaryText.withOpacity(0.4)),
             filled: true,
-            fillColor: const Color(0xFF1F1F1F),
+            fillColor: context.isDarkMode ? const Color(0xFF1F1F1F) : Colors.white.withOpacity(0.9),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
+              borderSide: BorderSide(color: context.customBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: context.customBorder),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: const BorderSide(
-                  color: Color(0xFF3B82F6), width: 1),
+                  color: Color(0xFF3B82F6), width: 1.5),
             ),
             contentPadding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             suffixIcon: IconButton(
               icon: Icon(
                 isVisible ? Icons.visibility_off : Icons.visibility,
-                color: Colors.grey[600],
+                color: context.customSecondaryText.withOpacity(0.6),
                 size: 20,
               ),
               onPressed: onToggle,
