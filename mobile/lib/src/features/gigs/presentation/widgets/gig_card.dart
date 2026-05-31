@@ -31,12 +31,12 @@ class GigCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.white.withOpacity(0.08),
-              Colors.white.withOpacity(0.03),
+              context.isDarkMode ? Colors.white.withOpacity(0.08) : Colors.white.withOpacity(0.85),
+              context.isDarkMode ? Colors.white.withOpacity(0.03) : Colors.white.withOpacity(0.5),
             ],
           ),
           border: Border.all(
-            color: Colors.white.withOpacity(0.1),
+            color: context.isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.08),
             width: 1,
           ),
         ),
@@ -57,7 +57,7 @@ class GigCard extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: context.isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -65,7 +65,7 @@ class GigCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
-                            color: Colors.white.withOpacity(0.8),
+                            color: context.customSecondaryText,
                           ),
                         ),
                       ),
@@ -84,7 +84,7 @@ class GigCard extends StatelessWidget {
                             'per service',
                             style: TextStyle(
                               fontSize: 10,
-                              color: Colors.white.withOpacity(0.5),
+                              color: context.customSecondaryText.withOpacity(0.7),
                             ),
                           ),
                         ],
@@ -98,10 +98,10 @@ class GigCard extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     gig.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: context.customText,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -128,8 +128,8 @@ class GigCard extends StatelessWidget {
                         memCacheWidth: 400,
                         fadeInDuration: const Duration(milliseconds: 300),
                         placeholder: (context, url) => Shimmer.fromColors(
-                          baseColor: AppTheme.shimmerBase,
-                          highlightColor: AppTheme.shimmerHighlight,
+                          baseColor: context.customShimmerBase,
+                          highlightColor: context.customShimmerHighlight,
                           child: Container(
                             height: 160,
                             width: double.infinity,
@@ -138,9 +138,9 @@ class GigCard extends StatelessWidget {
                         ),
                         errorWidget: (context, url, error) => Container(
                           height: 160,
-                          color: const Color(0xFF222222),
-                          child: const Center(
-                            child: Icon(Icons.broken_image_outlined, color: Colors.white24, size: 32),
+                          color: context.isDarkMode ? const Color(0xFF222222) : const Color(0xFFE2E8F0),
+                          child: Center(
+                            child: Icon(Icons.broken_image_outlined, color: context.customSecondaryText, size: 32),
                           ),
                         ),
                       ),
@@ -157,7 +157,7 @@ class GigCard extends StatelessWidget {
                       gig.description!,
                       style: TextStyle(
                         fontSize: 13,
-                        color: Colors.white.withOpacity(0.6),
+                        color: context.customText.withOpacity(0.75),
                         height: 1.4,
                       ),
                       maxLines: 3,
@@ -173,16 +173,16 @@ class GigCard extends StatelessWidget {
                   child: Column(
                     children: [
                       if (gig.location != null)
-                        _buildInfoRow(FontAwesomeIcons.locationDot, gig.location!),
+                        _buildInfoRow(context, FontAwesomeIcons.locationDot, gig.location!),
                       if (gig.duration != null)
-                        _buildInfoRow(FontAwesomeIcons.clock, gig.duration!),
-                      _buildRatingRow(gig.rating, gig.reviewsCount),
+                        _buildInfoRow(context, FontAwesomeIcons.clock, gig.duration!),
+                      _buildRatingRow(context, gig.rating, gig.reviewsCount),
                     ],
                   ),
                 ),
 
                 const SizedBox(height: 16),
-                Divider(color: Colors.white.withOpacity(0.1), height: 1),
+                Divider(color: context.customBorder, height: 1),
                 
                 // Bottom row: User info & Apply button
                 Padding(
@@ -197,7 +197,7 @@ class GigCard extends StatelessWidget {
                             height: 28,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.white.withOpacity(0.1),
+                              color: context.isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
                             ),
                             child: ClipOval(
                               child: gig.profile?.avatarUrl != null
@@ -211,17 +211,17 @@ class GigCard extends StatelessWidget {
                                       memCacheHeight: 80,
                                       fadeInDuration: const Duration(milliseconds: 200),
                                       placeholder: (context, url) => Shimmer.fromColors(
-                                        baseColor: AppTheme.shimmerBase,
-                                        highlightColor: AppTheme.shimmerHighlight,
+                                        baseColor: context.customShimmerBase,
+                                        highlightColor: context.customShimmerHighlight,
                                         child: Container(color: Colors.white),
                                       ),
                                       errorWidget: (context, url, error) => Center(
                                         child: Text(
                                           _getInitials(gig.profile?.firstName, gig.profile?.lastName),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
-                                            color: Colors.white,
+                                            color: context.customText,
                                           ),
                                         ),
                                       ),
@@ -229,10 +229,10 @@ class GigCard extends StatelessWidget {
                                   : Center(
                                       child: Text(
                                         _getInitials(gig.profile?.firstName, gig.profile?.lastName),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                          color: context.customText,
                                         ),
                                       ),
                                     ),
@@ -241,17 +241,17 @@ class GigCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             _getUserName(gig.profile?.firstName, gig.profile?.lastName),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
                               fontWeight: FontWeight.w500,
-                              color: Colors.white,
+                              color: context.customText,
                             ),
                           ),
                         ],
                       ),
                       
                       // Apply / Manage Button
-                      _buildActionButton(primaryColor),
+                      _buildActionButton(context, primaryColor),
                     ],
                   ),
                 ),
@@ -263,23 +263,23 @@ class GigCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(FaIconData icon, String text) {
+  Widget _buildInfoRow(BuildContext context, FaIconData icon, String text) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
         children: [
-          FaIcon(icon, size: 12, color: Colors.white.withOpacity(0.5)),
+          FaIcon(icon, size: 12, color: context.customSecondaryText),
           const SizedBox(width: 8),
           Text(
             text,
-            style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
+            style: TextStyle(fontSize: 12, color: context.customSecondaryText),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildRatingRow(num rating, int reviewCount) {
+  Widget _buildRatingRow(BuildContext context, num rating, int reviewCount) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Row(
@@ -288,35 +288,41 @@ class GigCard extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             rating.toStringAsFixed(1),
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: context.customText),
           ),
           const SizedBox(width: 4),
           Text(
             '($reviewCount reviews)',
-            style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
+            style: TextStyle(fontSize: 12, color: context.customSecondaryText),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildActionButton(Color primaryColor) {
+  Widget _buildActionButton(BuildContext context, Color primaryColor) {
     final currentUserId = Supabase.instance.client.auth.currentUser?.id;
     final isOwner = currentUserId != null && currentUserId == gig.userId;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: isOwner ? Colors.white.withOpacity(0.12) : Colors.white,
+        color: isOwner 
+            ? (context.isDarkMode ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.08)) 
+            : (context.isDarkMode ? Colors.white : primaryColor),
         borderRadius: BorderRadius.circular(20),
-        border: isOwner ? Border.all(color: Colors.white.withOpacity(0.2)) : null,
+        border: isOwner 
+            ? Border.all(color: context.isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1)) 
+            : null,
       ),
       child: Row(
         children: [
           FaIcon(
             isOwner ? FontAwesomeIcons.sliders : FontAwesomeIcons.message,
             size: 12,
-            color: isOwner ? Colors.white : primaryColor,
+            color: isOwner 
+                ? context.customText 
+                : (context.isDarkMode ? primaryColor : Colors.white),
           ),
           const SizedBox(width: 6),
           Text(
@@ -324,7 +330,9 @@ class GigCard extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: isOwner ? Colors.white : primaryColor,
+              color: isOwner 
+                  ? context.customText 
+                  : (context.isDarkMode ? primaryColor : Colors.white),
             ),
           ),
         ],

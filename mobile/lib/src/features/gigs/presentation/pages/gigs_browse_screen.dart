@@ -74,14 +74,14 @@ class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.work_off_outlined, size: 64, color: Colors.white.withOpacity(0.2)),
+                        Icon(Icons.work_off_outlined, size: 64, color: context.customSecondaryText.withOpacity(0.3)),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'No gigs found',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: context.customText,
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -89,7 +89,7 @@ class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
                           'Try adjusting your search or check back later.',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.white.withOpacity(0.5),
+                            color: context.customSecondaryText,
                           ),
                         ),
                       ],
@@ -172,9 +172,9 @@ class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: context.isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.0),
+            border: Border.all(color: context.isDarkMode ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.1), width: 1.0),
           ),
           child: profileAsync.when(
             data: (profile) {
@@ -194,27 +194,27 @@ class _GigsBrowseScreenState extends ConsumerState<GigsBrowseScreen> {
                         memCacheHeight: 100,
                         fadeInDuration: const Duration(milliseconds: 200),
                         placeholder: (context, url) => Shimmer.fromColors(
-                          baseColor: AppTheme.shimmerBase,
-                          highlightColor: AppTheme.shimmerHighlight,
+                          baseColor: context.customShimmerBase,
+                          highlightColor: context.customShimmerHighlight,
                           child: Container(color: Colors.white),
                         ),
                         errorWidget: (context, url, error) => Center(
                           child: Text(
                             initial,
-                            style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: context.customText, fontSize: 14, fontWeight: FontWeight.w600),
                           ),
                         ),
                       )
                     : Center(
                         child: Text(
                           initial,
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: context.customText, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                       ),
               );
             },
             loading: () => const SizedBox.shrink(),
-            error: (err, stack) => const Icon(Icons.account_circle, color: Colors.white, size: 24),
+            error: (err, stack) => Icon(Icons.account_circle, color: context.customText, size: 24),
           ),
         ),
       ),
