@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../../auth/auth_provider.dart';
 import '../pages/notifications_screen.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class NotificationBell extends ConsumerStatefulWidget {
   const NotificationBell({super.key});
@@ -191,19 +192,19 @@ class _NotificationBellState extends ConsumerState<NotificationBell> with Single
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.08),
+              color: context.customSurface,
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.15),
+                color: context.customBorder.withValues(alpha: 0.4),
                 width: 1.0,
               ),
             ),
             child: Stack(
               alignment: Alignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.notifications_none,
-                  color: Colors.white,
+                  color: context.customText,
                   size: 20,
                 ),
                 if (unreadCount > 0)
@@ -341,17 +342,10 @@ class _NotificationDropdownPanel extends StatelessWidget {
                     filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
                     child: Container(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            const Color(0xFF1E1E24).withValues(alpha: 0.55),
-                            const Color(0xFF0F0F12).withValues(alpha: 0.35),
-                          ],
-                        ),
+                        color: context.customSurface,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.15),
+                          color: context.customBorder.withValues(alpha: 0.4),
                           width: 1.5,
                         ),
                         boxShadow: [
@@ -362,7 +356,7 @@ class _NotificationDropdownPanel extends StatelessWidget {
                             offset: const Offset(0, 12),
                           ),
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.3),
+                            color: Colors.black.withValues(alpha: 0.15),
                             blurRadius: 40,
                             spreadRadius: 10,
                           ),
@@ -376,10 +370,10 @@ class _NotificationDropdownPanel extends StatelessWidget {
                             padding: const EdgeInsets.fromLTRB(16, 16, 12, 12),
                             child: Row(
                               children: [
-                                const Text(
+                                Text(
                                   'Notifications',
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: context.customText,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -421,7 +415,7 @@ class _NotificationDropdownPanel extends StatelessWidget {
                                 const SizedBox(width: 6),
                                 IconButton(
                                   onPressed: onClose,
-                                  icon: const Icon(Icons.close, color: Colors.grey, size: 16),
+                                  icon: Icon(Icons.close, color: context.customSecondaryText, size: 16),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
                                   splashRadius: 16,
@@ -429,7 +423,7 @@ class _NotificationDropdownPanel extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const Divider(color: Colors.white10, height: 1),
+                          Divider(color: context.customBorder, height: 1),
 
                           // Notification Items
                           if (displayList.isEmpty)
@@ -447,10 +441,10 @@ class _NotificationDropdownPanel extends StatelessWidget {
                                         color: Color(0xFF3B82F6), size: 24),
                                   ),
                                   const SizedBox(height: 12),
-                                  const Text(
+                                  Text(
                                     "You're all caught up",
                                     style: TextStyle(
-                                      color: Colors.white,
+                                      color: context.customText,
                                       fontSize: 13,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -459,7 +453,7 @@ class _NotificationDropdownPanel extends StatelessWidget {
                                   Text(
                                     'No new notifications',
                                     style: TextStyle(
-                                      color: Colors.grey[500],
+                                      color: context.customSecondaryText.withValues(alpha: 0.7),
                                       fontSize: 11,
                                     ),
                                   ),
@@ -473,7 +467,7 @@ class _NotificationDropdownPanel extends StatelessWidget {
                                 physics: const NeverScrollableScrollPhysics(),
                                 padding: const EdgeInsets.symmetric(vertical: 8),
                                 itemCount: displayList.length,
-                                separatorBuilder: (_, index) => const Divider(color: Colors.white10, height: 1),
+                                separatorBuilder: (_, index) => Divider(color: context.customBorder, height: 1),
                                 itemBuilder: (ctx, index) {
                                   final item = displayList[index];
                                   final isRead = item['is_read'] == true;
@@ -502,7 +496,7 @@ class _NotificationDropdownPanel extends StatelessWidget {
                                                       child: Text(
                                                         item['title'] ?? '',
                                                         style: TextStyle(
-                                                          color: Colors.white,
+                                                          color: context.customText,
                                                           fontSize: 13,
                                                           fontWeight: isRead ? FontWeight.w500 : FontWeight.bold,
                                                         ),
@@ -526,7 +520,7 @@ class _NotificationDropdownPanel extends StatelessWidget {
                                                 Text(
                                                   item['content'] ?? '',
                                                   style: TextStyle(
-                                                    color: Colors.grey[400],
+                                                    color: context.customSecondaryText,
                                                     fontSize: 11,
                                                     height: 1.3,
                                                   ),
@@ -537,7 +531,7 @@ class _NotificationDropdownPanel extends StatelessWidget {
                                                 Text(
                                                   _timeAgo(item['created_at'] ?? ''),
                                                   style: TextStyle(
-                                                    color: Colors.grey[600],
+                                                    color: context.customSecondaryText.withValues(alpha: 0.6),
                                                     fontSize: 9,
                                                   ),
                                                 ),
@@ -551,7 +545,7 @@ class _NotificationDropdownPanel extends StatelessWidget {
                                 },
                               ),
                             ),
-                          const Divider(color: Colors.white10, height: 1),
+                          Divider(color: context.customBorder, height: 1),
 
                           // Footer "Show More" Button
                           Padding(

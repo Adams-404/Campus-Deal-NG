@@ -202,9 +202,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.08),
+            color: context.customSurface,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white.withOpacity(0.15), width: 1.0),
+            border: Border.all(color: context.customBorder.withValues(alpha: 0.4), width: 1.0),
           ),
           child: profileAsync.when(
             data: (profile) {
@@ -218,13 +218,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     : Center(
                         child: Text(
                           initial,
-                          style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                          style: TextStyle(color: context.customText, fontSize: 14, fontWeight: FontWeight.w600),
                         ),
                       ),
               );
             },
             loading: () => const SizedBox.shrink(),
-            error: (_, __) => const Icon(Icons.account_circle, color: Colors.white, size: 24),
+            error: (_, __) => Icon(Icons.account_circle, color: context.customText, size: 24),
           ),
         ),
       ),
