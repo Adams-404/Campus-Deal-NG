@@ -153,7 +153,7 @@ extension ThemeContext on BuildContext {
 
   // Adaptive background and surface colors
   Color get customBackground => isDarkMode ? const Color(0xFF0A0A0A) : const Color(0xFFD7E4F5);
-  Color get customSurface => isDarkMode ? const Color(0xFF171717) : Colors.white;
+  Color get customSurface => isDarkMode ? const Color(0xFF171717) : Colors.white.withOpacity(0.65);
   Color get customText => isDarkMode ? Colors.white : const Color(0xFF0F172A);
   Color get customSecondaryText => isDarkMode ? const Color(0xFFA3A3A3) : const Color(0xFF475569);
   Color get customBorder => isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.1);

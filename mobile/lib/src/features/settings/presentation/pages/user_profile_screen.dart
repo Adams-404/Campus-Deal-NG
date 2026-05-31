@@ -10,6 +10,7 @@ import '../../../../core/widgets/glass_skeleton.dart';
 import '../../../messages/domain/models/chat_models.dart';
 import '../../../messages/presentation/pages/chat_screen.dart';
 import '../../../marketplace/presentation/pages/item_detail_screen.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class UserProfileScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -253,7 +254,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF1E3A8A).withOpacity(0.18),
+                color: context.isDarkMode
+                    ? const Color(0xFF1E3A8A).withOpacity(0.18)
+                    : const Color(0xFF93C5FD).withOpacity(0.2),
               ),
             ),
           ),
@@ -265,7 +268,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF3B82F6).withOpacity(0.06),
+                color: context.isDarkMode
+                    ? const Color(0xFF3B82F6).withOpacity(0.06)
+                    : const Color(0xFF60A5FA).withOpacity(0.08),
               ),
             ),
           ),
@@ -283,12 +288,13 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.5),
+          color: context.isDarkMode ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.7),
           shape: BoxShape.circle,
+          border: Border.all(color: context.customBorder.withOpacity(0.1)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(10),
-          child: Icon(icon, color: iconColor ?? Colors.white, size: 18),
+          child: Icon(icon, color: iconColor ?? context.customText, size: 18),
         ),
       ),
     );
@@ -297,9 +303,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF0A0A0A),
-        body: SafeArea(
+      return Scaffold(
+        backgroundColor: context.customBackground,
+        body: const SafeArea(
           child: GlassShimmer(
             child: GlassSkeletonProfile(),
           ),
@@ -309,7 +315,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
 
     if (_profile == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0A0A0A),
+        backgroundColor: context.customBackground,
         appBar: const GlassAppBar(title: 'Profile'),
         body: Center(
           child: Column(
@@ -324,18 +330,18 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                 child: const Icon(Icons.person_off_outlined, color: Colors.redAccent, size: 40),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'User not found',
-                style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(color: context.customText, fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF262626),
+                  backgroundColor: context.isDarkMode ? const Color(0xFF262626) : Colors.black.withOpacity(0.05),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text('Go Back', style: TextStyle(color: Colors.white)),
+                child: Text('Go Back', style: TextStyle(color: context.customText)),
               ),
             ],
           ),
@@ -353,7 +359,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
     final joinedDate = _formatDate(_profile!['created_at']);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       body: Stack(
         children: [
           _buildAmbientGlow(),
@@ -374,23 +380,23 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF3B82F6).withOpacity(0.6),
-                              const Color(0xFF1D4ED8).withOpacity(0.1),
-                              const Color(0xFF3B82F6).withOpacity(0.4),
+                              context.isDarkMode ? const Color(0xFF3B82F6).withOpacity(0.6) : const Color(0xFF3B82F6).withOpacity(0.4),
+                              context.isDarkMode ? const Color(0xFF1D4ED8).withOpacity(0.1) : const Color(0xFF1D4ED8).withOpacity(0.05),
+                              context.isDarkMode ? const Color(0xFF3B82F6).withOpacity(0.4) : const Color(0xFF3B82F6).withOpacity(0.3),
                             ],
                           ),
                         ),
                         child: CircleAvatar(
                           radius: 50,
-                          backgroundColor: const Color(0xFF141417),
+                          backgroundColor: context.isDarkMode ? const Color(0xFF141417) : Colors.black.withOpacity(0.05),
                           backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
                               ? CachedNetworkImageProvider(avatarUrl)
                               : null,
                           child: avatarUrl == null || avatarUrl.isEmpty
                               ? Text(
                                   avatarLetter,
-                                  style: const TextStyle(
-                                    color: Colors.white,
+                                  style: TextStyle(
+                                    color: context.customText,
                                     fontSize: 34,
                                     fontWeight: FontWeight.w300,
                                   ),
@@ -407,8 +413,8 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                 Text(
                   displayName,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: context.customText,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     letterSpacing: -0.5,
@@ -423,21 +429,21 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     if (address.isNotEmpty) ...[
-                      const Icon(Icons.location_on_outlined, color: Colors.grey, size: 14),
+                      Icon(Icons.location_on_outlined, color: context.customSecondaryText, size: 14),
                       const SizedBox(width: 4),
                       Text(
                         address,
-                        style: const TextStyle(color: Colors.grey, fontSize: 13),
+                        style: TextStyle(color: context.customSecondaryText, fontSize: 13),
                       ),
                       const SizedBox(width: 12),
-                      Container(width: 4, height: 4, decoration: const BoxDecoration(color: Colors.grey, shape: BoxShape.circle)),
+                      Container(width: 4, height: 4, decoration: BoxDecoration(color: context.customSecondaryText, shape: BoxShape.circle)),
                       const SizedBox(width: 12),
                     ],
-                    const Icon(Icons.calendar_today_outlined, color: Colors.grey, size: 12),
+                    Icon(Icons.calendar_today_outlined, color: context.customSecondaryText, size: 12),
                     const SizedBox(width: 4),
                     Text(
                       'Joined $joinedDate',
-                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      style: TextStyle(color: context.customSecondaryText, fontSize: 13),
                     ),
                   ],
                 ),
@@ -504,9 +510,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF16161A),
+                          color: context.customSurface,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.white.withOpacity(0.08)),
+                          border: Border.all(color: context.customBorder),
                         ),
                         child: IconButton(
                           onPressed: () {
@@ -514,7 +520,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                               const SnackBar(content: Text('Profile link copied!')),
                             );
                           },
-                          icon: const Icon(Icons.share_outlined, color: Colors.white, size: 18),
+                          icon: Icon(Icons.share_outlined, color: context.customText, size: 18),
                         ),
                       ),
                     ],
@@ -525,7 +531,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                 // Divider line for premium separation
                 Container(
                   height: 1,
-                  color: Colors.white.withOpacity(0.05),
+                  color: context.customBorder,
                 ),
                 const SizedBox(height: 20),
 
@@ -553,7 +559,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                           child: Text(
                             '$tab ($count)',
                             style: TextStyle(
-                              color: isSelected ? const Color(0xFF3B82F6) : Colors.grey[500],
+                              color: isSelected ? const Color(0xFF3B82F6) : context.customSecondaryText,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                               letterSpacing: 0.1,
@@ -573,25 +579,25 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 64, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF121215),
+                      color: context.customSurface,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white.withOpacity(0.03)),
+                      border: Border.all(color: context.customBorder),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.inventory_2_outlined, color: Colors.grey[700], size: 36),
+                        Icon(Icons.inventory_2_outlined, color: context.customSecondaryText, size: 36),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'No offerings yet',
-                          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: context.customText, fontSize: 15, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           _isCurrentUser
                               ? 'Start listing your items or services today!'
                               : 'This user hasn\'t posted any offerings yet.',
-                          style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                          style: TextStyle(color: context.customSecondaryText, fontSize: 13),
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -613,7 +619,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.4),
+                      context.isDarkMode ? Colors.black.withOpacity(0.4) : context.customBackground.withOpacity(0.4),
                       Colors.transparent,
                     ],
                   ),
@@ -663,9 +669,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           },
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF141417),
+              color: context.customSurface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.04)),
+              border: Border.all(color: context.customBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,12 +686,12 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                           CachedNetworkImage(
                             imageUrl: ImageUtils.getThumbnailUrl(imageUrl, width: 300, height: 250),
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: const Color(0xFF1A1A1E)),
+                            placeholder: (context, url) => Container(color: context.isDarkMode ? const Color(0xFF1A1A1E) : Colors.black.withOpacity(0.03)),
                           )
                         else
                           Container(
-                            color: const Color(0xFF1A1A1E),
-                            child: const Icon(Icons.image_not_supported_outlined, color: Colors.white12),
+                            color: context.isDarkMode ? const Color(0xFF1A1A1E) : Colors.black.withOpacity(0.03),
+                            child: Icon(Icons.image_not_supported_outlined, color: context.customSecondaryText.withOpacity(0.3)),
                           ),
                         if (item['condition'] != null)
                           Positioned(
@@ -714,7 +720,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     children: [
                       Text(
                         item['title'] ?? '',
-                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                        style: TextStyle(color: context.customText, fontSize: 13, fontWeight: FontWeight.w600),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -754,9 +760,9 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFF141417),
+              color: context.customSurface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.04)),
+              border: Border.all(color: context.customBorder),
             ),
             child: Row(
               children: [
@@ -769,11 +775,11 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                         ? CachedNetworkImage(
                             imageUrl: ImageUtils.getThumbnailUrl(imageUrl, width: 160, height: 160),
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: const Color(0xFF1A1A1E)),
+                            placeholder: (context, url) => Container(color: context.isDarkMode ? const Color(0xFF1A1A1E) : Colors.black.withOpacity(0.03)),
                           )
                         : Container(
-                            color: const Color(0xFF1A1A1E),
-                            child: const Icon(Icons.work_outline, color: Colors.white24),
+                            color: context.isDarkMode ? const Color(0xFF1A1A1E) : Colors.black.withOpacity(0.03),
+                            child: Icon(Icons.work_outline, color: context.customSecondaryText.withOpacity(0.3)),
                           ),
                   ),
                 ),
@@ -784,7 +790,7 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                     children: [
                       Text(
                         gig['title'] ?? '',
-                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: context.customText, fontSize: 14, fontWeight: FontWeight.bold),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -795,12 +801,12 @@ class _UserProfileScreenState extends ConsumerState<UserProfileScreen> {
                           const SizedBox(width: 4),
                           Text(
                             '${gig['rating'] ?? 0.0}',
-                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: context.customText, fontSize: 11, fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '(${gig['reviews_count'] ?? 0})',
-                            style: const TextStyle(color: Colors.grey, fontSize: 10),
+                            style: TextStyle(color: context.customSecondaryText, fontSize: 10),
                           ),
                           const Spacer(),
                           Text(

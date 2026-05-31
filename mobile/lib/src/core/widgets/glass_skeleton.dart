@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
 
 /// Specular Liquid Glass Shimmer effect driven by ShaderMask.
 /// Performs a diagonal reflection sweep across the child widget.
@@ -102,10 +103,10 @@ class GlassSkeletonBlock extends StatelessWidget {
       height: height,
       margin: margin,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: context.isDarkMode ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
         borderRadius: BorderRadius.circular(borderRadius),
         border: Border.all(
-          color: Colors.white.withOpacity(0.08),
+          color: context.isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.03),
           width: 1,
         ),
       ),
@@ -124,9 +125,9 @@ class GlassSkeletonCard extends StatelessWidget {
     return Container(
       width: isFeatured ? double.infinity : 160,
       decoration: BoxDecoration(
-        color: const Color(0xFF171717),
+        color: context.customSurface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: context.customBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,9 +155,9 @@ class GlassSkeletonCard extends StatelessWidget {
                       width: 16,
                       height: 16,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
+                        color: context.isDarkMode ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                        border: Border.all(color: context.customBorder),
                       ),
                     ),
                     const SizedBox(width: 6),
@@ -182,9 +183,9 @@ class GlassSkeletonGigCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withOpacity(0.03),
+        color: context.customSurface,
         border: Border.all(
-          color: Colors.white.withOpacity(0.08),
+          color: context.customBorder,
           width: 1,
         ),
       ),
@@ -222,7 +223,7 @@ class GlassSkeletonGigCard extends StatelessWidget {
             const SizedBox(height: 6),
             const GlassSkeletonBlock(height: 12, width: double.infinity),
             const SizedBox(height: 16),
-            Divider(color: Colors.white.withOpacity(0.1), height: 1),
+            Divider(color: context.customBorder, height: 1),
             const SizedBox(height: 16),
             // Bottom user row
             Row(
@@ -234,9 +235,9 @@ class GlassSkeletonGigCard extends StatelessWidget {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
+                        color: context.isDarkMode ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                        border: Border.all(color: context.customBorder),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -271,7 +272,7 @@ class GlassSkeletonListTile extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Colors.white.withOpacity(0.05),
+            color: context.customBorder,
           ),
         ),
       ),
@@ -282,9 +283,9 @@ class GlassSkeletonListTile extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.06),
+                color: context.isDarkMode ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white.withOpacity(0.08)),
+                border: Border.all(color: context.customBorder),
               ),
             ),
             const SizedBox(width: 14),
@@ -338,7 +339,7 @@ class GlassSkeletonDetails extends StatelessWidget {
                 const SizedBox(height: 12),
                 const GlassSkeletonBlock(height: 24, width: 100),
                 const SizedBox(height: 16),
-                Divider(color: Colors.white.withOpacity(0.08)),
+                Divider(color: context.customBorder),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -346,9 +347,9 @@ class GlassSkeletonDetails extends StatelessWidget {
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.06),
+                        color: context.isDarkMode ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                        border: Border.all(color: context.customBorder),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -363,7 +364,7 @@ class GlassSkeletonDetails extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Divider(color: Colors.white.withOpacity(0.08)),
+                Divider(color: context.customBorder),
                 const SizedBox(height: 16),
                 const GlassSkeletonBlock(height: 14, width: 100),
                 const SizedBox(height: 12),
@@ -395,9 +396,9 @@ class GlassSkeletonProfile extends StatelessWidget {
             width: double.infinity,
             height: 180,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.03),
+              color: context.customSurface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: context.customBorder),
             ),
             child: Stack(
               alignment: Alignment.center,
@@ -410,9 +411,9 @@ class GlassSkeletonProfile extends StatelessWidget {
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.06),
+                          color: context.isDarkMode ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.05),
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white.withOpacity(0.12), width: 2),
+                          border: Border.all(color: context.customBorder, width: 2),
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -427,9 +428,9 @@ class GlassSkeletonProfile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.03),
+              color: context.customSurface,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: context.customBorder),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
