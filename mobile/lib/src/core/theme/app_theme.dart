@@ -83,14 +83,14 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: const ColorScheme.light(
-        primary: Color(0xFF111827),
+        primary: Color(0xFF0F172A),
         secondary: accentColor,
         surface: Colors.white,
-        background: Color(0xFFF9FAFB),
-        onBackground: Color(0xFF111827),
-        onSurface: Color(0xFF111827),
+        background: Color(0xFFD7E4F5),
+        onBackground: Color(0xFF0F172A),
+        onSurface: Color(0xFF0F172A),
       ),
-      scaffoldBackgroundColor: const Color(0xFFF9FAFB),
+      scaffoldBackgroundColor: const Color(0xFFD7E4F5),
       scrollbarTheme: ScrollbarThemeData(
         thumbColor: WidgetStateProperty.all(Colors.black.withOpacity(0.12)),
         trackColor: WidgetStateProperty.all(Colors.transparent),
@@ -109,15 +109,15 @@ class AppTheme {
           statusBarBrightness: Brightness.light,
         ),
         titleTextStyle: TextStyle(
-          color: Color(0xFF111827),
+          color: Color(0xFF0F172A),
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
       ),
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
-        selectedItemColor: Color(0xFF111827),
-        unselectedItemColor: Color(0xFF6B7280),
+        selectedItemColor: Color(0xFF0F172A),
+        unselectedItemColor: Color(0xFF475569),
         type: BottomNavigationBarType.fixed,
         elevation: 0,
       ),
@@ -130,7 +130,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: const Color(0xFFF3F4F6),
+        fillColor: const Color(0xFFF1F5F9),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -139,8 +139,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: accentColor, width: 1),
         ),
-        labelStyle: const TextStyle(color: Color(0xFF6B7280)),
-        prefixIconColor: Color(0xFF6B7280),
+        labelStyle: const TextStyle(color: Color(0xFF475569)),
+        prefixIconColor: Color(0xFF475569),
       ),
     );
   }
@@ -152,11 +152,11 @@ extension ThemeContext on BuildContext {
   bool get isDarkMode => theme.brightness == Brightness.dark;
 
   // Adaptive background and surface colors
-  Color get customBackground => isDarkMode ? const Color(0xFF0A0A0A) : const Color(0xFFF9FAFB);
-  Color get customSurface => isDarkMode ? const Color(0xFF171717) : Colors.white;
-  Color get customText => isDarkMode ? Colors.white : const Color(0xFF111827);
-  Color get customSecondaryText => isDarkMode ? const Color(0xFFA3A3A3) : const Color(0xFF6B7280);
-  Color get customBorder => isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08);
-  Color get customShimmerBase => isDarkMode ? const Color(0xFF1A1A1A) : const Color(0xFFE5E7EB);
-  Color get customShimmerHighlight => isDarkMode ? const Color(0xFF262626) : const Color(0xFFF3F4F6);
+  Color get customBackground => isDarkMode ? const Color(0xFF0A0A0A) : const Color(0xFFD7E4F5);
+  Color get customSurface => isDarkMode ? const Color(0xFF171717) : Colors.white.withOpacity(0.65);
+  Color get customText => isDarkMode ? Colors.white : const Color(0xFF0F172A);
+  Color get customSecondaryText => isDarkMode ? const Color(0xFFA3A3A3) : const Color(0xFF475569);
+  Color get customBorder => isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.1);
+  Color get customShimmerBase => isDarkMode ? const Color(0xFF1A1A1A) : const Color(0xFFE2E8F0);
+  Color get customShimmerHighlight => isDarkMode ? const Color(0xFF262626) : const Color(0xFFF1F5F9);
 }

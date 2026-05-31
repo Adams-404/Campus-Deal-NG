@@ -231,9 +231,9 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF0A0A0A),
-        body: SafeArea(
+      return Scaffold(
+        backgroundColor: context.customBackground,
+        body: const SafeArea(
           child: GlassShimmer(
             child: GlassSkeletonDetails(),
           ),
@@ -243,13 +243,13 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
 
     if (_product == null) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0A0A0A),
+        backgroundColor: context.customBackground,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Item not found',
-                  style: TextStyle(color: Colors.white)),
+              Text('Item not found',
+                  style: TextStyle(color: context.customText)),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => Navigator.pop(context),
@@ -266,7 +266,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
         product.seller?.firstName ?? product.seller?.fullName ?? 'Seller';
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       body: Stack(
         children: [
           CustomScrollView(
@@ -284,7 +284,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                 actions: [
                   _buildCircleButton(
                     icon: _isSaved ? Icons.favorite : Icons.favorite_border,
-                    iconColor: _isSaved ? Colors.red : Colors.white,
+                    iconColor: _isSaved ? Colors.red : (context.isDarkMode ? Colors.white : Colors.black),
                     onTap: _isSaving ? null : _toggleSave,
                   ),
                   const SizedBox(width: 8),
@@ -305,7 +305,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                               colors: [
-                                Colors.black.withOpacity(0.6),
+                                Colors.black.withOpacity(context.isDarkMode ? 0.6 : 0.2),
                                 Colors.black.withOpacity(0.0),
                               ],
                             ),
@@ -324,7 +324,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                               begin: Alignment.bottomCenter,
                               end: Alignment.topCenter,
                               colors: [
-                                const Color(0xFF0A0A0A),
+                                context.customBackground,
                                 Colors.transparent,
                               ],
                             ),
@@ -362,12 +362,13 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
       child: Container(
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.5),
+          color: context.isDarkMode ? Colors.black.withOpacity(0.5) : Colors.white.withOpacity(0.7),
           shape: BoxShape.circle,
+          border: Border.all(color: context.customBorder.withOpacity(0.1)),
         ),
         child: Padding(
           padding: const EdgeInsets.all(8),
-          child: Icon(icon, color: iconColor ?? Colors.white, size: 20),
+          child: Icon(icon, color: iconColor ?? context.customText, size: 20),
         ),
       ),
     );
@@ -478,8 +479,8 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               Expanded(
                 child: Text(
                   product.title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: context.customText,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     height: 1.3,
@@ -489,8 +490,8 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               const SizedBox(width: 12),
               Text(
                 '₦${NumberFormat('#,##0').format(product.price)}',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.customText,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
@@ -512,8 +513,8 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               ],
               _buildBadge(
                 label: product.category,
-                color: Colors.white.withOpacity(0.15),
-                textColor: Colors.white,
+                color: context.customSurface,
+                textColor: context.customText,
               ),
             ],
           ),
@@ -521,7 +522,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
           const SizedBox(height: 24),
 
           // Divider
-          Container(height: 1, color: Colors.white.withOpacity(0.08)),
+          Container(height: 1, color: context.customBorder),
           const SizedBox(height: 20),
 
           // Seller
@@ -541,7 +542,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               children: [
                 CircleAvatar(
                   radius: 22,
-                  backgroundColor: Colors.white.withOpacity(0.2),
+                  backgroundColor: context.isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.05),
                   backgroundImage: product.seller?.avatarUrl != null &&
                           product.seller!.avatarUrl!.isNotEmpty
                       ? CachedNetworkImageProvider(
@@ -551,8 +552,8 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                   child: product.seller?.avatarUrl == null ||
                           product.seller!.avatarUrl!.isEmpty
                       ? Text(avatarLetter,
-                          style: const TextStyle(
-                              color: Colors.white,
+                          style: TextStyle(
+                              color: context.customText,
                               fontWeight: FontWeight.bold))
                       : null,
                 ),
@@ -563,14 +564,14 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                     children: [
                       Text(
                         sellerName,
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: context.customText,
                             fontWeight: FontWeight.w600,
                             fontSize: 15),
                       ),
-                      const Text(
+                      Text(
                         'Seller',
-                        style: TextStyle(color: Colors.grey, fontSize: 12),
+                        style: TextStyle(color: context.customSecondaryText, fontSize: 12),
                       ),
                     ],
                   ),
@@ -580,15 +581,15 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
+                      color: context.customSurface,
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                          color: Colors.white.withOpacity(0.3)),
+                          color: context.customBorder),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Your listing',
                       style: TextStyle(
-                          color: Colors.white,
+                          color: context.customText,
                           fontSize: 12,
                           fontWeight: FontWeight.w500),
                     ),
@@ -598,16 +599,16 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
           ),
 
           const SizedBox(height: 24),
-          Container(height: 1, color: Colors.white.withOpacity(0.08)),
+          Container(height: 1, color: context.customBorder),
           const SizedBox(height: 20),
 
           // Description
           if (product.description != null &&
               product.description!.isNotEmpty) ...[
-            const Text(
+            Text(
               'Description',
               style: TextStyle(
-                  color: Colors.white,
+                  color: context.customText,
                   fontSize: 16,
                   fontWeight: FontWeight.bold),
             ),
@@ -615,7 +616,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
             Text(
               product.description!,
               style: TextStyle(
-                color: Colors.grey[300],
+                color: context.customSecondaryText,
                 fontSize: 14,
                 height: 1.6,
               ),
@@ -644,17 +645,17 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Details',
           style: TextStyle(
-              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              color: context.customText, fontSize: 16, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF171717),
+            color: context.customSurface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white.withOpacity(0.06)),
+            border: Border.all(color: context.customBorder),
           ),
           child: Column(
             children: details.asMap().entries.map((entry) {
@@ -662,17 +663,17 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
               return Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(
+                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(entry.value['label']!,
-                            style: const TextStyle(
-                                color: Colors.grey, fontSize: 13)),
+                            style: TextStyle(
+                                color: context.customSecondaryText, fontSize: 13)),
                         Text(entry.value['value']!,
-                            style: const TextStyle(
-                                color: Colors.white,
+                            style: TextStyle(
+                                color: context.customText,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500)),
                       ],
@@ -681,7 +682,7 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                   if (!isLast)
                     Divider(
                         height: 1,
-                        color: Colors.white.withOpacity(0.06),
+                        color: context.customBorder,
                         indent: 16,
                         endIndent: 16),
                 ],
@@ -741,9 +742,9 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.0),
-                    Colors.black.withOpacity(0.85),
-                    Colors.black.withOpacity(0.95),
+                    context.customBackground.withOpacity(0.0),
+                    context.customBackground.withOpacity(0.85),
+                    context.customBackground.withOpacity(0.95),
                   ],
                   stops: const [0.0, 0.4, 1.0],
                 ),
@@ -765,17 +766,17 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                             decoration: BoxDecoration(
                               color: _isSaved
                                   ? Colors.red.withOpacity(0.2)
-                                  : Colors.white.withOpacity(0.12),
+                                  : context.customSurface,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: _isSaved
                                     ? Colors.red.withOpacity(0.6)
-                                    : Colors.white.withOpacity(0.3),
+                                    : context.customBorder,
                                 width: 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.white.withOpacity(0.05),
+                                  color: context.customBorder.withOpacity(0.05),
                                   blurRadius: 10,
                                   spreadRadius: 1,
                                 ),
@@ -784,14 +785,14 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                             child: _isSaving
                                 ? GlassPulseIcon(
                                     icon: _isSaved ? Icons.favorite : Icons.favorite_border,
-                                    color: _isSaved ? Colors.red : Colors.white,
+                                    color: _isSaved ? Colors.red : context.customText,
                                     size: 22,
                                   )
                                 : Icon(
                                     _isSaved
                                         ? Icons.favorite
                                         : Icons.favorite_border,
-                                    color: _isSaved ? Colors.red : Colors.white,
+                                    color: _isSaved ? Colors.red : context.customText,
                                     size: 22,
                                   ),
                           ),
@@ -811,18 +812,18 @@ class _ItemDetailScreenState extends ConsumerState<ItemDetailScreen> {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  Colors.white.withOpacity(0.25),
-                                  Colors.white.withOpacity(0.10),
+                                  context.isDarkMode ? Colors.white.withOpacity(0.25) : const Color(0xFF3B82F6).withOpacity(0.95),
+                                  context.isDarkMode ? Colors.white.withOpacity(0.10) : const Color(0xFF1D4ED8).withOpacity(0.85),
                                 ],
                               ),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.4),
+                                color: context.isDarkMode ? Colors.white.withOpacity(0.4) : const Color(0xFF3B82F6).withOpacity(0.5),
                                 width: 1.5,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.white.withOpacity(0.1),
+                                  color: context.isDarkMode ? Colors.white.withOpacity(0.1) : const Color(0xFF3B82F6).withOpacity(0.15),
                                   blurRadius: 15,
                                   spreadRadius: 2,
                                 ),

@@ -41,20 +41,20 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: context.customSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           'Delete Gig?',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(color: context.customText, fontWeight: FontWeight.bold),
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to delete this gig listing? This action cannot be undone.',
-          style: TextStyle(color: Colors.white70),
+          style: TextStyle(color: context.customSecondaryText),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text('Cancel', style: TextStyle(color: context.customSecondaryText)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(dialogContext, true),
@@ -213,7 +213,7 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                 begin: Alignment.bottomCenter,
                                 end: Alignment.topCenter,
                                 colors: [
-                                  const Color(0xFF0F0F13),
+                                  context.isDarkMode ? const Color(0xFF0F0F13) : context.customBackground,
                                   Colors.transparent,
                                 ],
                               ),
@@ -272,7 +272,7 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                             'per service',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.white.withOpacity(0.5),
+                              color: context.customSecondaryText,
                             ),
                           ),
                         ],
@@ -284,10 +284,10 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                   // Title
                   Text(
                     widget.gig.title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: context.customText,
                       height: 1.2,
                     ),
                   ),
@@ -320,12 +320,12 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                   const SizedBox(height: 24),
 
                   // Description
-                  const Text(
+                  Text(
                     'About this gig',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: context.customText,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -333,7 +333,7 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                     widget.gig.description ?? 'No description provided.',
                     style: TextStyle(
                       fontSize: 15,
-                      color: Colors.white.withOpacity(0.7),
+                      color: context.customText.withOpacity(0.8),
                       height: 1.6,
                     ),
                   ),
@@ -341,12 +341,12 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
 
                   // Tags
                   if (widget.gig.tags.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       'Skills / Tags',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: context.customText,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -360,17 +360,17 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.08),
+                            color: context.isDarkMode ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(16),
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.1),
+                              color: context.customBorder,
                             ),
                           ),
                           child: Text(
                             tag,
                             style: TextStyle(
                               fontSize: 13,
-                              color: Colors.white.withOpacity(0.8),
+                              color: context.customText,
                             ),
                           ),
                         );
@@ -379,16 +379,16 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                     const SizedBox(height: 24),
                   ],
 
-                  Divider(color: Colors.white.withOpacity(0.1)),
+                  Divider(color: context.customBorder),
                   const SizedBox(height: 16),
 
                   // Provider
-                  const Text(
+                  Text(
                     'Gig Provider',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: context.customText,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -409,7 +409,7 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                           height: 48,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.1),
+                            color: context.isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
                           ),
                           child: ClipOval(
                             child: widget.gig.profile?.avatarUrl != null
@@ -423,8 +423,8 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                     memCacheHeight: 120,
                                     fadeInDuration: const Duration(milliseconds: 200),
                                     placeholder: (context, url) => Shimmer.fromColors(
-                                      baseColor: AppTheme.shimmerBase,
-                                      highlightColor: AppTheme.shimmerHighlight,
+                                      baseColor: context.customShimmerBase,
+                                      highlightColor: context.customShimmerHighlight,
                                       child: Container(color: Colors.white),
                                     ),
                                     errorWidget: (context, url, error) => Center(
@@ -433,10 +433,10 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                           widget.gig.profile?.firstName,
                                           widget.gig.profile?.lastName,
                                         ),
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                          color: context.customText,
                                         ),
                                       ),
                                     ),
@@ -447,10 +447,10 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                         widget.gig.profile?.firstName,
                                         widget.gig.profile?.lastName,
                                       ),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white,
+                                        color: context.customText,
                                       ),
                                     ),
                                   ),
@@ -466,10 +466,10 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                   widget.gig.profile?.firstName,
                                   widget.gig.profile?.lastName,
                                 ),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: context.customText,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -483,10 +483,10 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                   const SizedBox(width: 4),
                                   Text(
                                     widget.gig.rating.toStringAsFixed(1),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: context.customText,
                                     ),
                                   ),
                                   const SizedBox(width: 4),
@@ -494,7 +494,7 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                     '(${widget.gig.reviewsCount} reviews)',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Colors.white.withOpacity(0.5),
+                                      color: context.customSecondaryText,
                                     ),
                                   ),
                                 ],
@@ -503,7 +503,7 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Icon(Icons.arrow_forward_ios, color: Colors.white30, size: 16),
+                        Icon(Icons.arrow_forward_ios, color: context.customSecondaryText.withOpacity(0.5), size: 16),
                       ],
                     ),
                   ),
@@ -578,9 +578,9 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.black.withOpacity(0.0),
-                    Colors.black.withOpacity(0.85),
-                    Colors.black.withOpacity(0.95),
+                    context.isDarkMode ? Colors.black.withOpacity(0.0) : context.customBackground.withOpacity(0.0),
+                    context.isDarkMode ? Colors.black.withOpacity(0.85) : context.customBackground.withOpacity(0.85),
+                    context.isDarkMode ? Colors.black.withOpacity(0.95) : context.customBackground.withOpacity(0.95),
                   ],
                   stops: const [0.0, 0.4, 1.0],
                 ),
@@ -666,13 +666,13 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                       colors: [
-                                        Colors.white.withOpacity(0.22),
-                                        Colors.white.withOpacity(0.06),
+                                        context.isDarkMode ? Colors.white.withOpacity(0.22) : Colors.black.withOpacity(0.08),
+                                        context.isDarkMode ? Colors.white.withOpacity(0.06) : Colors.black.withOpacity(0.02),
                                       ],
                                     ),
                                     borderRadius: BorderRadius.circular(18),
                                     border: Border.all(
-                                      color: Colors.white.withOpacity(0.30),
+                                      color: context.isDarkMode ? Colors.white.withOpacity(0.30) : Colors.black.withOpacity(0.15),
                                       width: 1.5,
                                     ),
                                   ),
@@ -681,21 +681,21 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                     child: InkWell(
                                       onTap: () => _handleEdit(context),
                                       borderRadius: BorderRadius.circular(18),
-                                      child: const Row(
+                                      child: Row(
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
                                           FaIcon(
                                             FontAwesomeIcons.penToSquare,
                                             size: 14,
-                                            color: Colors.white,
+                                            color: context.isDarkMode ? Colors.white : context.customText,
                                           ),
-                                          SizedBox(width: 8),
+                                          const SizedBox(width: 8),
                                           Text(
                                             'Edit Gig',
                                             style: TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,
-                                              color: Colors.white,
+                                              color: context.isDarkMode ? Colors.white : context.customText,
                                               letterSpacing: 0.3,
                                             ),
                                           ),
@@ -723,17 +723,17 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                   colors: [
-                                    primaryColor.withOpacity(0.25),
-                                    primaryColor.withOpacity(0.08),
+                                    context.isDarkMode ? primaryColor.withOpacity(0.25) : primaryColor,
+                                    context.isDarkMode ? primaryColor.withOpacity(0.08) : primaryColor.withOpacity(0.85),
                                   ],
                                 ),
                                 border: Border.all(
-                                  color: primaryColor.withOpacity(0.45),
+                                  color: context.isDarkMode ? primaryColor.withOpacity(0.45) : primaryColor.withOpacity(0.9),
                                   width: 1.5,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: primaryColor.withOpacity(0.25),
+                                    color: primaryColor.withOpacity(context.isDarkMode ? 0.25 : 0.15),
                                     blurRadius: 16,
                                     spreadRadius: 1,
                                     offset: const Offset(0, 4),
@@ -784,19 +784,19 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: context.isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: context.customBorder),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: context.isDarkMode ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.05),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: FaIcon(icon, size: 14, color: Colors.white),
+            child: FaIcon(icon, size: 14, color: context.customText),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -807,16 +807,16 @@ class _GigDetailScreenState extends ConsumerState<GigDetailScreen> {
                   title,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.white.withOpacity(0.5),
+                    color: context.customSecondaryText,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: context.customText,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -869,20 +869,20 @@ class _ApplicationSheetState extends State<_ApplicationSheet> {
       margin: const EdgeInsets.all(16),
       padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + bottomPadding),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
+        color: context.customSurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: context.customBorder),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Apply for this Gig',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: context.customText,
             ),
           ),
           const SizedBox(height: 8),
@@ -890,19 +890,19 @@ class _ApplicationSheetState extends State<_ApplicationSheet> {
             'Write a short message to the gig provider explaining why you are a good fit.',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.white.withOpacity(0.6),
+              color: context.customSecondaryText,
             ),
           ),
           const SizedBox(height: 20),
           TextField(
             controller: _messageController,
             maxLines: 4,
-            style: const TextStyle(color: Colors.white),
+            style: TextStyle(color: context.customText),
             decoration: InputDecoration(
               hintText: 'I am interested in working on: ${widget.gig.title}',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              hintStyle: TextStyle(color: context.customSecondaryText.withOpacity(0.5)),
               filled: true,
-              fillColor: Colors.white.withOpacity(0.05),
+              fillColor: context.isDarkMode ? Colors.white.withOpacity(0.05) : Colors.black.withOpacity(0.03),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,

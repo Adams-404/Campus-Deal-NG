@@ -595,7 +595,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: context.customSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -604,35 +604,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.15),
+                color: context.isDarkMode ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.05),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.storefront,
-                color: Colors.white,
+                color: context.customText,
                 size: 36,
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Campus Deal',
               style: TextStyle(
-                color: Colors.white,
+                color: context.customText,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Version 1.0.0',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              style: TextStyle(color: context.customSecondaryText, fontSize: 14),
             ),
             const SizedBox(height: 12),
             Text(
               'The student marketplace for Nigerian campuses. Buy and sell anything, find gigs, and connect with your campus community.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Colors.grey[400],
+                color: context.customSecondaryText,
                 fontSize: 13,
                 height: 1.5,
               ),
@@ -642,7 +642,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close', style: TextStyle(color: Colors.white)),
+            child: Text('Close', style: TextStyle(color: context.customText)),
           ),
         ],
       ),
@@ -673,20 +673,20 @@ class _ConfirmSignOutDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: context.customSurface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text(
+      title: Text(
         'Sign Out',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        style: TextStyle(color: context.customText, fontWeight: FontWeight.bold),
       ),
-      content: const Text(
+      content: Text(
         'Are you sure you want to sign out? You will need to sign in again to access your account.',
-        style: TextStyle(color: Colors.grey),
+        style: TextStyle(color: context.customSecondaryText),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          child: Text('Cancel', style: TextStyle(color: context.customSecondaryText)),
         ),
         TextButton(
           onPressed: () async {
