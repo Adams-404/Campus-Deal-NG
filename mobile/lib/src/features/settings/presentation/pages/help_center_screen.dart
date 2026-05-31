@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class HelpCenterScreen extends StatelessWidget {
   const HelpCenterScreen({super.key});
@@ -43,7 +44,7 @@ class HelpCenterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: 'Help Center'),
       body: SingleChildScrollView(
@@ -56,6 +57,7 @@ class HelpCenterScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildSupportCard(
+                    context: context,
                     icon: Icons.email_outlined,
                     label: 'Email Support',
                     subtitle: 'support@campusdeal.ng',
@@ -66,6 +68,7 @@ class HelpCenterScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildSupportCard(
+                    context: context,
                     icon: Icons.chat_outlined,
                     label: 'WhatsApp',
                     subtitle: '+234 906 706 3781',
@@ -78,10 +81,10 @@ class HelpCenterScreen extends StatelessWidget {
             const SizedBox(height: 28),
 
             // FAQs
-            const Text(
+            Text(
               'Frequently Asked Questions',
               style: TextStyle(
-                  color: Colors.white,
+                  color: context.customText,
                   fontSize: 16,
                   fontWeight: FontWeight.w600),
             ),
@@ -97,10 +100,10 @@ class HelpCenterScreen extends StatelessWidget {
             Center(
               child: Column(
                 children: [
-                  const Text(
+                  Text(
                     'Still Need Help?',
                     style: TextStyle(
-                        color: Colors.white,
+                        color: context.customText,
                         fontSize: 16,
                         fontWeight: FontWeight.w600),
                   ),
@@ -108,7 +111,7 @@ class HelpCenterScreen extends StatelessWidget {
                   Text(
                     'Our support team is here to assist you with any questions or concerns.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                    style: TextStyle(color: context.customSecondaryText, fontSize: 13),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
@@ -136,6 +139,7 @@ class HelpCenterScreen extends StatelessWidget {
   }
 
   Widget _buildSupportCard({
+    required BuildContext context,
     required IconData icon,
     required String label,
     required String subtitle,
@@ -147,22 +151,22 @@ class HelpCenterScreen extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF171717),
+          color: context.customSurface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withOpacity(0.2)),
+          border: Border.all(color: context.customBorder),
         ),
         child: Column(
           children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(height: 10),
             Text(label,
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: context.customText,
                     fontSize: 13,
                     fontWeight: FontWeight.w600)),
             const SizedBox(height: 4),
             Text(subtitle,
-                style: TextStyle(color: Colors.grey[500], fontSize: 11),
+                style: TextStyle(color: context.customSecondaryText, fontSize: 11),
                 textAlign: TextAlign.center),
           ],
         ),
@@ -190,9 +194,9 @@ class _FaqTileState extends State<_FaqTile> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF171717),
+          color: context.customSurface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
+          border: Border.all(color: context.customBorder),
         ),
         child: Column(
           children: [
@@ -206,7 +210,7 @@ class _FaqTileState extends State<_FaqTile> {
                     Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: Colors.teal.withOpacity(0.1),
+                        color: Colors.teal.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: const Icon(Icons.help_outline,
@@ -215,8 +219,8 @@ class _FaqTileState extends State<_FaqTile> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(widget.question,
-                          style: const TextStyle(
-                              color: Colors.white,
+                          style: TextStyle(
+                              color: context.customText,
                               fontSize: 14,
                               fontWeight: FontWeight.w500)),
                     ),
@@ -224,7 +228,7 @@ class _FaqTileState extends State<_FaqTile> {
                       turns: _expanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 200),
                       child: Icon(Icons.keyboard_arrow_down,
-                          color: Colors.grey[600], size: 20),
+                          color: context.customSecondaryText.withOpacity(0.6), size: 20),
                     ),
                   ],
                 ),
@@ -238,7 +242,7 @@ class _FaqTileState extends State<_FaqTile> {
                 child: Text(
                   widget.answer,
                   style: TextStyle(
-                      color: Colors.grey[400], fontSize: 13, height: 1.5),
+                      color: context.customSecondaryText, fontSize: 13, height: 1.5),
                 ),
               ),
               crossFadeState: _expanded

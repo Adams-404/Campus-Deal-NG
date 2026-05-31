@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -49,7 +50,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: 'Feedback'),
       body: SingleChildScrollView(
@@ -67,22 +68,22 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                   color: Colors.purple, size: 36),
             ),
             const SizedBox(height: 16),
-            const Text('We Value Your Feedback',
-                style: TextStyle(color: Colors.white, fontSize: 20,
+            Text('We Value Your Feedback',
+                style: TextStyle(color: context.customText, fontSize: 20,
                     fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Text(
               'Your feedback helps us improve Campus Deal.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[500], fontSize: 13),
+              style: TextStyle(color: context.customSecondaryText, fontSize: 13),
             ),
             const SizedBox(height: 28),
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF171717),
+                color: context.customSurface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withOpacity(0.06)),
+                border: Border.all(color: context.customBorder),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,17 +155,18 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(color: Colors.grey[400], fontSize: 13,
+        Text(label, style: TextStyle(color: context.customSecondaryText, fontSize: 13,
             fontWeight: FontWeight.w500)),
         const SizedBox(height: 6),
         TextFormField(
           controller: ctrl, keyboardType: keyboard, maxLines: lines,
           validator: validator,
-          style: const TextStyle(color: Colors.white, fontSize: 14),
+          style: TextStyle(color: context.customText, fontSize: 14),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[700], fontSize: 13),
-            filled: true, fillColor: const Color(0xFF0A0A0A),
+            hintStyle: TextStyle(color: context.customSecondaryText.withOpacity(0.4), fontSize: 13),
+            filled: true,
+            fillColor: context.isDarkMode ? const Color(0xFF0A0A0A) : Colors.white.withOpacity(0.9),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(color: Colors.purple.withOpacity(0.2))),
             enabledBorder: OutlineInputBorder(

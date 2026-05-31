@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -45,7 +46,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: 'Privacy Policy'),
       body: SingleChildScrollView(
@@ -55,7 +56,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
           children: [
             Text(
               'At Campus Deal, we take your privacy seriously. This policy outlines how we collect, use, and protect your personal information.',
-              style: TextStyle(color: Colors.grey[400], fontSize: 14, height: 1.6),
+              style: TextStyle(color: context.customSecondaryText, fontSize: 14, height: 1.6),
             ),
             const SizedBox(height: 20),
             ..._sections.map((s) => _ExpandSection(
@@ -68,10 +69,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
             Center(
               child: Column(children: [
                 Text('Last updated: March 2025',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                    style: TextStyle(color: context.customSecondaryText.withOpacity(0.6), fontSize: 12)),
                 const SizedBox(height: 4),
                 Text('Questions? Contact us at the Help Center.',
-                    style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                    style: TextStyle(color: context.customSecondaryText.withOpacity(0.6), fontSize: 12)),
               ]),
             ),
             const SizedBox(height: 80),
@@ -104,9 +105,9 @@ class _ExpandSectionState extends State<_ExpandSection> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF171717),
+          color: context.customSurface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withOpacity(0.06)),
+          border: Border.all(color: context.customBorder),
         ),
         child: Column(children: [
           InkWell(
@@ -118,7 +119,7 @@ class _ExpandSectionState extends State<_ExpandSection> {
                 Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: widget.color.withOpacity(0.1),
+                    color: widget.color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(widget.icon, color: widget.color, size: 16),
@@ -126,14 +127,14 @@ class _ExpandSectionState extends State<_ExpandSection> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(widget.title,
-                      style: const TextStyle(color: Colors.white,
+                      style: TextStyle(color: context.customText,
                           fontSize: 14, fontWeight: FontWeight.w500)),
                 ),
                 AnimatedRotation(
                   turns: _expanded ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
                   child: Icon(Icons.keyboard_arrow_down,
-                      color: Colors.grey[600], size: 20),
+                      color: context.customSecondaryText.withOpacity(0.6), size: 20),
                 ),
               ]),
             ),
@@ -144,7 +145,7 @@ class _ExpandSectionState extends State<_ExpandSection> {
             secondChild: Padding(
               padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
               child: Text(widget.content,
-                  style: TextStyle(color: Colors.grey[400],
+                  style: TextStyle(color: context.customSecondaryText,
                       fontSize: 13, height: 1.6)),
             ),
             crossFadeState: _expanded

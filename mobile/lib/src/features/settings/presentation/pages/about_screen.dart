@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/widgets/glass_app_bar.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -16,7 +17,7 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       extendBodyBehindAppBar: true,
       appBar: const GlassAppBar(title: 'About Campus Deal'),
       body: SingleChildScrollView(
@@ -24,6 +25,7 @@ class AboutScreen extends StatelessWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           // Mission
           _card(
+            context: context,
             icon: Icons.flag_outlined,
             title: 'Our Mission',
             child: Column(
@@ -31,7 +33,7 @@ class AboutScreen extends StatelessWidget {
               children: [
                 Text(
                   'Campus Deal connects students, local businesses, and peers through a single ecosystem that offers personalized deals, peer-to-peer buying/selling, and on-campus job opportunities.',
-                  style: TextStyle(color: Colors.grey[400], fontSize: 13, height: 1.6),
+                  style: TextStyle(color: context.customSecondaryText, fontSize: 13, height: 1.6),
                 ),
                 const SizedBox(height: 12),
                 Container(
@@ -50,7 +52,7 @@ class AboutScreen extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         'To become the go-to lifestyle and opportunity platform for students across Nigeria and Africa.',
-                        style: TextStyle(color: Colors.cyan[200], fontSize: 12, height: 1.5),
+                        style: TextStyle(color: context.isDarkMode ? Colors.cyan[200] : const Color(0xFF0891B2), fontSize: 12, height: 1.5),
                       ),
                     ],
                   ),
@@ -62,15 +64,16 @@ class AboutScreen extends StatelessWidget {
 
           // Features
           _card(
+            context: context,
             icon: Icons.star_outline,
             title: 'Key Features',
             child: Column(
               children: [
-                _featureItem('Campus Marketplace', 'Buy, sell, or trade items within your university community.'),
-                _featureItem('Gig Economy Hub', 'Find or post on-campus jobs and freelance opportunities.'),
-                _featureItem('Student Verification', 'Secure platform with verified students only.'),
-                _featureItem('Secure Messaging', 'Built-in chat without sharing personal info.'),
-                _featureItem('Smart Recommendations', 'Personalized suggestions based on your interests.'),
+                _featureItem(context, 'Campus Marketplace', 'Buy, sell, or trade items within your university community.'),
+                _featureItem(context, 'Gig Economy Hub', 'Find or post on-campus jobs and freelance opportunities.'),
+                _featureItem(context, 'Student Verification', 'Secure platform with verified students only.'),
+                _featureItem(context, 'Secure Messaging', 'Built-in chat without sharing personal info.'),
+                _featureItem(context, 'Smart Recommendations', 'Personalized suggestions based on your interests.'),
               ],
             ),
           ),
@@ -78,13 +81,14 @@ class AboutScreen extends StatelessWidget {
 
           // Team
           _card(
+            context: context,
             icon: Icons.people_outline,
             title: 'Meet the Founder',
             child: Row(children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(40),
                 child: Builder(
-                  builder: (context) {
+                  builder: (ctx) {
                     const tokenPart1 = 'eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9lN2M5ZWEwNS1hZDNhLTQwYjgtODQ0Yy0yODJhYTNhMTVjYTMiLCJhbGciOiJIUzI1NiJ9';
                     const tokenPart2 = 'eyJ1cmwiOiJ0ZWFtL011aGFtbWFkLUFkYW11LnBuZyIsImlhdCI6MTc1MzEzNDI5NCwiZXhwIjo5MTMyNTU4Mjk0fQ';
                     const tokenPart3 = 'yy8YwgSWm6QW7OLLVMV2_3u4N_AWOko0mSa6Iw4tkF8';
@@ -93,10 +97,10 @@ class AboutScreen extends StatelessWidget {
                       imageUrl: imageUrl,
                       width: 64, height: 64, fit: BoxFit.cover,
                       placeholder: (_, __) => Container(width: 64, height: 64,
-                          color: const Color(0xFF262626)),
+                          color: context.isDarkMode ? const Color(0xFF262626) : Colors.black.withOpacity(0.03)),
                       errorWidget: (_, __, ___) => Container(width: 64, height: 64,
-                          color: const Color(0xFF262626),
-                          child: const Icon(Icons.person, color: Colors.grey)),
+                          color: context.isDarkMode ? const Color(0xFF262626) : Colors.black.withOpacity(0.03),
+                          child: Icon(Icons.person, color: context.customSecondaryText)),
                     );
                   },
                 ),
@@ -106,19 +110,19 @@ class AboutScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Muhammad Aliyu',
-                        style: TextStyle(color: Colors.white,
+                    Text('Muhammad Aliyu',
+                        style: TextStyle(color: context.customText,
                             fontWeight: FontWeight.w600, fontSize: 15)),
                     const SizedBox(height: 2),
                     Text('Founder and CEO',
-                        style: TextStyle(color: Colors.grey[500], fontSize: 13)),
+                        style: TextStyle(color: context.customSecondaryText, fontSize: 13)),
                     const SizedBox(height: 8),
                     Row(children: [
-                      _socialIcon(Icons.link, () => _launch('https://github.com/Adams-404')),
+                      _socialIcon(context, Icons.link, () => _launch('https://github.com/Adams-404')),
                       const SizedBox(width: 12),
-                      _socialIcon(Icons.alternate_email, () => _launch('https://x.com/_Adam_Alee')),
+                      _socialIcon(context, Icons.alternate_email, () => _launch('https://x.com/_Adam_Alee')),
                       const SizedBox(width: 12),
-                      _socialIcon(Icons.email_outlined, () => _launch('mailto:muhammadadamualiyu33@gmail.com')),
+                      _socialIcon(context, Icons.email_outlined, () => _launch('mailto:muhammadadamualiyu33@gmail.com')),
                     ]),
                   ],
                 ),
@@ -144,10 +148,10 @@ class AboutScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              Text('Version 1.0.0', style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+              Text('Version 1.0.0', style: TextStyle(color: context.customSecondaryText, fontSize: 12)),
               const SizedBox(height: 4),
               Text('© 2025 Campus Deal. All rights reserved.',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+                  style: TextStyle(color: context.customSecondaryText, fontSize: 12)),
             ]),
           ),
           const SizedBox(height: 80),
@@ -156,19 +160,19 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _card({required IconData icon, required String title, required Widget child}) {
+  Widget _card({required BuildContext context, required IconData icon, required String title, required Widget child}) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF171717),
+        color: context.customSurface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: context.customBorder),
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Row(children: [
           Icon(icon, color: Colors.cyan, size: 18),
           const SizedBox(width: 8),
-          Text(title, style: const TextStyle(color: Colors.white,
+          Text(title, style: TextStyle(color: context.customText,
               fontSize: 16, fontWeight: FontWeight.w600)),
         ]),
         const SizedBox(height: 14),
@@ -177,7 +181,7 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-  Widget _featureItem(String title, String desc) {
+  Widget _featureItem(BuildContext context, String title, String desc) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -191,20 +195,20 @@ class AboutScreen extends StatelessWidget {
         Expanded(child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(color: Colors.white,
+            Text(title, style: TextStyle(color: context.customText,
                 fontSize: 13, fontWeight: FontWeight.w500)),
             const SizedBox(height: 2),
-            Text(desc, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+            Text(desc, style: TextStyle(color: context.customSecondaryText, fontSize: 12)),
           ],
         )),
       ]),
     );
   }
 
-  Widget _socialIcon(IconData icon, VoidCallback onTap) {
+  Widget _socialIcon(BuildContext context, IconData icon, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
-      child: Icon(icon, color: Colors.grey[500], size: 18),
+      child: Icon(icon, color: context.customSecondaryText, size: 18),
     );
   }
 }
