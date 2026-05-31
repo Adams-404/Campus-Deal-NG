@@ -20,6 +20,7 @@ import 'src/features/gigs/presentation/pages/my_gigs_screen.dart';
 import 'src/features/gigs/presentation/widgets/create_gig_modal.dart';
 import 'src/core/widgets/glass_skeleton.dart';
 import 'src/core/widgets/connectivity_wrapper.dart';
+import 'src/core/providers/theme_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -36,15 +37,20 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(themeProvider);
+
     return MaterialApp(
       title: 'Campus Deal NG',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       builder: (context, child) {
         return Stack(
           children: [

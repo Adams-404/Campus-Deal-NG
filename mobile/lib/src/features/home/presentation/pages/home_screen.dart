@@ -10,6 +10,7 @@ import '../../../../core/widgets/glass_search_bar.dart';
 import '../../../../core/widgets/mode_switcher_pill.dart';
 import '../../../settings/presentation/widgets/notification_bell.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -82,12 +83,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
+                      Text(
                         'Featured Items',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: context.customText,
                         ),
                       ),
                       const SizedBox(height: 16),
