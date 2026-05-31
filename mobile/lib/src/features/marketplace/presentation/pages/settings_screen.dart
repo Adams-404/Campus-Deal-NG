@@ -15,6 +15,8 @@ import '../../../settings/presentation/pages/feedback_screen.dart';
 import '../../../settings/presentation/pages/privacy_policy_screen.dart';
 import '../../../settings/presentation/pages/about_screen.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/providers/theme_provider.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -71,6 +73,131 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     ).then((_) => _loadProfile()); // Refresh profile on return
   }
 
+  IconData _getThemeIcon(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return Icons.light_mode_outlined;
+      case ThemeMode.dark:
+        return Icons.dark_mode_outlined;
+      case ThemeMode.system:
+        return Icons.brightness_auto_outlined;
+    }
+  }
+
+  String _getThemeLabel(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.light:
+        return 'Theme: Light';
+      case ThemeMode.dark:
+        return 'Theme: Dark';
+      case ThemeMode.system:
+        return 'Theme: System';
+    }
+  }
+
+  void _showThemeSelector(BuildContext context, WidgetRef ref, ThemeMode currentMode) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        child: Container(
+          decoration: BoxDecoration(
+            color: context.customSurface.withOpacity(0.85),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border.all(color: context.customBorder),
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: context.customSecondaryText.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                'Choose Theme',
+                style: TextStyle(
+                  color: context.customText,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              _buildThemeOption(ctx, ref, ThemeMode.light, 'Light Mode', Icons.light_mode, currentMode),
+              const SizedBox(height: 8),
+              _buildThemeOption(ctx, ref, ThemeMode.dark, 'Dark Mode', Icons.dark_mode, currentMode),
+              const SizedBox(height: 8),
+              _buildThemeOption(ctx, ref, ThemeMode.system, 'System Default', Icons.brightness_auto, currentMode),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeOption(
+    BuildContext context,
+    WidgetRef ref,
+    ThemeMode mode,
+    String label,
+    IconData icon,
+    ThemeMode currentMode,
+  ) {
+    final isSelected = mode == currentMode;
+    return InkWell(
+      onTap: () {
+        ref.read(themeProvider.notifier).setThemeMode(mode);
+        Navigator.pop(context);
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? Colors.blue.withOpacity(0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected 
+                ? Colors.blue.withOpacity(0.3)
+                : Colors.transparent,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              color: isSelected ? Colors.blue : context.customSecondaryText,
+              size: 20,
+            ),
+            const SizedBox(width: 14),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.blue : context.customText,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 15,
+              ),
+            ),
+            const Spacer(),
+            if (isSelected)
+              const Icon(
+                Icons.check_circle,
+                color: Colors.blue,
+                size: 20,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final supabase = ref.watch(supabaseClientProvider);
@@ -85,9 +212,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final avatarLetter = displayName.isNotEmpty
         ? displayName[0].toUpperCase()
         : 'U';
+    final themeMode = ref.watch(themeProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -119,8 +247,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white.withValues(alpha: 0.08),
-                          Colors.white.withValues(alpha: 0.0),
+                          context.customText.withOpacity(0.08),
+                          context.customText.withOpacity(0.0),
                         ],
                       ),
                     ),
@@ -193,6 +321,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       iconBg: Colors.pink.withOpacity(0.15),
                       iconColor: Colors.pink,
                       onTap: () => _navigateTo(const NotificationsScreen()),
+                    ),
+                    _SettingsItem(
+                      icon: _getThemeIcon(themeMode),
+                      label: _getThemeLabel(themeMode),
+                      iconBg: Colors.blue.withOpacity(0.15),
+                      iconColor: Colors.blue,
+                      onTap: () => _showThemeSelector(context, ref, themeMode),
                     ),
                   ],
                 ),
@@ -322,23 +457,23 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: const Color(0xFF171717).withValues(alpha: 0.4),
+            color: context.customSurface.withOpacity(0.4),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            border: Border.all(color: context.customBorder),
           ),
           child: Row(
             children: [
               CircleAvatar(
                 radius: 30,
-                backgroundColor: Colors.white.withOpacity(0.2),
+                backgroundColor: context.isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.1),
                 backgroundImage: avatarUrl != null && avatarUrl.isNotEmpty
                     ? CachedNetworkImageProvider(avatarUrl)
                     : null,
                 child: avatarUrl == null || avatarUrl.isEmpty
                     ? Text(
                         avatarLetter,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: context.customText,
                           fontWeight: FontWeight.bold,
                           fontSize: 24,
                         ),
@@ -352,8 +487,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   children: [
                     Text(
                       displayName,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: context.customText,
                         fontWeight: FontWeight.bold,
                         fontSize: 17,
                       ),
@@ -361,13 +496,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     const SizedBox(height: 3),
                     Text(
                       email,
-                      style: TextStyle(color: Colors.grey[400], fontSize: 13),
+                      style: TextStyle(color: context.customSecondaryText, fontSize: 13),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: Colors.grey[600], size: 20),
+              Icon(Icons.chevron_right, color: context.customSecondaryText, size: 20),
             ],
           ),
         ),
@@ -389,7 +524,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Text(
               title.toUpperCase(),
               style: TextStyle(
-                color: Colors.grey[500],
+                color: context.customSecondaryText,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
                 letterSpacing: 1.2,
@@ -398,9 +533,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF171717),
+              color: context.customSurface,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withOpacity(0.06)),
+              border: Border.all(color: context.customBorder),
             ),
             child: Column(
               children: items.asMap().entries.map((entry) {
@@ -411,7 +546,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     if (!isLast)
                       Divider(
                         height: 1,
-                        color: Colors.white.withOpacity(0.05),
+                        color: context.customBorder,
                         indent: 56,
                         endIndent: 0,
                       ),
@@ -446,10 +581,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             Expanded(
               child: Text(
                 item.label,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: TextStyle(color: context.customText, fontSize: 15),
               ),
             ),
-            Icon(Icons.chevron_right, color: Colors.grey[600], size: 20),
+            Icon(Icons.chevron_right, color: context.customSecondaryText, size: 20),
           ],
         ),
       ),

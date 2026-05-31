@@ -57,9 +57,9 @@ class ProductCard extends StatelessWidget {
       child: Container(
         width: isFeatured ? double.infinity : 160,
         decoration: BoxDecoration(
-          color: const Color(0xFF171717),
+          color: context.customSurface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.05)),
+          border: Border.all(color: context.customBorder),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,13 +81,13 @@ class ProductCard extends StatelessWidget {
                     memCacheWidth: isFeatured ? 600 : 400,
                     fadeInDuration: const Duration(milliseconds: 300),
                     placeholder: (context, url) => Shimmer.fromColors(
-                      baseColor: AppTheme.shimmerBase,
-                      highlightColor: AppTheme.shimmerHighlight,
+                      baseColor: context.customShimmerBase,
+                      highlightColor: context.customShimmerHighlight,
                       child: Container(color: Colors.white),
                     ),
                     errorWidget: (context, url, error) => Container(
-                      color: const Color(0xFF222222),
-                      child: const Icon(Icons.broken_image, color: Colors.white24),
+                      color: context.isDarkMode ? const Color(0xFF222222) : const Color(0xFFE5E7EB),
+                      child: Icon(Icons.broken_image, color: context.customSecondaryText),
                     ),
                   ),
                 ),
@@ -116,17 +116,17 @@ class ProductCard extends StatelessWidget {
                     title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: Colors.white,
+                      color: context.customText,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '₦${NumberFormat('#,##0').format(price)}',
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: context.customText,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -136,17 +136,17 @@ class ProductCard extends StatelessWidget {
                     children: [
                       CircleAvatar(
                         radius: 8,
-                        backgroundColor: Colors.grey[800],
+                        backgroundColor: context.isDarkMode ? Colors.grey[800] : Colors.grey[300],
                         child: Text(
                           sellerName[0],
-                          style: const TextStyle(fontSize: 8, color: Colors.white),
+                          style: TextStyle(fontSize: 8, color: context.customText),
                         ),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         sellerName,
                         style: TextStyle(
-                          color: Colors.grey[400],
+                          color: context.customSecondaryText,
                           fontSize: 10,
                         ),
                       ),

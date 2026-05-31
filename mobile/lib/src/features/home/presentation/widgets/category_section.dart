@@ -3,6 +3,7 @@ import '../../domain/models/product.dart';
 import 'product_card.dart';
 import '../pages/category_page.dart';
 import '../../../marketplace/presentation/pages/item_detail_screen.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class CategorySection extends StatelessWidget {
   final String title;
@@ -30,10 +31,10 @@ class CategorySection extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: context.customText,
                 ),
               ),
               TextButton(
@@ -53,7 +54,7 @@ class CategorySection extends StatelessWidget {
                     Text(
                       'See All',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
+                        color: context.customSecondaryText,
                         fontSize: 14,
                       ),
                     ),
@@ -61,7 +62,7 @@ class CategorySection extends StatelessWidget {
                     Icon(
                       Icons.arrow_forward_ios,
                       size: 12,
-                      color: Colors.white.withOpacity(0.7),
+                      color: context.customSecondaryText,
                     ),
                   ],
                 ),
