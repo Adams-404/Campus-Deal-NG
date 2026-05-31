@@ -8,6 +8,7 @@ import 'package:campus_deal_mobile/src/core/widgets/glass_search_bar.dart';
 import 'chat_screen.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
 import 'package:campus_deal_mobile/src/core/providers/app_mode_provider.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class MessagesScreen extends ConsumerStatefulWidget {
   const MessagesScreen({super.key});
@@ -159,7 +160,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticK
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
@@ -232,7 +233,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticK
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-                color: Colors.white.withOpacity(0.05)),
+                color: context.customBorder),
           ),
         ),
         child: Row(
@@ -250,15 +251,15 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticK
                       Expanded(
                         child: Text(
                           conv.otherUser.displayName,
-                          style: const TextStyle(
-                              color: Colors.white,
+                          style: TextStyle(
+                              color: context.customText,
                               fontWeight: FontWeight.w600,
                               fontSize: 15),
                         ),
                       ),
                       Text(timeStr,
                           style: TextStyle(
-                              color: Colors.grey[600], fontSize: 12)),
+                              color: context.customSecondaryText, fontSize: 12)),
                     ],
                   ),
                   if (conv.itemTitle != null) ...[
@@ -266,12 +267,12 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticK
                     Row(
                       children: [
                         Icon(Icons.tag,
-                            size: 11, color: Colors.white.withOpacity(0.8)),
+                            size: 11, color: context.customSecondaryText.withOpacity(0.8)),
                         const SizedBox(width: 3),
                         Text(
                           conv.itemTitle!,
                           style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
+                              color: context.customSecondaryText.withOpacity(0.8),
                               fontSize: 11,
                               fontWeight: FontWeight.w500),
                         ),
@@ -284,7 +285,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticK
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        color: Colors.grey[500], fontSize: 13),
+                        color: context.customSecondaryText, fontSize: 13),
                   ),
                 ],
               ),
@@ -302,9 +303,9 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticK
                   memCacheWidth: 150,
                   memCacheHeight: 150,
                   placeholder: (_, __) =>
-                      Container(color: const Color(0xFF222222)),
+                      Container(color: context.customSurface),
                   errorWidget: (_, __, ___) =>
-                      Container(color: const Color(0xFF222222)),
+                      Container(color: context.customSurface),
                 ),
               ),
           ],
@@ -317,7 +318,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticK
     return CircleAvatar(
       radius: 24,
       backgroundColor:
-          Colors.white.withOpacity(0.2),
+          context.isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.05),
       backgroundImage: user.avatarUrl != null && user.avatarUrl!.isNotEmpty
           ? CachedNetworkImageProvider(
               ImageUtils.getThumbnailUrl(user.avatarUrl!, width: 100, height: 100),
@@ -325,8 +326,8 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticK
           : null,
       child: user.avatarUrl == null || user.avatarUrl!.isEmpty
           ? Text(user.initials,
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: context.customText,
                   fontWeight: FontWeight.bold,
                   fontSize: 18))
           : null,
@@ -344,19 +345,19 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticK
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: const Color(0xFF171717),
+                color: context.customSurface,
                 shape: BoxShape.circle,
                 border: Border.all(
-                    color: Colors.white.withOpacity(0.06)),
+                    color: context.customBorder),
               ),
-              child: const Icon(Icons.chat_bubble_outline,
-                  color: Colors.grey, size: 32),
+              child: Icon(Icons.chat_bubble_outline,
+                  color: context.customSecondaryText, size: 32),
             ),
             const SizedBox(height: 20),
             Text(
               _search.isNotEmpty ? 'No results' : 'No conversations yet',
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: context.customText,
                   fontSize: 18,
                   fontWeight: FontWeight.bold),
             ),
@@ -364,7 +365,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> with AutomaticK
             Text(
               'Tap "Message Seller" on any listing to start a conversation.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[500], fontSize: 14),
+              style: TextStyle(color: context.customSecondaryText, fontSize: 14),
             ),
           ],
         ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,6 +11,7 @@ import '../../../../core/providers/connectivity_provider.dart';
 import '../../../../core/utils/connectivity_utils.dart';
 import '../providers/offline_messages_provider.dart';
 import '../../../settings/presentation/pages/user_profile_screen.dart';
+import '../../../../core/theme/app_theme.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   final Conversation conversation;
@@ -238,13 +240,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final allMessages = [..._messages, ...pendingMessages];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0A0A),
+      backgroundColor: context.customBackground,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0A0A0A),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              color: Colors.white, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new,
+              color: context.customText, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: GestureDetector(
@@ -264,15 +266,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               CircleAvatar(
                 radius: 18,
                 backgroundColor:
-                    Colors.white.withOpacity(0.2),
+                    context.isDarkMode ? Colors.white.withOpacity(0.2) : Colors.black.withOpacity(0.05),
                 backgroundImage:
                     other.avatarUrl != null && other.avatarUrl!.isNotEmpty
                         ? CachedNetworkImageProvider(other.avatarUrl!)
                         : null,
                 child: other.avatarUrl == null || other.avatarUrl!.isEmpty
                     ? Text(other.initials,
-                        style: const TextStyle(
-                            color: Colors.white,
+                        style: TextStyle(
+                            color: context.customText,
                             fontWeight: FontWeight.bold,
                             fontSize: 14))
                     : null,
@@ -284,8 +286,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   children: [
                     Text(
                       other.displayName,
-                      style: const TextStyle(
-                          color: Colors.white,
+                      style: TextStyle(
+                          color: context.customText,
                           fontWeight: FontWeight.bold,
                           fontSize: 16),
                     ),
@@ -293,7 +295,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       Text(
                         widget.conversation.itemTitle!,
                         style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: context.customSecondaryText,
                             fontSize: 11),
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -307,7 +309,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           preferredSize: const Size.fromHeight(1),
           child: Container(
               height: 1,
-              color: Colors.white.withOpacity(0.06)),
+              color: context.customBorder),
         ),
       ),
       body: Column(
@@ -393,9 +395,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFF171717),
+        color: context.customSurface,
         border: Border(
-            bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
+            bottom: BorderSide(color: context.customBorder)),
       ),
       child: Row(
         children: [
@@ -408,9 +410,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 height: 40,
                 fit: BoxFit.cover,
                 placeholder: (_, __) =>
-                    Container(color: const Color(0xFF222222)),
+                    Container(color: context.customSurface),
                 errorWidget: (_, __, ___) =>
-                    Container(color: const Color(0xFF222222)),
+                    Container(color: context.customSurface),
               ),
             ),
           const SizedBox(width: 10),
@@ -420,8 +422,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               children: [
                 Text(
                   conv.itemTitle ?? '',
-                  style: const TextStyle(
-                      color: Colors.white,
+                  style: TextStyle(
+                      color: context.customText,
                       fontWeight: FontWeight.w600,
                       fontSize: 13),
                   maxLines: 1,
@@ -430,8 +432,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 if (conv.itemPrice != null)
                   Text(
                     '₦${NumberFormat('#,##0').format(conv.itemPrice!)}',
-                    style: const TextStyle(
-                        color: Colors.white,
+                    style: TextStyle(
+                        color: context.customText,
                         fontWeight: FontWeight.bold,
                         fontSize: 12),
                   ),
@@ -459,11 +461,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         decoration: BoxDecoration(
           color: isMe
               ? const Color(0xFF6366F1).withOpacity(0.18)
-              : Colors.white.withOpacity(0.07),
+              : (context.isDarkMode ? Colors.white.withOpacity(0.07) : Colors.white.withOpacity(0.8)),
           border: Border.all(
             color: isMe
                 ? const Color(0xFF6366F1).withOpacity(0.35)
-                : Colors.white.withOpacity(0.08),
+                : context.customBorder,
             width: 1.2,
           ),
           borderRadius: BorderRadius.only(
@@ -476,7 +478,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.15),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -489,7 +491,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             Text(
               msg.content,
               style: TextStyle(
-                  color: isMe ? Colors.white : const Color(0xFFE2E8F0),
+                  color: isMe ? (context.isDarkMode ? Colors.white : const Color(0xFF1E1B4B)) : context.customText,
                   fontSize: 14,
                   height: 1.4),
             ),
@@ -501,20 +503,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   _formatMsgTime(msg.createdAt),
                   style: TextStyle(
                       color: isMe
-                          ? Colors.white.withOpacity(0.5)
-                          : Colors.white.withOpacity(0.4),
+                          ? (context.isDarkMode ? Colors.white.withOpacity(0.5) : const Color(0xFF4F46E5).withOpacity(0.8))
+                          : context.customSecondaryText.withOpacity(0.8),
                       fontSize: 10),
                 ),
                 if (isMe && !isTemp) ...[
                   const SizedBox(width: 4),
                   Icon(Icons.done_all,
                       size: 12,
-                      color: Colors.white.withOpacity(0.6)),
+                      color: context.isDarkMode ? Colors.white.withOpacity(0.6) : const Color(0xFF4F46E5).withOpacity(0.7)),
                 ] else if (isMe && isTemp) ...[
                   const SizedBox(width: 4),
                   GlassPulseIcon(
                     icon: Icons.access_time,
-                    color: Colors.white.withOpacity(0.6),
+                    color: context.isDarkMode ? Colors.white.withOpacity(0.6) : const Color(0xFF4F46E5).withOpacity(0.7),
                     size: 10,
                   ),
                 ],
@@ -539,13 +541,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       child: Row(
         children: [
           Expanded(
-              child: Divider(color: Colors.white.withOpacity(0.08))),
+              child: Divider(color: context.customBorder)),
           const SizedBox(width: 8),
           Text(label,
-              style: TextStyle(color: Colors.grey[600], fontSize: 11)),
+              style: TextStyle(color: context.customSecondaryText, fontSize: 11)),
           const SizedBox(width: 8),
           Expanded(
-              child: Divider(color: Colors.white.withOpacity(0.08))),
+              child: Divider(color: context.customBorder)),
         ],
       ),
     );
@@ -556,32 +558,36 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       padding: EdgeInsets.fromLTRB(
           12, 10, 12, 10 + MediaQuery.of(context).padding.bottom),
       decoration: BoxDecoration(
-        color: const Color(0xFF111111),
+        color: context.customBackground,
         border: Border(
-            top: BorderSide(color: Colors.white.withOpacity(0.06))),
+            top: BorderSide(color: context.customBorder)),
       ),
       child: Row(
         children: [
           Expanded(
             child: Container(
+              clipBehavior: Clip.antiAlias,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
+                color: context.customSurface,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(
-                    color: Colors.white.withOpacity(0.08)),
+                    color: context.customBorder),
               ),
               child: TextField(
                 controller: _messageController,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
+                style: TextStyle(color: context.customText, fontSize: 15),
                 maxLines: 4,
                 minLines: 1,
                 textInputAction: TextInputAction.newline,
                 keyboardType: TextInputType.multiline,
                 decoration: InputDecoration(
+                  filled: false,
                   hintText: 'Type a message...',
-                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  hintStyle: TextStyle(color: context.customSecondaryText.withOpacity(0.6)),
                   border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
                   contentPadding:
                       const EdgeInsets.symmetric(vertical: 12),
                 ),
@@ -591,36 +597,44 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           const SizedBox(width: 8),
           GestureDetector(
             onTap: _isSending ? null : _sendMessage,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Colors.white, Color(0xFF6366F1)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color:
-                        Colors.white.withOpacity(0.4),
-                    blurRadius: 10,
-                    spreadRadius: 1,
-                  ),
-                ],
-              ),
-              child: _isSending
-                  ? const Padding(
-                      padding: EdgeInsets.all(12),
-                      child: GlassShimmer(
-                        child: Icon(Icons.send_rounded,
-                            color: Colors.white, size: 20),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(23),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: context.customSurface,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: context.customBorder,
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: context.customBorder.withOpacity(0.05),
+                        blurRadius: 10,
+                        spreadRadius: 1,
                       ),
-                    )
-                  : const Icon(Icons.send_rounded,
-                      color: Colors.white, size: 20),
+                    ],
+                  ),
+                  child: _isSending
+                      ? Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(context.customText),
+                          ),
+                        )
+                      : Icon(
+                          Icons.send_rounded,
+                          color: context.customText,
+                          size: 20,
+                        ),
+                ),
+              ),
             ),
           ),
         ],
@@ -637,22 +651,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.1),
+              color: context.customSurface,
               shape: BoxShape.circle,
+              border: Border.all(color: context.customBorder),
             ),
-            child: const Icon(Icons.waving_hand_outlined,
-                color: Colors.white, size: 32),
+            child: Icon(Icons.waving_hand_outlined,
+                color: context.customText, size: 32),
           ),
           const SizedBox(height: 16),
-          const Text('Say hello!',
+          Text('Say hello!',
               style: TextStyle(
-                  color: Colors.white,
+                  color: context.customText,
                   fontSize: 18,
                   fontWeight: FontWeight.bold)),
           const SizedBox(height: 6),
           Text(
             'No messages yet. Start the conversation.',
-            style: TextStyle(color: Colors.grey[500], fontSize: 14),
+            style: TextStyle(color: context.customSecondaryText, fontSize: 14),
           ),
         ],
       ),
