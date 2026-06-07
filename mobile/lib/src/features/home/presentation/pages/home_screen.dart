@@ -11,6 +11,7 @@ import '../../../../core/widgets/mode_switcher_pill.dart';
 import '../../../settings/presentation/widgets/notification_bell.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../widgets/profile_dropdown.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -194,37 +195,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildProfileAvatar() {
     final profileAsync = ref.watch(profileProvider);
     
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: context.customSurface,
-            shape: BoxShape.circle,
-            border: Border.all(color: context.customBorder.withValues(alpha: 0.4), width: 1.0),
-          ),
-          child: profileAsync.when(
-            data: (profile) {
-              final avatarUrl = profile?['avatar_url'] as String?;
-              final firstName = profile?['first_name'] as String? ?? '';
-              final initial = firstName.isNotEmpty ? firstName[0].toUpperCase() : '?';
-              
-              return ClipOval(
-                child: avatarUrl != null && avatarUrl.isNotEmpty
-                    ? Image.network(avatarUrl, fit: BoxFit.cover)
-                    : Center(
-                        child: Text(
-                          initial,
-                          style: TextStyle(color: context.customText, fontSize: 14, fontWeight: FontWeight.w600),
+    return GestureDetector(
+      onTap: () {
+        final data = profileAsync.whenOrNull(data: (d) => d);
+        ProfileDropdown.show(context, ref, profileData: data);
+      },
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: context.customSurface,
+              shape: BoxShape.circle,
+              border: Border.all(color: context.customBorder.withValues(alpha: 0.4), width: 1.0),
+            ),
+            child: profileAsync.when(
+              data: (profile) {
+                final avatarUrl = profile?['avatar_url'] as String?;
+                final firstName = profile?['first_name'] as String? ?? '';
+                final initial = firstName.isNotEmpty ? firstName[0].toUpperCase() : '?';
+                
+                return ClipOval(
+                  child: avatarUrl != null && avatarUrl.isNotEmpty
+                      ? Image.network(avatarUrl, fit: BoxFit.cover)
+                      : Center(
+                          child: Text(
+                            initial,
+                            style: TextStyle(color: context.customText, fontSize: 14, fontWeight: FontWeight.w600),
+                          ),
                         ),
-                      ),
-              );
-            },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => Icon(Icons.account_circle, color: context.customText, size: 24),
+                );
+              },
+              loading: () => const SizedBox.shrink(),
+              error: (_, __) => Icon(Icons.account_circle, color: context.customText, size: 24),
+            ),
           ),
         ),
       ),
