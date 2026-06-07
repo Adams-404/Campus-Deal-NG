@@ -37,6 +37,7 @@ class _SlidingConnectivityBannerState extends ConsumerState<SlidingConnectivityB
   bool _isVisible = false;
   ConnectivityStatus _bannerStatus = ConnectivityStatus.connected;
   Timer? _dismissTimer;
+  bool _wasDisconnected = false;
 
   @override
   void initState() {
@@ -66,6 +67,7 @@ class _SlidingConnectivityBannerState extends ConsumerState<SlidingConnectivityB
       _dismissTimer?.cancel();
       
       if (next == ConnectivityStatus.disconnected) {
+        _wasDisconnected = true;
         setState(() {
           _isVisible = true;
           _bannerStatus = ConnectivityStatus.disconnected;
@@ -76,7 +78,8 @@ class _SlidingConnectivityBannerState extends ConsumerState<SlidingConnectivityB
           _bannerStatus = ConnectivityStatus.checking;
         });
       } else if (next == ConnectivityStatus.connected) {
-        if (previous == ConnectivityStatus.disconnected || previous == ConnectivityStatus.checking) {
+        if (_wasDisconnected) {
+          _wasDisconnected = false;
           // Temporarily show green "Restored" state
           setState(() {
             _isVisible = true;
