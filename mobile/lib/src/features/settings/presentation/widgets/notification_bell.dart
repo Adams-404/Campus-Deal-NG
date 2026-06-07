@@ -192,7 +192,14 @@ class _NotificationBellState extends ConsumerState<NotificationBell> with Single
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: context.customSurface,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: 0.18),
+                  Colors.white.withValues(alpha: 0.06),
+                ],
+              ),
               shape: BoxShape.circle,
               border: Border.all(
                 color: context.customBorder.withValues(alpha: 0.4),
