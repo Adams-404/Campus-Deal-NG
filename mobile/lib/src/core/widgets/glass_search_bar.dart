@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../theme/app_theme.dart';
 
 class GlassSearchBar extends StatefulWidget {
   final TextEditingController controller;
@@ -54,7 +55,7 @@ class _GlassSearchBarState extends State<GlassSearchBar> {
         boxShadow: [
           if (_isFocused)
             BoxShadow(
-              color: const Color(0xFF3B82F6).withOpacity(0.2),
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.2),
               blurRadius: 15,
               spreadRadius: 2,
             ),
@@ -70,15 +71,18 @@ class _GlassSearchBarState extends State<GlassSearchBar> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white.withOpacity(_isFocused ? 0.15 : 0.08),
-                  Colors.white.withOpacity(_isFocused ? 0.05 : 0.02),
+                  context.customText.withValues(alpha: _isFocused ? 0.15 : 0.08),
+                  context.customText.withValues(alpha: _isFocused ? 0.05 : 0.02),
                 ],
               ),
+              color: context.isDarkMode 
+                  ? Colors.transparent 
+                  : Colors.white.withValues(alpha: 0.45),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(
                 color: _isFocused 
-                    ? const Color(0xFF3B82F6).withOpacity(0.6) 
-                    : Colors.white.withOpacity(0.15),
+                    ? const Color(0xFF3B82F6).withValues(alpha: 0.7) 
+                    : context.customBorder.withValues(alpha: 0.5),
                 width: 1.2,
               ),
             ),
@@ -87,8 +91,8 @@ class _GlassSearchBarState extends State<GlassSearchBar> {
               focusNode: _focusNode,
               onChanged: widget.onChanged,
               onSubmitted: widget.onSubmitted,
-              style: const TextStyle(
-                color: Colors.white, 
+              style: TextStyle(
+                color: context.customText, 
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
                 letterSpacing: 0.2,
@@ -97,21 +101,21 @@ class _GlassSearchBarState extends State<GlassSearchBar> {
                 filled: false, // Ensure we don't use the theme's dark background
                 hintText: widget.hintText,
                 hintStyle: TextStyle(
-                  color: Colors.white.withOpacity(0.5), 
+                  color: context.customSecondaryText.withValues(alpha: 0.65), 
                   fontSize: 14,
-                  fontWeight: FontWeight.w300,
+                  fontWeight: FontWeight.w400,
                 ),
                 prefixIcon: Container(
                   padding: const EdgeInsets.all(12),
                   child: FaIcon(
                     FontAwesomeIcons.magnifyingGlass,
-                    color: _isFocused ? const Color(0xFF3B82F6) : Colors.white.withOpacity(0.6),
+                    color: _isFocused ? const Color(0xFF3B82F6) : context.customSecondaryText,
                     size: 16,
                   ),
                 ),
                 suffixIcon: widget.controller.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white70, size: 18),
+                        icon: Icon(Icons.close, color: context.customSecondaryText, size: 18),
                         onPressed: () {
                           widget.controller.clear();
                           if (widget.onClear != null) widget.onClear!();
@@ -122,7 +126,7 @@ class _GlassSearchBarState extends State<GlassSearchBar> {
                         padding: const EdgeInsets.all(12),
                         child: FaIcon(
                           FontAwesomeIcons.wandMagicSparkles,
-                          color: Colors.white.withOpacity(0.25),
+                          color: context.customSecondaryText.withValues(alpha: 0.4),
                           size: 14,
                         ),
                       ),
