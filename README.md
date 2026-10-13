@@ -5,6 +5,8 @@
 
 Campus Deal is a student-focused deals and marketplace platform designed to make campus life more affordable, connected, and opportunity-driven. It serves as a hub where students can access discounts, local offers, gigs, and a trusted marketplace—all verified to be exclusive to their university community.
 
+👉 Quick summary: see [ABOUT.md](./ABOUT.md)
+
 ## 🌐 Live Website
 
 **URL**: [Campus Deal](https://campusdeal.ng/)
