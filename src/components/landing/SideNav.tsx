@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { X, ChevronRight, Home, Users, MessageSquare, Bot, ShoppingBag, LogIn, UserPlus } from "lucide-react"; 
+import { X, ChevronRight, Home, Users, MessageSquare, Bot, ShoppingBag, LogIn, UserPlus, Info } from "lucide-react"; 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -15,6 +15,10 @@ export const SideNav = ({ onClose, onNavigate }: SideNavProps) => {
     { label: "Features", icon: ShoppingBag, sectionId: "features" },
     { label: "AI Assistant", icon: Bot, sectionId: "ai-assistant" }, 
     { label: "Testimonials", icon: Users, sectionId: "testimonials" },
+  ];
+
+  const quickLinks = [
+    { label: "About Campus Deal", icon: Info, href: "/about" },
   ];
 
   const authItems = [
@@ -76,6 +80,22 @@ export const SideNav = ({ onClose, onNavigate }: SideNavProps) => {
                     <span>{item.label}</span>
                     <ChevronRight className="w-4 h-4 ml-auto text-white/60 transform rotate-180" />
                   </button>
+                </motion.li>
+              ))}
+              {quickLinks.map((item) => (
+                <motion.li key={item.label}
+                  whileHover={{ x: 5 }}
+                  transition={{ type: "spring", stiffness: 400 }}
+                >
+                  <Link
+                    to={item.href}
+                    onClick={onClose}
+                    className="flex items-center gap-3 px-4 py-3 w-full text-left text-white hover:bg-white/10 rounded-lg transition-colors"
+                  >
+                    <item.icon className="w-5 h-5 text-blue-400" />
+                    <span>{item.label}</span>
+                    <ChevronRight className="w-4 h-4 ml-auto text-white/60 transform rotate-180" />
+                  </Link>
                 </motion.li>
               ))}
             </ul>

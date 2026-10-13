@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'sign_up_screen.dart';
 import '../widgets/liquid_glass_background.dart';
 import '../../../../core/widgets/glass_skeleton.dart';
+import '../../../settings/presentation/pages/about_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -236,6 +237,24 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const AboutScreen(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'About Campus Deal',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.75),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 40),
               ],
